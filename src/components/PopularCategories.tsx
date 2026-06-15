@@ -10,26 +10,25 @@ interface Category {
   icon: LucideIcon;
   labelEn: string;
   labelMm: string;
-  color: string;
+  bgColor: string;
+  iconColor: string;
 }
 
 const categories: Category[] = [
-  { icon: Hotel, labelEn: 'Hotels', labelMm: 'ဟိုတယ်များ', color: 'bg-blue-100 text-[#1E88E5]' },
-  { icon: UtensilsCrossed, labelEn: 'Restaurants', labelMm: 'စားသောက်ဆိုင်များ', color: 'bg-orange-100 text-[#FFA726]' },
-  { icon: Camera, labelEn: 'Attractions', labelMm: 'လည်ပတ်စရာများ', color: 'bg-emerald-100 text-emerald-600' },
-  { icon: BookOpen, labelEn: 'Guides & Blogs', labelMm: 'လမ်းညွှန်များနှင့် ဘလော့ဂ်များ', color: 'bg-purple-100 text-purple-600' },
-  { icon: Map, labelEn: 'Tours', labelMm: 'တူရုးများ', color: 'bg-rose-100 text-rose-600' },
-  { icon: CalendarDays, labelEn: 'Planner', labelMm: 'စီမံချက်', color: 'bg-amber-100 text-amber-600' },
+  { icon: Hotel, labelEn: 'Hotels', labelMm: 'ဟိုတယ်များ', bgColor: 'bg-blue-100', iconColor: 'text-[#1E88E5]' },
+  { icon: UtensilsCrossed, labelEn: 'Restaurants', labelMm: 'စားသောက်ဆိုင်များ', bgColor: 'bg-orange-100', iconColor: 'text-[#FFA726]' },
+  { icon: Camera, labelEn: 'Attractions', labelMm: 'လည်ပတ်စရာများ', bgColor: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+  { icon: BookOpen, labelEn: 'Guides', labelMm: 'လမ်းညွှန်များ', bgColor: 'bg-purple-100', iconColor: 'text-purple-600' },
+  { icon: Map, labelEn: 'Tours', labelMm: 'တူရုးများ', bgColor: 'bg-rose-100', iconColor: 'text-rose-600' },
+  { icon: CalendarDays, labelEn: 'Planner', labelMm: 'စီမံချက်', bgColor: 'bg-amber-100', iconColor: 'text-amber-600' },
 ];
 
 const translations = {
   en: {
-    title: 'Popular Categories',
-    subtitle: 'Find exactly what you need for your trip',
+    title: 'Categories',
   },
   mm: {
-    title: 'လူကြိုက်များသော အမျိုးအစားများ',
-    subtitle: 'သင့်ခရီးစဉ်အတွက် လိုအပ်သည်များကို ရှာပါ',
+    title: 'အမျိုးအစားများ',
   },
 };
 
@@ -37,26 +36,29 @@ export default function PopularCategories({ language, darkMode = false }: Popula
   const t = translations[language];
 
   return (
-    <section className={`py-16 ${darkMode ? 'bg-slate-800' : 'bg-white'} transition-colors`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'} mb-2`}>{t.title}</h2>
-          <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t.subtitle}</p>
-        </div>
+    <section className={`py-8 ${darkMode ? 'bg-slate-800' : 'bg-white'} transition-colors`}>
+      <div className="max-w-7xl mx-auto">
+        {/* Left-aligned title */}
+        <h2 className={`text-lg font-semibold px-4 mb-4 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+          {t.title}
+        </h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
+        {/* Horizontal scroll container */}
+        <div className="flex overflow-x-auto gap-4 px-4 pb-2 scrollbar-hide">
           {categories.map((cat) => {
             const Icon = cat.icon;
             return (
               <a
                 key={cat.labelEn}
                 href="#"
-                className={`group flex flex-col items-center p-6 ${darkMode ? 'bg-slate-700' : 'bg-slate-50'} rounded-2xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${darkMode ? 'border-slate-600' : 'border border-slate-100'}`}
+                className="flex flex-col items-center shrink-0 group"
               >
-                <div className={`w-14 h-14 ${cat.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <Icon className="w-7 h-7" />
+                {/* Circular icon container */}
+                <div className={`w-14 h-14 ${cat.bgColor} rounded-full flex items-center justify-center mb-2 group-hover:scale-105 transition-transform`}>
+                  <Icon className={`w-6 h-6 ${cat.iconColor}`} />
                 </div>
-                <span className={`text-sm font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'} text-center`}>
+                {/* Label below circle */}
+                <span className={`text-xs font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'} whitespace-nowrap`}>
                   {language === 'en' ? cat.labelEn : cat.labelMm}
                 </span>
               </a>
