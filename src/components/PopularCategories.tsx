@@ -1,4 +1,20 @@
-import { Hotel, UtensilsCrossed, Camera, BookOpen, Map, CalendarDays } from 'lucide-react';
+import {
+  Hotel,
+  UtensilsCrossed,
+  Coffee,
+  Camera,
+  ShoppingCart,
+  BookOpen,
+  Building2,
+  Landmark,
+  HeartPulse,
+  Pill,
+  Sparkles,
+  Fuel,
+  Plane,
+  Store,
+  ChevronRight,
+} from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
 interface PopularCategoriesProps {
@@ -17,18 +33,28 @@ interface Category {
 const categories: Category[] = [
   { icon: Hotel, labelEn: 'Hotels', labelMm: 'ဟိုတယ်များ', bgColor: 'bg-blue-100', iconColor: 'text-[#1E88E5]' },
   { icon: UtensilsCrossed, labelEn: 'Restaurants', labelMm: 'စားသောက်ဆိုင်များ', bgColor: 'bg-orange-100', iconColor: 'text-[#FFA726]' },
+  { icon: Coffee, labelEn: 'Cafes', labelMm: 'ကဖေးများ', bgColor: 'bg-amber-100', iconColor: 'text-amber-600' },
   { icon: Camera, labelEn: 'Attractions', labelMm: 'လည်ပတ်စရာများ', bgColor: 'bg-emerald-100', iconColor: 'text-emerald-600' },
-  { icon: BookOpen, labelEn: 'Guides', labelMm: 'လမ်းညွှန်များ', bgColor: 'bg-purple-100', iconColor: 'text-purple-600' },
-  { icon: Map, labelEn: 'Tours', labelMm: 'တူရုးများ', bgColor: 'bg-rose-100', iconColor: 'text-rose-600' },
-  { icon: CalendarDays, labelEn: 'Planner', labelMm: 'စီမံချက်', bgColor: 'bg-amber-100', iconColor: 'text-amber-600' },
+  { icon: ShoppingCart, labelEn: 'Shopping', labelMm: 'ဈေးဝယ်ရန်', bgColor: 'bg-pink-100', iconColor: 'text-pink-600' },
+  { icon: BookOpen, labelEn: 'Book Shops', labelMm: 'စာအုပ်ဆိုင်များ', bgColor: 'bg-indigo-100', iconColor: 'text-indigo-600' },
+  { icon: Building2, labelEn: 'Banks', labelMm: 'ဘဏ်များ', bgColor: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+  { icon: Landmark, labelEn: 'ATMs', labelMm: 'ငွေသားထုတ်စက်များ', bgColor: 'bg-teal-100', iconColor: 'text-teal-600' },
+  { icon: HeartPulse, labelEn: 'Hospitals', labelMm: 'ဆေးရုံများ', bgColor: 'bg-red-100', iconColor: 'text-red-500' },
+  { icon: Pill, labelEn: 'Pharmacies', labelMm: 'ဆေးဆိုင်များ', bgColor: 'bg-lime-100', iconColor: 'text-lime-600' },
+  { icon: Sparkles, labelEn: 'Spas', labelMm: 'စပါးများ', bgColor: 'bg-violet-100', iconColor: 'text-violet-600' },
+  { icon: Fuel, labelEn: 'Gas Stations', labelMm: 'လောင်စာဆီဆိုင်များ', bgColor: 'bg-yellow-100', iconColor: 'text-yellow-600' },
+  { icon: Plane, labelEn: 'Travel Agency', labelMm: 'ခရီးသွားကော်ပိုရိတ်', bgColor: 'bg-sky-100', iconColor: 'text-sky-600' },
+  { icon: Store, labelEn: 'Markets', labelMm: 'ဈေးများ', bgColor: 'bg-rose-100', iconColor: 'text-rose-600' },
 ];
 
 const translations = {
   en: {
     title: 'Categories',
+    viewAll: 'View All',
   },
   mm: {
     title: 'အမျိုးအစားများ',
+    viewAll: 'အားလုံးကြည့်ရန်',
   },
 };
 
@@ -38,10 +64,19 @@ export default function PopularCategories({ language, darkMode = false }: Popula
   return (
     <section className={`py-8 ${darkMode ? 'bg-slate-800' : 'bg-white'} transition-colors`}>
       <div className="max-w-7xl mx-auto">
-        {/* Left-aligned title */}
-        <h2 className={`text-lg font-semibold px-4 mb-4 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
-          {t.title}
-        </h2>
+        {/* Header row with title and View All */}
+        <div className="flex items-center justify-between px-4 mb-4">
+          <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+            {t.title}
+          </h2>
+          <a
+            href="#categories"
+            className="flex items-center gap-1 text-sm font-medium text-[#1E88E5] hover:text-[#1565C0] transition-colors"
+          >
+            {t.viewAll}
+            <ChevronRight className="w-4 h-4" />
+          </a>
+        </div>
 
         {/* Horizontal scroll container */}
         <div className="flex overflow-x-auto gap-4 px-4 pb-2 scrollbar-hide">
