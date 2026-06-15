@@ -152,7 +152,7 @@ export default function Hero({ language }: HeroProps) {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-16">
+    <section className="relative min-h-[33vh] flex items-center justify-center pt-16 pb-6">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
@@ -160,30 +160,30 @@ export default function Hero({ language }: HeroProps) {
           alt="Myanmar landscape"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-slate-900/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/50 to-slate-900/80" />
       </div>
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 leading-tight">
           {t.heading}
         </h1>
-        <p className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+        <p className="text-sm md:text-base text-white/80 mb-4 max-w-2xl mx-auto">
           {t.subheading}
         </p>
 
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-8 relative" ref={searchRef}>
+        <div className="max-w-2xl mx-auto mb-4 relative" ref={searchRef}>
           <form onSubmit={handleSearchSubmit}>
-            <div className="bg-white rounded-xl shadow-2xl p-2">
+            <div className="bg-white rounded-xl shadow-2xl p-1.5">
               <div className="flex items-center gap-2">
-                <div className="flex-1 flex items-center gap-3 px-4">
-                  <Search className="w-5 h-5 text-slate-400 shrink-0" />
+                <div className="flex-1 flex items-center gap-2 px-3">
+                  <Search className="w-4 h-4 text-slate-400 shrink-0" />
                   <input
                     ref={inputRef}
                     type="text"
                     placeholder={t.searchPlaceholder}
-                    className="w-full py-3 text-slate-700 placeholder-slate-400 focus:outline-none bg-transparent"
+                    className="w-full py-2.5 text-sm text-slate-700 placeholder-slate-400 focus:outline-none bg-transparent"
                     value={searchQuery}
                     onChange={(e) => handleInputChange(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -201,7 +201,7 @@ export default function Hero({ language }: HeroProps) {
                 </div>
                 <button
                   type="submit"
-                  className="bg-[#1E88E5] hover:bg-[#1565C0] text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 shrink-0"
+                  className="bg-[#1E88E5] hover:bg-[#1565C0] text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shrink-0"
                 >
                   <Search className="w-4 h-4" />
                   <span className="hidden sm:inline">{t.searchButton}</span>
@@ -269,8 +269,8 @@ export default function Hero({ language }: HeroProps) {
         </div>
 
         {/* City Quick Links */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <span className="text-white/60 text-sm">{t.explore}:</span>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="text-white/60 text-xs">{t.explore}:</span>
           {cities.map((city) => (
             <button
               key={city.name}
@@ -279,18 +279,11 @@ export default function Hero({ language }: HeroProps) {
                 setSearchQuery(language === 'en' ? city.name : city.nameMm);
                 handleInputChange(language === 'en' ? city.name : city.nameMm);
               }}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium transition-all border border-white/20 hover:border-white/40"
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full text-xs font-medium transition-all border border-white/20 hover:border-white/40"
             >
               {language === 'en' ? city.name : city.nameMm}
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-        <div className="w-6 h-10 border-2 border-white/40 rounded-full flex items-start justify-center pt-2">
-          <div className="w-1.5 h-3 bg-white/60 rounded-full animate-bounce" />
         </div>
       </div>
     </section>
