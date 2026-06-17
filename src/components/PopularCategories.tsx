@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Hotel,
   UtensilsCrossed,
@@ -60,6 +61,60 @@ const translations = {
 
 export default function PopularCategories({ language, darkMode = false }: PopularCategoriesProps) {
   const t = translations[language];
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  // Convert vertical mouse wheel to horizontal scroll
+  const handleWheel = useCallback((e: WheelEvent) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    e.preventDefault();
+    container.scrollLeft += e.deltaY;
+  }, []);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
+
+  // Drag-to-scroll handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    setIsDragging(true);
+    setStartX(e.pageX - container.offsetLeft);
+    setScrollLeft(container.scrollLeft);
+    container.style.cursor = 'grabbing';
+  };
+
+  const handleMouseUp = () => {
+    const container = scrollRef.current;
+    if (!container) return;
+    setIsDragging(false);
+    container.style.cursor = 'grab';
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const container = scrollRef.current;
+    if (!container) return;
+    e.preventDefault();
+    const x = e.pageX - container.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    container.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseLeave = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      const container = scrollRef.current;
+      if (container) container.style.cursor = 'grab';
+    }
+  };
 
   return (
     <section className={`py-8 ${darkMode ? 'bg-slate-800' : 'bg-white'} transition-colors`}>
@@ -79,21 +134,54 @@ export default function PopularCategories({ language, darkMode = false }: Popula
         </div>
 
         {/* Horizontal scroll container */}
-        <div className="flex overflow-x-auto gap-4 px-4 pb-2 scrollbar-hide">
+        <div
+          ref={scrollRef}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          className="categories-scroll"
+          style={{
+            display: 'flex',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            whiteSpace: 'nowrap',
+            scrollBehavior: 'smooth',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            gap: '16px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+            paddingBottom: '8px',
+            cursor: 'grab',
+            userSelect: 'none',
+          }}
+        >
           {categories.map((cat) => {
             const Icon = cat.icon;
             return (
               <a
                 key={cat.labelEn}
                 href="#"
-                className="flex flex-col items-center shrink-0 group"
+                style={{
+                  display: 'inline-flex',
+                  flexShrink: 0,
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
               >
                 {/* Circular icon container */}
-                <div className={`w-14 h-14 ${cat.bgColor} rounded-full flex items-center justify-center mb-2 group-hover:scale-105 transition-transform`}>
+                <div
+                  className={`${cat.bgColor} rounded-full flex items-center justify-center mb-2 group-hover:scale-105 transition-transform`}
+                  style={{ width: '56px', height: '56px' }}
+                >
                   <Icon className={`w-6 h-6 ${cat.iconColor}`} />
                 </div>
                 {/* Label below circle */}
-                <span className={`text-xs font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'} whitespace-nowrap`}>
+                <span
+                  className={`text-xs font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
                   {language === 'en' ? cat.labelEn : cat.labelMm}
                 </span>
               </a>

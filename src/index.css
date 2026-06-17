@@ -10,3 +10,8 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Hide scrollbar for categories horizontal scroll - Chrome/Safari/Edge */
+.categories-scroll::-webkit-scrollbar {
+  display: none;
+}
