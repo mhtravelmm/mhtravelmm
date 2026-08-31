@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
+import { HomePage } from './features/home/HomePage';
 import type { Currency, Language, Theme } from './types';
 
 function Shell({
@@ -31,17 +32,6 @@ function Shell({
   );
 }
 
-function HomePage() {
-  return (
-    <Shell footerVariant="full">
-      <p className="py-10 text-center text-sm text-text-muted">
-        Home page sections (hero ad, categories, travel plans, travel guide, blogs, populars,
-        reviews, awards, partners) go here next.
-      </p>
-    </Shell>
-  );
-}
-
 function PlaceholderPage({ title }: { title: string }) {
   return (
     <Shell>
@@ -54,7 +44,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/"
+          element={
+            <Shell footerVariant="full">
+              <HomePage />
+            </Shell>
+          }
+        />
         <Route path="/cities" element={<PlaceholderPage title="Cities" />} />
         <Route path="/nearby" element={<PlaceholderPage title="Nearby" />} />
         <Route path="/rentals" element={<PlaceholderPage title="Rentals" />} />
