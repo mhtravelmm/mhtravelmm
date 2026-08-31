@@ -1,39 +1,72 @@
 import { useState } from 'react';
-import {
-  Header,
-  Hero,
-  PopularCategories,
-  PopularDestinations,
-  FeaturedHotels,
-  LatestGuides,
-  PopularTours,
-  CTABanner,
-  Footer,
-} from './components';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
+import type { Currency, Language, Theme } from './types';
 
-function App() {
-  const [language, setLanguage] = useState<'en' | 'mm'>('en');
-  const [darkMode, setDarkMode] = useState(false);
+function Shell({
+  children,
+  footerVariant = 'minimal',
+}: {
+  children: React.ReactNode;
+  footerVariant?: 'full' | 'minimal';
+}) {
+  const [language, setLanguage] = useState<Language>('mm');
+  const [currency, setCurrency] = useState<Currency>('MMK');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-slate-900' : 'bg-white'} transition-colors`}>
+    <div className="min-h-screen bg-bg px-4 py-3 md:px-8">
       <Header
         language={language}
-        onLanguageChange={setLanguage}
-        darkMode={darkMode}
-        onDarkModeChange={setDarkMode}
+        onLanguageToggle={() => setLanguage((l) => (l === 'mm' ? 'en' : 'mm'))}
+        currency={currency}
+        onCurrencyToggle={() => setCurrency((c) => (c === 'MMK' ? 'USD' : 'MMK'))}
+        theme={theme}
+        onThemeToggle={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
       />
-      <main>
-        <Hero language={language} />
-        <PopularCategories language={language} darkMode={darkMode} />
-        <PopularDestinations language={language} darkMode={darkMode} />
-        <FeaturedHotels language={language} darkMode={darkMode} />
-        <LatestGuides language={language} darkMode={darkMode} />
-        <PopularTours language={language} darkMode={darkMode} />
-        <CTABanner language={language} />
-      </main>
-      <Footer language={language} darkMode={darkMode} />
+      <main>{children}</main>
+      <Footer variant={footerVariant} />
     </div>
+  );
+}
+
+function HomePage() {
+  return (
+    <Shell footerVariant="full">
+      <p className="py-10 text-center text-sm text-text-muted">
+        Home page sections (hero ad, categories, travel plans, travel guide, blogs, populars,
+        reviews, awards, partners) go here next.
+      </p>
+    </Shell>
+  );
+}
+
+function PlaceholderPage({ title }: { title: string }) {
+  return (
+    <Shell>
+      <p className="py-10 text-center text-sm text-text-muted">{title} — coming soon.</p>
+    </Shell>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/cities" element={<PlaceholderPage title="Cities" />} />
+        <Route path="/nearby" element={<PlaceholderPage title="Nearby" />} />
+        <Route path="/rentals" element={<PlaceholderPage title="Rentals" />} />
+        <Route path="/ticketing" element={<PlaceholderPage title="Ticketing" />} />
+        <Route path="/travel-plans" element={<PlaceholderPage title="Travel Plans" />} />
+        <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
+        <Route path="/blogs" element={<PlaceholderPage title="Blogs" />} />
+        <Route path="/search" element={<PlaceholderPage title="Search" />} />
+        <Route path="/account" element={<PlaceholderPage title="Account" />} />
+        <Route path="*" element={<PlaceholderPage title="Not found" />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

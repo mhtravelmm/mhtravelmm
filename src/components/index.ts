@@ -1,9 +1,0 @@
-export { default as Header } from './Header';
-export { default as Hero } from './Hero';
-export { default as PopularCategories } from './PopularCategories';
-export { default as PopularDestinations } from './PopularDestinations';
-export { default as FeaturedHotels } from './FeaturedHotels';
-export { default as LatestGuides } from './LatestGuides';
-export { default as PopularTours } from './PopularTours';
-export { default as CTABanner } from './CTABanner';
-export { default as Footer } from './Footer';
