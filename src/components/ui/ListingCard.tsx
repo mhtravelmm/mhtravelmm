@@ -62,7 +62,7 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md' }: ListingC
       </div>
 
       <div className="p-2">
-        <p className={`${titleSize} text-white leading-snug line-clamp-1`}>{listing.title}</p>
+        <p className={`${titleSize} text-text-primary leading-snug line-clamp-1`}>{listing.title}</p>
         {listing.subtitle && (
           <p className="mt-0.5 text-[9px] text-text-faint line-clamp-1">{listing.subtitle}</p>
         )}

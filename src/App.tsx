@@ -1,9 +1,7 @@
-import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
-import type { Currency, Language, Theme } from './types';
 
 function Shell({
   children,
@@ -12,20 +10,9 @@ function Shell({
   children: React.ReactNode;
   footerVariant?: 'full' | 'minimal';
 }) {
-  const [language, setLanguage] = useState<Language>('mm');
-  const [currency, setCurrency] = useState<Currency>('MMK');
-  const [theme, setTheme] = useState<Theme>('dark');
-
   return (
     <div className="min-h-screen bg-bg px-4 py-3 md:px-8">
-      <Header
-        language={language}
-        onLanguageToggle={() => setLanguage((l) => (l === 'mm' ? 'en' : 'mm'))}
-        currency={currency}
-        onCurrencyToggle={() => setCurrency((c) => (c === 'MMK' ? 'USD' : 'MMK'))}
-        theme={theme}
-        onThemeToggle={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-      />
+      <Header />
       <main>{children}</main>
       <Footer variant={footerVariant} />
     </div>

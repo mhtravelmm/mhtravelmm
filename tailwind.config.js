@@ -1,29 +1,37 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
-        // Base surfaces (dark theme, per approved mockups)
+        // Base surfaces — wired to CSS variables in index.css so the
+        // `.light` class (toggled on <html>) flips every one of these
+        // automatically, app-wide, without touching component code.
         bg: {
-          DEFAULT: '#0b0d11',
-          card: '#14171d',
-          cardAlt: '#1b1e26',
+          DEFAULT: 'rgb(var(--color-bg) / <alpha-value>)',
+          card: 'rgb(var(--color-bg-card) / <alpha-value>)',
+          cardAlt: 'rgb(var(--color-bg-cardAlt) / <alpha-value>)',
         },
         border: {
-          DEFAULT: '#262a33',
+          DEFAULT: 'rgb(var(--color-border) / <alpha-value>)',
         },
         text: {
-          primary: '#ffffff',
-          secondary: '#c7cad1',
-          muted: '#9aa0ab',
-          faint: '#6d7280',
+          primary: 'rgb(var(--color-text-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--color-text-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--color-text-muted) / <alpha-value>)',
+          faint: 'rgb(var(--color-text-faint) / <alpha-value>)',
         },
+        review: {
+          bg: 'rgb(var(--color-review-bg) / <alpha-value>)',
+          text: 'rgb(var(--color-review-text) / <alpha-value>)',
+          muted: 'rgb(var(--color-review-text-muted) / <alpha-value>)',
+        },
+        // Brand and status colors are intentionally the same in both
+        // themes (they're accent colors, not surfaces).
         brand: {
-          // Primary accent (links, active nav, icons)
           blue: '#4d8dff',
           blueDark: '#2a5fd6',
-          // Primary CTA (Book Now, Explore Now, prices)
           red: '#c0392b',
           redLight: '#e78a8a',
         },

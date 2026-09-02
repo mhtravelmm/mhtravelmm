@@ -1,13 +1,15 @@
 import { Trophy, Medal, Award, BadgeCheck, type LucideIcon } from 'lucide-react';
 import { AWARDS } from '../../../data/homeData';
+import { useLanguage } from '../../../lib/i18n';
 import { SectionHeader } from './SectionHeader';
 
 const ICONS: Record<string, LucideIcon> = { Trophy, Medal, Award, BadgeCheck };
 
 export function Awards() {
+  const { t } = useLanguage();
   return (
     <section className="mb-5">
-      <SectionHeader title="Awards" viewAllHref="/awards" />
+      <SectionHeader title={t('section_awards')} viewAllHref="/awards" />
       <div className="grid grid-cols-4 gap-2">
         {AWARDS.map((a) => {
           const Icon = ICONS[a.icon] ?? Trophy;

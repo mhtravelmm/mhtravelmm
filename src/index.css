@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-bg: 11 13 17;
+  --color-bg-card: 20 23 29;
+  --color-bg-cardAlt: 27 30 38;
+  --color-border: 38 42 51;
+  --color-text-primary: 255 255 255;
+  --color-text-secondary: 199 202 209;
+  --color-text-muted: 154 160 171;
+  --color-text-faint: 109 114 128;
+  --color-review-bg: 233 230 223;
+  --color-review-text: 26 26 26;
+  --color-review-text-muted: 74 74 72;
+}
+
+.light {
+  --color-bg: 246 247 249;
+  --color-bg-card: 255 255 255;
+  --color-bg-cardAlt: 237 239 243;
+  --color-border: 224 227 232;
+  --color-text-primary: 17 20 26;
+  --color-text-secondary: 55 61 71;
+  --color-text-muted: 100 107 118;
+  --color-text-faint: 138 144 154;
+  --color-review-bg: 255 255 255;
+  --color-review-text: 26 26 26;
+  --color-review-text-muted: 90 95 103;
+}
+
+body {
+  background-color: rgb(var(--color-bg));
+  transition: background-color 0.15s ease;
+}
+
 /* Hide scrollbar while keeping scroll functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -15,3 +48,4 @@
 .categories-scroll::-webkit-scrollbar {
   display: none;
 }
+
