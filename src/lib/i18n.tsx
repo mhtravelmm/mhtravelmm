@@ -21,6 +21,10 @@ const translations = {
   // Common
   view_all: { mm: 'အားလုံးကြည့်ရန်', en: 'View all' },
   search_placeholder: { mm: 'ရှာဖွေရန်...', en: 'Search...' },
+  notifications_title: { mm: 'အသိပေးချက်များ', en: 'Notifications' },
+  notifications_mark_all_read: { mm: 'အားလုံး ဖတ်ပြီးအဖြစ် မှတ်မည်', en: 'Mark all as read' },
+  notifications_empty: { mm: 'အသိပေးချက် မရှိသေးပါ', en: 'No notifications yet' },
+  notifications_see_all: { mm: 'အားလုံး ကြည့်မည်', en: 'See all' },
 
   // Section titles
   section_categories: { mm: 'အမျိုးအစားများ', en: 'Categories' },

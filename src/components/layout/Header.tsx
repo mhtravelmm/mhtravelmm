@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
+import { NOTIFICATIONS } from '../../data/notifications';
+import { NotificationsDropdown } from './NotificationsDropdown';
 
 export function NAV_ITEMS_HOOK() {
   const { t } = useLanguage();
@@ -18,7 +20,7 @@ export function NAV_ITEMS_HOOK() {
   ] as const;
 }
 
-export function Header({ unreadNotifications = 0 }: { unreadNotifications?: number }) {
+export function Header({ unreadNotifications }: { unreadNotifications?: number }) {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
@@ -28,6 +30,18 @@ export function Header({ unreadNotifications = 0 }: { unreadNotifications?: numb
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const unreadCount = unreadNotifications ?? notifications.filter((n) => !n.isRead).length;
+
+  function markAllRead() {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  }
+
+  function markOneRead(id: string) {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+  }
 
   useEffect(() => {
     if (searchOpen) inputRef.current?.focus();
@@ -120,14 +134,28 @@ export function Header({ unreadNotifications = 0 }: { unreadNotifications?: numb
             <Sun size={16} className="text-text-secondary hover:text-text-primary transition" />
           )}
         </button>
-        <Link to="/account/notifications" className="relative" aria-label="Notifications">
-          <Bell size={16} className="text-text-secondary hover:text-text-primary transition" />
-          {unreadNotifications > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-red text-[8px] text-white">
-              {unreadNotifications > 9 ? '9+' : unreadNotifications}
-            </span>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen((v) => !v)}
+            aria-label="Notifications"
+          >
+            <Bell size={16} className="text-text-secondary hover:text-text-primary transition" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-red text-[8px] text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+          {notificationsOpen && (
+            <NotificationsDropdown
+              notifications={notifications}
+              onClose={() => setNotificationsOpen(false)}
+              onMarkAllRead={markAllRead}
+              onOpenItem={markOneRead}
+            />
           )}
-        </Link>
+        </div>
         <Link to="/account" aria-label="Account">
           <div className="h-[22px] w-[22px] rounded-full bg-brand-blueDark" />
         </Link>
