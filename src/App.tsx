@@ -11,10 +11,15 @@ function Shell({
   footerVariant?: 'full' | 'minimal';
 }) {
   return (
-    <div className="min-h-screen bg-bg px-4 py-3 md:px-8">
-      <Header />
-      <main>{children}</main>
-      <Footer variant={footerVariant} />
+    <div className="min-h-screen bg-bg">
+      {/* Sticky, full-bleed so it never scrolls away with page content */}
+      <div className="sticky top-0 z-50 border-b border-border bg-bg/95 px-4 backdrop-blur md:px-8">
+        <Header />
+      </div>
+      <div className="px-4 py-3 md:px-8">
+        <main>{children}</main>
+        <Footer variant={footerVariant} />
+      </div>
     </div>
   );
 }

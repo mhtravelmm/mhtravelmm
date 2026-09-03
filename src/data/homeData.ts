@@ -15,9 +15,9 @@ export const CATEGORIES = [
 ] as const;
 
 export const TRAVEL_PLANS: CardListing[] = [
-  { id: 'tp1', title: 'Yangon - Bagan - Bago', subtitle: '3 days 2 nights', rating: 4.5, distanceKm: 12, isFavorited: false, views: 1500, priceLabel: '$ 580', href: '/travel-plans/tp1' },
-  { id: 'tp2', title: 'Yangon - Bagan - Bago', subtitle: '3 days 2 nights', rating: 4.0, distanceKm: 8, isFavorited: false, views: 1500, priceLabel: '$ 580', href: '/travel-plans/tp2' },
-  { id: 'tp3', title: 'Yangon - Bagan - Bago', subtitle: '3 days 2 nights', rating: 4.2, distanceKm: 15, isFavorited: false, views: 1500, priceLabel: '$ 580', href: '/travel-plans/tp3' },
+  { id: 'tp1', title: 'Yangon - Bagan - Bago', subtitle: '3 days 2 nights', rating: 4.5, distanceKm: 12, isFavorited: false, views: 1500, priceUsd: 580, href: '/travel-plans/tp1' },
+  { id: 'tp2', title: 'Yangon - Bagan - Bago', subtitle: '3 days 2 nights', rating: 4.0, distanceKm: 8, isFavorited: false, views: 1500, priceUsd: 580, href: '/travel-plans/tp2' },
+  { id: 'tp3', title: 'Yangon - Bagan - Bago', subtitle: '3 days 2 nights', rating: 4.2, distanceKm: 15, isFavorited: false, views: 1500, priceUsd: 580, href: '/travel-plans/tp3' },
 ];
 
 export const TRAVEL_GUIDES: CardListing[] = [

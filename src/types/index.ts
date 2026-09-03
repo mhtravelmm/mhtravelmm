@@ -23,7 +23,8 @@ export interface CardListing {
   views: number;
   /** Optional context-specific fields */
   subtitle?: string;
-  priceLabel?: string; // e.g. "$ 580" or "$95 / night"
+  /** Base price in USD — the display currency toggle converts/formats this */
+  priceUsd?: number;
   badgeLabel?: string; // e.g. "Best seller", "Open now"
   href?: string;
 }

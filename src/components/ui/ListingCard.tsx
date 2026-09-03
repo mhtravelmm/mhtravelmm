@@ -1,5 +1,6 @@
 import { Star, MapPin, Heart, Eye } from 'lucide-react';
 import type { CardListing } from '../../types';
+import { useCurrency } from '../../lib/currency';
 
 interface ListingCardProps {
   listing: CardListing;
@@ -16,6 +17,7 @@ interface ListingCardProps {
  * enforced here in one place rather than left to each call site.
  */
 export function ListingCard({ listing, onToggleFavorite, size = 'md' }: ListingCardProps) {
+  const { formatPrice } = useCurrency();
   const imageHeight = size === 'sm' ? 'h-11' : 'h-[70px] md:h-[90px]';
   const titleSize = size === 'sm' ? 'text-[10px]' : 'text-xs md:text-sm';
 
@@ -78,9 +80,9 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md' }: ListingC
           </span>
         </div>
 
-        {listing.priceLabel && (
+        {listing.priceUsd !== undefined && (
           <div className="mt-1.5 rounded-md bg-brand-red py-1 text-center text-[11px] text-white">
-            {listing.priceLabel}
+            {formatPrice(listing.priceUsd)}
           </div>
         )}
       </div>

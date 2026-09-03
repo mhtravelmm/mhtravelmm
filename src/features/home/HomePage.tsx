@@ -1,4 +1,5 @@
 import { AdSlot } from '../../components/ui/AdSlot';
+import { fetchMockAd } from '../../data/ads';
 import { Hero } from './sections/Hero';
 import { Categories } from './sections/Categories';
 import { ListingGridSection } from './sections/ListingGridSection';
@@ -11,10 +12,7 @@ import { useLanguage } from '../../lib/i18n';
 function BreakAd({ placement }: { placement: string }) {
   return (
     <div className="mb-5">
-      <AdSlot
-        placement={placement}
-        devPlaceholder="Ad slot — collapses automatically if no ad is available"
-      />
+      <AdSlot placement={placement} fetchAd={fetchMockAd} />
     </div>
   );
 }

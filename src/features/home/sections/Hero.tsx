@@ -1,4 +1,5 @@
 import { AdSlot } from '../../../components/ui/AdSlot';
+import { fetchMockAd } from '../../../data/ads';
 
 /**
  * The hero banner is an ad slot (Admin Ads / Google AdSense-AdMob), not
@@ -8,10 +9,7 @@ import { AdSlot } from '../../../components/ui/AdSlot';
 export function Hero() {
   return (
     <div className="mb-5">
-      <AdSlot
-        placement="home_hero"
-        devPlaceholder="Hero ad slot (Admin Ads / AdSense / AdMob) — collapses automatically if none available"
-      />
+      <AdSlot placement="home_hero" fetchAd={fetchMockAd} />
     </div>
   );
 }

@@ -20,6 +20,7 @@ const translations = {
 
   // Common
   view_all: { mm: 'အားလုံးကြည့်ရန်', en: 'View all' },
+  search_placeholder: { mm: 'ရှာဖွေရန်...', en: 'Search...' },
 
   // Section titles
   section_categories: { mm: 'အမျိုးအစားများ', en: 'Categories' },

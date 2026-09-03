@@ -4,6 +4,23 @@ import type { Currency } from '../types';
 interface CurrencyContextValue {
   currency: Currency;
   toggleCurrency: () => void;
+  /** Formats a USD base price as a display string in the current currency */
+  formatPrice: (usd: number) => string;
+}
+
+/**
+ * USD -> MMK exchange rate. Per the confirmed spec this is set by
+ * Admin/Super Admin and can change over time; this constant is a
+ * placeholder until it's served from Supabase.
+ */
+const MMK_PER_USD = 4500;
+
+function formatPriceFor(usd: number, currency: Currency): string {
+  if (currency === 'USD') {
+    return `$ ${usd.toLocaleString('en-US')}`;
+  }
+  const mmk = Math.round(usd * MMK_PER_USD);
+  return `${mmk.toLocaleString('en-US')} Ks`;
 }
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null);
@@ -25,9 +42,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   }, [currency]);
 
   const toggleCurrency = () => setCurrency((c) => (c === 'MMK' ? 'USD' : 'MMK'));
+  const formatPrice = (usd: number) => formatPriceFor(usd, currency);
 
   return (
-    <CurrencyContext.Provider value={{ currency, toggleCurrency }}>
+    <CurrencyContext.Provider value={{ currency, toggleCurrency, formatPrice }}>
       {children}
     </CurrencyContext.Provider>
   );
