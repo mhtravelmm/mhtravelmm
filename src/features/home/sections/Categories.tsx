@@ -52,16 +52,20 @@ export function Categories() {
   return (
     <section className="mb-5">
       <SectionHeader title={t('section_categories')} viewAllHref="/categories" />
-      <div className="grid grid-cols-5 gap-2.5 sm:grid-cols-8 md:grid-cols-11">
+      <div className="flex gap-4 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {CATEGORIES.map((cat) => {
           const Icon = ICONS[cat.icon] ?? MapPin;
           const labelKey = CATEGORY_LABEL_KEYS[cat.key];
           return (
-            <Link key={cat.key} to={`/${cat.key}`} className="flex flex-col items-center gap-1">
+            <Link
+              key={cat.key}
+              to={`/${cat.key}`}
+              className="flex shrink-0 flex-col items-center gap-1 basis-[64px]"
+            >
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-blueDark/20">
                 <Icon size={16} className="text-brand-blue" />
               </div>
-              <span className="text-center text-[8px] text-text-muted">
+              <span className="whitespace-nowrap text-center text-[8px] text-text-muted">
                 {labelKey ? t(labelKey) : cat.label}
               </span>
             </Link>
