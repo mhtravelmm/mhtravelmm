@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
+import { CityPage } from './features/city/CityPage';
 
 function Shell({
   children,
@@ -44,7 +45,14 @@ function App() {
             </Shell>
           }
         />
-        <Route path="/cities" element={<PlaceholderPage title="Cities" />} />
+        <Route
+          path="/cities"
+          element={
+            <Shell>
+              <CityPage />
+            </Shell>
+          }
+        />
         <Route path="/nearby" element={<PlaceholderPage title="Nearby" />} />
         <Route path="/rentals" element={<PlaceholderPage title="Rentals" />} />
         <Route path="/ticketing" element={<PlaceholderPage title="Ticketing" />} />
