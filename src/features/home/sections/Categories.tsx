@@ -46,31 +46,57 @@ const CATEGORY_LABEL_KEYS: Record<string, TranslationKey> = {
   nearby: 'cat_nearby',
 };
 
+function CategoryItem({
+  cat,
+  t,
+  ariaHidden,
+}: {
+  cat: (typeof CATEGORIES)[number];
+  t: (key: TranslationKey) => string;
+  ariaHidden?: boolean;
+}) {
+  const Icon = ICONS[cat.icon] ?? MapPin;
+  const labelKey = CATEGORY_LABEL_KEYS[cat.key];
+  return (
+    <Link
+      to={`/${cat.key}`}
+      aria-hidden={ariaHidden}
+      tabIndex={ariaHidden ? -1 : undefined}
+      className="flex shrink-0 basis-[64px] flex-col items-center gap-1"
+    >
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-blueDark/20">
+        <Icon size={16} className="text-brand-blue" />
+      </div>
+      <span className="whitespace-nowrap text-center text-[8px] text-text-muted">
+        {labelKey ? t(labelKey) : cat.label}
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * Categories scroll themselves continuously (marquee), looping back to the
+ * start seamlessly — not a manual drag/swipe strip. This is done by
+ * rendering the list twice back-to-back inside a track that animates by
+ * exactly -50% of its own width, so the moment the first copy has fully
+ * passed, the second (identical) copy is in exactly the same position —
+ * no visible jump/reset.
+ */
 export function Categories() {
   const { t } = useLanguage();
 
   return (
     <section className="mb-5">
       <SectionHeader title={t('section_categories')} viewAllHref="/categories" />
-      <div className="flex gap-4 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {CATEGORIES.map((cat) => {
-          const Icon = ICONS[cat.icon] ?? MapPin;
-          const labelKey = CATEGORY_LABEL_KEYS[cat.key];
-          return (
-            <Link
-              key={cat.key}
-              to={`/${cat.key}`}
-              className="flex shrink-0 flex-col items-center gap-1 basis-[64px]"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-blueDark/20">
-                <Icon size={16} className="text-brand-blue" />
-              </div>
-              <span className="whitespace-nowrap text-center text-[8px] text-text-muted">
-                {labelKey ? t(labelKey) : cat.label}
-              </span>
-            </Link>
-          );
-        })}
+      <div className="overflow-hidden">
+        <div className="animate-marquee flex w-max gap-4">
+          {CATEGORIES.map((cat) => (
+            <CategoryItem key={`a-${cat.key}`} cat={cat} t={t} />
+          ))}
+          {CATEGORIES.map((cat) => (
+            <CategoryItem key={`b-${cat.key}`} cat={cat} t={t} ariaHidden />
+          ))}
+        </div>
       </div>
     </section>
   );

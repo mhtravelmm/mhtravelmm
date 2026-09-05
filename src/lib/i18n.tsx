@@ -25,6 +25,17 @@ const translations = {
   notifications_mark_all_read: { mm: 'အားလုံး ဖတ်ပြီးအဖြစ် မှတ်မည်', en: 'Mark all as read' },
   notifications_empty: { mm: 'အသိပေးချက် မရှိသေးပါ', en: 'No notifications yet' },
   notifications_see_all: { mm: 'အားလုံး ကြည့်မည်', en: 'See all' },
+  section_cities: { mm: 'မြို့များ', en: 'Cities' },
+  see_more_cities: { mm: 'မြို့ ထပ်ကြည့်ရန်', en: 'See more cities' },
+  section_top_attractions: { mm: 'ထင်ရှားသော နေရာများ', en: 'Top attractions' },
+  section_popular_hotels: { mm: 'လူကြိုက်များသော ဟိုတယ်များ', en: 'Popular hotels' },
+  section_restaurants: { mm: 'စားသောက်ဆိုင်များ', en: 'Restaurants' },
+  section_book_shops: { mm: 'စာအုပ်ဆိုင်များ', en: 'Book shops' },
+  section_rentals: { mm: 'ငှားရမ်းခြင်း', en: 'Rentals' },
+  section_transport_operators: { mm: 'ခရီးသွားဝန်ဆောင်မှုများ', en: 'Transport operators' },
+  section_cafes: { mm: 'ကော်ဖီဆိုင်များ', en: 'Cafes' },
+  section_markets: { mm: 'စျေးများ', en: 'Markets' },
+  section_popular_searches: { mm: 'လူကြိုက်များသော ရှာဖွေမှုများ', en: 'Popular searches' },
 
   // Section titles
   section_categories: { mm: 'အမျိုးအစားများ', en: 'Categories' },
