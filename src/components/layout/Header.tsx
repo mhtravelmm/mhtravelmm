@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Search, Globe, DollarSign, Moon, Sun, Bell, X } from 'lucide-react';
+import { Search, Globe, DollarSign, Moon, Sun, Heart, Bell, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
@@ -134,6 +134,9 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
             <Sun size={16} className="text-text-secondary hover:text-text-primary transition" />
           )}
         </button>
+        <Link to="/favorites" aria-label="Favorites">
+          <Heart size={16} className="text-text-secondary hover:text-text-primary transition" />
+        </Link>
         <div className="relative">
           <button
             type="button"

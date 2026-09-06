@@ -61,6 +61,7 @@ function App() {
         <Route path="/blogs" element={<PlaceholderPage title="Blogs" />} />
         <Route path="/search" element={<PlaceholderPage title="Search" />} />
         <Route path="/account" element={<PlaceholderPage title="Account" />} />
+        <Route path="/favorites" element={<PlaceholderPage title="Favorites" />} />
         <Route path="*" element={<PlaceholderPage title="Not found" />} />
       </Routes>
     </BrowserRouter>
