@@ -55,6 +55,10 @@ const translations = {
     mm: '© ၂၀၂၆ MH Travel. မူပိုင်ခွင့် အားလုံး ရယူထားသည်။',
     en: '© 2026 MH Travel. All rights reserved.',
   },
+
+  nav_favorite: { mm: 'အကြိုက်ဆုံးများ', en: 'Favorite' },
+  sidebar_payment_methods: { mm: 'ငွေပေးချေမှု နည်းလမ်းများ', en: 'Payment methods' },
+  sidebar_login_registration: { mm: 'အကောင့်ဝင်ရန် / မှတ်ပုံတင်ရန်', en: 'Login / Registration' },
   section_cities: { mm: 'မြို့များ', en: 'Cities' },
   see_more_cities: { mm: 'မြို့ ထပ်ကြည့်ရန်', en: 'See more cities' },
   section_top_attractions: { mm: 'ထင်ရှားသော နေရာများ', en: 'Top attractions' },
