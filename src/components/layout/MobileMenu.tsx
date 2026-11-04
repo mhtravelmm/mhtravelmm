@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
@@ -42,16 +44,32 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
 
-  return (
+  // Close on Escape, and stop the page behind from scrolling while open.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
+  // Rendered through a portal into <body>: the sticky header uses backdrop-blur,
+  // which would otherwise trap a position:fixed drawer inside the header box.
+  return createPortal(
     <div className="fixed inset-0 z-[60] md:hidden">
       <button
         type="button"
         aria-label="Close menu"
         onClick={onClose}
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-black/30"
       />
 
-      <div className="relative flex h-full w-[280px] flex-col overflow-y-auto bg-bg-card">
+      <div className="relative flex h-full w-[82%] max-w-[320px] flex-col overflow-y-auto border-r border-border bg-bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <Link to="/" onClick={onClose} className="text-base font-medium text-brand-blue">
             MH Travel
@@ -169,6 +187,7 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
           {t('footer_copyright')}
         </p>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

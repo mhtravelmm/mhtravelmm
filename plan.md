@@ -281,13 +281,15 @@ it is a pre-arrival matter.
 - All user-facing strings go through the translation helper.
 - Ad slots use the shared `AdSlot` component so the collapse rule lives in
   one place.
+- Overlays that use `position: fixed` (drawers, modals) must render through
+  a React portal into `document.body`. The sticky header uses
+  `backdrop-blur`, which makes any `fixed` child size itself to the header
+  box instead of the screen. The mobile drawer hit exactly this bug.
 
 ---
 
 ## 16. Open Items
 
-- Mobile menu: restyle the drawer to leave a visible strip of the page on
-  the right with a divider line (in progress).
 - Favorites page (the header heart currently links to a placeholder).
 - City page: wire favorite toggling (same fix already done on Home).
 - Remaining pages: Nearby, Rentals, Ticketing, Travel Plans, Travel Guide,
