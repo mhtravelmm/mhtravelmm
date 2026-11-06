@@ -3,6 +3,7 @@ import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
 import { CityPage } from './features/city/CityPage';
+import { BlogsPage } from './features/blogs/BlogsPage';
 
 function Shell({
   children,
@@ -58,7 +59,7 @@ function App() {
         <Route path="/ticketing" element={<PlaceholderPage title="Ticketing" />} />
         <Route path="/travel-plans" element={<PlaceholderPage title="Travel Plans" />} />
         <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
-        <Route path="/blogs" element={<PlaceholderPage title="Blogs" />} />
+        <Route path="/blogs" element={<Shell><BlogsPage /></Shell>} />
         <Route path="/search" element={<PlaceholderPage title="Search" />} />
         <Route path="/account" element={<PlaceholderPage title="Account" />} />
         <Route path="/favorites" element={<PlaceholderPage title="Favorites" />} />

@@ -208,6 +208,10 @@ Blog:
 - No user-facing categories or tags. A backend-only SEO tag field feeds
   search engines and is never shown in the app.
 - Interactions: favorite, share, view count.
+- Blogs Page implementation: use an editorial featured-story layout with a
+  searchable latest-story list; keep categories and tags out of the UI. Open
+  articles in a bilingual reader, preserve shareable story URLs, and keep
+  favorite/view interactions client-side until the backend is connected.
 
 Travel Guide:
 
@@ -292,8 +296,10 @@ it is a pre-arrival matter.
 
 - Favorites page (the header heart currently links to a placeholder).
 - City page: wire favorite toggling (same fix already done on Home).
+- Blogs page implemented: bilingual editorial listing and reader; favorite,
+  share, and view counts currently use client-side storage pending backend wiring.
 - Remaining pages: Nearby, Rentals, Ticketing, Travel Plans, Travel Guide,
-  Blogs, detail pages, Search, Account.
+  detail pages, Search, Account.
 - Real photography (current build uses placeholder gradients).
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
