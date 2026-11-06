@@ -35,6 +35,18 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
   const [notifications, setNotifications] = useState(NOTIFICATIONS);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuTop, setMenuTop] = useState(56);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // The drawer must start right under the header bar (never cover it), so
+  // measure where the sticky header wrapper ends at the moment of opening.
+  function toggleMobileMenu() {
+    if (!mobileMenuOpen) {
+      const wrapper = headerRef.current?.parentElement ?? headerRef.current;
+      if (wrapper) setMenuTop(Math.round(wrapper.getBoundingClientRect().bottom));
+    }
+    setMobileMenuOpen((open) => !open);
+  }
   const unreadCount = unreadNotifications ?? notifications.filter((n) => !n.isRead).length;
 
   function markAllRead() {
@@ -98,15 +110,20 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
 
   return (
     <>
-      <header className="flex items-center justify-between py-3">
+      <header ref={headerRef} className="flex items-center justify-between py-3">
         <div className="flex items-center gap-2.5">
           <button
             type="button"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
+            onClick={toggleMobileMenu}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
             className="md:hidden"
           >
-            <Menu size={19} className="text-text-secondary hover:text-text-primary transition" />
+            {mobileMenuOpen ? (
+              <X size={19} className="text-text-primary transition" />
+            ) : (
+              <Menu size={19} className="text-text-secondary hover:text-text-primary transition" />
+            )}
           </button>
           <Link to="/" className="text-lg font-medium text-brand-blue">
             MH Travel
@@ -185,7 +202,9 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
         </div>
       </header>
 
-      {mobileMenuOpen && <MobileMenu onClose={() => setMobileMenuOpen(false)} />}
+      {mobileMenuOpen && (
+        <MobileMenu top={menuTop} onClose={() => setMobileMenuOpen(false)} />
+      )}
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
+import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
@@ -36,10 +36,12 @@ const SUPPORT_LINKS: TranslationKey[] = [
 const MYANMAR_PAYMENT = ['KBZPay', 'AYA Pay', 'CB Pay', 'OK$', 'UAB Pay', 'MPU', 'mytelpay'];
 
 interface MobileMenuProps {
+  /** Distance from the top of the viewport to the bottom of the header bar */
+  top: number;
   onClose: () => void;
 }
 
-export function MobileMenu({ onClose }: MobileMenuProps) {
+export function MobileMenu({ top, onClose }: MobileMenuProps) {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
@@ -61,7 +63,7 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
   // Rendered through a portal into <body>: the sticky header uses backdrop-blur,
   // which would otherwise trap a position:fixed drawer inside the header box.
   return createPortal(
-    <div className="fixed inset-0 z-[60] md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-40 md:hidden" style={{ top }}>
       <button
         type="button"
         aria-label="Close menu"
@@ -70,15 +72,6 @@ export function MobileMenu({ onClose }: MobileMenuProps) {
       />
 
       <div className="relative flex h-full w-[82%] max-w-[320px] flex-col overflow-y-auto border-r border-border bg-bg-card">
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <Link to="/" onClick={onClose} className="text-base font-medium text-brand-blue">
-            MH Travel
-          </Link>
-          <button type="button" onClick={onClose} aria-label="Close menu">
-            <X size={18} className="text-text-secondary" />
-          </button>
-        </div>
-
         <nav className="flex flex-col gap-0.5 px-3 py-3">
           {NAV_LINKS.map(({ key, href, Icon }) => (
             <Link
