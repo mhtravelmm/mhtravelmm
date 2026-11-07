@@ -118,8 +118,8 @@ function StoryCard({
   const copy = getLocalizedCopy(post, language);
 
   return (
-    <article className="group overflow-hidden rounded-xl border border-border bg-bg-card transition duration-300 hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-black/10">
-      <div className="relative h-40 overflow-hidden bg-bg-cardAlt sm:h-44">
+    <article className="group overflow-hidden rounded-card border border-border bg-bg-card transition duration-300 hover:brightness-110">
+      <div className="relative h-24 overflow-hidden bg-bg-cardAlt sm:h-28">
         <button
           type="button"
           onClick={onOpen}
@@ -133,65 +133,65 @@ function StoryCard({
             className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
           />
         </button>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/70 to-transparent" />
         <div className="absolute left-3 top-3 flex items-center gap-1">
           <button
             type="button"
             onClick={onToggleFavorite}
             aria-label={t(isFavorited ? 'blog_saved' : 'blog_save')}
             aria-pressed={isFavorited}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
           >
-            <Heart size={16} fill={isFavorited ? 'currentColor' : 'none'} className={isFavorited ? 'text-brand-redLight' : ''} />
+            <Heart size={12} fill={isFavorited ? 'currentColor' : 'none'} className={isFavorited ? 'text-brand-redLight' : ''} />
           </button>
           <button
             type="button"
             onClick={onShare}
             aria-label={t('blog_share')}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
           >
-            <Share2 size={15} />
+            <Share2 size={12} />
           </button>
         </div>
-        <span className="absolute bottom-2.5 left-3.5 flex items-center gap-1 text-[11px] text-white">
-          <MapPin size={11} />
+        <span className="absolute bottom-1.5 left-2 flex items-center gap-0.5 text-[9px] text-white">
+          <MapPin size={9} />
           {post.location[language]}
         </span>
       </div>
 
-      <div className="p-3.5 sm:p-4">
-        <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] uppercase tracking-[0.08em] text-text-faint">
+      <div className="p-2">
+        <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[8px] uppercase tracking-[0.05em] text-text-faint">
           <time dateTime={post.publishedAt} className="inline-flex items-center gap-1.5">
-            <CalendarDays size={11} />
+            <CalendarDays size={9} />
             {formatDate(post.publishedAt, language)}
           </time>
           <span className="inline-flex items-center gap-1.5">
-            <Clock3 size={11} />
+            <Clock3 size={9} />
             {getReadTime(post.readMinutes, language, t)}
           </span>
         </div>
 
         <button type="button" onClick={onOpen} className="text-left">
-          <h2 className="line-clamp-2 font-serif text-lg leading-snug text-text-primary transition group-hover:text-brand-blue sm:text-xl">
+          <h2 className="line-clamp-1 font-serif text-sm leading-snug text-text-primary transition group-hover:text-brand-blue sm:text-base">
             {copy.title}
           </h2>
         </button>
-        <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-text-muted sm:text-[13px]">{copy.excerpt}</p>
+        <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-text-muted">{copy.excerpt}</p>
 
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
-          <span className="min-w-0 truncate text-[10px] text-text-secondary sm:text-[11px]">
+        <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-border pt-1.5">
+          <span className="min-w-0 truncate text-[9px] text-text-secondary">
             {t('blog_author_prefix')} {post.author[language]}
           </span>
           <button
             type="button"
             onClick={onOpen}
-            className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-brand-blue transition hover:text-text-primary"
+            className="inline-flex shrink-0 items-center gap-0.5 text-[9px] font-medium text-brand-blue transition hover:text-text-primary"
           >
             {t('blog_read_story')}
-            <ArrowRight size={12} />
+            <ArrowRight size={10} />
           </button>
         </div>
-        <div className="mt-3 border-t border-border pt-3">
+        <div className="mt-1.5 border-t border-border pt-1.5">
           <StoryMetrics post={post} views={views} language={language} t={t} />
         </div>
       </div>
