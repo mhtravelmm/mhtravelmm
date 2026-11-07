@@ -78,12 +78,15 @@
 
 ### Ticketing
 
-- `/ticketing` now uses a full bilingual Ticketing hub instead of a placeholder.
-- Product filters cover Express Bus, Ferry, Airline, Cinema, and Events as a separate MH Travel product surface.
-- The hub has origin/destination, travel date, passenger count, search state, operator result cards, fares, departure/arrival times, remaining seats, and a seat-selection CTA.
-- The UI clearly distinguishes the central Ticketing hub from local YBS reference data; YBS is shown as route/stop reference without seat booking.
-- Live availability and live seat-map behavior are documented in the page. Seat status is intentionally presented as a live booking handoff rather than pre-cached data.
-- Both pages use the shared dark theme, compact card treatment, responsive layout, and Burmese/English translations.
+- `/ticketing` now uses a bilingual city/township-first booking hub instead of a generic route-only search.
+- Ticket types are separated into Bus, Train, Events, and Cinema flows. Each type exposes only the fields relevant to that ticket.
+- Cinema and Event flows ask for city, township, venue/event name, date, and passenger count. Multiple cinemas in one township can be selected by name.
+- Bus flow asks for from city/township, to city/township, bus line, date, passenger count, boarding point, drop-off point, and seats.
+- Train flow asks for from city/township, to city/township, train line, date, and passenger count.
+- Bus seat selection is shown as a compact seat grid and the selected seats plus boarding/drop-off points are summarized in the side panel.
+- Results use the shared currency formatter, operator cards, route/venue summaries, times, remaining-seat information, and category-specific continuation actions.
+- The page keeps live availability and seat-map handoff messaging. Real operator availability and seat locking remain a backend/API integration step.
+- All new city, township, cinema, event, bus line, boarding, drop-off, and seat labels support Burmese/English.
 
 ## 3. Authentication UI and session behavior
 
