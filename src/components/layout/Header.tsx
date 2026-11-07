@@ -196,7 +196,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
               />
             )}
           </div>
-          <Link to="/account" aria-label="Account">
+          <Link to="/account" aria-label="Account" className="hidden sm:inline-flex">
             <div className="h-[22px] w-[22px] rounded-full bg-brand-blueDark" />
           </Link>
         </div>
