@@ -25,7 +25,7 @@ function RequireSuperAdmin() {
   const { isAuthenticated, isSuperAdmin } = useAuth();
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
   if (!isSuperAdmin) return <Navigate to="/account" replace />;
-  return <Shell><SuperAdminPage /></Shell>;
+  return <SuperAdminPage />;
 }
 
 function AppRoutes() {
@@ -46,7 +46,7 @@ function AppRoutes() {
     <Route path="/account" element={<Shell><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
-    <Route path="/admin/login" element={<Shell><AdminLoginPage /></Shell>} />
+    <Route path="/admin/login" element={<AdminLoginPage />} />
     <Route path="/super-admin" element={<RequireSuperAdmin />} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
