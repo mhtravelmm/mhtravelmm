@@ -118,8 +118,8 @@ function StoryCard({
   const copy = getLocalizedCopy(post, language);
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-border bg-bg-card transition duration-300 hover:-translate-y-1 hover:border-brand-blue/40 hover:shadow-xl hover:shadow-black/10">
-      <div className="relative aspect-[1.55/1] overflow-hidden bg-bg-cardAlt">
+    <article className="group overflow-hidden rounded-xl border border-border bg-bg-card transition duration-300 hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-black/10">
+      <div className="relative h-40 overflow-hidden bg-bg-cardAlt sm:h-44">
         <button
           type="button"
           onClick={onOpen}
@@ -133,14 +133,14 @@ function StoryCard({
             className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
           />
         </button>
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
-        <div className="absolute left-3 top-3 flex items-center gap-1.5">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+        <div className="absolute left-3 top-3 flex items-center gap-1">
           <button
             type="button"
             onClick={onToggleFavorite}
             aria-label={t(isFavorited ? 'blog_saved' : 'blog_save')}
             aria-pressed={isFavorited}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
           >
             <Heart size={16} fill={isFavorited ? 'currentColor' : 'none'} className={isFavorited ? 'text-brand-redLight' : ''} />
           </button>
@@ -148,50 +148,50 @@ function StoryCard({
             type="button"
             onClick={onShare}
             aria-label={t('blog_share')}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
           >
             <Share2 size={15} />
           </button>
         </div>
-        <span className="absolute bottom-3 left-4 flex items-center gap-1.5 text-xs text-white">
-          <MapPin size={12} />
+        <span className="absolute bottom-2.5 left-3.5 flex items-center gap-1 text-[11px] text-white">
+          <MapPin size={11} />
           {post.location[language]}
         </span>
       </div>
 
-      <div className="p-4 sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] uppercase tracking-[0.12em] text-text-faint">
+      <div className="p-3.5 sm:p-4">
+        <div className="mb-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] uppercase tracking-[0.08em] text-text-faint">
           <time dateTime={post.publishedAt} className="inline-flex items-center gap-1.5">
-            <CalendarDays size={12} />
+            <CalendarDays size={11} />
             {formatDate(post.publishedAt, language)}
           </time>
           <span className="inline-flex items-center gap-1.5">
-            <Clock3 size={12} />
+            <Clock3 size={11} />
             {getReadTime(post.readMinutes, language, t)}
           </span>
         </div>
 
         <button type="button" onClick={onOpen} className="text-left">
-          <h2 className="font-serif text-xl leading-snug text-text-primary transition group-hover:text-brand-blue sm:text-[22px]">
+          <h2 className="line-clamp-2 font-serif text-lg leading-snug text-text-primary transition group-hover:text-brand-blue sm:text-xl">
             {copy.title}
           </h2>
         </button>
-        <p className="mt-2.5 line-clamp-3 text-sm leading-6 text-text-muted">{copy.excerpt}</p>
+        <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-text-muted sm:text-[13px]">{copy.excerpt}</p>
 
-        <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-4">
-          <span className="min-w-0 truncate text-xs text-text-secondary">
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+          <span className="min-w-0 truncate text-[10px] text-text-secondary sm:text-[11px]">
             {t('blog_author_prefix')} {post.author[language]}
           </span>
           <button
             type="button"
             onClick={onOpen}
-            className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-brand-blue transition hover:text-text-primary"
+            className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-brand-blue transition hover:text-text-primary"
           >
             {t('blog_read_story')}
-            <ArrowRight size={14} />
+            <ArrowRight size={12} />
           </button>
         </div>
-        <div className="mt-4 border-t border-border pt-3.5">
+        <div className="mt-3 border-t border-border pt-3">
           <StoryMetrics post={post} views={views} language={language} t={t} />
         </div>
       </div>
@@ -488,40 +488,40 @@ export function BlogsPage() {
         <span className="text-text-secondary">{t('nav_blogs')}</span>
       </div>
 
-      <section className="relative mb-12 overflow-hidden rounded-2xl border border-border bg-bg-card sm:rounded-[26px]">
+      <section className="relative mb-9 overflow-hidden rounded-2xl border border-border bg-bg-card sm:rounded-[26px]">
         <div className="pointer-events-none absolute -left-24 -top-28 h-72 w-72 rounded-full bg-brand-blue/10 blur-3xl" />
         <div className="grid lg:grid-cols-[1.02fr_0.98fr]">
-          <div className="relative z-10 flex flex-col justify-center px-5 py-7 sm:px-8 sm:py-9 lg:px-11 lg:py-12">
-            <p className="mb-4 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-blue sm:text-xs">
+          <div className="relative z-10 flex flex-col justify-center px-5 py-6 sm:px-7 sm:py-7 lg:px-9 lg:py-9">
+            <p className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-blue sm:text-xs">
               <span className="h-px w-7 bg-brand-blue" />
               {t('blog_eyebrow')}
             </p>
-            <h1 className="max-w-2xl font-serif text-3xl leading-[1.12] text-text-primary sm:text-4xl lg:text-[48px]">
+            <h1 className="max-w-2xl font-serif text-3xl leading-[1.12] text-text-primary sm:text-4xl lg:text-[40px]">
               {t('blog_title')}
             </h1>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-text-muted sm:text-base sm:leading-8">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-text-muted sm:text-[15px] sm:leading-7">
               {t('blog_intro')}
             </p>
 
-            <div className="mt-8 border-t border-border pt-6">
-              <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-redLight">
+            <div className="mt-5 border-t border-border pt-4 sm:mt-6 sm:pt-5">
+              <div className="mb-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-redLight">
                 <BookOpen size={13} />
                 {t('blog_featured_story')}
               </div>
-              <h2 className="max-w-xl font-serif text-xl leading-snug text-text-primary sm:text-2xl">
+              <h2 className="max-w-xl font-serif text-lg leading-snug text-text-primary sm:text-xl">
                 {featuredCopy.title}
               </h2>
-              <p className="mt-2 line-clamp-2 max-w-xl text-sm leading-6 text-text-muted">
+              <p className="mt-1.5 line-clamp-2 max-w-xl text-xs leading-5 text-text-muted sm:text-[13px]">
                 {featuredCopy.excerpt}
               </p>
-              <div className="mt-4">
+              <div className="mt-3">
                 <StoryMetrics post={featuredPost} views={viewsFor(featuredPost)} language={language} t={t} />
               </div>
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-4 flex flex-wrap items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => openPost(featuredPost)}
-                  className="inline-flex items-center gap-2 rounded-full bg-brand-red px-5 py-3 text-sm font-medium text-white shadow-lg shadow-brand-red/15 transition hover:brightness-110"
+                  className="inline-flex items-center gap-2 rounded-full bg-brand-red px-4 py-2.5 text-xs font-medium text-white shadow-lg shadow-brand-red/15 transition hover:brightness-110"
                 >
                   {t('blog_read_story')}
                   <ArrowRight size={15} />
@@ -530,7 +530,7 @@ export function BlogsPage() {
                   type="button"
                   onClick={() => void sharePost(featuredPost)}
                   aria-label={t('blog_share')}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-brand-blue/50 hover:text-brand-blue"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-brand-blue/50 hover:text-brand-blue"
                 >
                   <Share2 size={16} />
                 </button>
@@ -539,7 +539,7 @@ export function BlogsPage() {
                   onClick={() => toggleFavorite(featuredPost)}
                   aria-label={t(isFavorited(featuredPost) ? 'blog_saved' : 'blog_save')}
                   aria-pressed={isFavorited(featuredPost)}
-                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full border border-border transition hover:border-brand-red/50 ${isFavorited(featuredPost) ? 'text-brand-redLight' : 'text-text-secondary hover:text-brand-redLight'}`}
+                  className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-border transition hover:border-brand-red/50 ${isFavorited(featuredPost) ? 'text-brand-redLight' : 'text-text-secondary hover:text-brand-redLight'}`}
                 >
                   <Heart size={16} fill={isFavorited(featuredPost) ? 'currentColor' : 'none'} />
                 </button>
@@ -547,7 +547,7 @@ export function BlogsPage() {
             </div>
           </div>
 
-          <div className="relative min-h-[260px] overflow-hidden bg-bg-cardAlt sm:min-h-[340px] lg:min-h-[580px]">
+          <div className="relative min-h-[230px] overflow-hidden bg-bg-cardAlt sm:min-h-[300px] lg:min-h-[440px]">
             <img
               src={featuredPost.imageUrl}
               alt={featuredCopy.title}
@@ -627,7 +627,7 @@ export function BlogsPage() {
         </div>
 
         {visiblePosts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
             {visiblePosts.map((post) => (
               <StoryCard
                 key={post.id}

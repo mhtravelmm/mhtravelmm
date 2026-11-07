@@ -209,9 +209,10 @@ Blog:
   search engines and is never shown in the app.
 - Interactions: favorite, share, view count.
 - Blogs Page implementation: use an editorial featured-story layout with a
-  searchable latest-story list; keep categories and tags out of the UI. Open
-  articles in a bilingual reader, preserve shareable story URLs, and keep
-  favorite/view interactions client-side until the backend is connected.
+  searchable latest-story list and compact, image-led story cards; keep
+  categories and tags out of the UI. Open articles in a bilingual reader,
+  preserve shareable story URLs, and keep favorite/view interactions
+  client-side until the backend is connected.
 
 Travel Guide:
 
