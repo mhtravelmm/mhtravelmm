@@ -108,6 +108,7 @@
 - Auth-user signup trigger automatically creates a profile and derives a safe username from metadata/email when needed.
 - Role-change trigger blocks traveler self-escalation and allows Super Admin role management.
 - Current Supabase profile row count was zero because no real user account details were provided yet.
+- Two Supabase migrations were applied to create the profile schema and then allow verified Super Admin role management. The Plan folder records what those migrations did and their current status; SQL source files are intentionally not stored in Plan.
 
 ## 6. Routes currently in the app
 

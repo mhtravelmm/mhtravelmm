@@ -17,6 +17,8 @@ Created `public.profiles` with a foreign key to `auth.users(id)`, unique usernam
 
 Updated the role protection trigger so travelers cannot escalate themselves, while a verified Super Admin can change roles through an authorized backend/admin operation.
 
+The Plan folder intentionally stores only this implementation record, not the SQL source. The SQL was applied directly to the Supabase project through the two migrations above.
+
 ## Roles
 
 The profile role check currently allows:
