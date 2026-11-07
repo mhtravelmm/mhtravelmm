@@ -68,8 +68,7 @@ export function HomePage() {
         listings={travelGuides.listings}
         onToggleFavorite={travelGuides.toggle}
         columns={4}
-        cardSize="sm"
-        cardVariant="guide"
+        cardSize="lg"
       />
       <ListingGridSection title={t('section_top_attractions')} viewAllHref="/attractions" listings={attractions.listings} onToggleFavorite={attractions.toggle} columns={5} cardSize="md" />
       <ListingGridSection title={t('section_popular_hotels')} viewAllHref="/hotels" listings={hotels.listings} onToggleFavorite={hotels.toggle} columns={5} cardSize="md" />
