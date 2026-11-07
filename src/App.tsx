@@ -10,6 +10,8 @@ import { NearbyPage } from './features/nearby/NearbyPage';
 import { AccountPage } from './features/account/AccountPage';
 import { NotificationsPage } from './features/notifications/NotificationsPage';
 import { BookShopPage } from './features/bookShops/BookShopPage';
+import { RentalsPage } from './features/rentals/RentalsPage';
+import { TicketingPage } from './features/ticketing/TicketingPage';
 import { AuthPage } from './features/auth/AuthPage';
 import { AdminLoginPage } from './features/auth/AdminLoginPage';
 import { SuperAdminPage } from './features/superAdmin/SuperAdminPage';
@@ -33,12 +35,12 @@ function AppRoutes() {
     <Route path="/" element={<Shell footerVariant="full"><HomePage /></Shell>} />
     <Route path="/cities" element={<Shell><CityPage /></Shell>} />
     <Route path="/nearby" element={<Shell><NearbyPage /></Shell>} />
-    <Route path="/rentals" element={<PlaceholderPage title="Rentals" />} />
+    <Route path="/rentals" element={<Shell><RentalsPage /></Shell>} />
     <Route path="/restaurants" element={<Shell><RestaurantPage /></Shell>} />
     <Route path="/restaurants/:id" element={<Shell><RestaurantPage /></Shell>} />
     <Route path="/book-shops" element={<Shell><BookShopPage /></Shell>} />
     <Route path="/book-shops/:id" element={<Shell><BookShopPage /></Shell>} />
-    <Route path="/ticketing" element={<PlaceholderPage title="Ticketing" />} />
+    <Route path="/ticketing" element={<Shell><TicketingPage /></Shell>} />
     <Route path="/travel-plans" element={<Shell><TravelPlansPage /></Shell>} />
     <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
     <Route path="/blogs" element={<Shell><BlogsPage /></Shell>} />

@@ -57,6 +57,25 @@
 - Restaurant detail includes hero, info row, map/amenities, menu tabs, dishes, reviews, venue photos, nearby attractions, and CTA.
 - Book Shop detail page follows the supplied reference layout with services, photos, popular books, nearby attractions, and CTA.
 
+### Rentals
+
+- `/rentals` now uses a full bilingual Rentals page instead of a placeholder.
+- Rental categories follow the plan: car, motorbike, motorboat, horse carriage, bicycle, camping tent, and travel guide.
+- The page has compact image cards, search, category chips, daily-rate display, a selected-rental request panel, number of days, and estimated total.
+- Full-day car rental shows the driver requirement; motorbike and bicycle options remain self-drive.
+- Long-distance round-trip pricing doubles the billable day count to include the return leg.
+- Travel Guide hire shows the additional accommodation, food, and travel-cost note from the plan.
+- Booking/request is disabled until the user accepts rental terms, and the page explains that Rental Admin checks availability before confirmation.
+
+### Ticketing
+
+- `/ticketing` now uses a full bilingual Ticketing hub instead of a placeholder.
+- Product filters cover Express Bus, Ferry, Airline, Cinema, and Events as a separate MH Travel product surface.
+- The hub has origin/destination, travel date, passenger count, search state, operator result cards, fares, departure/arrival times, remaining seats, and a seat-selection CTA.
+- The UI clearly distinguishes the central Ticketing hub from local YBS reference data; YBS is shown as route/stop reference without seat booking.
+- Live availability and live seat-map behavior are documented in the page. Seat status is intentionally presented as a live booking handoff rather than pre-cached data.
+- Both pages use the shared dark theme, compact card treatment, responsive layout, and Burmese/English translations.
+
 ## 3. Authentication UI and session behavior
 
 ### Traveler routes
@@ -126,12 +145,12 @@
 - `/`
 - `/cities`
 - `/nearby`
-- `/rentals` (placeholder)
+- `/rentals`
 - `/restaurants`
 - `/restaurants/:id`
 - `/book-shops`
 - `/book-shops/:id`
-- `/ticketing` (placeholder)
+- `/ticketing`
 - `/travel-plans`
 - `/travel-guide` (placeholder)
 - `/blogs`
@@ -163,6 +182,6 @@
 2. Add secure username-to-auth identity login handling without exposing private email data.
 3. Configure Google OAuth and Facebook OAuth in Supabase and add production callback URLs.
 4. Create the first real traveler account only after receiving the requested username, Gmail/Email, display name, and temporary password.
-5. Complete Rentals, Ticketing, Travel Guide detail, Search results, Favorites, and remaining detail pages.
+5. Complete Travel Guide detail, Search results, Favorites, and remaining detail pages.
 6. Connect bookings, custom plan requests, favorites, views, notifications, and reviews to Supabase tables and RLS policies.
 7. Add Admin-managed content tables, owner/admin account provisioning, audit logs, and production role management.
