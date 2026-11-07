@@ -198,6 +198,8 @@ const translations = {
   blog_close: { mm: 'ပိတ်ရန်', en: 'Close' },
   blog_reader_label: { mm: 'ဇာတ်လမ်းဖတ်ရှုရန်', en: 'Story reader' },
   blog_back_to_stories: { mm: 'ဇာတ်လမ်းများသို့ ပြန်သွားမည်', en: 'Back to stories' },
+  blog_related_hotels: { mm: 'အနီးအနားရှိ လူကြိုက်များသော ဟိုတယ်များ', en: 'Popular hotels to consider' },
+  blog_view_all_hotels: { mm: 'ဟိုတယ်အားလုံးကြည့်ရန်', en: 'View all hotels' },
   blog_story_image: { mm: 'ခရီးသွားဇာတ်လမ်း ဓာတ်ပုံ', en: 'Travel story photograph' },
 
   // Travel Plans page

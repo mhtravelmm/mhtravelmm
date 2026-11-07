@@ -13,8 +13,11 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { AdSlot } from '../../components/ui/AdSlot';
+import { ListingCard } from '../../components/ui/ListingCard';
 import { fetchMockAd } from '../../data/ads';
 import { BLOG_POSTS, type BlogBlock, type BlogPost } from '../../data/blogsData';
+import { POPULAR_HOTELS } from '../../data/cityPageData';
+import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import type { Language } from '../../types';
 
@@ -246,7 +249,7 @@ function StoryReader({
   const copy = getLocalizedCopy(post, language);
 
   return (
-    <section className="mx-auto max-w-5xl overflow-hidden rounded-card border border-border bg-bg-card shadow-xl">
+    <section className="mx-auto max-w-5xl overflow-hidden">
       <article
         aria-labelledby="blog-reader-title"
         aria-label={t('blog_reader_label')}
@@ -354,6 +357,7 @@ export function BlogsPage() {
   const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>(() => readStoredValue(FAVORITES_STORAGE_KEY, {}));
   const [viewIncrements, setViewIncrements] = useState<Record<string, number>>(() => readStoredValue(VIEWS_STORAGE_KEY, {}));
   const [toast, setToast] = useState('');
+  const relatedHotels = useToggleFavorite(POPULAR_HOTELS);
 
   useEffect(() => {
     window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoriteOverrides));
@@ -567,6 +571,15 @@ export function BlogsPage() {
             onToggleFavorite={() => toggleFavorite(selectedPost)}
             onShare={() => void sharePost(selectedPost)}
           />
+          <section className="mt-10 border-t border-border pt-6" aria-labelledby="related-hotels-title">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id="related-hotels-title" className="text-base font-medium text-text-primary">{t('blog_related_hotels')}</h2>
+              <a href="/hotels" className="text-[10px] text-brand-blue hover:text-text-primary">{t('blog_view_all_hotels')}</a>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {relatedHotels.listings.map((hotel) => <ListingCard key={hotel.id} listing={hotel} size="md" onToggleFavorite={relatedHotels.toggle} />)}
+            </div>
+          </section>
         </div>
       )}
     </div>

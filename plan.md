@@ -351,6 +351,9 @@ it is a pre-arrival matter.
   than a fixed modal/overlay. The reader keeps the shared site header/footer,
   supports back navigation, and renders sponsored slots above, within existing
   ad blocks, and below the article content.
+- The in-page Blog reader no longer uses a paper-like outer card; it follows the
+  app background and page flow. Each article now ends with a related Popular
+  Hotels row sourced from the existing hotel data and shared listing cards.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.
