@@ -326,6 +326,10 @@ it is a pre-arrival matter.
   Attractions, Popular Hotels, Restaurants, Book Shops, Rentals, Transport
   Services, Cafes, Markets, and Popular Searches in the same section pattern
   as the deployed `/cities` page.
+- Nearby page implemented at `/nearby`: browser geolocation with Yangon
+  fallback, direct keyword/category search, rating and distance filters, an
+  eight-card nearest-place grid spanning two desktop rows, and category-grouped
+  highly rated recommendations for places that are a little farther away.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.
