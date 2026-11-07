@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, BusFront, CalendarDays, CheckCircle2, MapPin, Search } from 'lucide-react';
+import { ArrowRight, BusFront, CalendarDays, CheckCircle2, Clapperboard, MapPin, Search, Ticket, TrainFront } from 'lucide-react';
 import { useCurrency } from '../../lib/currency';
 import { useLanguage } from '../../lib/i18n';
 
@@ -32,6 +32,9 @@ const services: Service[] = [
 
 const products = [
   { id: 'bus' as const, icon: BusFront, label: { mm: 'ကားလက်မှတ်', en: 'Bus' } },
+  { id: 'train' as const, icon: TrainFront, label: { mm: 'ရထားလက်မှတ်', en: 'Train' } },
+  { id: 'events' as const, icon: Ticket, label: { mm: 'Event လက်မှတ်', en: 'Events' } },
+  { id: 'cinema' as const, icon: Clapperboard, label: { mm: 'ရုပ်ရှင်ရုံလက်မှတ်', en: 'Cinema' } },
 ];
 
 export function TicketingPage() {
