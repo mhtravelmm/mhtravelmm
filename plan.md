@@ -347,6 +347,10 @@ it is a pre-arrival matter.
   stationery, gifts, photos, reviews, nearby attractions, and CTA.
 - Home now renders a dedicated ad slot immediately below Popular Hotels using
   the existing Admin Ads/AdSlot pipeline and collapse-when-empty behavior.
+- Blog posts now open as an in-page reader inside the normal Blogs route rather
+  than a fixed modal/overlay. The reader keeps the shared site header/footer,
+  supports back navigation, and renders sponsored slots above, within existing
+  ad blocks, and below the article content.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.

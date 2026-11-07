@@ -71,6 +71,27 @@ const AD_CREATIVES: Record<string, AdCreative> = {
     clickThroughUrl: '/book-shops',
     advertiser: 'Book Nook Yangon',
   },
+  blog_post_top: {
+    id: 'ad-blog-top-1',
+    type: 'image',
+    mediaUrl: bannerSvg('Plan your next Myanmar escape', 'Travel ideas, stays and local experiences from MH Travel.', '#315d8f', '#17243d', '/images/blog/bagan-sunrise.webp'),
+    clickThroughUrl: '/travel-plans',
+    advertiser: 'MH Travel',
+  },
+  blog_post_bottom: {
+    id: 'ad-blog-bottom-1',
+    type: 'image',
+    mediaUrl: bannerSvg('Keep exploring', 'Find your next place to stay, eat and visit with MH Travel.', '#8a4a3e', '#3a1a1a', '/images/blog/shwedagon-evening.webp'),
+    clickThroughUrl: '/nearby',
+    advertiser: 'MH Travel Discoveries',
+  },
+  blog_inline: {
+    id: 'ad-blog-inline-1',
+    type: 'image',
+    mediaUrl: bannerSvg('A better way to travel Myanmar', 'Build a plan around the places you want to see.', '#4a8a3e', '#1a3a1a'),
+    clickThroughUrl: '/travel-plans',
+    advertiser: 'MH Travel Plans',
+  },
 };
 
 /**
@@ -79,5 +100,5 @@ const AD_CREATIVES: Record<string, AdCreative> = {
  */
 export async function fetchMockAd(placement: string): Promise<AdCreative | null> {
   await new Promise((resolve) => setTimeout(resolve, 120));
-  return AD_CREATIVES[placement] ?? null;
+  return AD_CREATIVES[placement] ?? (placement.startsWith('blog_') ? AD_CREATIVES.blog_inline : null);
 }

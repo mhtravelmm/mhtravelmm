@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   ArrowRight,
   CalendarDays,
@@ -246,21 +245,14 @@ function StoryReader({
 }) {
   const copy = getLocalizedCopy(post, language);
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-5"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-      role="presentation"
-    >
+  return (
+    <section className="mx-auto max-w-5xl overflow-hidden rounded-card border border-border bg-bg-card shadow-xl">
       <article
-        role="dialog"
-        aria-modal="true"
         aria-labelledby="blog-reader-title"
         aria-label={t('blog_reader_label')}
-        className="relative flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-border bg-bg shadow-2xl sm:max-h-[90vh] sm:rounded-2xl"
-        onMouseDown={(event) => event.stopPropagation()}
+        className="relative overflow-hidden"
       >
-        <div className="absolute right-3 top-3 z-10 flex gap-2">
+        <div className="absolute right-3 top-3 z-10 flex gap-2 sm:right-5 sm:top-5">
           <button
             type="button"
             onClick={onShare}
@@ -301,7 +293,7 @@ function StoryReader({
           </div>
         </div>
 
-        <div className="overflow-y-auto px-5 py-6 sm:px-9 sm:py-8">
+        <div className="px-5 py-6 sm:px-9 sm:py-8">
           <div className="mx-auto max-w-2xl">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
               <div>
@@ -317,14 +309,19 @@ function StoryReader({
             <p className="mb-7 border-l-2 border-brand-blue pl-4 text-base leading-7 text-text-secondary sm:text-lg">
               {copy.excerpt}
             </p>
+            <div className="mb-6">
+              <AdSlot placement="blog_post_top" fetchAd={fetchMockAd} />
+            </div>
             <div className="space-y-6">
               {post.blocks.map((block, index) => renderBlock(block, index, post, language))}
+            </div>
+            <div className="mt-8">
+              <AdSlot placement="blog_post_bottom" fetchAd={fetchMockAd} />
             </div>
           </div>
         </div>
       </article>
-    </div>,
-    document.body,
+    </section>
   );
 }
 
@@ -388,15 +385,6 @@ export function BlogsPage() {
       setViewIncrements((current) => ({ ...current, [post.id]: (current[post.id] ?? 0) + 1 }));
     }
   }, [storySlug, setSearchParams]);
-
-  useEffect(() => {
-    if (!selectedPost) return undefined;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [selectedPost]);
 
   useEffect(() => {
     if (!selectedPost) return undefined;
@@ -478,7 +466,7 @@ export function BlogsPage() {
 
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-5 sm:pt-8">
-      <section aria-labelledby="latest-stories-title">
+      {!selectedPost && <section aria-labelledby="latest-stories-title">
         <div className="mb-5 flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-blue">{t('blog_eyebrow')}</p>
@@ -556,7 +544,7 @@ export function BlogsPage() {
             )}
           </div>
         )}
-      </section>
+      </section>}
 
       {toast && (
         <div role="status" className="fixed bottom-5 left-1/2 z-[120] -translate-x-1/2 rounded-full border border-border bg-bg-card px-4 py-2.5 text-xs text-text-primary shadow-xl">
@@ -565,16 +553,21 @@ export function BlogsPage() {
       )}
 
       {selectedPost && (
-        <StoryReader
-          post={selectedPost}
-          language={language}
-          t={t}
-          views={viewsFor(selectedPost)}
-          isFavorited={isFavorited(selectedPost)}
-          onClose={closePost}
-          onToggleFavorite={() => toggleFavorite(selectedPost)}
-          onShare={() => void sharePost(selectedPost)}
-        />
+        <div className="mt-5">
+          <button type="button" onClick={closePost} className="mb-3 inline-flex items-center gap-1.5 text-xs text-brand-blue hover:text-text-primary">
+            <ArrowRight size={13} className="rotate-180" /> {t('blog_back_to_stories')}
+          </button>
+          <StoryReader
+            post={selectedPost}
+            language={language}
+            t={t}
+            views={viewsFor(selectedPost)}
+            isFavorited={isFavorited(selectedPost)}
+            onClose={closePost}
+            onToggleFavorite={() => toggleFavorite(selectedPost)}
+            onShare={() => void sharePost(selectedPost)}
+          />
+        </div>
       )}
     </div>
   );

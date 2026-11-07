@@ -197,6 +197,7 @@ const translations = {
   blog_share_unavailable: { mm: 'မျှဝေမရပါ။ လင့်ခ်ကို ပြန်ကြိုးစားပါ။', en: 'Sharing is unavailable right now.' },
   blog_close: { mm: 'ပိတ်ရန်', en: 'Close' },
   blog_reader_label: { mm: 'ဇာတ်လမ်းဖတ်ရှုရန်', en: 'Story reader' },
+  blog_back_to_stories: { mm: 'ဇာတ်လမ်းများသို့ ပြန်သွားမည်', en: 'Back to stories' },
   blog_story_image: { mm: 'ခရီးသွားဇာတ်လမ်း ဓာတ်ပုံ', en: 'Travel story photograph' },
 
   // Travel Plans page
