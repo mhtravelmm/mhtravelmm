@@ -19,6 +19,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { useLanguage } from '../../lib/i18n';
+import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
 import { TRAVEL_PLANS, BLOGS } from '../../data/homeData';
 import { ListingCard } from '../../components/ui/ListingCard';
@@ -39,6 +40,8 @@ const menu: { id: DashboardView; icon: typeof UserRound; key: 'account_overview'
 
 export function AccountPage() {
   const { t } = useLanguage();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [view, setView] = useState<DashboardView>('overview');
   const favorites = useToggleFavorite([...TRAVEL_PLANS, ...BLOGS]);
 
@@ -49,7 +52,7 @@ export function AccountPage() {
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue to-brand-blueDark text-xl font-medium text-white">AA</div>
-            <div><p className="text-[10px] uppercase tracking-[0.18em] text-brand-blue">{t('account_traveler_badge')}</p><h1 className="mt-1 text-xl font-medium text-text-primary">Aung Aung</h1><p className="mt-1 text-xs text-text-muted">aung.aung@example.com · Yangon, Myanmar</p></div>
+            <div><p className="text-[10px] uppercase tracking-[0.18em] text-brand-blue">{t('account_traveler_badge')}</p><h1 className="mt-1 text-xl font-medium text-text-primary">{user?.name ?? 'Aung Aung'}</h1><p className="mt-1 text-xs text-text-muted">{user?.email ?? 'aung.aung@example.com'} · Yangon, Myanmar</p></div>
           </div>
           <button type="button" onClick={() => setView('settings')} className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-bg px-3 py-2 text-xs text-text-secondary transition hover:border-brand-blue/50 hover:text-brand-blue"><Edit3 size={13} />{t('account_edit_profile')}</button>
         </div>
@@ -57,7 +60,7 @@ export function AccountPage() {
       </section>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[190px_1fr]">
-        <aside className="rounded-card border border-border bg-bg-card p-2"><nav className="grid grid-cols-2 gap-1 lg:grid-cols-1">{menu.map(({ id, icon: Icon, key }) => <button key={id} type="button" onClick={() => setView(id)} className={`flex items-center gap-2 rounded-md px-3 py-2.5 text-left text-xs transition ${view === id ? 'bg-brand-blue text-white' : 'text-text-secondary hover:bg-bg-cardAlt hover:text-text-primary'}`}><Icon size={14} />{t(key)}</button>)}</nav><div className="mt-3 border-t border-border pt-3"><button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-xs text-text-faint hover:text-brand-red"><LogOut size={14} />{t('account_logout')}</button></div></aside>
+        <aside className="rounded-card border border-border bg-bg-card p-2"><nav className="grid grid-cols-2 gap-1 lg:grid-cols-1">{menu.map(({ id, icon: Icon, key }) => <button key={id} type="button" onClick={() => setView(id)} className={`flex items-center gap-2 rounded-md px-3 py-2.5 text-left text-xs transition ${view === id ? 'bg-brand-blue text-white' : 'text-text-secondary hover:bg-bg-cardAlt hover:text-text-primary'}`}><Icon size={14} />{t(key)}</button>)}</nav><div className="mt-3 border-t border-border pt-3"><button type="button" onClick={() => { logout(); navigate('/login', { replace: true }); }} className="flex w-full items-center gap-2 px-3 py-2 text-xs text-text-faint hover:text-brand-red"><LogOut size={14} />{t('account_logout')}</button></div></aside>
 
         <main className="min-w-0">{view === 'overview' && <Overview onOpen={setView} />}{view === 'bookings' && <Bookings />}{view === 'plans' && <Plans />}{view === 'favorites' && <Favorites listings={favorites.listings} toggle={favorites.toggle} />}{view === 'reviews' && <Reviews />}{view === 'messages' && <Messages />}{view === 'settings' && <SettingsView />}{view === 'support' && <Support />}</main>
       </div>
