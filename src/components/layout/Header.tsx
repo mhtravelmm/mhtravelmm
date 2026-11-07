@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
+import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { MobileMenu } from './MobileMenu';
@@ -25,6 +26,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
+  const { isAuthenticated, isSuperAdmin } = useAuth();
   const navItems = NAV_ITEMS_HOOK();
   const navigate = useNavigate();
 
@@ -196,7 +198,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
               />
             )}
           </div>
-          <Link to="/account" aria-label="Account" className="hidden sm:inline-flex">
+          <Link to={isAuthenticated ? (isSuperAdmin ? '/super-admin' : '/account') : '/login'} aria-label="Account" className="hidden sm:inline-flex">
             <div className="h-[22px] w-[22px] rounded-full bg-brand-blueDark" />
           </Link>
         </div>

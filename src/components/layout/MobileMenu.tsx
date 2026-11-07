@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
 
@@ -45,7 +46,7 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
-  const [isLoggedIn] = useState(() => typeof window !== 'undefined' && window.localStorage.getItem('mh-travel-authenticated') === 'true');
+  const { isAuthenticated, isSuperAdmin } = useAuth();
 
   // Close on Escape, and stop the page behind from scrolling while open.
   useEffect(() => {
@@ -170,11 +171,11 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
 
         <div className="border-t border-border px-4 py-3">
           <Link
-            to={isLoggedIn ? '/account' : '/login'}
+            to={isAuthenticated ? (isSuperAdmin ? '/super-admin' : '/account') : '/login'}
             onClick={onClose}
             className="block w-full rounded-lg bg-bg py-2.5 text-center text-xs text-text-secondary transition hover:text-text-primary"
           >
-            {isLoggedIn ? t('account_overview') : t('sidebar_login_registration')}
+            {isAuthenticated ? (isSuperAdmin ? t('admin_super_admin') : t('account_overview')) : t('sidebar_login_registration')}
           </Link>
         </div>
 
