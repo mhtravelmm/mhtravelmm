@@ -341,6 +341,10 @@ it is a pre-arrival matter.
 - Account Recent activity is intentionally a short preview of the same
   notification stream; its View all action opens the full inbox. On phone
   layouts, Account and Notifications are now visible in the mobile drawer.
+- Book Shop detail page implemented at `/book-shops` and `/book-shops/:id`,
+  following the supplied reference structure while preserving MH Travel's
+  existing theme: hero and shop facts, services, About section, books,
+  stationery, gifts, photos, reviews, nearby attractions, and CTA.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.

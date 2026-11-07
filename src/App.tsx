@@ -9,6 +9,7 @@ import { RestaurantPage } from './features/restaurants/RestaurantPage';
 import { NearbyPage } from './features/nearby/NearbyPage';
 import { AccountPage } from './features/account/AccountPage';
 import { NotificationsPage } from './features/notifications/NotificationsPage';
+import { BookShopPage } from './features/bookShops/BookShopPage';
 
 function Shell({
   children,
@@ -63,6 +64,8 @@ function App() {
         <Route path="/rentals" element={<PlaceholderPage title="Rentals" />} />
         <Route path="/restaurants" element={<Shell><RestaurantPage /></Shell>} />
         <Route path="/restaurants/:id" element={<Shell><RestaurantPage /></Shell>} />
+        <Route path="/book-shops" element={<Shell><BookShopPage /></Shell>} />
+        <Route path="/book-shops/:id" element={<Shell><BookShopPage /></Shell>} />
         <Route path="/ticketing" element={<PlaceholderPage title="Ticketing" />} />
         <Route path="/travel-plans" element={<Shell><TravelPlansPage /></Shell>} />
         <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
