@@ -72,6 +72,7 @@ export function HomePage() {
       />
       <ListingGridSection title={t('section_top_attractions')} viewAllHref="/attractions" listings={attractions.listings} onToggleFavorite={attractions.toggle} columns={5} cardSize="md" />
       <ListingGridSection title={t('section_popular_hotels')} viewAllHref="/hotels" listings={hotels.listings} onToggleFavorite={hotels.toggle} columns={5} cardSize="md" />
+      <BreakAd placement="home_after_hotels" />
       <ListingGridSection title={t('section_restaurants')} viewAllHref="/restaurants" listings={restaurants.listings} onToggleFavorite={restaurants.toggle} columns={5} cardSize="md" />
       <ListingGridSection
         title={t('section_blogs')}

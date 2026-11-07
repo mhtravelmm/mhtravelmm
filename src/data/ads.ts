@@ -43,6 +43,13 @@ const AD_CREATIVES: Record<string, AdCreative> = {
     clickThroughUrl: '/hotels',
     advertiser: 'Sedona Hotel Yangon',
   },
+  home_after_hotels: {
+    id: 'ad-hotels-1',
+    type: 'image',
+    mediaUrl: bannerSvg('Stay closer to what matters', 'Discover comfortable stays across Myanmar with MH Travel.', '#315d8f', '#17243d', '/images/blog/inle-stilt-houses.webp'),
+    clickThroughUrl: '/hotels',
+    advertiser: 'MH Travel Hotels',
+  },
   home_after_blogs: {
     id: 'ad-blogs-1',
     type: 'image',

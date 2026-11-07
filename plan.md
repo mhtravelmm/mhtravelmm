@@ -345,6 +345,8 @@ it is a pre-arrival matter.
   following the supplied reference structure while preserving MH Travel's
   existing theme: hero and shop facts, services, About section, books,
   stationery, gifts, photos, reviews, nearby attractions, and CTA.
+- Home now renders a dedicated ad slot immediately below Popular Hotels using
+  the existing Admin Ads/AdSlot pipeline and collapse-when-empty behavior.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.
