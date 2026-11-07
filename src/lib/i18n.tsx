@@ -406,6 +406,7 @@ const translations = {
   rentals_phone: { mm: 'ဆက်သွယ်ရန် ဖုန်းနံပါတ်', en: 'Contact phone number' },
   rentals_phone_placeholder: { mm: '09xxxxxxxxx', en: '09xxxxxxxxx' },
   rentals_day_count: { mm: 'ရက်', en: 'day(s)' },
+  rentals_participants: { mm: 'ပါဝင်မည့်လူဦးရေ', en: 'Participants' },
   rentals_submit_order: { mm: 'Order တင်မည်', en: 'Submit order' },
   rentals_contact_note: { mm: 'Order ရပြီး MH Travel က ပြန်လည်ဆက်သွယ်ပါမည်။', en: 'MH Travel will contact you after receiving the order.' },
   rentals_submitted: { mm: 'Order တင်ပြီးပါပြီ။ MH Travel မှ သင့်ဖုန်းနံပါတ်သို့ ပြန်လည်ဆက်သွယ်ပါမည်။', en: 'Order received. MH Travel will contact you on the phone number provided.' },
