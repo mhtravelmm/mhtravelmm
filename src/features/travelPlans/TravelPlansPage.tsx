@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Clock3, Search, SlidersHorizontal } from 'lucide-react';
+import { MapPinned, Search, SlidersHorizontal } from 'lucide-react';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { TRAVEL_PLANS } from '../../data/homeData';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
@@ -79,6 +79,10 @@ export function TravelPlansPage() {
   const [query, setQuery] = useState('');
   const [duration, setDuration] = useState<DurationFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('popular');
+  const [customDestination, setCustomDestination] = useState('');
+  const [customDays, setCustomDays] = useState('3');
+  const [customNotes, setCustomNotes] = useState('');
+  const [customPlanSaved, setCustomPlanSaved] = useState(false);
 
   const visiblePlans = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
@@ -108,18 +112,6 @@ export function TravelPlansPage() {
 
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-3 sm:pt-5">
-      <section className="mb-5 border-b border-border pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base font-medium text-text-primary sm:text-lg">{t('travel_plans_page_title')}</h1>
-            <p className="mt-0.5 text-xs text-text-muted">{t('travel_plans_page_intro')}</p>
-          </div>
-          <span className="hidden items-center gap-1 text-[10px] text-text-faint sm:inline-flex">
-            <Clock3 size={12} /> {t('travel_plans_duration_hint')}
-          </span>
-        </div>
-      </section>
-
       <section className="mb-4 flex flex-col gap-2 rounded-card border border-border bg-bg-card p-2 sm:flex-row sm:items-center">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">{t('travel_plans_search_label')}</span>
@@ -179,6 +171,68 @@ export function TravelPlansPage() {
           {t('travel_plans_no_results')}
         </div>
       )}
+
+      <section className="mt-8 rounded-card border border-brand-blue/25 bg-bg-card p-3 sm:p-4">
+        <div className="mb-3 flex items-start gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
+            <MapPinned size={16} />
+          </span>
+          <div>
+            <h2 className="text-sm font-medium text-text-primary">{t('travel_plans_custom_title')}</h2>
+            <p className="mt-0.5 text-[11px] leading-5 text-text-muted">{t('travel_plans_custom_intro')}</p>
+          </div>
+        </div>
+
+        <form
+          className="grid gap-2 sm:grid-cols-[1.4fr_0.7fr_1.5fr_auto] sm:items-end"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (customDestination.trim()) setCustomPlanSaved(true);
+          }}
+        >
+          <label className="block">
+            <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_destination')}</span>
+            <input
+              value={customDestination}
+              onChange={(event) => {
+                setCustomDestination(event.target.value);
+                setCustomPlanSaved(false);
+              }}
+              placeholder={t('travel_plans_custom_destination_placeholder')}
+              className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_days')}</span>
+            <select
+              value={customDays}
+              onChange={(event) => setCustomDays(event.target.value)}
+              className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-secondary outline-none focus:border-brand-blue/60"
+            >
+              {[1, 2, 3, 4, 5, 6, 7].map((days) => <option key={days} value={days}>{days}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_notes')}</span>
+            <input
+              value={customNotes}
+              onChange={(event) => setCustomNotes(event.target.value)}
+              placeholder={t('travel_plans_custom_notes_placeholder')}
+              className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60"
+            />
+          </label>
+          <button type="submit" className="rounded-md bg-brand-red px-3 py-2 text-xs font-medium text-white transition hover:brightness-110">
+            {t('travel_plans_custom_button')}
+          </button>
+        </form>
+
+        {customPlanSaved && (
+          <p className="mt-3 rounded-md bg-brand-blue/10 px-2.5 py-2 text-[11px] text-brand-blue">
+            {t('travel_plans_custom_saved')} {customDestination} · {customDays} {t('travel_plans_custom_day_suffix')}
+            {customNotes.trim() ? ` · ${customNotes.trim()}` : ''}
+          </p>
+        )}
+      </section>
     </div>
   );
 }

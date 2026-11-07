@@ -301,7 +301,9 @@ it is a pre-arrival matter.
   share, and view counts currently use client-side storage pending backend wiring.
 - Travel Plans page implemented: compact shared-card grid with bilingual UI,
   route search, duration filters, sorting, price display, and client-side
-  favorite toggles.
+  favorite toggles. The page starts directly with the plan tools and ends with
+  a bilingual custom-plan builder for destination, days, and notes; no extra
+  intro banner is shown.
 - Remaining pages: Nearby, Rentals, Ticketing, Travel Guide,
   detail pages, Search, Account.
 - Real photography (current build uses placeholder gradients).

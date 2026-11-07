@@ -115,9 +115,6 @@ const translations = {
   blog_story_image: { mm: 'ခရီးသွားဇာတ်လမ်း ဓာတ်ပုံ', en: 'Travel story photograph' },
 
   // Travel Plans page
-  travel_plans_page_title: { mm: 'ခရီးစဉ်များ', en: 'Travel plans' },
-  travel_plans_page_intro: { mm: 'သင့်အချိန်နဲ့ ဘတ်ဂျက်နဲ့ ကိုက်ညီတဲ့ ခရီးစဉ်ကို ရှာပါ။', en: 'Find a route that fits your time and budget.' },
-  travel_plans_duration_hint: { mm: 'ရက်အလိုက် စစ်ရန်', en: 'Filter by days' },
   travel_plans_search_label: { mm: 'ခရီးစဉ်များကို ရှာရန်', en: 'Search travel plans' },
   travel_plans_search_placeholder: { mm: 'မြို့အမည် သို့မဟုတ် ခရီးစဉ် ရှာရန်...', en: 'Search by city or route...' },
   travel_plans_duration_label: { mm: 'ခရီးစဉ်ကြာချိန်', en: 'Trip duration' },
@@ -130,6 +127,16 @@ const translations = {
   travel_plans_lowest_price: { mm: 'စျေးနှုန်းအနိမ့်ဆုံး', en: 'Lowest price' },
   travel_plans_results: { mm: 'တွေ့ရှိသော ခရီးစဉ်များ', en: 'Available plans' },
   travel_plans_no_results: { mm: 'ကိုက်ညီတဲ့ ခရီးစဉ် မတွေ့ပါ။', en: 'No travel plans match your search.' },
+  travel_plans_custom_title: { mm: 'ကိုယ်ပိုင်ခရီးစဉ် ဆွဲရန်', en: 'Create your own plan' },
+  travel_plans_custom_intro: { mm: 'သွားလိုတဲ့နေရာနဲ့ ရက်အရေအတွက်ကို ထည့်ပြီး ကိုယ်ပိုင်ခရီးစဉ်ကို စတင်ဆွဲပါ။', en: 'Start a custom itinerary with your destination and number of days.' },
+  travel_plans_custom_destination: { mm: 'သွားမည့်နေရာ', en: 'Destination' },
+  travel_plans_custom_destination_placeholder: { mm: 'ဥပမာ - ပုဂံ၊ အင်းလေး...', en: 'e.g. Bagan, Inle Lake...' },
+  travel_plans_custom_days: { mm: 'ရက်', en: 'Days' },
+  travel_plans_custom_notes: { mm: 'မှတ်ချက်', en: 'Notes' },
+  travel_plans_custom_notes_placeholder: { mm: 'ထည့်လိုသောနေရာများ...', en: 'Places you want to include...' },
+  travel_plans_custom_button: { mm: 'စတင်ဆွဲမည်', en: 'Start planning' },
+  travel_plans_custom_saved: { mm: 'သင့်စိတ်ကြိုက်ခရီးစဉ်:', en: 'Your custom plan:' },
+  travel_plans_custom_day_suffix: { mm: 'ရက်', en: 'days' },
 
   // Categories
   cat_book_shop: { mm: 'စာအုပ်ဆိုင်', en: 'Book shop' },
