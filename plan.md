@@ -354,6 +354,9 @@ it is a pre-arrival matter.
 - The in-page Blog reader no longer uses a paper-like outer card; it follows the
   app background and page flow. Each article now ends with a related Popular
   Hotels row sourced from the existing hotel data and shared listing cards.
+- The Blogs listing no longer shows the editorial eyebrow, “Latest stories”
+  heading, or intro sentence; it opens directly with search/sort controls and
+  the post cards.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.

@@ -470,16 +470,9 @@ export function BlogsPage() {
 
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-5 sm:pt-8">
-      {!selectedPost && <section aria-labelledby="latest-stories-title">
-        <div className="mb-5 flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-blue">{t('blog_eyebrow')}</p>
-            <h2 id="latest-stories-title" className="font-serif text-2xl text-text-primary sm:text-3xl">
-              {t('blog_latest_title')}
-            </h2>
-            <p className="mt-1.5 text-sm text-text-muted">{t('blog_latest_intro')}</p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      {!selectedPost && <section aria-label={t('blog_story_count')}>
+        <div className="mb-4 flex justify-end">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <label className="relative block min-w-0 sm:w-64">
               <span className="sr-only">{t('blog_search_label')}</span>
               <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" />
