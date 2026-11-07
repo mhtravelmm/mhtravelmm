@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { MapPinned, Search, SlidersHorizontal } from 'lucide-react';
+import { CheckCircle2, MapPinned, Search, Send, SlidersHorizontal } from 'lucide-react';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { POPULARS, TRAVEL_PLANS } from '../../data/homeData';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
@@ -103,6 +103,7 @@ export function TravelPlansPage() {
   const [customStay, setCustomStay] = useState('hotel');
   const [customNotes, setCustomNotes] = useState('');
   const [customPlanSaved, setCustomPlanSaved] = useState(false);
+  const [customRequestSent, setCustomRequestSent] = useState(false);
 
   const visiblePlans = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
@@ -203,11 +204,27 @@ export function TravelPlansPage() {
           </div>
         </div>
 
+        <div className="mb-3 grid gap-2 rounded-md bg-bg px-2.5 py-2 sm:grid-cols-3">
+          {[
+            ['1', 'travel_plans_custom_step_request'],
+            ['2', 'travel_plans_custom_step_quote'],
+            ['3', 'travel_plans_custom_step_confirm'],
+          ].map(([number, key]) => (
+            <div key={number} className="flex items-center gap-2 text-[10px] text-text-secondary">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">{number}</span>
+              {t(key as 'travel_plans_custom_step_request' | 'travel_plans_custom_step_quote' | 'travel_plans_custom_step_confirm')}
+            </div>
+          ))}
+        </div>
+
         <form
           className="grid gap-2 sm:grid-cols-[1.4fr_0.7fr_1.5fr_auto] sm:items-end"
           onSubmit={(event) => {
             event.preventDefault();
-            if (customStart.trim() && (customDestination.trim() || customPlaces.length > 0)) setCustomPlanSaved(true);
+            if (customStart.trim() && (customDestination.trim() || customPlaces.length > 0)) {
+              setCustomPlanSaved(true);
+              setCustomRequestSent(true);
+            }
           }}
         >
           <label className="block">
@@ -322,8 +339,9 @@ export function TravelPlansPage() {
               className="w-full resize-y rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60"
             />
           </label>
-          <button type="submit" className="rounded-md bg-brand-red px-3 py-2 text-xs font-medium text-white transition hover:brightness-110 sm:self-end">
-            {t('travel_plans_custom_button')}
+          <button type="submit" className="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-red px-3 py-2 text-xs font-medium text-white transition hover:brightness-110 sm:self-end">
+            <Send size={12} />
+            {customRequestSent ? t('travel_plans_custom_sent_button') : t('travel_plans_custom_button')}
           </button>
         </form>
 
@@ -332,6 +350,16 @@ export function TravelPlansPage() {
             {t('travel_plans_custom_saved')} {customStart} → {customDestination || customPlaces.map((place) => localizedPlanTitle(place, language)).join(', ')} · {customDays} {t('travel_plans_custom_day_suffix')} · {customTravelers} {t('travel_plans_custom_travelers_suffix')} · {t(`travel_plans_custom_nationality_${customNationality}` as 'travel_plans_custom_nationality_citizen' | 'travel_plans_custom_nationality_foreigner')} · {customHotel ? AVAILABLE_HOTELS.find((hotel) => hotel.id === customHotel)?.title : t('travel_plans_custom_hotel_later')} · {t(`travel_plans_custom_budget_${customBudget}` as 'travel_plans_custom_budget_low' | 'travel_plans_custom_budget_mid' | 'travel_plans_custom_budget_high')} · {t(`travel_plans_custom_transport_${customTransport}` as 'travel_plans_custom_transport_car' | 'travel_plans_custom_transport_bus' | 'travel_plans_custom_transport_mixed')} · {t(`travel_plans_custom_stay_${customStay}` as 'travel_plans_custom_stay_hotel' | 'travel_plans_custom_stay_guesthouse' | 'travel_plans_custom_stay_flexible')}
             {customNotes.trim() ? ` · ${customNotes.trim()}` : ''}
           </p>
+        )}
+
+        {customRequestSent && (
+          <div className="mt-3 flex items-start gap-2 rounded-md border border-brand-blue/25 bg-brand-blue/10 px-2.5 py-2.5 text-[11px] text-brand-blue">
+            <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium">{t('travel_plans_custom_request_received')}</p>
+              <p className="mt-0.5 leading-5 text-brand-blue/80">{t('travel_plans_custom_request_next')}</p>
+            </div>
+          </div>
         )}
       </section>
     </div>

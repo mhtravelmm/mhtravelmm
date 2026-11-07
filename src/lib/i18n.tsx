@@ -156,9 +156,15 @@ const translations = {
   travel_plans_custom_stay_flexible: { mm: 'အကြံပြုချက်အတိုင်း', en: 'Recommend for me' },
   travel_plans_custom_notes: { mm: 'မှတ်ချက်', en: 'Notes' },
   travel_plans_custom_notes_placeholder: { mm: 'ထည့်လိုသောနေရာများ၊ အစားအသောက်၊ လှုပ်ရှားမှုများ...', en: 'Places, food, activities, or special requests...' },
-  travel_plans_custom_button: { mm: 'စတင်ဆွဲမည်', en: 'Start planning' },
+  travel_plans_custom_button: { mm: 'MH Travel ထံ ပို့မည်', en: 'Send to MH Travel' },
+  travel_plans_custom_sent_button: { mm: 'တောင်းဆိုပြီးပါပြီ', en: 'Request sent' },
   travel_plans_custom_saved: { mm: 'သင့်စိတ်ကြိုက်ခရီးစဉ်:', en: 'Your custom plan:' },
   travel_plans_custom_day_suffix: { mm: 'ရက်', en: 'days' },
+  travel_plans_custom_step_request: { mm: 'သင့်ခရီးစဉ်အသေးစိတ်ကို MH Travel ထံ ပို့မည်', en: 'Send your plan details to MH Travel' },
+  travel_plans_custom_step_quote: { mm: 'MH Travel က ကုန်ကျငွေတွက်ပြီး အစီအစဉ်ပြန်ပေးမည်', en: 'MH Travel calculates the cost and prepares the plan' },
+  travel_plans_custom_step_confirm: { mm: 'သွားမည့်အခါ MH Travel နဲ့ ဆက်သွယ်ပြီး နေရာများကို ညှိနှိုင်းမည်', en: 'Contact MH Travel to confirm and negotiate destinations' },
+  travel_plans_custom_request_received: { mm: 'သင့် Custom Plan request ကို MH Travel ထံ ပို့ပြီးပါပြီ။', en: 'Your Custom Plan request has been sent to MH Travel.' },
+  travel_plans_custom_request_next: { mm: 'MH Travel ဘက်က သင့်အချက်အလက်တွေကို စစ်ဆေးပြီး ကုန်ကျငွေတွက်ပေးပါမယ်။ သွားမည့်နေရာနဲ့ ဝန်ဆောင်မှုတွေကိုလည်း သင့်နဲ့ ပြန်လည်ညှိနှိုင်းဆက်သွယ်ပေးပါမယ်။', en: 'MH Travel will review your details, calculate the cost, and contact you to confirm services and negotiate the places you want to visit.' },
 
   // Categories
   cat_book_shop: { mm: 'စာအုပ်ဆိုင်', en: 'Book shop' },

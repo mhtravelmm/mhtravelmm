@@ -305,7 +305,10 @@ it is a pre-arrival matter.
   a bilingual custom-plan builder for start point, destinations, days,
   travelers, nationality, budget, transport, accommodation, hotel choice, and
   notes; selectable hotels and places come only from existing MH Travel data,
-  and hotel selection may be left for later. No extra intro banner is shown.
+  and hotel selection may be left for later. Submitting sends a custom-plan
+  request into the MH Travel quotation flow: MH Travel calculates the cost,
+  contacts the user before confirmation, and negotiates requested destinations
+  or services. No extra intro banner is shown.
 - Remaining pages: Nearby, Rentals, Ticketing, Travel Guide,
   detail pages, Search, Account.
 - Real photography (current build uses placeholder gradients).
