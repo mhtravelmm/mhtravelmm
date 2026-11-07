@@ -7,7 +7,7 @@ interface ListingGridSectionProps {
   viewAllHref?: string;
   listings: CardListing[];
   columns?: 3 | 4 | 6;
-  cardSize?: 'sm' | 'md';
+  cardSize?: 'sm' | 'md' | 'lg';
   cardVariant?: 'default' | 'guide';
   onToggleFavorite?: (id: string) => void;
 }

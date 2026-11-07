@@ -5,8 +5,8 @@ import { useCurrency } from '../../lib/currency';
 interface ListingCardProps {
   listing: CardListing;
   onToggleFavorite?: (id: string) => void;
-  /** Visual size — 'md' for grid rows of 3-4, 'sm' for dense rows of 5-6 */
-  size?: 'sm' | 'md';
+  /** Visual size — 'lg' for detail-page rows, 'md' for Home rows, 'sm' for dense rows. */
+  size?: 'sm' | 'md' | 'lg';
   /** Optional horizontal treatment used by compact Travel Guide cards. */
   variant?: 'default' | 'guide';
 }
@@ -20,14 +20,15 @@ interface ListingCardProps {
  */
 export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 'default' }: ListingCardProps) {
   const { formatPrice } = useCurrency();
-  const imageHeight = size === 'sm' ? 'h-11' : 'h-[70px] md:h-[90px]';
-  const titleSize = size === 'sm' ? 'text-[10px]' : 'text-xs md:text-sm';
+  const imageHeight = size === 'sm' ? 'h-11' : size === 'lg' ? 'h-28 md:h-32' : 'h-[70px] md:h-[90px]';
+  const titleSize = size === 'sm' ? 'text-[10px]' : size === 'lg' ? 'text-sm md:text-base' : 'text-xs md:text-sm';
   const isGuide = variant === 'guide';
+  const isLarge = size === 'lg' && !isGuide;
 
   return (
     <a
       href={listing.href ?? '#'}
-      className={`${isGuide ? 'flex items-stretch' : 'block'} overflow-hidden rounded-card bg-bg-card transition hover:brightness-110`}
+      className={`${isGuide ? 'flex items-stretch' : 'block'} overflow-hidden rounded-card border ${isLarge ? 'border-border shadow-sm hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg' : 'border-transparent'} bg-bg-card transition hover:brightness-110`}
     >
       <div className={`relative ${isGuide ? 'm-1.5 h-11 w-11 shrink-0 rounded-full' : imageHeight} bg-gradient-to-br from-bg-cardAlt to-bg`}>
         {listing.imageUrl && (
@@ -66,25 +67,25 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
         )}
       </div>
 
-      <div className={`${isGuide ? 'min-w-0 flex-1 py-1.5 pr-1.5' : 'p-2'}`}>
+      <div className={`${isGuide ? 'min-w-0 flex-1 py-1.5 pr-1.5' : isLarge ? 'p-3' : 'p-2'}`}>
         <p className={`${titleSize} text-text-primary leading-snug line-clamp-1`}>{listing.title}</p>
         {listing.subtitle && (
-          <p className="mt-0.5 text-[9px] text-text-faint line-clamp-1">{listing.subtitle}</p>
+          <p className={`${isLarge ? 'text-[11px]' : 'text-[9px]'} mt-0.5 text-text-faint line-clamp-1`}>{listing.subtitle}</p>
         )}
 
-        <div className="mt-1 flex items-center justify-between text-[8px] text-text-faint">
+        <div className={`${isLarge ? 'mt-2 text-[10px]' : 'mt-1 text-[8px]'} flex items-center justify-between text-text-faint`}>
           <span className="flex items-center gap-0.5">
-            <MapPin size={8} />
+            <MapPin size={isLarge ? 10 : 8} />
             {listing.distanceKm} km
           </span>
           <span className="flex items-center gap-0.5">
-            <Eye size={8} />
+            <Eye size={isLarge ? 10 : 8} />
             {formatCount(listing.views)}
           </span>
         </div>
 
         {listing.priceUsd !== undefined && (
-          <div className="mt-1.5 rounded-md bg-brand-red py-1 text-center text-[11px] text-white">
+          <div className={`${isLarge ? 'mt-2 py-1.5 text-xs' : 'mt-1.5 py-1 text-[11px]'} rounded-md bg-brand-red text-center text-white`}>
             {formatPrice(listing.priceUsd)}
           </div>
         )}

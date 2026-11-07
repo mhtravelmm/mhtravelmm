@@ -319,6 +319,9 @@ it is a pre-arrival matter.
   Travel theme and shared shell while adding a hero, info row, map/amenities,
   menu tabs, dishes, reviews, venue photos, nearby attractions, and CTA based
   on the supplied restaurant layout reference.
+- Non-home listing cards: City/secondary listing sections now use a slightly
+  larger, richer card treatment for Travel Guide and Popular categories;
+  homepage card sizing remains unchanged.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.

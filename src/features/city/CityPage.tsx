@@ -70,6 +70,7 @@ export function CityPage() {
         viewAllHref="/travel-guide"
         listings={CITY_TRAVEL_GUIDES}
         columns={3}
+        cardSize="lg"
       />
 
       <ListingGridSection
@@ -87,21 +88,21 @@ export function CityPage() {
         viewAllHref="/hotels"
         listings={POPULAR_HOTELS}
         columns={6}
-        cardSize="sm"
+        cardSize="md"
       />
       <ListingGridSection
         title={t('section_restaurants')}
         viewAllHref="/restaurants"
         listings={POPULAR_RESTAURANTS}
         columns={6}
-        cardSize="sm"
+        cardSize="md"
       />
       <ListingGridSection
         title={t('section_book_shops')}
         viewAllHref="/book-shops"
         listings={POPULAR_BOOK_SHOPS}
         columns={6}
-        cardSize="sm"
+        cardSize="md"
       />
 
       <BreakAd placement="city_after_shopping" />
@@ -111,28 +112,28 @@ export function CityPage() {
         viewAllHref="/rentals"
         listings={POPULAR_RENTALS}
         columns={6}
-        cardSize="sm"
+        cardSize="md"
       />
       <ListingGridSection
         title={t('section_transport_operators')}
         viewAllHref="/ticketing"
         listings={POPULAR_TRANSPORT}
         columns={6}
-        cardSize="sm"
+        cardSize="md"
       />
       <ListingGridSection
         title={t('section_cafes')}
         viewAllHref="/cafes"
         listings={POPULAR_CAFES}
         columns={6}
-        cardSize="sm"
+        cardSize="md"
       />
       <ListingGridSection
         title={t('section_markets')}
         viewAllHref="/markets"
         listings={POPULAR_MARKETS}
         columns={6}
-        cardSize="sm"
+        cardSize="md"
       />
 
       <section className="mb-5">
