@@ -6,7 +6,7 @@ interface ListingGridSectionProps {
   title: string;
   viewAllHref?: string;
   listings: CardListing[];
-  columns?: 3 | 4 | 6;
+  columns?: 3 | 4 | 5 | 6;
   cardSize?: 'sm' | 'md' | 'lg';
   cardVariant?: 'default' | 'guide';
   onToggleFavorite?: (id: string) => void;
@@ -15,6 +15,7 @@ interface ListingGridSectionProps {
 const COLS: Record<number, string> = {
   3: 'grid-cols-3',
   4: 'grid-cols-2 sm:grid-cols-4',
+  5: 'grid-cols-2 sm:grid-cols-5',
   6: 'grid-cols-3 sm:grid-cols-6',
 };
 

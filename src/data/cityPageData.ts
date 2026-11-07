@@ -20,43 +20,43 @@ export const CITY_TRAVEL_GUIDES: CardListing[] = [
 ];
 
 export const TOP_ATTRACTIONS: CardListing[] = [
-  { id: 'ta1', title: 'Shwedagon pagoda', rating: 4.6, distanceKm: 3, isFavorited: false, views: 1500, href: '/attractions/ta1' },
-  { id: 'ta2', title: "People's park", rating: 4.5, distanceKm: 4, isFavorited: false, views: 1500, href: '/attractions/ta2' },
-  { id: 'ta3', title: 'Shwe Chaw thar pagoda', rating: 4.7, distanceKm: 2, isFavorited: false, views: 1500, href: '/attractions/ta3' },
-  { id: 'ta4', title: 'Sule pagoda', rating: 4.4, distanceKm: 1, isFavorited: false, views: 1500, href: '/attractions/ta4' },
-  { id: 'ta5', title: 'U Bein bridge', rating: 4.3, distanceKm: 620, isFavorited: false, views: 1500, href: '/attractions/ta5' },
+  { id: 'ta1', title: 'Shwedagon pagoda', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.6, distanceKm: 3, isFavorited: false, views: 1500, href: '/attractions/ta1' },
+  { id: 'ta2', title: "People's park", imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.5, distanceKm: 4, isFavorited: false, views: 1500, href: '/attractions/ta2' },
+  { id: 'ta3', title: 'Shwe Chaw thar pagoda', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.7, distanceKm: 2, isFavorited: false, views: 1500, href: '/attractions/ta3' },
+  { id: 'ta4', title: 'Sule pagoda', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.4, distanceKm: 1, isFavorited: false, views: 1500, href: '/attractions/ta4' },
+  { id: 'ta5', title: 'U Bein bridge', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.3, distanceKm: 620, isFavorited: false, views: 1500, href: '/attractions/ta5' },
 ];
 
 export const POPULAR_HOTELS: CardListing[] = [
-  { id: 'ph1', title: 'Sedona hotel Yangon', rating: 4.8, distanceKm: 2.5, isFavorited: false, views: 1500, href: '/hotels/sedona-yangon' },
-  { id: 'ph2', title: 'Pan Pacific Yangon', rating: 4.7, distanceKm: 3.1, isFavorited: false, views: 1500, href: '/hotels/pan-pacific' },
-  { id: 'ph3', title: 'Lotte hotel Yangon', rating: 4.6, distanceKm: 1.8, isFavorited: false, views: 1500, href: '/hotels/lotte' },
-  { id: 'ph4', title: 'Melia Yangon', rating: 4.5, distanceKm: 2.2, isFavorited: false, views: 1500, href: '/hotels/melia' },
-  { id: 'ph5', title: 'Wyndham grand', rating: 4.4, distanceKm: 4.0, isFavorited: false, views: 1500, href: '/hotels/wyndham' },
+  { id: 'ph1', title: 'Sedona hotel Yangon', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.8, distanceKm: 2.5, isFavorited: false, views: 1500, href: '/hotels/sedona-yangon' },
+  { id: 'ph2', title: 'Pan Pacific Yangon', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.7, distanceKm: 3.1, isFavorited: false, views: 1500, href: '/hotels/pan-pacific' },
+  { id: 'ph3', title: 'Lotte hotel Yangon', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.6, distanceKm: 1.8, isFavorited: false, views: 1500, href: '/hotels/lotte' },
+  { id: 'ph4', title: 'Melia Yangon', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.5, distanceKm: 2.2, isFavorited: false, views: 1500, href: '/hotels/melia' },
+  { id: 'ph5', title: 'Wyndham grand', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.4, distanceKm: 4.0, isFavorited: false, views: 1500, href: '/hotels/wyndham' },
 ];
 
 export const POPULAR_RESTAURANTS: CardListing[] = [
-  { id: 'pr1', title: 'The Rangoon house', rating: 4.6, distanceKm: 2.1, isFavorited: false, views: 1500, href: '/restaurants/rangoon-house' },
-  { id: 'pr2', title: 'Shan Yoe Yar', rating: 4.4, distanceKm: 1.6, isFavorited: false, views: 1500, href: '/restaurants/shan-yoe-yar' },
-  { id: 'pr3', title: 'Monsoon restaurant', rating: 4.3, distanceKm: 2.8, isFavorited: false, views: 1500, href: '/restaurants/monsoon' },
-  { id: 'pr4', title: 'Feel Myanmar food', rating: 4.5, distanceKm: 3.0, isFavorited: false, views: 1500, href: '/restaurants/feel-myanmar' },
-  { id: 'pr5', title: "Boo's kitchen", rating: 4.2, distanceKm: 1.9, isFavorited: false, views: 1500, href: '/restaurants/boos-kitchen' },
+  { id: 'pr1', title: 'The Rangoon house', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.6, distanceKm: 2.1, isFavorited: false, views: 1500, href: '/restaurants/rangoon-house' },
+  { id: 'pr2', title: 'Shan Yoe Yar', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.4, distanceKm: 1.6, isFavorited: false, views: 1500, href: '/restaurants/shan-yoe-yar' },
+  { id: 'pr3', title: 'Monsoon restaurant', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.3, distanceKm: 2.8, isFavorited: false, views: 1500, href: '/restaurants/monsoon' },
+  { id: 'pr4', title: 'Feel Myanmar food', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.5, distanceKm: 3.0, isFavorited: false, views: 1500, href: '/restaurants/feel-myanmar' },
+  { id: 'pr5', title: "Boo's kitchen", imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.2, distanceKm: 1.9, isFavorited: false, views: 1500, href: '/restaurants/boos-kitchen' },
 ];
 
 export const POPULAR_BOOK_SHOPS: CardListing[] = [
-  { id: 'pb1', title: 'Book Nook Yangon', rating: 4.8, distanceKm: 0.7, isFavorited: false, views: 1500, href: '/book-shops/book-nook' },
-  { id: 'pb2', title: 'Shwe Book shop', rating: 4.5, distanceKm: 1.2, isFavorited: false, views: 1500, href: '/book-shops/shwe' },
-  { id: 'pb3', title: 'City Book center', rating: 4.3, distanceKm: 2.3, isFavorited: false, views: 1500, href: '/book-shops/city-center' },
-  { id: 'pb4', title: 'Innwa bookstore', rating: 4.4, distanceKm: 1.5, isFavorited: false, views: 1500, href: '/book-shops/innwa' },
-  { id: 'pb5', title: 'Pansodan books', rating: 4.6, distanceKm: 2.0, isFavorited: false, views: 1500, href: '/book-shops/pansodan' },
+  { id: 'pb1', title: 'Book Nook Yangon', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.8, distanceKm: 0.7, isFavorited: false, views: 1500, href: '/book-shops/book-nook' },
+  { id: 'pb2', title: 'Shwe Book shop', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.5, distanceKm: 1.2, isFavorited: false, views: 1500, href: '/book-shops/shwe' },
+  { id: 'pb3', title: 'City Book center', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.3, distanceKm: 2.3, isFavorited: false, views: 1500, href: '/book-shops/city-center' },
+  { id: 'pb4', title: 'Innwa bookstore', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.4, distanceKm: 1.5, isFavorited: false, views: 1500, href: '/book-shops/innwa' },
+  { id: 'pb5', title: 'Pansodan books', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.6, distanceKm: 2.0, isFavorited: false, views: 1500, href: '/book-shops/pansodan' },
 ];
 
 export const POPULAR_RENTALS: CardListing[] = [
-  { id: 'pre1', title: 'Toyota car rental', rating: 4.5, distanceKm: 1.5, isFavorited: false, views: 1500, href: '/rentals/pre1' },
-  { id: 'pre2', title: 'Honda motorbike', rating: 4.6, distanceKm: 0.8, isFavorited: false, views: 1500, href: '/rentals/pre2' },
-  { id: 'pre3', title: 'Yangon bicycle hub', rating: 4.4, distanceKm: 1.1, isFavorited: false, views: 1500, href: '/rentals/pre3' },
-  { id: 'pre4', title: 'Guide - Ko Aung Aung', rating: 4.8, distanceKm: 2.0, isFavorited: false, views: 1500, href: '/rentals/pre4' },
-  { id: 'pre5', title: 'Motorboat rental', rating: 4.3, distanceKm: 5.2, isFavorited: false, views: 1500, href: '/rentals/pre5' },
+  { id: 'pre1', title: 'Toyota car rental', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.5, distanceKm: 1.5, isFavorited: false, views: 1500, href: '/rentals/pre1' },
+  { id: 'pre2', title: 'Honda motorbike', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.6, distanceKm: 0.8, isFavorited: false, views: 1500, href: '/rentals/pre2' },
+  { id: 'pre3', title: 'Yangon bicycle hub', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.4, distanceKm: 1.1, isFavorited: false, views: 1500, href: '/rentals/pre3' },
+  { id: 'pre4', title: 'Guide - Ko Aung Aung', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.8, distanceKm: 2.0, isFavorited: false, views: 1500, href: '/rentals/pre4' },
+  { id: 'pre5', title: 'Motorboat rental', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.3, distanceKm: 5.2, isFavorited: false, views: 1500, href: '/rentals/pre5' },
 ];
 
 export const POPULAR_TRANSPORT: CardListing[] = [

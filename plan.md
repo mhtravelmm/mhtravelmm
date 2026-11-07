@@ -322,6 +322,10 @@ it is a pre-arrival matter.
 - Non-home listing cards: City/secondary listing sections now use a slightly
   larger, richer card treatment for Travel Guide and Popular categories;
   homepage card sizing remains unchanged.
+- Home discovery expansion: Home now reuses the Cities data to show Top
+  Attractions, Popular Hotels, Restaurants, Book Shops, Rentals, Transport
+  Services, Cafes, Markets, and Popular Searches in the same section pattern
+  as the deployed `/cities` page.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.
