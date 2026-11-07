@@ -4,6 +4,7 @@ import { Footer } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
 import { CityPage } from './features/city/CityPage';
 import { BlogsPage } from './features/blogs/BlogsPage';
+import { TravelPlansPage } from './features/travelPlans/TravelPlansPage';
 
 function Shell({
   children,
@@ -57,7 +58,7 @@ function App() {
         <Route path="/nearby" element={<PlaceholderPage title="Nearby" />} />
         <Route path="/rentals" element={<PlaceholderPage title="Rentals" />} />
         <Route path="/ticketing" element={<PlaceholderPage title="Ticketing" />} />
-        <Route path="/travel-plans" element={<PlaceholderPage title="Travel Plans" />} />
+        <Route path="/travel-plans" element={<Shell><TravelPlansPage /></Shell>} />
         <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
         <Route path="/blogs" element={<Shell><BlogsPage /></Shell>} />
         <Route path="/search" element={<PlaceholderPage title="Search" />} />

@@ -9,7 +9,7 @@ import type { CardListing } from '../types';
  * `toggle` should also write/delete the corresponding row for the
  * logged-in user instead of only updating local state.
  */
-export function useToggleFavorite(initial: CardListing[]) {
+export function useToggleFavorite<T extends CardListing>(initial: T[]) {
   const [listings, setListings] = useState(initial);
 
   function toggle(id: string) {

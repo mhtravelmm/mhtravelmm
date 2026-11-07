@@ -114,6 +114,23 @@ const translations = {
   blog_reader_label: { mm: 'ဇာတ်လမ်းဖတ်ရှုရန်', en: 'Story reader' },
   blog_story_image: { mm: 'ခရီးသွားဇာတ်လမ်း ဓာတ်ပုံ', en: 'Travel story photograph' },
 
+  // Travel Plans page
+  travel_plans_page_title: { mm: 'ခရီးစဉ်များ', en: 'Travel plans' },
+  travel_plans_page_intro: { mm: 'သင့်အချိန်နဲ့ ဘတ်ဂျက်နဲ့ ကိုက်ညီတဲ့ ခရီးစဉ်ကို ရှာပါ။', en: 'Find a route that fits your time and budget.' },
+  travel_plans_duration_hint: { mm: 'ရက်အလိုက် စစ်ရန်', en: 'Filter by days' },
+  travel_plans_search_label: { mm: 'ခရီးစဉ်များကို ရှာရန်', en: 'Search travel plans' },
+  travel_plans_search_placeholder: { mm: 'မြို့အမည် သို့မဟုတ် ခရီးစဉ် ရှာရန်...', en: 'Search by city or route...' },
+  travel_plans_duration_label: { mm: 'ခရီးစဉ်ကြာချိန်', en: 'Trip duration' },
+  travel_plans_all_durations: { mm: 'အားလုံး', en: 'All durations' },
+  travel_plans_short: { mm: '၃ ရက်အထိ', en: 'Up to 3 days' },
+  travel_plans_long: { mm: '၅ ရက်နှင့်အထက်', en: '5 days or more' },
+  travel_plans_sort_label: { mm: 'စီရန်', en: 'Sort plans' },
+  travel_plans_most_viewed: { mm: 'လူကြည့်အများဆုံး', en: 'Most viewed' },
+  travel_plans_top_rated: { mm: 'အဆင့်အမြင့်ဆုံး', en: 'Top rated' },
+  travel_plans_lowest_price: { mm: 'စျေးနှုန်းအနိမ့်ဆုံး', en: 'Lowest price' },
+  travel_plans_results: { mm: 'တွေ့ရှိသော ခရီးစဉ်များ', en: 'Available plans' },
+  travel_plans_no_results: { mm: 'ကိုက်ညီတဲ့ ခရီးစဉ် မတွေ့ပါ။', en: 'No travel plans match your search.' },
+
   // Categories
   cat_book_shop: { mm: 'စာအုပ်ဆိုင်', en: 'Book shop' },
   cat_hotels: { mm: 'ဟိုတယ်များ', en: 'Hotels' },

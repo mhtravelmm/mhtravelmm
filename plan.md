@@ -299,7 +299,10 @@ it is a pre-arrival matter.
 - City page: wire favorite toggling (same fix already done on Home).
 - Blogs page implemented: bilingual editorial listing and reader; favorite,
   share, and view counts currently use client-side storage pending backend wiring.
-- Remaining pages: Nearby, Rentals, Ticketing, Travel Plans, Travel Guide,
+- Travel Plans page implemented: compact shared-card grid with bilingual UI,
+  route search, duration filters, sorting, price display, and client-side
+  favorite toggles.
+- Remaining pages: Nearby, Rentals, Ticketing, Travel Guide,
   detail pages, Search, Account.
 - Real photography (current build uses placeholder gradients).
 - Payment gateway details (KBZPay, AYA Pay and others).
