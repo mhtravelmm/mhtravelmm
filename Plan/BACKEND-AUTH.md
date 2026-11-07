@@ -77,6 +77,8 @@ Google and Facebook buttons are present in the Signup UI, but they are not produ
 
 No OAuth secrets belong in the Git repository or in frontend source code.
 
+Facebook App credentials were provided during setup, but they were not entered because Supabase Dashboard login required a manual hCaptcha step. Provider configuration is deferred until the owner resumes the dashboard login. The supplied secret is intentionally not recorded here.
+
 ## Account creation note
 
 No real traveler account was inserted because the owner has not yet provided the exact username, Gmail/Email, display name, and temporary password. Once those values are supplied, create the account through Supabase Auth so the profile trigger creates the linked `public.profiles` row automatically. Never insert a fake `auth.users` row directly into the database.

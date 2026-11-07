@@ -88,6 +88,7 @@
 - Admin login checks the linked profile role before allowing the Super Admin portal.
 - The implementation was typechecked and production-built successfully.
 - Supabase Dashboard provider credentials are still required before Google/Facebook OAuth can complete in production; this remains an external configuration blocker.
+- Facebook App credentials were supplied, but Supabase Dashboard login/hCaptcha prevented provider configuration; setup was intentionally deferred at the user's request. The secret is not stored in the repository or Plan notes.
 
 ## 4. Super Admin Portal
 
