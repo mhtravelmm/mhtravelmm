@@ -338,10 +338,10 @@ const translations = {
   cat_nearby: { mm: 'အနီးအနား', en: 'Nearby' },
 
   // Rentals
-  rentals_eyebrow: { mm: 'MH Travel Rental', en: 'MH Travel Rental' },
-  rentals_title: { mm: 'သင့်ခရီးအတွက် ငှားရမ်းပါ', en: 'Rent what your journey needs' },
-  rentals_intro: { mm: 'ကား၊ မော်တော်ဆိုင်ကယ်၊ စက်လှေနဲ့ ခရီးသွားလမ်းညွှန်ကို နေ့စဉ်နှုန်းထားနဲ့ ရွေးချယ်ပါ။', en: 'Choose cars, bikes, boats, and local guides with clear daily rates.' },
-  rentals_managed_by: { mm: 'MH Travel Rental Admin မှ စီမံသည်', en: 'Managed by MH Travel Rental Admin' },
+  rentals_eyebrow: { mm: 'ကြော်ငြာ', en: 'Advertisement' },
+  rentals_title: { mm: 'MH Travel သယ်ယူပို့ဆောင်ရေး ဝန်ဆောင်မှု', en: 'MH Travel transport services' },
+  rentals_intro: { mm: 'အသေးစိတ်ကြည့်ရန်', en: 'Learn more' },
+  rentals_managed_by: { mm: '', en: '' },
   rentals_search: { mm: 'ငှားရမ်းလိုသောအရာ ရှာရန်...', en: 'Search rental options...' },
   rentals_available: { mm: 'ရရှိနိုင်သော ရွေးချယ်စရာများ', en: 'Available options' },
   rentals_options: { mm: 'မျိုး', en: 'options' },
