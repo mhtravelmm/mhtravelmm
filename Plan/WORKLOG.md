@@ -73,6 +73,7 @@
 - Rental type cards now include compact destination photography thumbnails while retaining the city-specific availability and selection behavior.
 - The removed Rentals intro copy was cleaned from the rendered header path and legacy translation values were changed to ad wording so the old `MH Travel Rental / Rent what your journey needs / Managed by Rental Admin` block cannot reappear from a stale route reference.
 - Rental card rates and the order estimate now use the shared `useCurrency().formatPrice()` formatter instead of hard-coded `$` strings, so the page follows the app-wide MMK/USD currency toggle.
+- Car rentals now require a minimum of 2 days. In Order details, car bookings show both Start date and a calculated End date, and the estimate uses the enforced date range. Non-car rental types can still start at 1 day.
 
 ### Ticketing
 
