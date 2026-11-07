@@ -122,10 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await supabase.auth.signOut();
           return { ok: false, message: 'auth_admin_required' };
         }
-        // Keep the seeded preview account usable until the real Supabase
-        // Super Admin profile is provisioned in the connected project.
-        const previewAdmin = readUsers().find((candidate) => candidate.email === normalizedEmail && candidate.password === password && candidate.role === 'super_admin');
-        if (previewAdmin) { setLocalSession(previewAdmin, setUser); return { ok: true }; }
+        // When Supabase is configured, Admin Login must use a real Supabase
+        // Auth user whose linked public.profiles row has super_admin role.
         return { ok: false, message: 'auth_admin_invalid_credentials' };
       }
       const match = readUsers().find((candidate) => candidate.email === normalizedEmail && candidate.password === password && candidate.role === 'super_admin');

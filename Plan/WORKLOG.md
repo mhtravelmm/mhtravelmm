@@ -137,7 +137,7 @@
 - Super Admin sees the dashboard only, not the traveler website pages.
 - Dashboard includes overview metrics, recent activity, users, content/listings, bookings, settings, role notes, and quick actions.
 - A clearly labeled `Logout / ထွက်မည်` button is visible in the dashboard header and returns to `/admin/login`.
-- Admin Login now redirects explicitly to `/super-admin` after success. If Supabase is configured but the real Super Admin profile has not yet been provisioned, the seeded local preview Super Admin account remains usable as a fallback instead of being blocked by the Supabase password/profile check.
+- Admin Login now redirects explicitly to `/super-admin` after success. When Supabase is configured, it authenticates only a real Supabase Auth user whose linked profile has `super_admin` role; the local preview account is not used in that production path.
 
 ## 5. Supabase backend work completed
 
@@ -196,7 +196,7 @@
 
 ## 8. Remaining implementation work
 
-1. Connect frontend auth to Supabase Auth instead of the local preview session store.
+1. Provision the first real Supabase traveler and Super Admin Auth accounts and verify their linked profile rows.
 2. Add secure username-to-auth identity login handling without exposing private email data.
 3. Configure Google OAuth and Facebook OAuth in Supabase and add production callback URLs.
 4. Create the first real traveler account only after receiving the requested username, Gmail/Email, display name, and temporary password.

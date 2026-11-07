@@ -55,7 +55,9 @@ The trigger uses `username` first. For OAuth signups, if a username is not suppl
 
 ## Required frontend integration next
 
-The UI now has a Supabase integration path with local preview fallback. Production integration should:
+The UI now uses Supabase directly whenever the Supabase environment is configured. Admin Login does not fall back to the local preview account in that mode. The connected project must contain a real Supabase Auth user with a linked `public.profiles` row whose role is `super_admin`.
+
+Current frontend integration:
 
 1. `supabase.auth.signUp` now sends username/display name metadata;
 2. `supabase.auth.signInWithPassword` now handles configured email/Gmail login;
@@ -65,6 +67,7 @@ The UI now has a Supabase integration path with local preview fallback. Producti
 6. the profile role protects `/super-admin`;
 7. `supabase.auth.signOut()` is used for both traveler and admin logout;
 8. Google and Facebook buttons now call `supabase.auth.signInWithOAuth` with the Login callback route.
+9. Admin Login calls `supabase.auth.signInWithPassword`, verifies the linked profile role, and rejects accounts without `super_admin`.
 
 ## OAuth setup still required
 
@@ -81,4 +84,4 @@ Facebook App credentials were provided during setup, but they were not entered b
 
 ## Account creation note
 
-No real traveler account was inserted because the owner has not yet provided the exact username, Gmail/Email, display name, and temporary password. Once those values are supplied, create the account through Supabase Auth so the profile trigger creates the linked `public.profiles` row automatically. Never insert a fake `auth.users` row directly into the database.
+No real traveler or Super Admin account was inserted because the owner has not yet provided the exact account email and temporary password. Create the account through Supabase Auth so the profile trigger creates the linked `public.profiles` row automatically, then promote the profile through an authorized Super Admin/backend operation. Never insert a fake `auth.users` row directly into the database.
