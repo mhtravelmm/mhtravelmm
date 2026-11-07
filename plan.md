@@ -315,6 +315,10 @@ it is a pre-arrival matter.
   Plan, Travel Guide, Blog, and Popular cards; Travel Guide uses the compact
   circular-image row treatment from the reference. Hero ad creative remains
   mock Admin Ads content until the ad backend is connected.
+- Restaurants detail page implemented at `/restaurants`: preserves the MH
+  Travel theme and shared shell while adding a hero, info row, map/amenities,
+  menu tabs, dishes, reviews, venue photos, nearby attractions, and CTA based
+  on the supplied restaurant layout reference.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.
