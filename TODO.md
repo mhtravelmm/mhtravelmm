@@ -19,4 +19,6 @@
 - [x] Super Admin access is separated from traveler login through the private `/admin/login` portal; no admin preview or admin credentials are shown in the public user login.
 - [x] Super Admin dashboard includes platform metrics, recent activity, users, content/listings, bookings, settings, and quick management actions.
 - [x] All authentication and admin labels are available in Burmese and English.
-- [ ] Replace the local preview session store with Supabase Auth, profiles, admin roles, and Row Level Security policies before production data is enabled.
+- [ ] Replace the local preview session store with Supabase Auth and connect the existing auth UI to the backend session.
+- [x] Supabase `public.profiles` table is created with unique usernames, display names, role checks, avatar metadata, timestamps, signup trigger, and Row Level Security policies.
+- [ ] Configure Google and Facebook OAuth provider credentials and callback URLs in Supabase Auth.
