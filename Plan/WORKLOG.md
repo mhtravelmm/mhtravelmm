@@ -87,6 +87,10 @@
 - Results use the shared currency formatter, operator cards, route/venue summaries, times, remaining-seat information, and category-specific continuation actions.
 - The page keeps live availability and seat-map handoff messaging. Real operator availability and seat locking remain a backend/API integration step.
 - All new city, township, cinema, event, bus line, boarding, drop-off, and seat labels support Burmese/English.
+- Ticketing was refined to a two-step flow: the first step only searches the route or venue; the second step opens after selecting a result.
+- Bus search now starts with departure city and destination city. After a bus line is selected, boarding point, drop-off point, and seat selection are shown.
+- Cinema search now starts with city and cinema name. After a cinema result is selected, the user chooses Movie 1 or Movie 2, Hall 1 or Hall 2, and then seats.
+- This keeps the initial search compact and prevents boarding, hall, and seat fields from appearing before a line or cinema has been chosen.
 
 ## 3. Authentication UI and session behavior
 
