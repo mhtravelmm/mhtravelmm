@@ -25,6 +25,15 @@ const translations = {
   notifications_mark_all_read: { mm: 'အားလုံး ဖတ်ပြီးအဖြစ် မှတ်မည်', en: 'Mark all as read' },
   notifications_empty: { mm: 'အသိပေးချက် မရှိသေးပါ', en: 'No notifications yet' },
   notifications_see_all: { mm: 'အားလုံး ကြည့်မည်', en: 'See all' },
+  notifications_page_intro: { mm: 'MH Travel မှ သင့်ခရီးစဉ်နဲ့ သက်ဆိုင်တဲ့ နောက်ဆုံးအသိပေးချက်များ။', en: 'The latest updates from MH Travel about your travel activity.' },
+  notifications_back_account: { mm: 'အကောင့်', en: 'Account' },
+  notifications_filter_all: { mm: 'အားလုံး', en: 'All' },
+  notifications_filter_unread: { mm: 'မဖတ်ရသေးသော', en: 'Unread' },
+  notifications_filter_read: { mm: 'ဖတ်ပြီးသော', en: 'Read' },
+  notifications_unread_count: { mm: 'မဖတ်ရသေးပါ', en: 'unread' },
+  notifications_today: { mm: 'ယနေ့', en: 'Today' },
+  notifications_earlier: { mm: 'ယခင်အသိပေးချက်များ', en: 'Earlier' },
+  notifications_empty_detail: { mm: 'အသစ်ထပ်ရောက်လာတဲ့အခါ ဒီနေရာမှာ ပြပေးပါမယ်။', en: 'New updates will appear here when they arrive.' },
 
   footer_tagline: {
     mm: 'မြန်မာနိုင်ငံရဲ့ အလှတရားကို ရှာဖွေဖို့ သင့်ယုံကြည်ရတဲ့ ခရီးဖော်။ ၂၄/၇ အသင့်ရှိပါတယ်။',

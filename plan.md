@@ -334,6 +334,10 @@ it is a pre-arrival matter.
   dashboard navigation, bookings, custom plans with quotation status,
   favorites, reviews, messages, settings, and support/legal views. Data is
   currently client-side sample state pending auth and Supabase wiring.
+- Full Notifications page implemented at `/notifications` and
+  `/account/notifications`: the header dropdown's See all link now opens a
+  bilingual notification inbox with All/Unread/Read filters, mark-all-read,
+  Today/Earlier grouping, unread styling, and linked notification destinations.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.
