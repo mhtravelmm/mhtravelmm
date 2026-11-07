@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Eye, EyeOff, KeyRound, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../lib/i18n';
-import { DEMO_SUPER_ADMIN_HINT, useAuth } from '../../lib/auth';
+import { useAuth } from '../../lib/auth';
 
 type AuthMode = 'login' | 'signup';
 
@@ -44,13 +44,6 @@ export function AuthPage() {
     }
   }
 
-  function fillDemoAdmin() {
-    setEmail(DEMO_SUPER_ADMIN_HINT.email);
-    setPassword(DEMO_SUPER_ADMIN_HINT.password);
-    setMode('login');
-    navigate('/login', { replace: true });
-  }
-
   return (
     <div className="mx-auto flex min-h-[calc(100vh-170px)] max-w-6xl items-center justify-center py-8">
       <section className="grid w-full overflow-hidden rounded-card border border-border bg-bg-card lg:grid-cols-[0.85fr_1.15fr]">
@@ -72,7 +65,6 @@ export function AuthPage() {
             {error && <p role="alert" className="rounded-md border border-brand-red/30 bg-brand-red/10 px-3 py-2 text-[11px] text-brand-redLight">{error}</p>}
             <button disabled={busy} type="submit" className="w-full rounded-md bg-brand-red px-4 py-2.5 text-xs font-medium text-white transition hover:brightness-110 disabled:cursor-wait disabled:opacity-60">{busy ? t('auth_processing') : mode === 'login' ? t('auth_login') : t('auth_create_account')}</button>
           </form>
-          {mode === 'login' && <div className="mt-6 border-t border-border pt-5"><div className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-text-faint"><span className="h-px flex-1 bg-border" />{t('auth_admin_preview')}<span className="h-px flex-1 bg-border" /></div><button type="button" onClick={fillDemoAdmin} className="flex w-full items-center justify-center gap-2 rounded-md border border-brand-blue/30 bg-brand-blue/10 px-3 py-2.5 text-xs text-brand-blue hover:bg-brand-blue/15"><ShieldCheck size={14} />{t('auth_use_admin_preview')}</button><p className="mt-2 text-center text-[10px] leading-4 text-text-faint">{t('auth_admin_preview_note')}</p></div>}
         </div>
       </section>
     </div>

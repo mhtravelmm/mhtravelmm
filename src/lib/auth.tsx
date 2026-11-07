@@ -18,6 +18,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isSuperAdmin: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  loginAdmin: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   signup: (input: { name: string; email: string; password: string; phone?: string }) => Promise<{ ok: boolean; message?: string }>;
   logout: () => void;
 }
@@ -99,6 +100,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       emitAuthChange();
       return { ok: true };
     },
+    async loginAdmin(email, password) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const match = readUsers().find((candidate) => candidate.email === normalizedEmail && candidate.password === password && candidate.role === 'super_admin');
+      if (!match) return { ok: false, message: 'auth_admin_invalid_credentials' };
+      const safeUser = publicUser(match);
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
+      window.localStorage.setItem('mh-travel-authenticated', 'true');
+      setUser(safeUser);
+      emitAuthChange();
+      return { ok: true };
+    },
     async signup(input) {
       const name = input.name.trim();
       const email = input.email.trim().toLowerCase();
@@ -141,8 +153,3 @@ export function useAuth() {
   if (!context) throw new Error('useAuth must be used inside AuthProvider');
   return context;
 }
-
-export const DEMO_SUPER_ADMIN_HINT = {
-  email: DEMO_ADMIN.email,
-  password: DEMO_ADMIN.password,
-};

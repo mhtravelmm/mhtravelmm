@@ -11,6 +11,7 @@ import { AccountPage } from './features/account/AccountPage';
 import { NotificationsPage } from './features/notifications/NotificationsPage';
 import { BookShopPage } from './features/bookShops/BookShopPage';
 import { AuthPage } from './features/auth/AuthPage';
+import { AdminLoginPage } from './features/auth/AdminLoginPage';
 import { SuperAdminPage } from './features/superAdmin/SuperAdminPage';
 import { AuthProvider, useAuth } from './lib/auth';
 
@@ -22,7 +23,7 @@ function PlaceholderPage({ title }: { title: string }) { return <Shell><p classN
 
 function RequireSuperAdmin() {
   const { isAuthenticated, isSuperAdmin } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
   if (!isSuperAdmin) return <Navigate to="/account" replace />;
   return <Shell><SuperAdminPage /></Shell>;
 }
@@ -45,6 +46,7 @@ function AppRoutes() {
     <Route path="/account" element={<Shell><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
+    <Route path="/admin/login" element={<Shell><AdminLoginPage /></Shell>} />
     <Route path="/super-admin" element={<RequireSuperAdmin />} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />

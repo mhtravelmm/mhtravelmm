@@ -365,9 +365,15 @@ const translations = {
   auth_admin_preview: { mm: 'Super Admin Preview', en: 'Super Admin preview' },
   auth_use_admin_preview: { mm: 'Super Admin အဖြစ် ဝင်ကြည့်မည်', en: 'Use Super Admin preview' },
   auth_admin_preview_note: { mm: 'Development preview အတွက်သာ ဖြစ်ပြီး production မှာ Supabase role policies အသုံးပြုရပါမယ်။', en: 'For development preview only. Production should use Supabase role policies.' },
+  auth_admin_invalid_credentials: { mm: 'Admin အကောင့်အချက်အလက် မမှန်ပါ။', en: 'Those admin credentials are not valid.' },
 
   // Super Admin dashboard
   admin_super_admin: { mm: 'Super Admin', en: 'Super Admin' },
+  admin_portal: { mm: 'Admin Portal', en: 'Admin Portal' },
+  admin_login_title: { mm: 'Super Admin ဝင်ရန်', en: 'Super Admin sign in' },
+  admin_login_intro: { mm: 'ဒီနေရာက MH Travel Admin များအတွက် သီးသန့်ဝင်ရောက်ရန်နေရာ ဖြစ်ပါတယ်။', en: 'This private sign-in is for MH Travel administrators only.' },
+  admin_login_button: { mm: 'Admin အကောင့်ဝင်မည်', en: 'Sign in to Admin' },
+  admin_back_to_user_login: { mm: 'User Login သို့ ပြန်သွားရန်', en: 'Back to traveler login' },
   admin_dashboard_title: { mm: 'MH Travel Control Center', en: 'MH Travel Control Center' },
   admin_dashboard_intro: { mm: 'အသုံးပြုသူများ၊ listing များ၊ content၊ booking နဲ့ platform လုပ်ဆောင်ချက်များကို စီမံပါ။', en: 'Manage users, listings, content, bookings, and platform operations from one place.' },
   admin_control_center: { mm: 'စီမံခန့်ခွဲမှု', en: 'Control center' },
