@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { MapPinned, Search, SlidersHorizontal } from 'lucide-react';
 import { ListingCard } from '../../components/ui/ListingCard';
-import { TRAVEL_PLANS } from '../../data/homeData';
+import { POPULARS, TRAVEL_PLANS } from '../../data/homeData';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useLanguage } from '../../lib/i18n';
 import type { CardListing } from '../../types';
@@ -59,6 +59,18 @@ const PLAN_LISTINGS: PlanListing[] = [
   },
 ];
 
+const AVAILABLE_HOTELS = Array.from(
+  new Map(
+    POPULARS
+      .filter((listing) => listing.href?.startsWith('/hotels/'))
+      .map((listing) => [listing.id, listing]),
+  ).values(),
+);
+
+const AVAILABLE_PLACES = Array.from(
+  new Set(PLAN_LISTINGS.flatMap((plan) => plan.title.split(' - '))),
+);
+
 function localizedPlanTitle(title: string, language: 'en' | 'mm'): string {
   if (language === 'en') return title;
   return title
@@ -81,6 +93,9 @@ export function TravelPlansPage() {
   const [sortMode, setSortMode] = useState<SortMode>('popular');
   const [customStart, setCustomStart] = useState('');
   const [customDestination, setCustomDestination] = useState('');
+  const [customNationality, setCustomNationality] = useState('citizen');
+  const [customHotel, setCustomHotel] = useState('');
+  const [customPlaces, setCustomPlaces] = useState<string[]>([]);
   const [customDays, setCustomDays] = useState('3');
   const [customTravelers, setCustomTravelers] = useState('2');
   const [customBudget, setCustomBudget] = useState('mid');
@@ -192,7 +207,7 @@ export function TravelPlansPage() {
           className="grid gap-2 sm:grid-cols-[1.4fr_0.7fr_1.5fr_auto] sm:items-end"
           onSubmit={(event) => {
             event.preventDefault();
-            if (customStart.trim() && customDestination.trim()) setCustomPlanSaved(true);
+            if (customStart.trim() && (customDestination.trim() || customPlaces.length > 0)) setCustomPlanSaved(true);
           }}
         >
           <label className="block">
@@ -235,6 +250,40 @@ export function TravelPlansPage() {
               {[1, 2, 3, 4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}</option>)}
             </select>
           </label>
+
+          <div className="grid gap-2 sm:col-span-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_nationality')}</span>
+              <select value={customNationality} onChange={(event) => setCustomNationality(event.target.value)} className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-secondary outline-none focus:border-brand-blue/60">
+                <option value="citizen">{t('travel_plans_custom_nationality_citizen')}</option>
+                <option value="foreigner">{t('travel_plans_custom_nationality_foreigner')}</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_hotel')}</span>
+              <select value={customHotel} onChange={(event) => setCustomHotel(event.target.value)} className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-secondary outline-none focus:border-brand-blue/60">
+                <option value="">{t('travel_plans_custom_hotel_later')}</option>
+                {AVAILABLE_HOTELS.map((hotel) => <option key={hotel.id} value={hotel.id}>{hotel.title}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <fieldset className="rounded-md border border-border bg-bg/50 p-2 sm:col-span-4">
+            <legend className="px-1 text-[10px] text-text-faint">{t('travel_plans_custom_places')}</legend>
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {AVAILABLE_PLACES.map((place) => (
+                <label key={place} className="flex cursor-pointer items-center gap-1.5 text-[11px] text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={customPlaces.includes(place)}
+                    onChange={() => setCustomPlaces((current) => current.includes(place) ? current.filter((item) => item !== place) : [...current, place])}
+                    className="accent-brand-blue"
+                  />
+                  {localizedPlanTitle(place, language)}
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
           <div className="grid gap-2 sm:col-span-4 sm:grid-cols-3">
             <label className="block">
@@ -280,7 +329,7 @@ export function TravelPlansPage() {
 
         {customPlanSaved && (
           <p className="mt-3 rounded-md bg-brand-blue/10 px-2.5 py-2 text-[11px] text-brand-blue">
-            {t('travel_plans_custom_saved')} {customStart} → {customDestination} · {customDays} {t('travel_plans_custom_day_suffix')} · {customTravelers} {t('travel_plans_custom_travelers_suffix')} · {t(`travel_plans_custom_budget_${customBudget}` as 'travel_plans_custom_budget_low' | 'travel_plans_custom_budget_mid' | 'travel_plans_custom_budget_high')} · {t(`travel_plans_custom_transport_${customTransport}` as 'travel_plans_custom_transport_car' | 'travel_plans_custom_transport_bus' | 'travel_plans_custom_transport_mixed')} · {t(`travel_plans_custom_stay_${customStay}` as 'travel_plans_custom_stay_hotel' | 'travel_plans_custom_stay_guesthouse' | 'travel_plans_custom_stay_flexible')}
+            {t('travel_plans_custom_saved')} {customStart} → {customDestination || customPlaces.map((place) => localizedPlanTitle(place, language)).join(', ')} · {customDays} {t('travel_plans_custom_day_suffix')} · {customTravelers} {t('travel_plans_custom_travelers_suffix')} · {t(`travel_plans_custom_nationality_${customNationality}` as 'travel_plans_custom_nationality_citizen' | 'travel_plans_custom_nationality_foreigner')} · {customHotel ? AVAILABLE_HOTELS.find((hotel) => hotel.id === customHotel)?.title : t('travel_plans_custom_hotel_later')} · {t(`travel_plans_custom_budget_${customBudget}` as 'travel_plans_custom_budget_low' | 'travel_plans_custom_budget_mid' | 'travel_plans_custom_budget_high')} · {t(`travel_plans_custom_transport_${customTransport}` as 'travel_plans_custom_transport_car' | 'travel_plans_custom_transport_bus' | 'travel_plans_custom_transport_mixed')} · {t(`travel_plans_custom_stay_${customStay}` as 'travel_plans_custom_stay_hotel' | 'travel_plans_custom_stay_guesthouse' | 'travel_plans_custom_stay_flexible')}
             {customNotes.trim() ? ` · ${customNotes.trim()}` : ''}
           </p>
         )}

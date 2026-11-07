@@ -303,8 +303,9 @@ it is a pre-arrival matter.
   route search, duration filters, sorting, price display, and client-side
   favorite toggles. The page starts directly with the plan tools and ends with
   a bilingual custom-plan builder for start point, destinations, days,
-  travelers, budget, transport, accommodation, and notes; no extra intro
-  banner is shown.
+  travelers, nationality, budget, transport, accommodation, hotel choice, and
+  notes; selectable hotels and places come only from existing MH Travel data,
+  and hotel selection may be left for later. No extra intro banner is shown.
 - Remaining pages: Nearby, Rentals, Ticketing, Travel Guide,
   detail pages, Search, Account.
 - Real photography (current build uses placeholder gradients).
