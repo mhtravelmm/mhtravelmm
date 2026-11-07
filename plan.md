@@ -330,6 +330,10 @@ it is a pre-arrival matter.
   fallback, direct keyword/category search, rating and distance filters, an
   eight-card nearest-place grid spanning two desktop rows, and category-grouped
   highly rated recommendations for places that are a little farther away.
+- User Account Dashboard implemented at `/account`: profile header and stats,
+  dashboard navigation, bookings, custom plans with quotation status,
+  favorites, reviews, messages, settings, and support/legal views. Data is
+  currently client-side sample state pending auth and Supabase wiring.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.

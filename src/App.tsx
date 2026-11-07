@@ -7,6 +7,7 @@ import { BlogsPage } from './features/blogs/BlogsPage';
 import { TravelPlansPage } from './features/travelPlans/TravelPlansPage';
 import { RestaurantPage } from './features/restaurants/RestaurantPage';
 import { NearbyPage } from './features/nearby/NearbyPage';
+import { AccountPage } from './features/account/AccountPage';
 
 function Shell({
   children,
@@ -66,7 +67,7 @@ function App() {
         <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
         <Route path="/blogs" element={<Shell><BlogsPage /></Shell>} />
         <Route path="/search" element={<PlaceholderPage title="Search" />} />
-        <Route path="/account" element={<PlaceholderPage title="Account" />} />
+        <Route path="/account" element={<Shell><AccountPage /></Shell>} />
         <Route path="/favorites" element={<PlaceholderPage title="Favorites" />} />
         <Route path="*" element={<PlaceholderPage title="Not found" />} />
       </Routes>
