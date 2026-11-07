@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
+import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Bell, UserRound, Globe, DollarSign, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
@@ -87,6 +87,22 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
         </nav>
 
         <div className="flex flex-col gap-0.5 border-t border-border px-3 py-3">
+          <Link
+            to="/account"
+            onClick={onClose}
+            className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs text-text-secondary hover:bg-bg hover:text-text-primary transition"
+          >
+            <UserRound size={15} />
+            {t('account_overview')}
+          </Link>
+          <Link
+            to="/account/notifications"
+            onClick={onClose}
+            className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs text-text-secondary hover:bg-bg hover:text-text-primary transition"
+          >
+            <Bell size={15} />
+            {t('notifications_title')}
+          </Link>
           <Link
             to="/favorites"
             onClick={onClose}

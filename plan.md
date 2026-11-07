@@ -338,6 +338,9 @@ it is a pre-arrival matter.
   `/account/notifications`: the header dropdown's See all link now opens a
   bilingual notification inbox with All/Unread/Read filters, mark-all-read,
   Today/Earlier grouping, unread styling, and linked notification destinations.
+- Account Recent activity is intentionally a short preview of the same
+  notification stream; its View all action opens the full inbox. On phone
+  layouts, Account and Notifications are now visible in the mobile drawer.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.

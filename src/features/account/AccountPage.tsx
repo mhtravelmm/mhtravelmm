@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   CalendarDays,
@@ -88,7 +89,8 @@ function MiniSaved({ title, image }: { title: string; image: string }) { return 
 
 function NotificationPreview() {
   const { t } = useLanguage();
-  return <section className="rounded-card border border-border bg-bg-card p-3 sm:p-4"><PanelTitle icon={Bell} title={t('account_recent_activity')} action={t('account_view_all')} /><div className="mt-3 space-y-2">{NOTIFICATIONS.slice(0, 3).map((item) => <div key={item.id} className="flex gap-2 border-b border-border pb-2 last:border-0 last:pb-0"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.isRead ? 'bg-border' : 'bg-brand-red'}`} /><p className="line-clamp-2 text-[10px] leading-4 text-text-secondary">{item.title}<span className="ml-1 text-text-faint">· {item.timeAgo}</span></p></div>)}</div></section>;
+  const navigate = useNavigate();
+  return <section className="rounded-card border border-border bg-bg-card p-3 sm:p-4"><PanelTitle icon={Bell} title={t('account_recent_activity')} action={t('account_view_all')} onClick={() => navigate('/account/notifications')} /><div className="mt-3 space-y-2">{NOTIFICATIONS.slice(0, 3).map((item) => <div key={item.id} className="flex gap-2 border-b border-border pb-2 last:border-0 last:pb-0"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${item.isRead ? 'bg-border' : 'bg-brand-red'}`} /><p className="line-clamp-2 text-[10px] leading-4 text-text-secondary">{item.title}<span className="ml-1 text-text-faint">· {item.timeAgo}</span></p></div>)}</div></section>;
 }
 
 function Bookings() { const { t } = useLanguage(); return <PagePanel title={t('account_bookings')} intro={t('account_bookings_intro')}><div className="space-y-2"><BookingRow title="The Rangoon House" date="18 Nov 2026" status={t('account_confirmed')} /><BookingRow title="Sedona Hotel Yangon" date="02 Dec 2026" status={t('account_completed')} /></div></PagePanel>; }
