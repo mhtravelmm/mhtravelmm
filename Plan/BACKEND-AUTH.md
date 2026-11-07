@@ -55,15 +55,16 @@ The trigger uses `username` first. For OAuth signups, if a username is not suppl
 
 ## Required frontend integration next
 
-The current UI still has a local preview auth provider. Production integration should:
+The UI now has a Supabase integration path with local preview fallback. Production integration should:
 
-1. use `supabase.auth.signUp` with username/display name metadata;
-2. use `supabase.auth.signInWithPassword` for email/Gmail login;
-3. add a secure username-login resolver so the browser does not expose private account email addresses;
-4. subscribe to `supabase.auth.onAuthStateChange`;
-5. load the matching `public.profiles` row after authentication;
-6. use the profile role to protect `/super-admin`;
-7. use `supabase.auth.signOut()` for both traveler and admin logout.
+1. `supabase.auth.signUp` now sends username/display name metadata;
+2. `supabase.auth.signInWithPassword` now handles configured email/Gmail login;
+3. a secure username-login resolver is still needed so the browser does not expose private account email addresses;
+4. `supabase.auth.onAuthStateChange` now hydrates the shared app session;
+5. the matching `public.profiles` row is loaded after authentication;
+6. the profile role protects `/super-admin`;
+7. `supabase.auth.signOut()` is used for both traveler and admin logout;
+8. Google and Facebook buttons now call `supabase.auth.signInWithOAuth` with the Login callback route.
 
 ## OAuth setup still required
 

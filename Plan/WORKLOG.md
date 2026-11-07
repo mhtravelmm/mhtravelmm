@@ -79,6 +79,16 @@
 - Traveler account logout clears the session and returns to traveler Login.
 - Super Admin logout clears the session and returns to `/admin/login`.
 
+### Supabase Auth connection started
+
+- `src/lib/supabase.ts` now exposes a nullable configured client so builds without environment variables still work in preview.
+- The shared auth provider now hydrates Supabase sessions, listens to `onAuthStateChange`, supports Supabase email signup/login, and calls `supabase.auth.signOut()` on logout.
+- Signup sends `username` and `display_name` metadata so the `public.profiles` trigger can create the linked profile.
+- Google and Facebook buttons now call `supabase.auth.signInWithOAuth()` with a callback to the Login route.
+- Admin login checks the linked profile role before allowing the Super Admin portal.
+- The implementation was typechecked and production-built successfully.
+- Supabase Dashboard provider credentials are still required before Google/Facebook OAuth can complete in production; this remains an external configuration blocker.
+
 ## 4. Super Admin Portal
 
 - Super Admin does not use the traveler web shell.

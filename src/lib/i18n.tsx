@@ -376,6 +376,7 @@ const translations = {
   auth_use_admin_preview: { mm: 'Super Admin အဖြစ် ဝင်ကြည့်မည်', en: 'Use Super Admin preview' },
   auth_admin_preview_note: { mm: 'Development preview အတွက်သာ ဖြစ်ပြီး production မှာ Supabase role policies အသုံးပြုရပါမယ်။', en: 'For development preview only. Production should use Supabase role policies.' },
   auth_admin_invalid_credentials: { mm: 'Admin အကောင့်အချက်အလက် မမှန်ပါ။', en: 'Those admin credentials are not valid.' },
+  auth_admin_required: { mm: 'ဒီဝင်ရောက်မှုက Super Admin အကောင့်အတွက်သာ ဖြစ်ပါတယ်။', en: 'This portal is for Super Admin accounts only.' },
 
   // Super Admin dashboard
   admin_super_admin: { mm: 'Super Admin', en: 'Super Admin' },

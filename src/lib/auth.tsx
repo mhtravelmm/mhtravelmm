@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { isSupabaseConfigured, supabase } from './supabase';
 
 export type AuthRole = 'traveler' | 'super_admin';
+export type OAuthProvider = 'google' | 'facebook';
 
 export interface AuthUser {
   id: string;
@@ -19,6 +22,7 @@ interface AuthContextValue {
   isSuperAdmin: boolean;
   login: (identifier: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  loginWithProvider: (provider: OAuthProvider) => Promise<{ ok: boolean; message?: string }>;
   signup: (input: { username: string; name: string; email: string; password: string }) => Promise<{ ok: boolean; message?: string }>;
   logout: () => void;
 }
@@ -48,28 +52,12 @@ function readUsers(): StoredUser[] {
   }
 }
 
-function saveUsers(users: StoredUser[]) {
-  window.localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-function publicUser(user: StoredUser): AuthUser {
-  const { password: _password, ...safeUser } = user;
-  return safeUser;
-}
-
-function readSession(): AuthUser | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = window.localStorage.getItem(SESSION_KEY);
-    return stored ? (JSON.parse(stored) as AuthUser) : null;
-  } catch {
-    return null;
-  }
-}
-
-function emitAuthChange() {
-  window.dispatchEvent(new Event(AUTH_EVENT));
-}
+function saveUsers(users: StoredUser[]) { window.localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+function publicUser(user: StoredUser): AuthUser { const { password: _password, ...safeUser } = user; return safeUser; }
+function readSession(): AuthUser | null { if (typeof window === 'undefined') return null; try { const stored = window.localStorage.getItem(SESSION_KEY); return stored ? (JSON.parse(stored) as AuthUser) : null; } catch { return null; } }
+function emitAuthChange() { window.dispatchEvent(new Event(AUTH_EVENT)); }
+function clearLocalSession() { window.localStorage.removeItem(SESSION_KEY); window.localStorage.removeItem('mh-travel-authenticated'); }
+function mapRole(value: unknown): AuthRole { return value === 'super_admin' ? 'super_admin' : 'traveler'; }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -77,13 +65,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(readSession);
 
   useEffect(() => {
-    const sync = () => setUser(readSession());
-    window.addEventListener(AUTH_EVENT, sync);
-    window.addEventListener('storage', sync);
-    return () => {
-      window.removeEventListener(AUTH_EVENT, sync);
-      window.removeEventListener('storage', sync);
-    };
+    const syncLocal = () => setUser(readSession());
+    window.addEventListener(AUTH_EVENT, syncLocal);
+    window.addEventListener('storage', syncLocal);
+    if (!isSupabaseConfigured || !supabase) return () => { window.removeEventListener(AUTH_EVENT, syncLocal); window.removeEventListener('storage', syncLocal); };
+
+    let active = true;
+    async function hydrate(session: Session | null) {
+      if (!session?.user || !active || !supabase) return;
+      const authUser: SupabaseUser = session.user;
+      const { data: profile } = await supabase.from('profiles').select('username, display_name, role, created_at').eq('id', authUser.id).maybeSingle();
+      if (!active) return;
+      const hydrated: AuthUser = {
+        id: authUser.id,
+        name: profile?.display_name || authUser.user_metadata?.display_name || authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Traveler',
+        username: profile?.username || authUser.user_metadata?.username || authUser.email?.split('@')[0] || `traveler_${authUser.id.slice(0, 8)}`,
+        email: authUser.email || '',
+        role: mapRole(profile?.role),
+        createdAt: profile?.created_at || authUser.created_at,
+      };
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(hydrated));
+      window.localStorage.setItem('mh-travel-authenticated', 'true');
+      setUser(hydrated);
+    }
+
+    void supabase.auth.getSession().then(({ data }) => hydrate(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) { clearLocalSession(); setUser(null); return; }
+      void hydrate(session);
+    });
+    return () => { active = false; listener.subscription.unsubscribe(); window.removeEventListener(AUTH_EVENT, syncLocal); window.removeEventListener('storage', syncLocal); };
   }, []);
 
   const value = useMemo<AuthContextValue>(() => ({
@@ -92,68 +103,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isSuperAdmin: user?.role === 'super_admin',
     async login(identifier, password) {
       const normalizedIdentifier = identifier.trim().toLowerCase();
+      if (isSupabaseConfigured && supabase && normalizedIdentifier.includes('@')) {
+        const { error } = await supabase.auth.signInWithPassword({ email: normalizedIdentifier, password });
+        return error ? { ok: false, message: 'auth_invalid_credentials' } : { ok: true };
+      }
       const match = readUsers().find((candidate) => (candidate.email === normalizedIdentifier || candidate.username === normalizedIdentifier) && candidate.password === password && candidate.role === 'traveler');
       if (!match) return { ok: false, message: 'auth_invalid_credentials' };
-      const safeUser = publicUser(match);
-      window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
-      window.localStorage.setItem('mh-travel-authenticated', 'true');
-      setUser(safeUser);
-      emitAuthChange();
-      return { ok: true };
+      const safeUser = publicUser(match); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); return { ok: true };
     },
     async loginAdmin(email, password) {
       const normalizedEmail = email.trim().toLowerCase();
+      if (isSupabaseConfigured && supabase) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+        if (error || !data.user) return { ok: false, message: 'auth_admin_invalid_credentials' };
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+        if (profile?.role !== 'super_admin') { await supabase.auth.signOut(); return { ok: false, message: 'auth_admin_required' }; }
+        return { ok: true };
+      }
       const match = readUsers().find((candidate) => candidate.email === normalizedEmail && candidate.password === password && candidate.role === 'super_admin');
       if (!match) return { ok: false, message: 'auth_admin_invalid_credentials' };
-      const safeUser = publicUser(match);
-      window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
-      window.localStorage.setItem('mh-travel-authenticated', 'true');
-      setUser(safeUser);
-      emitAuthChange();
-      return { ok: true };
+      const safeUser = publicUser(match); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); return { ok: true };
+    },
+    async loginWithProvider(provider) {
+      if (!isSupabaseConfigured || !supabase) return { ok: false, message: 'auth_social_setup_pending' };
+      const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/login` } });
+      return error ? { ok: false, message: 'auth_social_setup_pending' } : { ok: true };
     },
     async signup(input) {
-      const name = input.name.trim();
-      const username = input.username.trim().toLowerCase();
-      const email = input.email.trim().toLowerCase();
+      const name = input.name.trim(); const username = input.username.trim().toLowerCase(); const email = input.email.trim().toLowerCase();
       if (name.length < 2) return { ok: false, message: 'auth_name_required' };
       if (!/^[a-z0-9_]{3,24}$/.test(username)) return { ok: false, message: 'auth_username_invalid' };
       if (!email.includes('@')) return { ok: false, message: 'auth_email_invalid' };
       if (input.password.length < 8) return { ok: false, message: 'auth_password_short' };
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.auth.signUp({ email, password: input.password, options: { data: { username, display_name: name } } });
+        return error ? { ok: false, message: error.message.toLowerCase().includes('already') ? 'auth_email_exists' : 'auth_generic_error' } : { ok: true };
+      }
       const users = readUsers();
       if (users.some((candidate) => candidate.email === email)) return { ok: false, message: 'auth_email_exists' };
       if (users.some((candidate) => candidate.username === username)) return { ok: false, message: 'auth_username_exists' };
-      const created: StoredUser = {
-        id: `traveler-${Date.now()}`,
-        name,
-        username,
-        email,
-        password: input.password,
-        role: 'traveler',
-        createdAt: new Date().toISOString(),
-      };
-      users.push(created);
-      saveUsers(users);
-      const safeUser = publicUser(created);
-      window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
-      window.localStorage.setItem('mh-travel-authenticated', 'true');
-      setUser(safeUser);
-      emitAuthChange();
-      return { ok: true };
+      const created: StoredUser = { id: `traveler-${Date.now()}`, name, username, email, password: input.password, role: 'traveler', createdAt: new Date().toISOString() };
+      users.push(created); saveUsers(users); const safeUser = publicUser(created); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); return { ok: true };
     },
-    logout() {
-      window.localStorage.removeItem(SESSION_KEY);
-      window.localStorage.removeItem('mh-travel-authenticated');
-      setUser(null);
-      emitAuthChange();
-    },
+    logout() { if (supabase) void supabase.auth.signOut(); clearLocalSession(); setUser(null); emitAuthChange(); },
   }), [user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used inside AuthProvider');
-  return context;
-}
+export function useAuth() { const context = useContext(AuthContext); if (!context) throw new Error('useAuth must be used inside AuthProvider'); return context; }
