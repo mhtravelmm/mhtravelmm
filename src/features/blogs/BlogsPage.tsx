@@ -71,11 +71,13 @@ function StoryMetrics({
   views,
   language,
   t,
+  showDistance = true,
 }: {
   post: BlogPost;
   views: number;
   language: Language;
   t: Translate;
+  showDistance?: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-text-muted">
@@ -83,12 +85,12 @@ function StoryMetrics({
         <Star size={13} fill="currentColor" />
         <span>{formatNumber(post.rating, language, 1)}</span>
       </span>
-      <span className="inline-flex items-center gap-1">
+      {showDistance && <span className="inline-flex items-center gap-1">
         <MapPin size={13} />
         <span>
           {formatNumber(post.distanceKm, language, 1)} km {t('blog_away')}
         </span>
-      </span>
+      </span>}
       <span className="inline-flex items-center gap-1">
         <Eye size={13} />
         <span>{formatCompactCount(views, language)}</span>
@@ -106,6 +108,7 @@ function StoryCard({
   onOpen,
   onToggleFavorite,
   onShare,
+  showDistance,
 }: {
   post: BlogPost;
   language: Language;
@@ -115,6 +118,7 @@ function StoryCard({
   onOpen: () => void;
   onToggleFavorite: () => void;
   onShare: () => void;
+  showDistance: boolean;
 }) {
   const copy = getLocalizedCopy(post, language);
 
@@ -193,7 +197,7 @@ function StoryCard({
           </button>
         </div>
         <div className="mt-1.5 border-t border-border pt-1.5">
-          <StoryMetrics post={post} views={views} language={language} t={t} />
+          <StoryMetrics post={post} views={views} language={language} t={t} showDistance={showDistance} />
         </div>
       </div>
     </article>
@@ -236,6 +240,7 @@ function StoryReader({
   onClose,
   onToggleFavorite,
   onShare,
+  showDistance,
 }: {
   post: BlogPost;
   language: Language;
@@ -245,6 +250,7 @@ function StoryReader({
   onClose: () => void;
   onToggleFavorite: () => void;
   onShare: () => void;
+  showDistance: boolean;
 }) {
   const copy = getLocalizedCopy(post, language);
 
@@ -306,7 +312,7 @@ function StoryReader({
                   <span>{getReadTime(post.readMinutes, language, t)}</span>
                 </div>
               </div>
-              <StoryMetrics post={post} views={views} language={language} t={t} />
+              <StoryMetrics post={post} views={views} language={language} t={t} showDistance={showDistance} />
             </div>
 
             <p className="mb-7 border-l-2 border-brand-blue pl-4 text-base leading-7 text-text-secondary sm:text-lg">
@@ -357,7 +363,22 @@ export function BlogsPage() {
   const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>(() => readStoredValue(FAVORITES_STORAGE_KEY, {}));
   const [viewIncrements, setViewIncrements] = useState<Record<string, number>>(() => readStoredValue(VIEWS_STORAGE_KEY, {}));
   const [toast, setToast] = useState('');
+  const [locationEnabled, setLocationEnabled] = useState(false);
   const relatedHotels = useToggleFavorite(POPULAR_HOTELS);
+
+  useEffect(() => {
+    if (!navigator.geolocation || !navigator.permissions) return;
+    let cancelled = false;
+    void navigator.permissions.query({ name: 'geolocation' }).then((permission) => {
+      if (permission.state !== 'granted') return;
+      navigator.geolocation.getCurrentPosition(
+        () => { if (!cancelled) setLocationEnabled(true); },
+        () => { if (!cancelled) setLocationEnabled(false); },
+        { maximumAge: 300000, timeout: 5000 },
+      );
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoriteOverrides));
@@ -471,6 +492,9 @@ export function BlogsPage() {
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-5 sm:pt-8">
       {!selectedPost && <section aria-label={t('blog_story_count')}>
+        <div className="mx-auto mb-4 max-w-3xl">
+          <AdSlot placement="blog_listing_banner" fetchAd={fetchMockAd} />
+        </div>
         <div className="mb-4 flex justify-end">
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <label className="relative block min-w-0 sm:w-64">
@@ -527,6 +551,7 @@ export function BlogsPage() {
                 onOpen={() => openPost(post)}
                 onToggleFavorite={() => toggleFavorite(post)}
                 onShare={() => void sharePost(post)}
+                showDistance={locationEnabled}
               />
             ))}
           </div>
@@ -551,9 +576,6 @@ export function BlogsPage() {
 
       {selectedPost && (
         <div className="mt-5">
-          <button type="button" onClick={closePost} className="mb-3 inline-flex items-center gap-1.5 text-xs text-brand-blue hover:text-text-primary">
-            <ArrowRight size={13} className="rotate-180" /> {t('blog_back_to_stories')}
-          </button>
           <StoryReader
             post={selectedPost}
             language={language}
@@ -563,7 +585,29 @@ export function BlogsPage() {
             onClose={closePost}
             onToggleFavorite={() => toggleFavorite(selectedPost)}
             onShare={() => void sharePost(selectedPost)}
+            showDistance={locationEnabled}
           />
+          <section className="mt-10 border-t border-border pt-6" aria-labelledby="related-stories-title">
+            <h2 id="related-stories-title" className="mb-3 text-base font-medium text-text-primary">{t('blog_related_stories')}</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {BLOG_POSTS.filter((post) => post.id !== selectedPost.id && post.location[language] === selectedPost.location[language]).concat(
+                BLOG_POSTS.filter((post) => post.id !== selectedPost.id && post.location[language] !== selectedPost.location[language]),
+              ).slice(0, 3).map((post) => (
+                <StoryCard
+                  key={post.id}
+                  post={post}
+                  language={language}
+                  t={t}
+                  views={viewsFor(post)}
+                  isFavorited={isFavorited(post)}
+                  onOpen={() => openPost(post)}
+                  onToggleFavorite={() => toggleFavorite(post)}
+                  onShare={() => void sharePost(post)}
+                  showDistance={locationEnabled}
+                />
+              ))}
+            </div>
+          </section>
           <section className="mt-10 border-t border-border pt-6" aria-labelledby="related-hotels-title">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 id="related-hotels-title" className="text-base font-medium text-text-primary">{t('blog_related_hotels')}</h2>
