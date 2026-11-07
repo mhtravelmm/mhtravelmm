@@ -69,6 +69,7 @@ function App() {
         <Route path="/blogs" element={<Shell><BlogsPage /></Shell>} />
         <Route path="/search" element={<PlaceholderPage title="Search" />} />
         <Route path="/account" element={<Shell><AccountPage /></Shell>} />
+        <Route path="/login" element={<PlaceholderPage title="Login / Registration" />} />
         <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
         <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
         <Route path="/favorites" element={<PlaceholderPage title="Favorites" />} />

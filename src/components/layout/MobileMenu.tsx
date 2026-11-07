@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Bell, UserRound, Globe, DollarSign, Moon, Sun } from 'lucide-react';
+import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
@@ -45,6 +45,7 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
+  const [isLoggedIn] = useState(() => typeof window !== 'undefined' && window.localStorage.getItem('mh-travel-authenticated') === 'true');
 
   // Close on Escape, and stop the page behind from scrolling while open.
   useEffect(() => {
@@ -87,22 +88,6 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
         </nav>
 
         <div className="flex flex-col gap-0.5 border-t border-border px-3 py-3">
-          <Link
-            to="/account"
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs text-text-secondary hover:bg-bg hover:text-text-primary transition"
-          >
-            <UserRound size={15} />
-            {t('account_overview')}
-          </Link>
-          <Link
-            to="/account/notifications"
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs text-text-secondary hover:bg-bg hover:text-text-primary transition"
-          >
-            <Bell size={15} />
-            {t('notifications_title')}
-          </Link>
           <Link
             to="/favorites"
             onClick={onClose}
@@ -184,12 +169,13 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
         </div>
 
         <div className="border-t border-border px-4 py-3">
-          <button
-            type="button"
-            className="w-full rounded-lg bg-bg py-2.5 text-xs text-text-secondary hover:text-text-primary transition"
+          <Link
+            to={isLoggedIn ? '/account' : '/login'}
+            onClick={onClose}
+            className="block w-full rounded-lg bg-bg py-2.5 text-center text-xs text-text-secondary transition hover:text-text-primary"
           >
-            {t('sidebar_login_registration')}
-          </button>
+            {isLoggedIn ? t('account_overview') : t('sidebar_login_registration')}
+          </Link>
         </div>
 
         <p className="mt-auto border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">
