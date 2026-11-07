@@ -79,18 +79,18 @@
 ### Ticketing
 
 - `/ticketing` now uses a bilingual city/township-first booking hub instead of a generic route-only search.
-- Ticket types are separated into Bus, Train, Events, and Cinema flows. Each type exposes only the fields relevant to that ticket.
-- Cinema and Event flows ask for city, township, venue/event name, date, and passenger count. Multiple cinemas in one township can be selected by name.
+- The current active Ticketing scope is Bus only. Train, Event, and Cinema selectors are intentionally hidden until the Bus flow is completed and reviewed.
+- Train, Event, and Cinema requirements remain recorded below as future scope and are not presented as active booking choices in the current UI.
 - Bus flow asks for from city/township, to city/township, bus line, date, passenger count, boarding point, drop-off point, and seats.
-- Train flow asks for from city/township, to city/township, train line, date, and passenger count.
+- Future Train flow is planned to ask for from city/township, to city/township, train line, date, and passenger count.
 - Bus seat selection is shown as a compact seat grid and the selected seats plus boarding/drop-off points are summarized in the side panel.
 - Results use the shared currency formatter, operator cards, route/venue summaries, times, remaining-seat information, and category-specific continuation actions.
 - The page keeps live availability and seat-map handoff messaging. Real operator availability and seat locking remain a backend/API integration step.
-- All new city, township, cinema, event, bus line, boarding, drop-off, and seat labels support Burmese/English.
+- Bus city, bus line, boarding, drop-off, and seat labels support Burmese/English. Future category labels remain available for the later phases.
 - Ticketing was refined to a two-step flow: the first step only searches the route or venue; the second step opens after selecting a result.
 - Bus search now starts with departure city and destination city. After a bus line is selected, boarding point, drop-off point, and seat selection are shown.
-- Cinema search now starts with city and cinema name. After a cinema result is selected, the user chooses Movie 1 or Movie 2, Hall 1 or Hall 2, and then seats.
-- This keeps the initial search compact and prevents boarding, hall, and seat fields from appearing before a line or cinema has been chosen.
+- Future Cinema search will start with city and cinema name; after a cinema result is selected, the user will choose Movie 1 or Movie 2, Hall 1 or Hall 2, and then seats.
+- The active Bus flow keeps the initial search compact and prevents boarding and seat fields from appearing before a bus line has been chosen.
 
 ## 3. Authentication UI and session behavior
 

@@ -412,9 +412,9 @@ const translations = {
   rentals_submitted: { mm: 'Order တင်ပြီးပါပြီ။ MH Travel မှ သင့်ဖုန်းနံပါတ်သို့ ပြန်လည်ဆက်သွယ်ပါမည်။', en: 'Order received. MH Travel will contact you on the phone number provided.' },
 
   // Ticketing
-  ticketing_eyebrow: { mm: 'MH Travel Ticketing', en: 'MH Travel Ticketing' },
-  ticketing_title: { mm: 'ခရီးစဉ် လက်မှတ်များ ရှာဖွေပါ', en: 'Find your next ticket' },
-  ticketing_intro: { mm: 'Express Bus၊ Ferry၊ Airline၊ Cinema နဲ့ Events လက်မှတ်များကို route နဲ့ date အလိုက် ရှာဖွေပါ။', en: 'Search Express Bus, Ferry, Airline, Cinema, and Event tickets by route and date.' },
+  ticketing_eyebrow: { mm: 'MH Travel ကားလက်မှတ်', en: 'MH Travel Bus Tickets' },
+  ticketing_title: { mm: 'ကားလက်မှတ် ရှာဖွေပါ', en: 'Find your bus ticket' },
+  ticketing_intro: { mm: 'ထွက်မည့်မြို့နဲ့ သွားမည့်မြို့ကို ရွေးပြီး ကားလိုင်း၊ တက်မည့်နေရာ၊ ဆင်းမည့်နေရာနဲ့ ခုံကို အဆင့်လိုက် ရွေးချယ်ပါ။', en: 'Choose departure and destination cities, then select the bus line, boarding point, drop-off point, and seat.' },
   ticketing_integrated: { mm: 'သီးခြား Ticketing ဝန်ဆောင်မှုနှင့် ချိတ်ဆက်ထားသည်', en: 'Connected to the dedicated Ticketing service' },
   ticketing_all: { mm: 'အားလုံး', en: 'All' },
   ticketing_from: { mm: 'မှ', en: 'From' },
