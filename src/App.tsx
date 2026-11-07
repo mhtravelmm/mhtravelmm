@@ -59,6 +59,7 @@ function App() {
         <Route path="/nearby" element={<PlaceholderPage title="Nearby" />} />
         <Route path="/rentals" element={<PlaceholderPage title="Rentals" />} />
         <Route path="/restaurants" element={<Shell><RestaurantPage /></Shell>} />
+        <Route path="/restaurants/:id" element={<Shell><RestaurantPage /></Shell>} />
         <Route path="/ticketing" element={<PlaceholderPage title="Ticketing" />} />
         <Route path="/travel-plans" element={<Shell><TravelPlansPage /></Shell>} />
         <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
