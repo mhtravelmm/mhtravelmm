@@ -137,6 +137,7 @@
 - Super Admin sees the dashboard only, not the traveler website pages.
 - Dashboard includes overview metrics, recent activity, users, content/listings, bookings, settings, role notes, and quick actions.
 - A clearly labeled `Logout / ထွက်မည်` button is visible in the dashboard header and returns to `/admin/login`.
+- Admin Login now redirects explicitly to `/super-admin` after success. If Supabase is configured but the real Super Admin profile has not yet been provisioned, the seeded local preview Super Admin account remains usable as a fallback instead of being blocked by the Supabase password/profile check.
 
 ## 5. Supabase backend work completed
 

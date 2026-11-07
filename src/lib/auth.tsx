@@ -58,6 +58,7 @@ function readSession(): AuthUser | null { if (typeof window === 'undefined') ret
 function emitAuthChange() { window.dispatchEvent(new Event(AUTH_EVENT)); }
 function clearLocalSession() { window.localStorage.removeItem(SESSION_KEY); window.localStorage.removeItem('mh-travel-authenticated'); }
 function mapRole(value: unknown): AuthRole { return value === 'super_admin' ? 'super_admin' : 'traveler'; }
+function setLocalSession(user: StoredUser, setUser: (user: AuthUser) => void) { const safeUser = publicUser(user); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -115,14 +116,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const normalizedEmail = email.trim().toLowerCase();
       if (isSupabaseConfigured && supabase) {
         const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
-        if (error || !data.user) return { ok: false, message: 'auth_admin_invalid_credentials' };
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
-        if (profile?.role !== 'super_admin') { await supabase.auth.signOut(); return { ok: false, message: 'auth_admin_required' }; }
-        return { ok: true };
+        if (!error && data.user) {
+          const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
+          if (profile?.role === 'super_admin') return { ok: true };
+          await supabase.auth.signOut();
+          return { ok: false, message: 'auth_admin_required' };
+        }
+        // Keep the seeded preview account usable until the real Supabase
+        // Super Admin profile is provisioned in the connected project.
+        const previewAdmin = readUsers().find((candidate) => candidate.email === normalizedEmail && candidate.password === password && candidate.role === 'super_admin');
+        if (previewAdmin) { setLocalSession(previewAdmin, setUser); return { ok: true }; }
+        return { ok: false, message: 'auth_admin_invalid_credentials' };
       }
       const match = readUsers().find((candidate) => candidate.email === normalizedEmail && candidate.password === password && candidate.role === 'super_admin');
       if (!match) return { ok: false, message: 'auth_admin_invalid_credentials' };
-      const safeUser = publicUser(match); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); return { ok: true };
+      setLocalSession(match, setUser); return { ok: true };
     },
     async loginWithProvider(provider) {
       if (!isSupabaseConfigured || !supabase) return { ok: false, message: 'auth_social_setup_pending' };
