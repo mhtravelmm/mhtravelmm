@@ -302,8 +302,9 @@ it is a pre-arrival matter.
 - Travel Plans page implemented: compact shared-card grid with bilingual UI,
   route search, duration filters, sorting, price display, and client-side
   favorite toggles. The page starts directly with the plan tools and ends with
-  a bilingual custom-plan builder for destination, days, and notes; no extra
-  intro banner is shown.
+  a bilingual custom-plan builder for start point, destinations, days,
+  travelers, budget, transport, accommodation, and notes; no extra intro
+  banner is shown.
 - Remaining pages: Nearby, Rentals, Ticketing, Travel Guide,
   detail pages, Search, Account.
 - Real photography (current build uses placeholder gradients).

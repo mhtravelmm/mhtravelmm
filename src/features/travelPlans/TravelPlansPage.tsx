@@ -79,8 +79,13 @@ export function TravelPlansPage() {
   const [query, setQuery] = useState('');
   const [duration, setDuration] = useState<DurationFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('popular');
+  const [customStart, setCustomStart] = useState('');
   const [customDestination, setCustomDestination] = useState('');
   const [customDays, setCustomDays] = useState('3');
+  const [customTravelers, setCustomTravelers] = useState('2');
+  const [customBudget, setCustomBudget] = useState('mid');
+  const [customTransport, setCustomTransport] = useState('car');
+  const [customStay, setCustomStay] = useState('hotel');
   const [customNotes, setCustomNotes] = useState('');
   const [customPlanSaved, setCustomPlanSaved] = useState(false);
 
@@ -187,9 +192,21 @@ export function TravelPlansPage() {
           className="grid gap-2 sm:grid-cols-[1.4fr_0.7fr_1.5fr_auto] sm:items-end"
           onSubmit={(event) => {
             event.preventDefault();
-            if (customDestination.trim()) setCustomPlanSaved(true);
+            if (customStart.trim() && customDestination.trim()) setCustomPlanSaved(true);
           }}
         >
+          <label className="block">
+            <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_start')}</span>
+            <input
+              value={customStart}
+              onChange={(event) => {
+                setCustomStart(event.target.value);
+                setCustomPlanSaved(false);
+              }}
+              placeholder={t('travel_plans_custom_start_placeholder')}
+              className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60"
+            />
+          </label>
           <label className="block">
             <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_destination')}</span>
             <input
@@ -213,22 +230,57 @@ export function TravelPlansPage() {
             </select>
           </label>
           <label className="block">
+            <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_travelers')}</span>
+            <select value={customTravelers} onChange={(event) => setCustomTravelers(event.target.value)} className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-secondary outline-none focus:border-brand-blue/60">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}</option>)}
+            </select>
+          </label>
+
+          <div className="grid gap-2 sm:col-span-4 sm:grid-cols-3">
+            <label className="block">
+              <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_budget')}</span>
+              <select value={customBudget} onChange={(event) => setCustomBudget(event.target.value)} className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-secondary outline-none focus:border-brand-blue/60">
+                <option value="low">{t('travel_plans_custom_budget_low')}</option>
+                <option value="mid">{t('travel_plans_custom_budget_mid')}</option>
+                <option value="high">{t('travel_plans_custom_budget_high')}</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_transport')}</span>
+              <select value={customTransport} onChange={(event) => setCustomTransport(event.target.value)} className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-secondary outline-none focus:border-brand-blue/60">
+                <option value="car">{t('travel_plans_custom_transport_car')}</option>
+                <option value="bus">{t('travel_plans_custom_transport_bus')}</option>
+                <option value="mixed">{t('travel_plans_custom_transport_mixed')}</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_stay')}</span>
+              <select value={customStay} onChange={(event) => setCustomStay(event.target.value)} className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-secondary outline-none focus:border-brand-blue/60">
+                <option value="hotel">{t('travel_plans_custom_stay_hotel')}</option>
+                <option value="guesthouse">{t('travel_plans_custom_stay_guesthouse')}</option>
+                <option value="flexible">{t('travel_plans_custom_stay_flexible')}</option>
+              </select>
+            </label>
+          </div>
+
+          <label className="block sm:col-span-3">
             <span className="mb-1 block text-[10px] text-text-faint">{t('travel_plans_custom_notes')}</span>
-            <input
+            <textarea
               value={customNotes}
               onChange={(event) => setCustomNotes(event.target.value)}
               placeholder={t('travel_plans_custom_notes_placeholder')}
-              className="w-full rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60"
+              rows={2}
+              className="w-full resize-y rounded-md border border-border bg-bg px-2.5 py-2 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60"
             />
           </label>
-          <button type="submit" className="rounded-md bg-brand-red px-3 py-2 text-xs font-medium text-white transition hover:brightness-110">
+          <button type="submit" className="rounded-md bg-brand-red px-3 py-2 text-xs font-medium text-white transition hover:brightness-110 sm:self-end">
             {t('travel_plans_custom_button')}
           </button>
         </form>
 
         {customPlanSaved && (
           <p className="mt-3 rounded-md bg-brand-blue/10 px-2.5 py-2 text-[11px] text-brand-blue">
-            {t('travel_plans_custom_saved')} {customDestination} · {customDays} {t('travel_plans_custom_day_suffix')}
+            {t('travel_plans_custom_saved')} {customStart} → {customDestination} · {customDays} {t('travel_plans_custom_day_suffix')} · {customTravelers} {t('travel_plans_custom_travelers_suffix')} · {t(`travel_plans_custom_budget_${customBudget}` as 'travel_plans_custom_budget_low' | 'travel_plans_custom_budget_mid' | 'travel_plans_custom_budget_high')} · {t(`travel_plans_custom_transport_${customTransport}` as 'travel_plans_custom_transport_car' | 'travel_plans_custom_transport_bus' | 'travel_plans_custom_transport_mixed')} · {t(`travel_plans_custom_stay_${customStay}` as 'travel_plans_custom_stay_hotel' | 'travel_plans_custom_stay_guesthouse' | 'travel_plans_custom_stay_flexible')}
             {customNotes.trim() ? ` · ${customNotes.trim()}` : ''}
           </p>
         )}
