@@ -59,13 +59,14 @@
 
 ### Rentals
 
-- `/rentals` now uses a full bilingual Rentals page instead of a placeholder.
-- Rental categories follow the plan: car, motorbike, motorboat, horse carriage, bicycle, camping tent, and travel guide.
-- The page has compact image cards, search, category chips, daily-rate display, a selected-rental request panel, number of days, and estimated total.
-- Full-day car rental shows the driver requirement; motorbike and bicycle options remain self-drive.
-- Long-distance round-trip pricing doubles the billable day count to include the return leg.
-- Travel Guide hire shows the additional accommodation, food, and travel-cost note from the plan.
-- Booking/request is disabled until the user accepts rental terms, and the page explains that Rental Admin checks availability before confirmation.
+- `/rentals` now uses a full bilingual city-first rental order flow instead of the earlier generic request-card design.
+- The user first chooses the rental city. Yangon, Bagan, Mandalay, Inle Lake, and Ngapali have different available categories and different MH Travel branch pickup options.
+- After choosing a city, the user chooses the rental type: motorbike, bicycle, car, horse carriage, camping tent, motorboat, or travel guide where available.
+- The user must choose a start date at least one day in advance, customer type (Myanmar citizen or foreigner), rental duration, and a phone number.
+- The user can choose delivery to a location or pickup from the selected city's MH Travel branch. Delivery address and branch are validated before order submission.
+- Motorbike and bicycle share the simple self-drive style flow. Cars use a separate flow with passenger count and a clear MH Travel vehicle/driver confirmation note.
+- The UI calculates an estimated total from city-available category rates, customer type, and number of days, then sends an order request for MH Travel follow-up.
+- After submission, the page confirms that MH Travel will call the provided phone number. This is a quotation/order handoff UI until the booking backend is connected.
 
 ### Ticketing
 
