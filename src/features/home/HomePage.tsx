@@ -49,6 +49,8 @@ export function HomePage() {
         listings={travelGuides.listings}
         onToggleFavorite={travelGuides.toggle}
         columns={4}
+        cardSize="sm"
+        cardVariant="guide"
       />
       <ListingGridSection
         title={t('section_blogs')}

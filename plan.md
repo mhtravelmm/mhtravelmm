@@ -311,7 +311,10 @@ it is a pre-arrival matter.
   or services. No extra intro banner is shown.
 - Remaining pages: Nearby, Rentals, Ticketing, Travel Guide,
   detail pages, Search, Account.
-- Real photography (current build uses placeholder gradients).
+- Homepage reference alignment: local Myanmar photography now fills Travel
+  Plan, Travel Guide, Blog, and Popular cards; Travel Guide uses the compact
+  circular-image row treatment from the reference. Hero ad creative remains
+  mock Admin Ads content until the ad backend is connected.
 - Payment gateway details (KBZPay, AYA Pay and others).
 - R2 folder and naming convention for manually uploaded assets.
 - Travel guide rental expense mechanics.

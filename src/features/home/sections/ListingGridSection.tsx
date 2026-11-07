@@ -8,6 +8,7 @@ interface ListingGridSectionProps {
   listings: CardListing[];
   columns?: 3 | 4 | 6;
   cardSize?: 'sm' | 'md';
+  cardVariant?: 'default' | 'guide';
   onToggleFavorite?: (id: string) => void;
 }
 
@@ -23,6 +24,7 @@ export function ListingGridSection({
   listings,
   columns = 4,
   cardSize = 'md',
+  cardVariant = 'default',
   onToggleFavorite,
 }: ListingGridSectionProps) {
   if (listings.length === 0) return null;
@@ -36,6 +38,7 @@ export function ListingGridSection({
             key={listing.id}
             listing={listing}
             size={cardSize}
+            variant={cardVariant}
             onToggleFavorite={onToggleFavorite}
           />
         ))}

@@ -11,7 +11,7 @@ import type { AdCreative } from '../components/ui/AdSlot';
  * AdMob -> collapse (nothing). This mock only covers the "Admin Ads"
  * tier — collapsing behavior itself is already implemented in AdSlot.
  */
-function bannerSvg(label: string, sub: string, from: string, to: string): string {
+function bannerSvg(label: string, sub: string, from: string, to: string, backgroundImage?: string): string {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="800" height="220" viewBox="0 0 800 220">
       <defs>
@@ -20,7 +20,7 @@ function bannerSvg(label: string, sub: string, from: string, to: string): string
           <stop offset="100%" stop-color="${to}"/>
         </linearGradient>
       </defs>
-      <rect width="800" height="220" fill="url(#g)"/>
+      ${backgroundImage ? `<image href="${backgroundImage}" width="800" height="220" preserveAspectRatio="xMidYMid slice"/><rect width="800" height="220" fill="#05070ccc"/>` : '<rect width="800" height="220" fill="url(#g)"/>'}
       <text x="40" y="110" font-family="Arial, sans-serif" font-size="34" fill="#ffffff" font-weight="600">${label}</text>
       <text x="40" y="150" font-family="Arial, sans-serif" font-size="17" fill="#f2e9dc">${sub}</text>
       <text x="40" y="196" font-family="Arial, sans-serif" font-size="12" fill="#ffffffaa">Sponsored</text>
@@ -32,7 +32,7 @@ const AD_CREATIVES: Record<string, AdCreative> = {
   home_hero: {
     id: 'ad-hero-1',
     type: 'image',
-    mediaUrl: bannerSvg('Explore Myanmar', 'Best destinations, best prices for your perfect trip.', '#c98a3e', '#7a4a1e'),
+    mediaUrl: bannerSvg('Explore Myanmar', 'Best destinations, best prices for your perfect trip.', '#c98a3e', '#7a4a1e', '/images/blog/shwedagon-evening.webp'),
     clickThroughUrl: '/travel-plans',
     advertiser: 'MH Travel',
   },
