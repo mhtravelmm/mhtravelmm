@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Bike, Car, Check, ChevronRight, Compass, MapPin, Phone, Search, ShipWheel, TentTree, UserRound } from 'lucide-react';
-import { AdSlot } from '../../components/ui/AdSlot';
 import { useCurrency } from '../../lib/currency';
 import { useLanguage } from '../../lib/i18n';
 
@@ -98,7 +97,7 @@ export function RentalsPage() {
   }
 
   return <div className="mx-auto max-w-7xl pb-10 pt-2 sm:pt-5">
-    <AdSlot placement="rentals-top" devPlaceholder={<div className="flex items-center justify-between gap-3"><div><p className="text-[9px] uppercase tracking-[0.18em]">{t('rentals_ad_label')}</p><p className="mt-1 text-xs font-medium">{t('rentals_ad_banner')}</p></div><span className="rounded bg-ad-text/10 px-2 py-1 text-[9px]">{t('rentals_ad_action')}</span></div>} />
+    <section className="flex items-center justify-between gap-3 rounded-lg border border-ad-border bg-ad-bg px-3 py-2.5 text-ad-text" data-ad-placement="rentals-top"><div><p className="text-[9px] uppercase tracking-[0.18em]">{t('rentals_ad_label')}</p><p className="mt-1 text-xs font-medium">{t('rentals_ad_banner')}</p></div><span className="shrink-0 rounded bg-ad-text/10 px-2 py-1 text-[9px]">{t('rentals_ad_action')}</span></section>
     <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_390px]">
       <section>
         <div className="mb-3"><h2 className="text-sm font-medium text-text-primary">{t('rentals_choose_type')}</h2><p className="mt-1 text-[10px] text-text-faint">{city.name[language]} · {availableCategories.length} {t('rentals_available_types')}</p></div>
