@@ -5,8 +5,8 @@ export type AuthRole = 'traveler' | 'super_admin';
 export interface AuthUser {
   id: string;
   name: string;
+  username: string;
   email: string;
-  phone?: string;
   role: AuthRole;
   createdAt: string;
 }
@@ -17,9 +17,9 @@ interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isSuperAdmin: boolean;
-  login: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  login: (identifier: string, password: string) => Promise<{ ok: boolean; message?: string }>;
   loginAdmin: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
-  signup: (input: { name: string; email: string; password: string; phone?: string }) => Promise<{ ok: boolean; message?: string }>;
+  signup: (input: { username: string; name: string; email: string; password: string }) => Promise<{ ok: boolean; message?: string }>;
   logout: () => void;
 }
 
@@ -29,6 +29,7 @@ const AUTH_EVENT = 'mh-travel-auth-changed';
 const DEMO_ADMIN: StoredUser = {
   id: 'super-admin-001',
   name: 'MH Travel Super Admin',
+  username: 'superadmin',
   email: 'superadmin@mhtravel.com',
   password: 'MHTravel@2026',
   role: 'super_admin',
@@ -89,9 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: Boolean(user),
     isSuperAdmin: user?.role === 'super_admin',
-    async login(email, password) {
-      const normalizedEmail = email.trim().toLowerCase();
-      const match = readUsers().find((candidate) => candidate.email === normalizedEmail && candidate.password === password);
+    async login(identifier, password) {
+      const normalizedIdentifier = identifier.trim().toLowerCase();
+      const match = readUsers().find((candidate) => (candidate.email === normalizedIdentifier || candidate.username === normalizedIdentifier) && candidate.password === password && candidate.role === 'traveler');
       if (!match) return { ok: false, message: 'auth_invalid_credentials' };
       const safeUser = publicUser(match);
       window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser));
@@ -113,17 +114,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async signup(input) {
       const name = input.name.trim();
+      const username = input.username.trim().toLowerCase();
       const email = input.email.trim().toLowerCase();
       if (name.length < 2) return { ok: false, message: 'auth_name_required' };
+      if (!/^[a-z0-9_]{3,24}$/.test(username)) return { ok: false, message: 'auth_username_invalid' };
       if (!email.includes('@')) return { ok: false, message: 'auth_email_invalid' };
       if (input.password.length < 8) return { ok: false, message: 'auth_password_short' };
       const users = readUsers();
       if (users.some((candidate) => candidate.email === email)) return { ok: false, message: 'auth_email_exists' };
+      if (users.some((candidate) => candidate.username === username)) return { ok: false, message: 'auth_username_exists' };
       const created: StoredUser = {
         id: `traveler-${Date.now()}`,
         name,
+        username,
         email,
-        phone: input.phone?.trim() || undefined,
         password: input.password,
         role: 'traveler',
         createdAt: new Date().toISOString(),
