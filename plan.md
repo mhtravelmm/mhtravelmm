@@ -208,11 +208,11 @@ Blog:
 - No user-facing categories or tags. A backend-only SEO tag field feeds
   search engines and is never shown in the app.
 - Interactions: favorite, share, view count.
-- Blogs Page implementation: use an editorial featured-story layout with a
-  searchable latest-story list and compact, image-led story cards; keep
-  categories and tags out of the UI. Open articles in a bilingual reader,
-  preserve shareable story URLs, and keep favorite/view interactions
-  client-side until the backend is connected.
+- Blogs Page implementation: use a searchable latest-story list with compact,
+  image-led story cards sized close to the homepage Travel Plan cards; keep
+  categories, tags, breadcrumbs, and oversized hero panels out of the UI. Open
+  articles in a bilingual reader, preserve shareable story URLs, and keep
+  favorite/view interactions client-side until the backend is connected.
 
 Travel Guide:
 

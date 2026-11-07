@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowRight,
-  BookOpen,
   CalendarDays,
   Clock3,
   Eye,
@@ -350,8 +349,6 @@ async function copyText(value: string): Promise<void> {
 export function BlogsPage() {
   const { language, t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const featuredPost = BLOG_POSTS[0];
-  const featuredCopy = getLocalizedCopy(featuredPost, language);
   const storySlug = searchParams.get('story');
   const selectedPost = BLOG_POSTS.find((post) => post.slug === storySlug) ?? null;
   const countedStoryRef = useRef<string | null>(null);
@@ -468,7 +465,6 @@ export function BlogsPage() {
   const visiblePosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
     return BLOG_POSTS
-      .filter((post) => post.id !== featuredPost.id)
       .filter((post) => {
         if (!normalizedQuery) return true;
         const content = getLocalizedCopy(post, language);
@@ -478,103 +474,10 @@ export function BlogsPage() {
       .sort((a, b) => sortMode === 'popular'
         ? (b.views + (viewIncrements[b.id] ?? 0)) - (a.views + (viewIncrements[a.id] ?? 0))
         : b.publishedAt.localeCompare(a.publishedAt));
-  }, [featuredPost.id, language, query, sortMode, viewIncrements]);
+  }, [language, query, sortMode, viewIncrements]);
 
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-5 sm:pt-8">
-      <div className="mb-5 flex items-center gap-2 text-xs text-text-faint">
-        <span>MH Travel</span>
-        <span aria-hidden="true">/</span>
-        <span className="text-text-secondary">{t('nav_blogs')}</span>
-      </div>
-
-      <section className="relative mb-9 overflow-hidden rounded-2xl border border-border bg-bg-card sm:rounded-[26px]">
-        <div className="pointer-events-none absolute -left-24 -top-28 h-72 w-72 rounded-full bg-brand-blue/10 blur-3xl" />
-        <div className="grid lg:grid-cols-[1.02fr_0.98fr]">
-          <div className="relative z-10 flex flex-col justify-center px-5 py-6 sm:px-7 sm:py-7 lg:px-9 lg:py-9">
-            <p className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-blue sm:text-xs">
-              <span className="h-px w-7 bg-brand-blue" />
-              {t('blog_eyebrow')}
-            </p>
-            <h1 className="max-w-2xl font-serif text-3xl leading-[1.12] text-text-primary sm:text-4xl lg:text-[40px]">
-              {t('blog_title')}
-            </h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-text-muted sm:text-[15px] sm:leading-7">
-              {t('blog_intro')}
-            </p>
-
-            <div className="mt-5 border-t border-border pt-4 sm:mt-6 sm:pt-5">
-              <div className="mb-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-redLight">
-                <BookOpen size={13} />
-                {t('blog_featured_story')}
-              </div>
-              <h2 className="max-w-xl font-serif text-lg leading-snug text-text-primary sm:text-xl">
-                {featuredCopy.title}
-              </h2>
-              <p className="mt-1.5 line-clamp-2 max-w-xl text-xs leading-5 text-text-muted sm:text-[13px]">
-                {featuredCopy.excerpt}
-              </p>
-              <div className="mt-3">
-                <StoryMetrics post={featuredPost} views={viewsFor(featuredPost)} language={language} t={t} />
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => openPost(featuredPost)}
-                  className="inline-flex items-center gap-2 rounded-full bg-brand-red px-4 py-2.5 text-xs font-medium text-white shadow-lg shadow-brand-red/15 transition hover:brightness-110"
-                >
-                  {t('blog_read_story')}
-                  <ArrowRight size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void sharePost(featuredPost)}
-                  aria-label={t('blog_share')}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-brand-blue/50 hover:text-brand-blue"
-                >
-                  <Share2 size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toggleFavorite(featuredPost)}
-                  aria-label={t(isFavorited(featuredPost) ? 'blog_saved' : 'blog_save')}
-                  aria-pressed={isFavorited(featuredPost)}
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-full border border-border transition hover:border-brand-red/50 ${isFavorited(featuredPost) ? 'text-brand-redLight' : 'text-text-secondary hover:text-brand-redLight'}`}
-                >
-                  <Heart size={16} fill={isFavorited(featuredPost) ? 'currentColor' : 'none'} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative min-h-[230px] overflow-hidden bg-bg-cardAlt sm:min-h-[300px] lg:min-h-[440px]">
-            <img
-              src={featuredPost.imageUrl}
-              alt={featuredCopy.title}
-              className="absolute inset-0 h-full w-full object-cover transition duration-700 hover:scale-[1.025]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-black/10" />
-            <div className="absolute left-4 top-4 rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-white backdrop-blur sm:left-6 sm:top-6">
-              {t('blog_featured_story')}
-            </div>
-            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3 sm:bottom-6 sm:left-6 sm:right-6">
-              <div className="rounded-full border border-white/15 bg-black/40 px-3 py-1.5 text-xs text-white backdrop-blur">
-                {featuredPost.location[language]}
-              </div>
-              <button
-                type="button"
-                onClick={() => toggleFavorite(featuredPost)}
-                aria-label={t(isFavorited(featuredPost) ? 'blog_saved' : 'blog_save')}
-                aria-pressed={isFavorited(featuredPost)}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur transition hover:bg-black/65"
-              >
-                <Heart size={17} fill={isFavorited(featuredPost) ? 'currentColor' : 'none'} className={isFavorited(featuredPost) ? 'text-brand-redLight' : ''} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section aria-labelledby="latest-stories-title">
         <div className="mb-5 flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
           <div>
