@@ -25,7 +25,8 @@ import { ListingCard } from '../../components/ui/ListingCard';
 import { fetchMockAd } from '../../data/ads';
 import { BLOG_POSTS, type BlogBlock, type BlogCategory, type BlogPost } from '../../data/blogsData';
 import { ADDITIONAL_BLOG_POSTS } from '../../data/additionalBlogPosts';
-import { POPULAR_HOTELS } from '../../data/cityPageData';
+import { POPULAR_CAFES, POPULAR_HOTELS, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } from '../../data/cityPageData';
+import { ListingGridSection } from '../home/sections/ListingGridSection';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useFavorites } from '../../lib/favorites';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
@@ -388,6 +389,9 @@ export function BlogsPage() {
   const [toast, setToast] = useState('');
   const [locationEnabled, setLocationEnabled] = useState(false);
   const relatedHotels = useToggleFavorite(POPULAR_HOTELS);
+  const topAttractions = useToggleFavorite(TOP_ATTRACTIONS);
+  const restaurants = useToggleFavorite(POPULAR_RESTAURANTS);
+  const cafes = useToggleFavorite(POPULAR_CAFES);
   const { isFavorite, toggleFavorite: toggleSharedFavorite } = useFavorites();
 
   useEffect(() => {
@@ -638,6 +642,33 @@ export function BlogsPage() {
               </div>
             )}
           </section>
+          <ListingGridSection
+            title={t('section_top_attractions')}
+            viewAllHref="/attractions"
+            listings={topAttractions.listings}
+            onToggleFavorite={topAttractions.toggle}
+            columns={5}
+            cardSize="md"
+            singleRow
+          />
+          <ListingGridSection
+            title={t('section_restaurants')}
+            viewAllHref="/restaurants"
+            listings={restaurants.listings}
+            onToggleFavorite={restaurants.toggle}
+            columns={5}
+            cardSize="md"
+            singleRow
+          />
+          <ListingGridSection
+            title={t('section_cafes')}
+            viewAllHref="/cafes"
+            listings={cafes.listings}
+            onToggleFavorite={cafes.toggle}
+            columns={5}
+            cardSize="md"
+            singleRow
+          />
         </>
       )}
 

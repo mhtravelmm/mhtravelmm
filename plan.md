@@ -231,6 +231,10 @@ Blog:
 - Interactions: favorite, share, view count.
 - On phones, place Latest stories and the Newest sort selector on one row,
   with the Search bar directly below; preserve the desktop inline controls.
+- After the Blogs listing's Load More control and before its page-bottom
+  copyright, show Top Attractions, Restaurants, then Cafes as three one-row
+  discovery sections. Reuse Home listings/favorite behavior, and keep the same
+  sections on Home as well.
 - Blogs Page follows the supplied responsive reference: an image-led Myanmar
   editorial hero and visible category filters, using nearly all available
   viewport width with only narrow responsive edge gutters rather than a

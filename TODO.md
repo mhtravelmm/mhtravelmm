@@ -102,6 +102,12 @@
 - [x] Keep each section as one horizontal row: show five cards across on wide screens and allow horizontal swipe scrolling on phones without wrapping to extra rows.
 - [x] Preserve the existing bilingual section titles, view-all destinations, listing-card metrics, and working favorite controls.
 
+## Blogs bottom discovery rows — Complete
+
+- [x] On `/blogs`, after the blog list and Load More control and before copyright, show three one-row sections in this order: Top Attractions, Restaurants, then Cafes.
+- [x] Reuse the existing Home attraction, restaurant, and cafe listings and favorite behavior; keep the same sections on Home and add them to Blogs rather than moving or removing them.
+- [x] Keep each section to one horizontal row, with five cards across on wide screens and phone swipe scrolling without wrapping.
+- [x] Preserve bilingual titles, view-all destinations, listing-card metrics, and favorite controls.
 
 ## Phone Blogs header, sort, and search layout — Complete
 
