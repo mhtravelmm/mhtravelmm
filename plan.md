@@ -219,7 +219,10 @@ Blog:
   metrics still visible. Keep search and sorting, present categories
   independently from SEO tags, and open articles in the bilingual reader with
   shareable story URLs and client-side favorite/view interactions until the
-  backend is connected.
+  backend is connected. The reader's title, author/metadata, excerpt, ads,
+  article text/media, and related content span the available viewport instead
+  of a centered max-width column; keep only small responsive gutters and avoid
+  horizontal overflow on phones.
 
 Travel Guide:
 

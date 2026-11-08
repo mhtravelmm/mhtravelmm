@@ -60,3 +60,10 @@
 - [x] `/blogs` uses nearly all available viewport width with narrow responsive edge gutters, not a restrictive centered max-width or large blank side margins.
 - [x] Every blog post card has a prominent, accessible heart favorite toggle on the image; its state and favorite count update together while share, views, and reading actions remain available.
 - [x] The full-width treatment is limited to `/blogs`, preserves compact phone cards without horizontal overflow, and leaves other routes unchanged.
+
+
+## Full-width Blog article reader — Complete
+
+- [x] When a Blog post opens, its title, author/metadata, excerpt, ads, text blocks, images, and related sections use the available `/blogs` page width; remove restrictive centered max-width wrappers that leave large blank side areas.
+- [x] Keep only small, responsive horizontal gutters so reader text is not confined to the center on desktop, and phone content uses the screen without horizontal scrolling.
+- [x] Preserve the reader's image hero, reading metadata, ad slots, block content, save/share/close controls, related stories, related hotels, and shareable story URL behavior.

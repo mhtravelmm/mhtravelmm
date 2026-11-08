@@ -277,7 +277,7 @@ function StoryReader({
   const copy = getLocalizedCopy(post, language);
 
   return (
-    <section className="mx-auto max-w-5xl overflow-hidden">
+    <section className="w-full max-w-none overflow-hidden">
       <article
         aria-labelledby="blog-reader-title"
         aria-label={t('blog_reader_label')}
@@ -314,18 +314,18 @@ function StoryReader({
         <div className="relative h-48 shrink-0 overflow-hidden bg-bg-cardAlt sm:h-64 md:h-72">
           <img src={post.imageUrl} alt={copy.title} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/10" />
-          <div className="absolute bottom-4 left-5 right-5 sm:bottom-6 sm:left-8 sm:right-8">
+          <div className="absolute bottom-4 left-2 right-2 sm:bottom-6 sm:left-4 sm:right-4">
             <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[11px] text-white backdrop-blur">
               <MapPin size={12} /> {post.location[language]}
             </span>
-            <h2 id="blog-reader-title" className="max-w-3xl font-serif text-2xl leading-tight text-white sm:text-3xl md:text-4xl">
+            <h2 id="blog-reader-title" className="w-full max-w-none font-serif text-2xl leading-tight text-white sm:text-3xl md:text-4xl">
               {copy.title}
             </h2>
           </div>
         </div>
 
-        <div className="px-5 py-6 sm:px-9 sm:py-8">
-          <div className="mx-auto max-w-2xl">
+        <div className="px-2 py-4 sm:px-3 sm:py-5 md:px-4 md:py-6">
+          <div className="w-full max-w-none">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
               <div>
                 <p className="text-sm font-medium text-text-primary">{post.author[language]}</p>
