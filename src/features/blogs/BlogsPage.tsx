@@ -175,6 +175,16 @@ function StoryCard({
         <time dateTime={post.publishedAt} className="absolute right-2 top-2 hidden items-center gap-1 rounded-full border border-white/15 bg-slate-950/65 px-2 py-1 text-[9px] text-white shadow backdrop-blur sm:inline-flex">
           <CalendarDays size={10} />{publishedDate}
         </time>
+        <button
+          type="button"
+          onClick={onToggleFavorite}
+          aria-label={t(isFavorited ? 'blog_saved' : 'blog_save')}
+          aria-pressed={isFavorited}
+          title={t(isFavorited ? 'blog_saved' : 'blog_save')}
+          className={`absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/20 shadow-lg backdrop-blur transition hover:scale-105 sm:h-8 sm:w-8 ${isFavorited ? 'bg-brand-red text-white' : 'bg-slate-950/65 text-white hover:bg-brand-red'}`}
+        >
+          <Heart size={14} fill={isFavorited ? 'currentColor' : 'none'} />
+        </button>
         <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[8px] text-white sm:bottom-2 sm:left-2 sm:text-[9px]">
           <MapPin size={8} />
           {post.location[language]}
@@ -202,15 +212,9 @@ function StoryCard({
 
         <div className="mt-1.5 flex items-center justify-between gap-1 border-t border-border pt-1.5">
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={onToggleFavorite}
-              aria-label={t(isFavorited ? 'blog_saved' : 'blog_save')}
-              aria-pressed={isFavorited}
-              className={`inline-flex items-center gap-1 rounded-lg px-1 py-1 text-[9px] transition hover:bg-brand-red/10 ${isFavorited ? 'text-brand-redLight' : 'text-text-muted'}`}
-            >
+            <span className={`inline-flex items-center gap-1 px-1 py-1 text-[9px] ${isFavorited ? 'text-brand-redLight' : 'text-text-muted'}`}>
               <Heart size={11} fill={isFavorited ? 'currentColor' : 'none'} />{formatCompactCount(favoriteTotal, language)}
-            </button>
+            </span>
             <button type="button" onClick={onShare} aria-label={t('blog_share')} className="flex h-6 w-6 items-center justify-center rounded-lg text-text-muted transition hover:bg-bg-cardAlt hover:text-brand-blue"><Share2 size={11} /></button>
           </div>
           <button type="button" onClick={onOpen} aria-label={`${t('blog_read_story')}: ${copy.title}`} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-blue px-2 py-1 text-[8px] font-semibold text-white transition hover:bg-brand-blueDark sm:px-2.5 sm:text-[9px]">
@@ -505,7 +509,7 @@ export function BlogsPage() {
   const displayedPosts = visiblePosts.slice(0, visibleCount);
 
   return (
-    <div className="mx-auto max-w-7xl pb-8 pt-5 sm:pt-8">
+    <div className="w-full pb-8 pt-3 sm:pt-5">
       {!selectedPost && (
         <>
           <section aria-labelledby="blog-hero-title" className="relative isolate mb-5 flex min-h-[190px] overflow-hidden rounded-2xl border border-border sm:min-h-[210px] lg:min-h-[235px]">

@@ -18,8 +18,21 @@ import { SuperAdminPage } from './features/superAdmin/SuperAdminPage';
 import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { AuthProvider, useAuth } from './lib/auth';
 
-function Shell({ children, showFooter = false }: { children: React.ReactNode; showFooter?: boolean }) {
-  return <div className="min-h-screen bg-bg"><div className="sticky top-0 z-50 border-b border-border bg-bg/95 px-4 backdrop-blur md:px-8"><Header /></div><div className="px-4 py-3 md:px-8"><main>{children}</main>{showFooter && <Footer />}</div></div>;
+function Shell({ children, showFooter = false, fullWidth = false }: { children: React.ReactNode; showFooter?: boolean; fullWidth?: boolean }) {
+  const headerSpacing = fullWidth ? 'px-2 sm:px-3 md:px-4' : 'px-4 md:px-8';
+  const pageSpacing = fullWidth ? 'px-1.5 py-2 sm:px-2 sm:py-3 md:px-3' : 'px-4 py-3 md:px-8';
+
+  return (
+    <div className="min-h-screen bg-bg">
+      <div className={`sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur ${headerSpacing}`}>
+        <Header />
+      </div>
+      <div className={pageSpacing}>
+        <main>{children}</main>
+        {showFooter && <Footer />}
+      </div>
+    </div>
+  );
 }
 
 function PlaceholderPage({ title }: { title: string }) { return <Shell><p className="py-10 text-center text-sm text-text-muted">{title} — coming soon.</p></Shell>; }
@@ -44,7 +57,7 @@ function AppRoutes() {
     <Route path="/ticketing" element={<Shell><TicketingPage /></Shell>} />
     <Route path="/travel-plans" element={<Shell><TravelPlansPage /></Shell>} />
     <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
-    <Route path="/blogs" element={<Shell><BlogsPage /></Shell>} />
+    <Route path="/blogs" element={<Shell fullWidth><BlogsPage /></Shell>} />
     <Route path="/search" element={<PlaceholderPage title="Search" />} />
     <Route path="/account" element={<Shell><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />

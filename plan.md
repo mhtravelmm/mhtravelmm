@@ -209,12 +209,15 @@ Blog:
   from SEO tags. SEO tags remain backend-only and are never shown in the app.
 - Interactions: favorite, share, view count.
 - Blogs Page follows the supplied responsive reference: an image-led Myanmar
-  editorial hero, visible category filters, and compact image-led story cards
-  in a denser desktop grid, with short horizontal cards and narrow thumbnails
-  on phone screens. Keep search and sorting, present categories independently
-  from SEO tags, and open articles in the bilingual reader with shareable story
-  URLs and client-side favorite/view interactions until the backend is
-  connected.
+  editorial hero and visible category filters, using nearly all available
+  viewport width with only narrow responsive edge gutters rather than a
+  restrictive centered max-width. Compact story cards use a denser desktop
+  grid and short horizontal layout on phones. Every card has a prominent,
+  accessible heart toggle on its image, with favorite counts and the other
+  metrics still visible. Keep search and sorting, present categories
+  independently from SEO tags, and open articles in the bilingual reader with
+  shareable story URLs and client-side favorite/view interactions until the
+  backend is connected.
 
 Travel Guide:
 
