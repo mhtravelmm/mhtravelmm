@@ -67,7 +67,7 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
   // Rendered through a portal into <body>: the sticky header uses backdrop-blur,
   // which would otherwise trap a position:fixed drawer inside the header box.
   return createPortal(
-    <div className="fixed inset-x-0 bottom-0 z-40 md:hidden" style={{ top }}>
+    <div className="fixed inset-x-0 bottom-0 z-[60] md:hidden" style={{ top }}>
       <button
         type="button"
         aria-label="Close menu"

@@ -20,7 +20,9 @@ import { AuthProvider, useAuth } from './lib/auth';
 
 function Shell({ children, showFooter = false, fullWidth = false }: { children: React.ReactNode; showFooter?: boolean; fullWidth?: boolean }) {
   const headerSpacing = fullWidth ? 'px-2 sm:px-3 md:px-4' : 'px-4 md:px-8';
-  const pageSpacing = fullWidth ? 'px-1.5 py-2 sm:px-2 sm:py-3 md:px-3' : 'px-4 py-3 md:px-8';
+  const pageSpacing = fullWidth
+    ? 'px-1.5 py-2 pb-[calc(4.25rem_+_env(safe-area-inset-bottom))] sm:px-2 sm:py-3 md:px-3 md:pb-3'
+    : 'px-4 py-3 pb-[calc(4.25rem_+_env(safe-area-inset-bottom))] md:px-8 md:pb-3';
 
   return (
     <div className="flex min-h-screen flex-col bg-bg">

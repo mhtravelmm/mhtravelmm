@@ -67,3 +67,10 @@
 - [x] When a Blog post opens, its title, author/metadata, excerpt, ads, text blocks, images, and related sections use the available `/blogs` page width; remove restrictive centered max-width wrappers that leave large blank side areas.
 - [x] Keep only small, responsive horizontal gutters so reader text is not confined to the center on desktop, and phone content uses the screen without horizontal scrolling.
 - [x] Preserve the reader's image hero, reading metadata, ad slots, block content, save/share/close controls, related stories, related hotels, and shareable story URL behavior.
+
+
+## Persistent phone bottom navigation — Complete
+
+- [x] On phone-sized views, keep a fixed bottom navigation visible on public pages, including Blog article reading, with Home, Nearby, Cities, Rentals, Travel Plans, and More.
+- [x] Highlight the active destination, and make More open the existing mobile sidebar/menu without losing the current route.
+- [x] Reserve safe-area-aware space beneath page content so the bar does not cover Blog text, controls, related stories, or copyright; when the sidebar is open, it layers above the bottom bar.

@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { MobileMenu } from './MobileMenu';
+import { MobileBottomNav } from './MobileBottomNav';
 
 export function NAV_ITEMS_HOOK() {
   const { t } = useLanguage();
@@ -50,6 +51,15 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
     }
     setMobileMenuOpen((open) => !open);
   }
+
+  function openMoreMenu() {
+    if (searchOpen) setSearchOpen(false);
+    if (!mobileMenuOpen) {
+      const wrapper = headerRef.current?.parentElement ?? headerRef.current;
+      if (wrapper) setMenuTop(Math.round(wrapper.getBoundingClientRect().bottom));
+    }
+    setMobileMenuOpen(true);
+  }
   const unreadCount = unreadNotifications ?? notifications.filter((n) => !n.isRead).length;
 
   function markAllRead() {
@@ -81,33 +91,37 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
   // logo stays, nav links hide to make room, closes with Escape/X.
   if (searchOpen) {
     return (
-      <header className="flex items-center gap-3 py-3">
-        <Link to="/" className="hidden shrink-0 text-lg font-medium text-brand-blue sm:block">
-          MH Travel
-        </Link>
-        <form onSubmit={submitSearch} className="flex flex-1 items-center gap-2">
-          <div className="flex flex-1 items-center gap-2 rounded-lg border border-brand-blue bg-bg-card px-3 py-2">
-            <Search size={15} className="shrink-0 text-brand-blue" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Escape' && closeSearch()}
-              placeholder={t('search_placeholder')}
-              className="w-full bg-transparent text-xs text-text-primary placeholder:text-text-faint focus:outline-none"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={closeSearch}
-            aria-label="Close search"
-            className="shrink-0 text-text-secondary hover:text-text-primary transition"
-          >
-            <X size={18} />
-          </button>
-        </form>
-      </header>
+      <>
+        <header ref={headerRef} className="flex items-center gap-3 py-3">
+          <Link to="/" className="hidden shrink-0 text-lg font-medium text-brand-blue sm:block">
+            MH Travel
+          </Link>
+          <form onSubmit={submitSearch} className="flex flex-1 items-center gap-2">
+            <div className="flex flex-1 items-center gap-2 rounded-lg border border-brand-blue bg-bg-card px-3 py-2">
+              <Search size={15} className="shrink-0 text-brand-blue" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Escape' && closeSearch()}
+                placeholder={t('search_placeholder')}
+                className="w-full bg-transparent text-xs text-text-primary placeholder:text-text-faint focus:outline-none"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={closeSearch}
+              aria-label="Close search"
+              className="shrink-0 text-text-secondary hover:text-text-primary transition"
+            >
+              <X size={18} />
+            </button>
+          </form>
+        </header>
+        <MobileBottomNav menuOpen={mobileMenuOpen} onMoreClick={openMoreMenu} />
+        {mobileMenuOpen && <MobileMenu top={menuTop} onClose={() => setMobileMenuOpen(false)} />}
+      </>
     );
   }
 
@@ -209,6 +223,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
         </div>
       </header>
 
+      <MobileBottomNav menuOpen={mobileMenuOpen} onMoreClick={openMoreMenu} />
       {mobileMenuOpen && (
         <MobileMenu top={menuTop} onClose={() => setMobileMenuOpen(false)} />
       )}

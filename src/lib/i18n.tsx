@@ -10,6 +10,9 @@ import type { Language } from '../types';
  */
 const translations = {
   // Header nav
+  nav_home: { mm: 'ပင်မ', en: 'Home' },
+  nav_more: { mm: 'ပိုမို', en: 'More' },
+  nav_mobile: { mm: 'အောက်ခြေ လမ်းညွှန်', en: 'Bottom navigation' },
   nav_cities: { mm: 'မြို့များ', en: 'Cities' },
   nav_nearby: { mm: 'အနီးအနား', en: 'Nearby' },
   nav_rentals: { mm: 'ငှားရမ်းရန်', en: 'Rentals' },
