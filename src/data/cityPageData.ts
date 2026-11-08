@@ -59,6 +59,16 @@ export const POPULAR_RENTALS: CardListing[] = [
   { id: 'pre5', title: 'Motorboat rental', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.3, distanceKm: 5.2, isFavorited: false, views: 1500, href: '/rentals/pre5' },
 ];
 
+/** Expanded Rental-page catalog; the original five POPULAR_RENTALS stay intact for Home/City. */
+export const RENTAL_PAGE_LISTINGS: CardListing[] = [
+  ...POPULAR_RENTALS,
+  { id: 'pre6', title: 'Yangon E-Bike', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.7, distanceKm: 1.2, isFavorited: false, views: 980, href: '/rentals' },
+  { id: 'pre7', title: 'City Scooter', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.6, distanceKm: 1.4, isFavorited: false, views: 875, href: '/rentals' },
+  { id: 'pre8', title: 'Self-drive SUV', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.8, distanceKm: 2.1, isFavorited: false, views: 1120, href: '/rentals' },
+  { id: 'pre9', title: 'Bagan horse carriage', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.5, distanceKm: 2.2, isFavorited: false, views: 760, href: '/rentals' },
+  { id: 'pre10', title: 'Inle camping tent', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.4, distanceKm: 3.2, isFavorited: false, views: 690, href: '/rentals' },
+];
+
 export const POPULAR_TRANSPORT: CardListing[] = [
   { id: 'pt1', title: 'JJ Express', rating: 4.6, distanceKm: 1.0, isFavorited: false, views: 1500, href: '/ticketing/jj-express' },
   { id: 'pt2', title: 'Elite Express', rating: 4.5, distanceKm: 1.4, isFavorited: false, views: 1500, href: '/ticketing/elite-express' },

@@ -5,14 +5,14 @@ import { useFavorites } from '../../lib/favorites';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { BLOGS, POPULARS, TRAVEL_PLANS } from '../../data/homeData';
 import { TRAVEL_GUIDE_STORIES } from '../../data/travelGuideData';
-import { TOP_ATTRACTIONS, POPULAR_CAFES, POPULAR_HOTELS, POPULAR_BOOK_SHOPS, POPULAR_MARKETS, POPULAR_RENTALS, POPULAR_RESTAURANTS, POPULAR_TRANSPORT } from '../../data/cityPageData';
+import { TOP_ATTRACTIONS, POPULAR_CAFES, POPULAR_HOTELS, POPULAR_BOOK_SHOPS, POPULAR_MARKETS, RENTAL_PAGE_LISTINGS, POPULAR_RESTAURANTS, POPULAR_TRANSPORT } from '../../data/cityPageData';
 import type { CardListing } from '../../types';
 
 type FavoriteCategory = 'all' | 'blogs' | 'plans' | 'guides' | 'hotels' | 'restaurants' | 'bookshops' | 'rentals' | 'transport' | 'cafes' | 'markets' | 'attractions';
 
 type FavoriteGroup = { id: FavoriteCategory; label: TranslationKey; listings: CardListing[] };
 
-const ALL_LISTINGS = [...TRAVEL_PLANS, ...TRAVEL_GUIDE_STORIES, ...BLOGS, ...POPULARS, ...TOP_ATTRACTIONS, ...POPULAR_HOTELS, ...POPULAR_RESTAURANTS, ...POPULAR_BOOK_SHOPS, ...POPULAR_RENTALS, ...POPULAR_TRANSPORT, ...POPULAR_CAFES, ...POPULAR_MARKETS];
+const ALL_LISTINGS = [...TRAVEL_PLANS, ...TRAVEL_GUIDE_STORIES, ...BLOGS, ...POPULARS, ...TOP_ATTRACTIONS, ...POPULAR_HOTELS, ...POPULAR_RESTAURANTS, ...POPULAR_BOOK_SHOPS, ...RENTAL_PAGE_LISTINGS, ...POPULAR_TRANSPORT, ...POPULAR_CAFES, ...POPULAR_MARKETS];
 
 const GROUPS: FavoriteGroup[] = [
   { id: 'all', label: 'favorites_all', listings: ALL_LISTINGS },
@@ -22,7 +22,7 @@ const GROUPS: FavoriteGroup[] = [
   { id: 'hotels', label: 'favorites_hotels', listings: POPULAR_HOTELS },
   { id: 'restaurants', label: 'favorites_restaurants', listings: POPULAR_RESTAURANTS },
   { id: 'bookshops', label: 'favorites_bookshops', listings: POPULAR_BOOK_SHOPS },
-  { id: 'rentals', label: 'favorites_rentals', listings: POPULAR_RENTALS },
+  { id: 'rentals', label: 'favorites_rentals', listings: RENTAL_PAGE_LISTINGS },
   { id: 'transport', label: 'favorites_transport', listings: POPULAR_TRANSPORT },
   { id: 'cafes', label: 'favorites_cafes', listings: POPULAR_CAFES },
   { id: 'markets', label: 'favorites_markets', listings: POPULAR_MARKETS },

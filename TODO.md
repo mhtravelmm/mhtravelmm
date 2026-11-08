@@ -41,7 +41,6 @@
 - [x] On phones, the sidebar on every route includes MH Travel and its tagline; Legal and Help/Support items; Navigate links for Cities, Nearby, Rentals, Ticketing, Travel Plans, and Travel Guide; Content/contact details; Myanmar payment options; App Store/Google Play; International payment options; and copyright at the bottom. It stays scrollable. These phone-sidebar sections are not restricted to Home.
 - [x] Standalone admin routes also retain a copyright line at the bottom of their page layouts.
 
-
 ## Traveler account dashboard UI refresh — Complete
 
 - [x] `/account` follows the supplied MH Travel dashboard reference: navy/cyan visual language, traveler profile and account navigation, destination welcome banner, four account stat cards, upcoming trip, quick actions, recent activity, and Myanmar discovery panel; the full desktop footer is Home-only while phone sidebar footer information is global.
@@ -58,13 +57,11 @@
 - [x] A Load More control reveals additional matching stories and resets appropriately when search or category filters change.
 - [x] New Blogs interface text is available in Burmese and English.
 
-
 ## Compact Blogs cards for desktop and phone — Complete
 
 - [x] Reduce oversized story boxes to the tighter proportions of the supplied Blogs reference, using a denser desktop grid and shorter card image/body spacing.
 - [x] Keep phone story cards compact and horizontal with a small thumbnail on the left, readable title/excerpt and category/date on the right, and accessible favorite/share/read controls without horizontal overflow.
 - [x] Preserve category filtering, search, sorting, reader links, bilingual labels, metrics, and the Load More interaction while changing card dimensions.
-
 
 ## Full-width Blogs page and visible favorite button — Complete
 
@@ -72,13 +69,11 @@
 - [x] Every blog post card has a prominent, accessible heart favorite toggle on the image; its state and favorite count update together while share, views, and reading actions remain available.
 - [x] The full-width treatment is limited to `/blogs`, preserves compact phone cards without horizontal overflow, and leaves other routes unchanged.
 
-
 ## Full-width Blog article reader — Complete
 
 - [x] When a Blog post opens, its title, author/metadata, excerpt, ads, text blocks, images, and related sections use the available `/blogs` page width; remove restrictive centered max-width wrappers that leave large blank side areas.
 - [x] Keep only small, responsive horizontal gutters so reader text is not confined to the center on desktop, and phone content uses the screen without horizontal scrolling.
 - [x] Preserve the reader's image hero, reading metadata, ad slots, block content, save/share/close controls, related stories, related hotels, and shareable story URL behavior.
-
 
 ## Persistent phone bottom navigation — Complete
 
@@ -87,7 +82,6 @@
 - [x] Keep exactly Home, Nearby, Ticketing, Travel Plans, and User Account in the bottom bar. Home and User Account are not duplicated as standalone sidebar links; Nearby, Ticketing, and Travel Plans also appear in the requested footer Navigate list, alongside Cities, Rentals, Travel Guide, and Blogs.
 - [x] Reserve safe-area-aware space beneath page content so the bar does not cover Blog text, controls, related stories, or copyright; the existing hamburger continues to open the sidebar.
 - [x] Keep the sidebar panel and backdrop above the bottom bar so all five tabs remain visible and clickable while the sidebar is open; choosing a tab navigates and closes the sidebar.
-
 
 ## Complete footer information in the phone sidebar — Complete
 
@@ -98,13 +92,11 @@
 - [x] Include Myanmar payment options KBZPay, AYA Pay, CB Pay, OK$, UAB Pay, MPU, and mytelpay; Download our app with App Store and Google Play; International payment options Visa, Mastercard, JCB, UnionPay, Amex, Discover, and Apple Pay; place © 2026 MH Travel. All rights reserved. at the end of the sidebar.
 - [x] Keep this phone-sidebar content on every route while preserving the full desktop footer as Home-only and the five-item phone bottom navigation.
 
-
 ## Compact phone Blog category filters — Complete
 
 - [x] On phone, keep the All filter fixed at the left side and put Travel Tips, Nature, Food, Health, Culture, Safety, and Others in one horizontal swipeable row to its right.
 - [x] Use small, compact filter boxes on phone; prevent wrapping into multiple rows, while keeping every category reachable by horizontal scrolling.
 - [x] Leave the desktop filter presentation responsive and preserve selected-category filtering, active state, Burmese/English labels, and the All reset behavior.
-
 
 ## Home bottom discovery rows — Complete
 
@@ -134,3 +126,13 @@
 - [x] After search, show Popular Routes as one row of route/fare cards and Best Deals as compact operator rows with route, times, duration, price, and a working Book Now action.
 - [x] On phones, use a compact hero and stacked search fields, swipeable route cards, and compact deal rows without covering the shared five-tab bottom navigation.
 - [x] Keep Ticketing labels bilingual, highlight the active Ticketing header link, and preserve the rule that full footer content is Home-only while copyright remains global.
+
+## Rentals page reference redesign — Complete
+
+- [x] Match the supplied Rentals design: wide Shwedagon-at-sunset ride hero, Rentals heading, short Myanmar ride copy, and Browse Rentals CTA.
+- [x] Show Bicycle, E-Bike, Motorbike, Scooter, Car with Driver, and Self-drive Car categories; retain city-specific availability and keep Horse Carriage, Camping Tent, Motorboat, and Travel Guide rentals accessible as additional options.
+- [x] Add Search rentals filtering and a Popular Rentals section with the six reference cards, ratings, shared favorite hearts, daily prices, Rent Now actions, and View All affordance; preserve existing rental IDs `pre1`–`pre5` and make any new favorites resolve in Favorites and Account.
+- [x] Keep the existing rental request form usable after a Rent Now action: city and available category selection, start/end date rules (including two-day minimum for cars), citizen/foreigner price, car type, delivery/branch handover, address/phone, estimate, submission feedback, and existing city/category behavior; terms must be accepted before booking submission.
+- [x] Add the Safe & Reliable Rentals banner with Well-Maintained, Affordable Price, and 24/7 Support.
+- [x] On phones, use a compact hero, three-column category tiles, search, compact rental rows/cards and horizontal swipe where appropriate; keep the shared five-tab bottom navigation unobstructed.
+- [x] Keep the Rentals UI bilingual, preserve global copyright on this page, and keep the full footer exclusive to Home.

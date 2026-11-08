@@ -44,7 +44,10 @@ export type ListingCategory =
 
 export type RentalCategory =
   | 'car'
+  | 'self_drive_car'
   | 'motorbike'
+  | 'ebike'
+  | 'scooter'
   | 'motorboat'
   | 'horse_carriage'
   | 'bicycle'

@@ -33,7 +33,7 @@ import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
 import { TRAVEL_PLANS, BLOGS, POPULARS } from '../../data/homeData';
 import { TRAVEL_GUIDE_STORIES } from '../../data/travelGuideData';
-import { TOP_ATTRACTIONS, POPULAR_HOTELS, POPULAR_RESTAURANTS, POPULAR_BOOK_SHOPS, POPULAR_RENTALS, POPULAR_TRANSPORT, POPULAR_CAFES, POPULAR_MARKETS } from '../../data/cityPageData';
+import { TOP_ATTRACTIONS, POPULAR_HOTELS, POPULAR_RESTAURANTS, POPULAR_BOOK_SHOPS, RENTAL_PAGE_LISTINGS, POPULAR_TRANSPORT, POPULAR_CAFES, POPULAR_MARKETS } from '../../data/cityPageData';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 
@@ -67,7 +67,7 @@ const allListings = [
   ...POPULAR_HOTELS,
   ...POPULAR_RESTAURANTS,
   ...POPULAR_BOOK_SHOPS,
-  ...POPULAR_RENTALS,
+  ...RENTAL_PAGE_LISTINGS,
   ...POPULAR_TRANSPORT,
   ...POPULAR_CAFES,
   ...POPULAR_MARKETS,
