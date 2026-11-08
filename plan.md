@@ -108,6 +108,11 @@ footer.
 - Ad slots sit at natural break points between sections.
 - Favorite hearts on cards actually toggle (client-side for now, to be
   backed by Supabase later).
+- Before the Home-only full footer/copyright, place the final discovery rows
+  in this order: Top Attractions, Restaurants, Cafes. Reuse the existing
+  Home listing data and favorite state, move the existing sections rather
+  than duplicate them, and keep each row horizontal on phones with swipe
+  scrolling and five cards across on wide screens.
 - Prices on cards are stored as a USD base value and formatted live by the
   selected currency.
 - All visible text goes through the translation system (EN/MM), including

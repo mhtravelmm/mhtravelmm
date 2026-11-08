@@ -93,3 +93,11 @@
 - [x] On phone, keep the All filter fixed at the left side and put Travel Tips, Nature, Food, Health, Culture, Safety, and Others in one horizontal swipeable row to its right.
 - [x] Use small, compact filter boxes on phone; prevent wrapping into multiple rows, while keeping every category reachable by horizontal scrolling.
 - [x] Leave the desktop filter presentation responsive and preserve selected-category filtering, active state, Burmese/English labels, and the All reset behavior.
+
+
+## Home bottom discovery rows — Complete
+
+- [x] Before the Home footer/copyright, show three one-row listing sections in this order: Top Attractions, Restaurants, then Cafes, after the Home Blogs “View more” section in page flow.
+- [x] Reuse the existing Home attraction, restaurant, and cafe listings and favorite toggles; move those sections to the bottom rather than duplicate their cards elsewhere.
+- [x] Keep each section as one horizontal row: show five cards across on wide screens and allow horizontal swipe scrolling on phones without wrapping to extra rows.
+- [x] Preserve the existing bilingual section titles, view-all destinations, listing-card metrics, and working favorite controls.

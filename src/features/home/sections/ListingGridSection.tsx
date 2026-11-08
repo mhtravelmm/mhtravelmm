@@ -10,6 +10,7 @@ interface ListingGridSectionProps {
   cardSize?: 'sm' | 'md' | 'lg';
   cardVariant?: 'default' | 'guide';
   onToggleFavorite?: (id: string) => void;
+  singleRow?: boolean;
 }
 
 const COLS: Record<number, string> = {
@@ -27,22 +28,31 @@ export function ListingGridSection({
   cardSize = 'md',
   cardVariant = 'default',
   onToggleFavorite,
+  singleRow = false,
 }: ListingGridSectionProps) {
   if (listings.length === 0) return null;
 
   return (
     <section className="mb-5">
       <SectionHeader title={title} viewAllHref={viewAllHref} />
-      <div className={`grid gap-2.5 ${COLS[columns]}`}>
-        {listings.map((listing) => (
-          <ListingCard
-            key={listing.id}
-            listing={listing}
-            size={cardSize}
-            variant={cardVariant}
-            onToggleFavorite={onToggleFavorite}
-          />
-        ))}
+      <div className={singleRow ? 'flex gap-2.5 overflow-x-auto overscroll-x-contain pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:overflow-visible lg:pb-0' : `grid gap-2.5 ${COLS[columns]}`}>
+        {listings.map((listing) => {
+          const card = (
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              size={cardSize}
+              variant={cardVariant}
+              onToggleFavorite={onToggleFavorite}
+            />
+          );
+
+          return singleRow ? (
+            <div key={listing.id} className="w-[68%] min-w-[145px] max-w-[230px] shrink-0 sm:w-[29%] sm:max-w-none lg:w-[calc((100%_-_2.5rem)/5)]">
+              {card}
+            </div>
+          ) : card;
+        })}
       </div>
     </section>
   );
