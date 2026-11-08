@@ -185,7 +185,9 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
           </Link>
         </div>
 
-        {isHomePage && <p className="mt-auto border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">{t('footer_copyright')}</p>}
+        <p className="mt-auto border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">
+          {t('footer_copyright')}
+        </p>
       </div>
     </div>,
     document.body

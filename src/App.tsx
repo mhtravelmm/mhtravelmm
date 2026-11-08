@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Header } from './components/layout/Header';
-import { Footer } from './components/layout/Footer';
+import { Footer, PageCopyright } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
 import { CityPage } from './features/city/CityPage';
 import { BlogsPage } from './features/blogs/BlogsPage';
@@ -23,14 +23,23 @@ function Shell({ children, showFooter = false, fullWidth = false }: { children: 
   const pageSpacing = fullWidth ? 'px-1.5 py-2 sm:px-2 sm:py-3 md:px-3' : 'px-4 py-3 md:px-8';
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="flex min-h-screen flex-col bg-bg">
       <div className={`sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur ${headerSpacing}`}>
         <Header />
       </div>
-      <div className={pageSpacing}>
-        <main>{children}</main>
-        {showFooter && <Footer />}
+      <div className={`${pageSpacing} flex flex-1 flex-col`}>
+        <main className="flex-1">{children}</main>
+        {showFooter ? <div className="hidden md:block"><Footer /></div> : <PageCopyright className="mt-auto hidden md:block" />}
       </div>
+    </div>
+  );
+}
+
+function StandalonePageLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-bg">
+      <main className="flex flex-1 flex-col">{children}</main>
+      <PageCopyright className="mx-4 mb-2 mt-auto md:mx-8" />
     </div>
   );
 }
@@ -62,8 +71,8 @@ function AppRoutes() {
     <Route path="/account" element={<Shell><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
-    <Route path="/admin/login" element={<AdminLoginPage />} />
-    <Route path="/super-admin" element={<RequireSuperAdmin />} />
+    <Route path="/admin/login" element={<StandalonePageLayout><AdminLoginPage /></StandalonePageLayout>} />
+    <Route path="/super-admin" element={<StandalonePageLayout><RequireSuperAdmin /></StandalonePageLayout>} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />

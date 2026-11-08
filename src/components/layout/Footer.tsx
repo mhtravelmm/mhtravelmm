@@ -111,3 +111,14 @@ export function Footer() {
     </footer>
   );
 }
+
+/** A standalone copyright row for the bottom of non-home page layouts. */
+export function PageCopyright({ className = '' }: { className?: string }) {
+  const { t } = useLanguage();
+
+  return (
+    <footer className={`border-t border-border py-2.5 text-center ${className}`}>
+      <p className="text-[9px] text-text-faint">{t('footer_copyright')}</p>
+    </footer>
+  );
+}
