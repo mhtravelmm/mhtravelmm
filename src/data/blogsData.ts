@@ -1,6 +1,7 @@
 import type { CardListing } from '../types';
 
 export type LocalizedText = { en: string; mm: string };
+export type BlogCategory = 'travel_tips' | 'nature' | 'food' | 'health' | 'culture' | 'safety' | 'others';
 
 export type BlogBlock =
   | { type: 'paragraph'; text: LocalizedText }
@@ -9,6 +10,8 @@ export type BlogBlock =
 
 export interface BlogPost extends Omit<CardListing, 'title'> {
   slug: string;
+  category: BlogCategory;
+  favoriteCount: number;
   imageUrl: string;
   location: LocalizedText;
   publishedAt: string;
@@ -24,6 +27,8 @@ export interface BlogPost extends Omit<CardListing, 'title'> {
 export const BLOG_POSTS: BlogPost[] = [
   {
     id: 'blog-bagan-first-light',
+    category: 'travel_tips',
+    favoriteCount: 842,
     slug: 'bagan-first-light',
     imageUrl: '/images/blog/bagan-sunrise.webp',
     location: { en: 'Bagan', mm: 'ပုဂံ' },
@@ -82,6 +87,8 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     id: 'blog-yangon-after-five',
+    category: 'others',
+    favoriteCount: 703,
     slug: 'yangon-after-five',
     imageUrl: '/images/blog/shwedagon-evening.webp',
     location: { en: 'Yangon', mm: 'ရန်ကုန်' },
@@ -132,6 +139,8 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     id: 'blog-inle-slow-water',
+    category: 'nature',
+    favoriteCount: 621,
     slug: 'inle-slow-water',
     imageUrl: '/images/blog/inle-stilt-houses.webp',
     location: { en: 'Inle Lake', mm: 'အင်းလေးကန်' },
@@ -183,6 +192,8 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     id: 'blog-ubein-evening',
+    category: 'culture',
+    favoriteCount: 542,
     slug: 'ubein-evening',
     imageUrl: '/images/blog/ubein-evening.webp',
     location: { en: 'Amarapura', mm: 'အမရပူရ' },

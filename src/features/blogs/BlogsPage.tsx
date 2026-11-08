@@ -1,21 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
+  BookOpen,
   CalendarDays,
   Clock3,
   Eye,
   Heart,
+  Landmark,
+  LayoutGrid,
   MapPin,
+  MoreHorizontal,
+  Mountain,
+  Send,
   Search,
+  ShieldCheck,
   Share2,
   Star,
+  Utensils,
   X,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { AdSlot } from '../../components/ui/AdSlot';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { fetchMockAd } from '../../data/ads';
-import { BLOG_POSTS, type BlogBlock, type BlogPost } from '../../data/blogsData';
+import { BLOG_POSTS, type BlogBlock, type BlogCategory, type BlogPost } from '../../data/blogsData';
+import { ADDITIONAL_BLOG_POSTS } from '../../data/additionalBlogPosts';
 import { POPULAR_HOTELS } from '../../data/cityPageData';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useFavorites } from '../../lib/favorites';
@@ -25,7 +35,21 @@ import type { Language } from '../../types';
 const VIEWS_STORAGE_KEY = 'mh-travel-blog-view-counts';
 
 type SortMode = 'latest' | 'popular';
+type CategoryFilter = 'all' | BlogCategory;
 type Translate = (key: TranslationKey) => string;
+
+const ALL_BLOG_POSTS = [...BLOG_POSTS, ...ADDITIONAL_BLOG_POSTS];
+
+const CATEGORY_FILTERS: { id: CategoryFilter; labelKey: TranslationKey; icon: LucideIcon; tone: string; activeTone: string }[] = [
+  { id: 'all', labelKey: 'blog_category_all', icon: LayoutGrid, tone: 'text-sky-300', activeTone: 'bg-sky-500' },
+  { id: 'travel_tips', labelKey: 'blog_category_travel_tips', icon: Send, tone: 'text-sky-300', activeTone: 'bg-sky-500' },
+  { id: 'nature', labelKey: 'blog_category_nature', icon: Mountain, tone: 'text-emerald-300', activeTone: 'bg-emerald-500' },
+  { id: 'food', labelKey: 'blog_category_food', icon: Utensils, tone: 'text-amber-300', activeTone: 'bg-amber-500' },
+  { id: 'health', labelKey: 'blog_category_health', icon: Heart, tone: 'text-pink-300', activeTone: 'bg-pink-500' },
+  { id: 'culture', labelKey: 'blog_category_culture', icon: Landmark, tone: 'text-yellow-300', activeTone: 'bg-yellow-500' },
+  { id: 'safety', labelKey: 'blog_category_safety', icon: ShieldCheck, tone: 'text-teal-300', activeTone: 'bg-teal-500' },
+  { id: 'others', labelKey: 'blog_category_others', icon: MoreHorizontal, tone: 'text-slate-300', activeTone: 'bg-slate-500' },
+];
 
 function getLocalizedCopy(post: BlogPost, language: Language) {
   return { title: post.title[language], excerpt: post.excerpt[language] };
@@ -72,15 +96,17 @@ function StoryMetrics({
   language,
   t,
   showDistance = true,
+  compact = false,
 }: {
   post: BlogPost;
   views: number;
   language: Language;
   t: Translate;
   showDistance?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-text-muted">
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 text-text-muted ${compact ? 'text-[9px] sm:text-[10px]' : 'text-[11px]'}`}>
       <span className="inline-flex items-center gap-1 text-status-rating" aria-label={`${t('blog_rating')}: ${formatNumber(post.rating, language, 1)}`}>
         <Star size={13} fill="currentColor" />
         <span>{formatNumber(post.rating, language, 1)}</span>
@@ -121,10 +147,15 @@ function StoryCard({
   showDistance: boolean;
 }) {
   const copy = getLocalizedCopy(post, language);
+  const category = CATEGORY_FILTERS.find((item) => item.id === post.category);
+  const CategoryIcon = category?.icon ?? BookOpen;
+  const categoryLabel = category ? t(category.labelKey) : '';
+  const favoriteTotal = post.favoriteCount + (isFavorited ? 1 : 0);
+  const publishedDate = formatDate(post.publishedAt, language);
 
   return (
-    <article className="group overflow-hidden rounded-card border border-border bg-bg-card transition duration-300 hover:brightness-110">
-      <div className="relative h-24 overflow-hidden bg-bg-cardAlt sm:h-28">
+    <article className="group flex min-w-0 overflow-hidden rounded-2xl border border-border bg-bg-card shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-xl hover:shadow-black/15 sm:flex-col">
+      <div className="relative h-[178px] w-[116px] shrink-0 overflow-hidden bg-bg-cardAlt sm:h-44 sm:w-full">
         <button
           type="button"
           onClick={onOpen}
@@ -135,69 +166,60 @@ function StoryCard({
             src={post.imageUrl}
             alt={copy.title}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
           />
         </button>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/70 to-transparent" />
-        <div className="absolute left-3 top-3 flex items-center gap-1">
-          <button
-            type="button"
-            onClick={onToggleFavorite}
-            aria-label={t(isFavorited ? 'blog_saved' : 'blog_save')}
-            aria-pressed={isFavorited}
-            className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
-          >
-            <Heart size={12} fill={isFavorited ? 'currentColor' : 'none'} className={isFavorited ? 'text-brand-redLight' : ''} />
-          </button>
-          <button
-            type="button"
-            onClick={onShare}
-            aria-label={t('blog_share')}
-            className="flex h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white backdrop-blur transition hover:bg-black/70"
-          >
-            <Share2 size={12} />
-          </button>
-        </div>
-        <span className="absolute bottom-1.5 left-2 flex items-center gap-0.5 text-[9px] text-white">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/15" />
+        {category && <span className="absolute left-3 top-3 hidden items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/65 px-2.5 py-1.5 text-[10px] font-semibold text-white shadow backdrop-blur sm:inline-flex">
+          <CategoryIcon size={13} className={category.tone} />{categoryLabel}
+        </span>}
+        <time dateTime={post.publishedAt} className="absolute right-3 top-3 hidden items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/65 px-2.5 py-1.5 text-[10px] text-white shadow backdrop-blur sm:inline-flex">
+          <CalendarDays size={12} />{publishedDate}
+        </time>
+        <span className="absolute bottom-2 left-2 flex items-center gap-1 text-[9px] text-white sm:bottom-3 sm:left-3 sm:text-[10px]">
           <MapPin size={9} />
           {post.location[language]}
         </span>
       </div>
 
-      <div className="p-2">
-        <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[8px] uppercase tracking-[0.05em] text-text-faint">
-          <time dateTime={post.publishedAt} className="inline-flex items-center gap-1.5">
-            <CalendarDays size={9} />
-            {formatDate(post.publishedAt, language)}
-          </time>
-          <span className="inline-flex items-center gap-1.5">
-            <Clock3 size={9} />
-            {getReadTime(post.readMinutes, language, t)}
-          </span>
-        </div>
-
-        <button type="button" onClick={onOpen} className="text-left">
-          <h2 className="line-clamp-1 font-serif text-sm leading-snug text-text-primary transition group-hover:text-brand-blue sm:text-base">
-            {copy.title}
-          </h2>
-        </button>
-        <p className="mt-0.5 line-clamp-1 text-[10px] leading-4 text-text-muted">{copy.excerpt}</p>
-
-        <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-border pt-1.5">
-          <span className="min-w-0 truncate text-[9px] text-text-secondary">
-            {t('blog_author_prefix')} {post.author[language]}
-          </span>
-          <button
-            type="button"
-            onClick={onOpen}
-            className="inline-flex shrink-0 items-center gap-0.5 text-[9px] font-medium text-brand-blue transition hover:text-text-primary"
-          >
-            {t('blog_read_story')}
-            <ArrowRight size={10} />
+      <div className="flex min-w-0 flex-1 flex-col justify-between p-3 sm:p-3.5">
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-1.5 sm:hidden">
+            <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-bg-cardAlt px-2 py-1 text-[9px] font-medium text-text-secondary">
+              <CategoryIcon size={11} className={category?.tone ?? 'text-brand-blue'} /><span className="truncate">{categoryLabel}</span>
+            </span>
+            <time dateTime={post.publishedAt} className="inline-flex shrink-0 items-center gap-1 text-[8px] text-text-faint"><CalendarDays size={10} />{publishedDate}</time>
+          </div>
+          <button type="button" onClick={onOpen} className="text-left">
+            <h2 className="line-clamp-2 font-semibold leading-snug text-text-primary transition group-hover:text-brand-blue sm:text-base">
+              {copy.title}
+            </h2>
           </button>
+          <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-text-muted sm:line-clamp-3 sm:text-xs sm:leading-5">{copy.excerpt}</p>
+          <div className="mt-2 hidden items-center gap-1.5 text-[9px] text-text-faint sm:flex">
+            <Clock3 size={11} />{getReadTime(post.readMinutes, language, t)}<span className="mx-0.5 text-border">·</span>{t('blog_author_prefix')} {post.author[language]}
+          </div>
+          <div className="mt-2">
+            <StoryMetrics post={post} views={views} language={language} t={t} showDistance={showDistance} compact />
+          </div>
         </div>
-        <div className="mt-1.5 border-t border-border pt-1.5">
-          <StoryMetrics post={post} views={views} language={language} t={t} showDistance={showDistance} />
+
+        <div className="mt-2.5 flex items-center justify-between gap-1.5 border-t border-border pt-2">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              aria-label={t(isFavorited ? 'blog_saved' : 'blog_save')}
+              aria-pressed={isFavorited}
+              className={`inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] transition hover:bg-brand-red/10 ${isFavorited ? 'text-brand-redLight' : 'text-text-muted'}`}
+            >
+              <Heart size={13} fill={isFavorited ? 'currentColor' : 'none'} />{formatCompactCount(favoriteTotal, language)}
+            </button>
+            <button type="button" onClick={onShare} aria-label={t('blog_share')} className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition hover:bg-bg-cardAlt hover:text-brand-blue"><Share2 size={13} /></button>
+          </div>
+          <button type="button" onClick={onOpen} aria-label={`${t('blog_read_story')}: ${copy.title}`} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-blue px-2.5 py-1.5 text-[9px] font-semibold text-white transition hover:bg-brand-blueDark sm:px-3 sm:text-[10px]">
+            <span className="hidden sm:inline">{t('blog_read_story')}</span><ArrowRight size={12} />
+          </button>
         </div>
       </div>
     </article>
@@ -356,10 +378,12 @@ export function BlogsPage() {
   const { language, t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const storySlug = searchParams.get('story');
-  const selectedPost = BLOG_POSTS.find((post) => post.slug === storySlug) ?? null;
+  const selectedPost = ALL_BLOG_POSTS.find((post) => post.slug === storySlug) ?? null;
   const countedStoryRef = useRef<string | null>(null);
   const [query, setQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('latest');
+  const [visibleCount, setVisibleCount] = useState(6);
   const [viewIncrements, setViewIncrements] = useState<Record<string, number>>(() => readStoredValue(VIEWS_STORAGE_KEY, {}));
   const [toast, setToast] = useState('');
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -390,7 +414,7 @@ export function BlogsPage() {
       return;
     }
 
-    const post = BLOG_POSTS.find((item) => item.slug === storySlug);
+    const post = ALL_BLOG_POSTS.find((item) => item.slug === storySlug);
     if (!post) {
       setSearchParams((current) => {
         const next = new URLSearchParams(current);
@@ -470,8 +494,9 @@ export function BlogsPage() {
 
   const visiblePosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
-    return BLOG_POSTS
+    return ALL_BLOG_POSTS
       .filter((post) => {
+        if (activeCategory !== 'all' && post.category !== activeCategory) return false;
         if (!normalizedQuery) return true;
         const content = getLocalizedCopy(post, language);
         return [content.title, content.excerpt, post.location[language]]
@@ -480,86 +505,127 @@ export function BlogsPage() {
       .sort((a, b) => sortMode === 'popular'
         ? (b.views + (viewIncrements[b.id] ?? 0)) - (a.views + (viewIncrements[a.id] ?? 0))
         : b.publishedAt.localeCompare(a.publishedAt));
-  }, [language, query, sortMode, viewIncrements]);
+  }, [activeCategory, language, query, sortMode, viewIncrements]);
+  const displayedPosts = visiblePosts.slice(0, visibleCount);
 
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-5 sm:pt-8">
-      {!selectedPost && <section aria-label={t('blog_story_count')}>
-        <div className="mx-auto mb-4 max-w-3xl">
-          <AdSlot placement="blog_listing_banner" fetchAd={fetchMockAd} />
-        </div>
-        <div className="mb-4 flex justify-end">
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <label className="relative block min-w-0 sm:w-64">
-              <span className="sr-only">{t('blog_search_label')}</span>
-              <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" />
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={t('blog_search_placeholder')}
-                aria-label={t('blog_search_label')}
-                className="w-full rounded-full border border-border bg-bg-card py-2.5 pl-9 pr-10 text-xs text-text-primary outline-none transition placeholder:text-text-faint focus:border-brand-blue/70"
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery('')}
-                  aria-label={t('blog_clear_search')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-faint hover:text-text-primary"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </label>
-            <label>
-              <span className="sr-only">{t('blog_sort_label')}</span>
-              <select
-                value={sortMode}
-                onChange={(event) => setSortMode(event.target.value as SortMode)}
-                aria-label={t('blog_sort_label')}
-                className="w-full rounded-full border border-border bg-bg-card px-4 py-2.5 text-xs text-text-secondary outline-none transition focus:border-brand-blue/70 sm:w-auto"
-              >
-                <option value="latest">{t('blog_sort_latest')}</option>
-                <option value="popular">{t('blog_sort_popular')}</option>
-              </select>
-            </label>
-          </div>
-        </div>
+      {!selectedPost && (
+        <>
+          <section aria-labelledby="blog-hero-title" className="relative isolate mb-5 flex min-h-[190px] overflow-hidden rounded-2xl border border-border sm:min-h-[210px] lg:min-h-[235px]">
+            <img src="/images/blog/shwedagon-evening.webp" alt={t('blog_hero_alt')} className="absolute inset-0 -z-20 h-full w-full object-cover object-center" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#04172c]/95 via-[#04172c]/75 to-[#04172c]/15" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#06172c]/45 to-transparent" />
+            <div className="flex max-w-3xl flex-col justify-center p-5 sm:p-7 lg:p-8">
+              <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.19em] text-sky-200 sm:text-xs"><BookOpen size={16} />MH TRAVEL JOURNAL</span>
+              <h1 id="blog-hero-title" className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">{t('blog_page_hero_title')}</h1>
+              <p className="mt-1 text-base font-semibold text-sky-100 sm:text-xl">{t('blog_page_hero_subtitle')}</p>
+              <p className="mt-1 max-w-xl text-[11px] leading-5 text-slate-100/90 sm:text-sm">{t('blog_page_hero_intro')}</p>
+            </div>
+          </section>
 
-        <div className="mb-4 text-xs text-text-faint">
-          {t('blog_story_count').replace('{count}', formatNumber(visiblePosts.length, language))}
-        </div>
+          <section aria-label={t('blog_filter_label')} className="mb-5">
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
+              {CATEGORY_FILTERS.map(({ id, labelKey, icon: Icon, tone, activeTone }) => {
+                const active = activeCategory === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => { setActiveCategory(id); setVisibleCount(6); }}
+                    aria-pressed={active}
+                    className={`inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border px-2.5 py-2 text-[10px] font-medium transition sm:min-h-11 sm:gap-2 sm:px-3.5 sm:text-xs ${active ? `${activeTone} border-transparent text-white shadow-lg shadow-black/10` : 'border-border bg-bg-card text-text-secondary hover:border-brand-blue/50 hover:bg-bg-cardAlt'}`}
+                  >
+                    <Icon size={15} className={active ? 'text-white' : tone} />{t(labelKey)}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-        {visiblePosts.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
-            {visiblePosts.map((post) => (
-              <StoryCard
-                key={post.id}
-                post={post}
-                language={language}
-                t={t}
-                views={viewsFor(post)}
-                isFavorited={isFavorited(post)}
-                onOpen={() => openPost(post)}
-                onToggleFavorite={() => toggleFavorite(post)}
-                onShare={() => void sharePost(post)}
-                showDistance={locationEnabled}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-bg-card/50 px-5 text-center">
-            <Search size={22} className="mb-3 text-text-faint" />
-            <p className="text-sm text-text-secondary">{t('blog_no_results')}</p>
-            {query && (
-              <button type="button" onClick={() => setQuery('')} className="mt-3 text-xs text-brand-blue hover:underline">
-                {t('blog_clear_search')}
-              </button>
+          <section aria-label={t('blog_story_count')}>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-text-primary sm:text-xl">{t('blog_latest_title')}</h2>
+                <p className="mt-0.5 text-[10px] text-text-faint sm:text-xs">{t('blog_story_count').replace('{count}', formatNumber(visiblePosts.length, language))}</p>
+              </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <label className="relative block min-w-0 sm:w-64">
+                  <span className="sr-only">{t('blog_search_label')}</span>
+                  <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => { setQuery(event.target.value); setVisibleCount(6); }}
+                    placeholder={t('blog_search_placeholder')}
+                    aria-label={t('blog_search_label')}
+                    className="w-full rounded-full border border-border bg-bg-card py-2.5 pl-9 pr-10 text-xs text-text-primary outline-none transition placeholder:text-text-faint focus:border-brand-blue/70"
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={() => { setQuery(''); setVisibleCount(6); }}
+                      aria-label={t('blog_clear_search')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-faint hover:text-text-primary"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </label>
+                <label>
+                  <span className="sr-only">{t('blog_sort_label')}</span>
+                  <select
+                    value={sortMode}
+                    onChange={(event) => { setSortMode(event.target.value as SortMode); setVisibleCount(6); }}
+                    aria-label={t('blog_sort_label')}
+                    className="w-full rounded-full border border-border bg-bg-card px-4 py-2.5 text-xs text-text-secondary outline-none transition focus:border-brand-blue/70 sm:w-auto"
+                  >
+                    <option value="latest">{t('blog_sort_latest')}</option>
+                    <option value="popular">{t('blog_sort_popular')}</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            {displayedPosts.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
+                {displayedPosts.map((post) => (
+                  <StoryCard
+                    key={post.id}
+                    post={post}
+                    language={language}
+                    t={t}
+                    views={viewsFor(post)}
+                    isFavorited={isFavorited(post)}
+                    onOpen={() => openPost(post)}
+                    onToggleFavorite={() => toggleFavorite(post)}
+                    onShare={() => void sharePost(post)}
+                    showDistance={locationEnabled}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-bg-card/50 px-5 text-center">
+                <Search size={22} className="mb-3 text-text-faint" />
+                <p className="text-sm text-text-secondary">{t('blog_no_results')}</p>
+                {query && (
+                  <button type="button" onClick={() => { setQuery(''); setVisibleCount(6); }} className="mt-3 text-xs text-brand-blue hover:underline">
+                    {t('blog_clear_search')}
+                  </button>
+                )}
+              </div>
             )}
-          </div>
-        )}
-      </section>}
+
+            {visiblePosts.length > displayedPosts.length && (
+              <div className="mt-6 flex justify-center">
+                <button type="button" onClick={() => setVisibleCount((count) => count + 6)} className="inline-flex items-center gap-2 rounded-full bg-brand-blue px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-brand-blue/20 transition hover:-translate-y-0.5 hover:bg-brand-blueDark">
+                  {t('blog_load_more')}<ArrowRight size={14} className="rotate-90" />
+                </button>
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
       {toast && (
         <div role="status" className="fixed bottom-5 left-1/2 z-[120] -translate-x-1/2 rounded-full border border-border bg-bg-card px-4 py-2.5 text-xs text-text-primary shadow-xl">
@@ -583,8 +649,8 @@ export function BlogsPage() {
           <section className="mt-10 border-t border-border pt-6" aria-labelledby="related-stories-title">
             <h2 id="related-stories-title" className="mb-3 text-base font-medium text-text-primary">{t('blog_related_stories')}</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {BLOG_POSTS.filter((post) => post.id !== selectedPost.id && post.location[language] === selectedPost.location[language]).concat(
-                BLOG_POSTS.filter((post) => post.id !== selectedPost.id && post.location[language] !== selectedPost.location[language]),
+              {ALL_BLOG_POSTS.filter((post) => post.id !== selectedPost.id && post.location[language] === selectedPost.location[language]).concat(
+                ALL_BLOG_POSTS.filter((post) => post.id !== selectedPost.id && post.location[language] !== selectedPost.location[language]),
               ).slice(0, 3).map((post) => (
                 <StoryCard
                   key={post.id}

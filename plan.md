@@ -205,14 +205,15 @@ Blog:
 - Written by Admin or Blog Post Admin. No per-post payout at launch.
 - Block-based editor mixing text, images and ad blocks. Title and body are
   dual-language (MM/EN).
-- No user-facing categories or tags. A backend-only SEO tag field feeds
-  search engines and is never shown in the app.
+- Editorial categories are visible filter controls in the Blogs page, separate
+  from SEO tags. SEO tags remain backend-only and are never shown in the app.
 - Interactions: favorite, share, view count.
-- Blogs Page implementation: use a searchable latest-story list with compact,
-  image-led story cards sized close to the homepage Travel Plan cards; keep
-  categories, tags, breadcrumbs, and oversized hero panels out of the UI. Open
-  articles in a bilingual reader, preserve shareable story URLs, and keep
-  favorite/view interactions client-side until the backend is connected.
+- Blogs Page follows the supplied responsive reference: an image-led Myanmar
+  editorial hero, visible category filters, and image-rich story cards on
+  desktop with compact horizontal cards on mobile. Keep search and sorting,
+  present categories independently from SEO tags, and open articles in the
+  bilingual reader with shareable story URLs and client-side favorite/view
+  interactions until the backend is connected.
 
 Travel Guide:
 

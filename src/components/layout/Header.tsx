@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, Globe, DollarSign, Moon, Sun, Heart, Bell, Menu, X } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
@@ -29,6 +29,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
   const { isAuthenticated, isSuperAdmin } = useAuth();
   const navItems = NAV_ITEMS_HOOK();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -133,15 +134,19 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
         </div>
 
         <nav className="hidden gap-4 md:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className="text-xs text-text-secondary hover:text-text-primary transition"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const active = location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={`rounded-full px-2.5 py-1.5 text-xs transition ${active ? 'bg-brand-blue text-white shadow-sm shadow-brand-blue/30' : 'text-text-secondary hover:text-text-primary'}`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-3">

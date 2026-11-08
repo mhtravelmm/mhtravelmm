@@ -3,11 +3,11 @@
 ## Blogs page and article reading experience — Complete
 
 - [x] Blog titles and bodies are available in both Myanmar and English.
-- [x] The Blogs experience shows no user-facing categories or tags; SEO tags remain backend-only and are not displayed in the app.
+- [x] Blogs shows editorial article categories as user-facing filters, separate from backend-only SEO tags, which are not displayed in the app.
 - [x] Readers can favorite, share, and see view counts for blog posts.
 - [x] Every blog content card shows rating, distance, favorite state, and views.
-- [x] Latest-story cards use a compact image-led layout with tighter spacing and readable summaries.
-- [x] Blogs uses the shared header and the copyright-only inner-page footer.
+- [x] Story cards use an image-led layout with readable summaries and activity metrics.
+- [x] Blogs uses the shared header and full footer shown in the supplied reference.
 
 ## Traveler authentication and Super Admin control center — Frontend complete
 
@@ -30,3 +30,12 @@
 - [x] The dashboard adapts to mobile widths with compact profile/navigation and stacked or compact card layouts while keeping account destinations accessible.
 - [x] Existing account destinations, favorite toggling, notification links, settings/support views, profile edit entry, and logout behavior remain usable.
 - [x] New account dashboard interface text is available in both Burmese and English.
+
+## Blogs page responsive reference refresh — Complete
+
+- [x] `/blogs` follows the supplied MH Travel reference with a Shwedagon-at-dusk hero, bilingual blog heading/subheading, editorial category filters for All, Travel Tips, Nature, Food, Health, Culture, Safety, and Others, a responsive story-card layout, and the full footer.
+- [x] Category chips filter by explicit editorial category; they do not expose or reuse backend-only `seoTags`.
+- [x] Desktop shows an image-led multi-column card grid; mobile uses compact horizontal story cards and a compact category grid.
+- [x] Story cards retain date, category, title, excerpt, reading/view/favorite metrics, favorite toggle, share action, and reader entry. Search, sorting, shareable story URLs, bilingual reader, and related content continue to work.
+- [x] A Load More control reveals additional matching stories and resets appropriately when search or category filters change.
+- [x] New Blogs interface text is available in Burmese and English.
