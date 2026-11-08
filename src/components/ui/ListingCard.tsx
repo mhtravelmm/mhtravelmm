@@ -21,7 +21,8 @@ interface ListingCardProps {
  */
 export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 'default' }: ListingCardProps) {
   const { formatPrice } = useCurrency();
-  const { toggleFavorite } = useFavorites();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favoriteState = onToggleFavorite ? listing.isFavorited : isFavorite(listing.id, listing.isFavorited);
   const imageHeight = size === 'sm' ? 'h-11' : size === 'lg' ? 'h-28 md:h-32' : 'h-[70px] md:h-[90px]';
   const titleSize = size === 'sm' ? 'text-[10px]' : size === 'lg' ? 'text-sm md:text-base' : 'text-xs md:text-sm';
   const isGuide = variant === 'guide';
@@ -53,13 +54,13 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
             if (onToggleFavorite) onToggleFavorite(listing.id);
             else toggleFavorite(listing.id, listing.isFavorited);
           }}
-          aria-label={listing.isFavorited ? 'Remove from favorites' : 'Save to favorites'}
+          aria-label={favoriteState ? 'Remove from favorites' : 'Save to favorites'}
           className={`absolute ${isGuide ? 'right-0.5 top-0.5' : 'right-1.5 top-1.5'} flex h-4 w-4 items-center justify-center rounded-full bg-white`}
         >
           <Heart
             size={9}
-            className={listing.isFavorited ? 'text-brand-red' : 'text-brand-red/70'}
-            fill={listing.isFavorited ? 'currentColor' : 'none'}
+            className={favoriteState ? 'text-brand-red' : 'text-brand-red/70'}
+            fill={favoriteState ? 'currentColor' : 'none'}
           />
         </button>
 

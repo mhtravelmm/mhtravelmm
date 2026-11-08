@@ -15,6 +15,7 @@ import { TicketingPage } from './features/ticketing/TicketingPage';
 import { AuthPage } from './features/auth/AuthPage';
 import { AdminLoginPage } from './features/auth/AdminLoginPage';
 import { SuperAdminPage } from './features/superAdmin/SuperAdminPage';
+import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { AuthProvider, useAuth } from './lib/auth';
 
 function Shell({ children, footerVariant = 'minimal' }: { children: React.ReactNode; footerVariant?: 'full' | 'minimal' }) {
@@ -52,7 +53,7 @@ function AppRoutes() {
     <Route path="/super-admin" element={<RequireSuperAdmin />} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
-    <Route path="/favorites" element={<PlaceholderPage title="Favorites" />} />
+    <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />
     <Route path="*" element={<PlaceholderPage title="Not found" />} />
   </Routes>;
 }
