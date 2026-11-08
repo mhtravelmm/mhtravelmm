@@ -23,24 +23,24 @@
 - [x] Supabase `public.profiles` table is created with unique usernames, display names, role checks, avatar metadata, timestamps, signup trigger, and Row Level Security policies.
 - [ ] Configure Google and Facebook OAuth provider credentials and callback URLs in Supabase Auth.
 
-## Home-only full footer and global copyright — Complete
+## Home-only desktop full footer and global copyright — Complete
 
 - [x] On desktop, the full footer with MH Travel branding, social links, legal/help/navigation/contact columns, payment options, app-store links, and copyright is rendered on Home only. Other pages have no full footer.
 - [x] On desktop, every page has the copyright line at the bottom; Home uses the copyright row in its full footer without a duplicate, and every other page shows a copyright-only strip.
-- [x] On phones, copyright is anchored at the bottom of the mobile sidebar on every standard route. The page-flow full/copyright footer is hidden; Home-only Legal, Help/Support, payment and app-download sections remain limited to Home's mobile drawer.
+- [x] On phones, the sidebar on every route includes MH Travel and its tagline; Legal and Help/Support items; Navigate links for Cities, Nearby, Rentals, Ticketing, Travel Plans, and Travel Guide; Content/contact details; Myanmar payment options; App Store/Google Play; International payment options; and copyright at the bottom. It stays scrollable. These phone-sidebar sections are not restricted to Home.
 - [x] Standalone admin routes also retain a copyright line at the bottom of their page layouts.
 
 
 ## Traveler account dashboard UI refresh — Complete
 
-- [x] `/account` follows the supplied MH Travel dashboard reference: navy/cyan visual language, traveler profile and account navigation, destination welcome banner, four account stat cards, upcoming trip, quick actions, recent activity, and Myanmar discovery panel; the full footer is Home-only and account shows only the global copyright placement.
+- [x] `/account` follows the supplied MH Travel dashboard reference: navy/cyan visual language, traveler profile and account navigation, destination welcome banner, four account stat cards, upcoming trip, quick actions, recent activity, and Myanmar discovery panel; the full desktop footer is Home-only while phone sidebar footer information is global.
 - [x] The dashboard adapts to mobile widths with compact profile/navigation and stacked or compact card layouts while keeping account destinations accessible.
 - [x] Existing account destinations, favorite toggling, notification links, settings/support views, profile edit entry, and logout behavior remain usable.
 - [x] New account dashboard interface text is available in both Burmese and English.
 
 ## Blogs page responsive reference refresh — Complete
 
-- [x] `/blogs` follows the supplied MH Travel reference with a Shwedagon-at-dusk hero, bilingual blog heading/subheading, editorial category filters for All, Travel Tips, Nature, Food, Health, Culture, Safety, and Others, and a responsive story-card layout; the full footer is Home-only and Blogs shows only the global copyright placement.
+- [x] `/blogs` follows the supplied MH Travel reference with a Shwedagon-at-dusk hero, bilingual blog heading/subheading, editorial category filters for All, Travel Tips, Nature, Food, Health, Culture, Safety, and Others, and a responsive story-card layout; the full desktop footer is Home-only while phone sidebar footer information is global.
 - [x] Category chips filter by explicit editorial category; they do not expose or reuse backend-only `seoTags`.
 - [x] Desktop shows an image-led multi-column card grid; mobile uses compact horizontal story cards and a compact category grid.
 - [x] Story cards retain date, category, title, excerpt, reading/view/favorite metrics, favorite toggle, share action, and reader entry. Search, sorting, shareable story URLs, bilingual reader, and related content continue to work.
@@ -73,5 +73,15 @@
 
 - [x] On phone-sized public pages, including Blog article reading, show exactly five fixed bottom tabs: Home, Nearby, Ticketing, Travel Plans, and User Account.
 - [x] Highlight the active destination; User Account opens the signed-in account or admin destination, and opens login when signed out.
-- [x] Do not duplicate Home, Nearby, Ticketing, Travel Plans, or User Account in the mobile sidebar. Keep the remaining destinations, Favorites, language/currency/theme controls, and Home-only footer sections in the sidebar.
+- [x] Keep exactly Home, Nearby, Ticketing, Travel Plans, and User Account in the bottom bar. Home and User Account are not duplicated as standalone sidebar links; Nearby, Ticketing, and Travel Plans also appear in the requested footer Navigate list, alongside Cities, Rentals, Travel Guide, and Blogs.
 - [x] Reserve safe-area-aware space beneath page content so the bar does not cover Blog text, controls, related stories, or copyright; the existing hamburger continues to open the sidebar.
+
+
+## Complete footer information in the phone sidebar — Complete
+
+- [x] On every phone route, show MH Travel and “Your trusted companion to explore the beauty of Myanmar. Available 24/7.” in the scrollable sidebar.
+- [x] Include Legal: Privacy policy, Terms of use, Terms and conditions, DMCA policy, Disclaimer, Cookie policy, and Sitemap; include Help and support: FAQ, Contact form, Feedback, and Report content.
+- [x] Include Navigate links for Cities, Nearby, Rentals, Ticketing, Travel plans, and Travel guide; retain Blogs and the existing Favorites and language/currency/theme controls.
+- [x] Include Content contact details: info@mhtravelmm.com, Facebook page, Telegram, Viber, and +95 9 400 686 925.
+- [x] Include Myanmar payment options KBZPay, AYA Pay, CB Pay, OK$, UAB Pay, MPU, and mytelpay; Download our app with App Store and Google Play; International payment options Visa, Mastercard, JCB, UnionPay, Amex, Discover, and Apple Pay; place © 2026 MH Travel. All rights reserved. at the end of the sidebar.
+- [x] Keep this phone-sidebar content on every route while preserving the full desktop footer as Home-only and the five-item phone bottom navigation.

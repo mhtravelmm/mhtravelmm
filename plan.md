@@ -72,16 +72,19 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   read and navigates, "See all" link, closes on outside click.
 - Mobile/tablet: a hamburger menu opens a partial-width sidebar drawer, so
   a strip of the page stays visible on the right with a divider line (not a
-  full opaque overlay). The drawer holds nav links, Favorite, Language,
-  Currency, Theme, and Login/Registration. Legal links, Help and Support,
-  payment method icons, and App Store/Google Play appear in the drawer only on
-  Home; the copyright line stays at the drawer bottom on every route.
+  full opaque overlay). On every route the phone drawer holds the MH Travel
+  tagline; complete Legal, Help and Support, Navigate, and Content/contact
+  sections; Myanmar and international payment options; App Store/Google Play;
+  Favorites, language/currency/theme controls, and copyright. The Navigate
+  list includes Cities, Nearby, Rentals, Ticketing, Travel Plans, Travel
+  Guide, and the existing Blogs shortcut. The drawer remains scrollable and
+  ends with the copyright line.
 - Phone views keep a fixed bottom navigation visible on every public page,
   including Blog reading, with exactly Home, Nearby, Ticketing, Travel Plans,
-  and User Account. These five destinations belong in the bottom bar rather
-  than being repeated in the sidebar. The hamburger continues to open the
-  sidebar for remaining destinations, Favorites and settings; content reserves
-  bottom safe-area space so the bar does not cover reading text.
+  and User Account. The phone drawer may also contain Nearby, Ticketing, and
+  Travel Plans under its requested Navigate section, but Home and User Account
+  remain only in the bottom bar. Content reserves bottom safe-area space so the
+  bar does not cover reading text.
 - On desktop the Home Page alone renders the full shared footer, including its
   copyright row. Every other page renders only the copyright line at the
   bottom. On phones, the page-flow footer is hidden and copyright is placed at
