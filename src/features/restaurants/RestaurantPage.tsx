@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useCurrency } from '../../lib/currency';
 import { useLanguage } from '../../lib/i18n';
+import { useFavorites } from '../../lib/favorites';
 
 const PHOTO_ASSETS = [
   '/images/blog/shwedagon-evening.webp',
@@ -51,7 +52,8 @@ const AMENITIES = [
 export function RestaurantPage() {
   const { t } = useLanguage();
   const { formatPrice } = useCurrency();
-  const [saved, setSaved] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const saved = isFavorite('pr1');
   const [activeTab, setActiveTab] = useState<'food' | 'drinks' | 'photos' | 'reviews'>('food');
   const [menuCategory, setMenuCategory] = useState('All dishes');
 
@@ -93,7 +95,7 @@ export function RestaurantPage() {
               </div>
               <p className="mt-2 max-w-xl text-xs leading-5 text-white/80 sm:text-sm">{t('restaurant_description')}</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" onClick={() => setSaved((value) => !value)} className="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-2 text-xs font-medium text-slate-900"><Heart size={14} fill={saved ? 'currentColor' : 'none'} /> {saved ? t('restaurant_saved') : t('restaurant_save')}</button>
+                <button type="button" onClick={() => toggleFavorite('pr1')} className="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-2 text-xs font-medium text-slate-900"><Heart size={14} fill={saved ? 'currentColor' : 'none'} /> {saved ? t('restaurant_saved') : t('restaurant_save')}</button>
                 <button type="button" className="inline-flex items-center gap-1.5 rounded-md bg-brand-blue px-3 py-2 text-xs font-medium text-white"><Navigation size={14} /> {t('restaurant_directions')}</button>
                 <button type="button" className="inline-flex items-center gap-1.5 rounded-md bg-brand-red px-3 py-2 text-xs font-medium text-white"><Phone size={14} /> {t('restaurant_call')}</button>
               </div>

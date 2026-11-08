@@ -149,6 +149,7 @@ const translations = {
   account_bookings_intro: { mm: 'သင့် booking များနဲ့ လက်ရှိအခြေအနေများကို ကြည့်ပါ။', en: 'View your bookings and their current status.' },
   account_plans_intro: { mm: 'သင်ဆွဲထားသော Custom Plans များကို စီမံပါ။', en: 'Manage the custom travel plans you have created.' },
   account_favorites_intro: { mm: 'နောက်မှပြန်ကြည့်ရန် သိမ်းထားသောနေရာများ။', en: 'Places and plans you saved for later.' },
+  account_no_favorites: { mm: 'အကြိုက်ဆုံးအဖြစ် သိမ်းထားတာ မရှိသေးပါ။', en: 'You have not saved any favorites yet.' },
   account_reviews_intro: { mm: 'သင်ရေးထားသော reviews များကို စီမံပါ။', en: 'Manage the reviews you have written.' },
   account_messages_intro: { mm: 'MH Travel နဲ့ ဆက်သွယ်ထားသော စာများ။', en: 'Messages and updates from MH Travel.' },
   account_message_sample: { mm: 'သင့် Custom Plan request ကို လက်ခံရရှိပါပြီ။ Quotation ပြင်ဆင်ပြီး သင့်ထံ ပြန်လည်ဆက်သွယ်ပေးပါမယ်။', en: 'We received your Custom Plan request. We will prepare the quotation and contact you shortly.' },

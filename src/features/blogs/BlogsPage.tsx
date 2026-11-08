@@ -18,10 +18,10 @@ import { fetchMockAd } from '../../data/ads';
 import { BLOG_POSTS, type BlogBlock, type BlogPost } from '../../data/blogsData';
 import { POPULAR_HOTELS } from '../../data/cityPageData';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
+import { useFavorites } from '../../lib/favorites';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import type { Language } from '../../types';
 
-const FAVORITES_STORAGE_KEY = 'mh-travel-blog-favorite-overrides';
 const VIEWS_STORAGE_KEY = 'mh-travel-blog-view-counts';
 
 type SortMode = 'latest' | 'popular';
@@ -360,11 +360,11 @@ export function BlogsPage() {
   const countedStoryRef = useRef<string | null>(null);
   const [query, setQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('latest');
-  const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>(() => readStoredValue(FAVORITES_STORAGE_KEY, {}));
   const [viewIncrements, setViewIncrements] = useState<Record<string, number>>(() => readStoredValue(VIEWS_STORAGE_KEY, {}));
   const [toast, setToast] = useState('');
   const [locationEnabled, setLocationEnabled] = useState(false);
   const relatedHotels = useToggleFavorite(POPULAR_HOTELS);
+  const { isFavorite, toggleFavorite: toggleSharedFavorite } = useFavorites();
 
   useEffect(() => {
     if (!navigator.geolocation || !navigator.permissions) return;
@@ -379,10 +379,6 @@ export function BlogsPage() {
     });
     return () => { cancelled = true; };
   }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoriteOverrides));
-  }, [favoriteOverrides]);
 
   useEffect(() => {
     window.localStorage.setItem(VIEWS_STORAGE_KEY, JSON.stringify(viewIncrements));
@@ -432,7 +428,7 @@ export function BlogsPage() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  const isFavorited = (post: BlogPost) => favoriteOverrides[post.id] ?? post.isFavorited;
+  const isFavorited = (post: BlogPost) => isFavorite(post.id, post.isFavorited);
   const viewsFor = (post: BlogPost) => post.views + (viewIncrements[post.id] ?? 0);
 
   function openPost(post: BlogPost) {
@@ -448,10 +444,7 @@ export function BlogsPage() {
   }
 
   function toggleFavorite(post: BlogPost) {
-    setFavoriteOverrides((current) => ({
-      ...current,
-      [post.id]: !(current[post.id] ?? post.isFavorited),
-    }));
+    toggleSharedFavorite(post.id, post.isFavorited);
   }
 
   async function sharePost(post: BlogPost) {

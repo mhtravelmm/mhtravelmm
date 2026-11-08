@@ -21,7 +21,8 @@ import {
 import { useLanguage } from '../../lib/i18n';
 import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
-import { TRAVEL_PLANS, BLOGS } from '../../data/homeData';
+import { TRAVEL_PLANS, TRAVEL_GUIDES, BLOGS, POPULARS } from '../../data/homeData';
+import { TOP_ATTRACTIONS, POPULAR_HOTELS, POPULAR_RESTAURANTS, POPULAR_BOOK_SHOPS, POPULAR_RENTALS, POPULAR_TRANSPORT, POPULAR_CAFES, POPULAR_MARKETS } from '../../data/cityPageData';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 
@@ -43,7 +44,7 @@ export function AccountPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<DashboardView>('overview');
-  const favorites = useToggleFavorite([...TRAVEL_PLANS, ...BLOGS]);
+  const favorites = useToggleFavorite([...TRAVEL_PLANS, ...TRAVEL_GUIDES, ...BLOGS, ...POPULARS, ...TOP_ATTRACTIONS, ...POPULAR_HOTELS, ...POPULAR_RESTAURANTS, ...POPULAR_BOOK_SHOPS, ...POPULAR_RENTALS, ...POPULAR_TRANSPORT, ...POPULAR_CAFES, ...POPULAR_MARKETS]);
 
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-2 sm:pt-4">
@@ -99,7 +100,7 @@ function NotificationPreview() {
 function Bookings() { const { t } = useLanguage(); return <PagePanel title={t('account_bookings')} intro={t('account_bookings_intro')}><div className="space-y-2"><BookingRow title="The Rangoon House" date="18 Nov 2026" status={t('account_confirmed')} /><BookingRow title="Sedona Hotel Yangon" date="02 Dec 2026" status={t('account_completed')} /></div></PagePanel>; }
 function BookingRow({ title, date, status }: { title: string; date: string; status: string }) { return <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-bg-cardAlt p-3"><div><p className="text-xs font-medium text-text-primary">{title}</p><p className="mt-1 text-[10px] text-text-muted">{date} · 2 guests</p></div><span className="rounded-full bg-status-successBg px-2 py-1 text-[9px] text-status-success">{status}</span></div>; }
 function Plans() { const { t } = useLanguage(); return <PagePanel title={t('account_plans')} intro={t('account_plans_intro')}><div className="rounded-md border border-brand-blue/20 bg-brand-blue/10 p-3"><p className="text-sm font-medium text-text-primary">Yangon → Bagan → Inle Lake</p><p className="mt-1 text-[10px] text-text-muted">7 days · 2 travelers · Myanmar citizen · Hotel selection later</p><div className="mt-3 flex items-center gap-2 text-[10px] text-status-warning"><WalletCards size={13} />{t('account_quotation_pending')}</div></div></PagePanel>; }
-function Favorites({ listings, toggle }: { listings: typeof TRAVEL_PLANS; toggle: (id: string) => void }) { const { t } = useLanguage(); return <PagePanel title={t('account_favorites')} intro={t('account_favorites_intro')}><div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">{listings.slice(0, 6).map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggle} size="md" />)}</div></PagePanel>; }
+function Favorites({ listings, toggle }: { listings: typeof TRAVEL_PLANS; toggle: (id: string) => void }) { const { t } = useLanguage(); const saved = listings.filter((listing) => listing.isFavorited); return <PagePanel title={t('account_favorites')} intro={t('account_favorites_intro')}>{saved.length > 0 ? <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">{saved.map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggle} size="md" />)}</div> : <div className="rounded-md border border-dashed border-border p-8 text-center text-xs text-text-muted">{t('account_no_favorites')}</div>}</PagePanel>; }
 function Reviews() { const { t } = useLanguage(); return <PagePanel title={t('account_reviews')} intro={t('account_reviews_intro')}><div className="space-y-2"><ReviewRow title="The Rangoon House" text="Amazing atmosphere, delicious food and great service!" /><ReviewRow title="Bagan at first light" text="A peaceful and memorable morning in Bagan." /></div></PagePanel>; }
 function ReviewRow({ title, text }: { title: string; text: string }) { return <div className="rounded-md border border-border bg-bg-cardAlt p-3"><div className="flex items-center justify-between"><p className="text-xs font-medium text-text-primary">{title}</p><span className="text-status-rating">★★★★★</span></div><p className="mt-1 text-[10px] text-text-muted">{text}</p></div>; }
 function Messages() { const { t } = useLanguage(); return <PagePanel title={t('account_messages')} intro={t('account_messages_intro')}><div className="rounded-md border border-border bg-bg-cardAlt p-3"><div className="flex gap-2"><MessageCircle size={15} className="text-brand-blue" /><div><p className="text-xs font-medium text-text-primary">MH Travel Support</p><p className="mt-1 text-[10px] leading-4 text-text-muted">{t('account_message_sample')}</p></div></div></div></PagePanel>; }

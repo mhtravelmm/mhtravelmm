@@ -93,7 +93,15 @@
 - Cinema search starts with city and cinema name; after a cinema result is selected, the user chooses Movie 1 or Movie 2, Hall 1 or Hall 2, and then seats.
 - The initial search remains compact for every category: detailed boarding, hall, and seat fields appear only after the relevant result is chosen.
 
-## 3. Authentication UI and session behavior
+## 3. Shared Favorites behavior
+
+- Added a shared Favorites provider with localStorage persistence so favorite overrides survive route changes and page refreshes.
+- Home listing cards, Travel Plans, Nearby, related hotels, and Blog posts now read/write the same favorite state instead of maintaining page-local heart state.
+- Restaurant and Book Shop detail-page save buttons use the same shared IDs as their listing cards, so saving from a detail page is reflected on cards and in the Account area.
+- Account Favorites now aggregates the app's listing collections and shows only currently saved items, with a Burmese/English empty state.
+- The current store is frontend-persistent; Supabase user-scoped favorites rows remain the next backend integration step.
+
+## 4. Authentication UI and session behavior
 
 ### Traveler routes
 

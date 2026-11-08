@@ -1,21 +1,22 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import type { CardListing } from '../types';
+import { useFavorites } from '../lib/favorites';
 
 /**
- * Manages local favorite/unfavorite state for a set of listings.
- *
- * This is a client-side placeholder: it makes the heart icon actually
- * respond to taps. Once Favorites (Section 22) is backed by Supabase,
- * `toggle` should also write/delete the corresponding row for the
- * logged-in user instead of only updating local state.
+ * Projects the shared favorite store onto a page's listing collection.
+ * Every page keeps the same favorite identity and updates immediately when
+ * another route toggles the same item.
  */
 export function useToggleFavorite<T extends CardListing>(initial: T[]) {
-  const [listings, setListings] = useState(initial);
+  const { overrides, toggleFavorite } = useFavorites();
+  const listings = useMemo(() => initial.map((listing) => ({
+    ...listing,
+    isFavorited: overrides[listing.id] ?? listing.isFavorited,
+  })), [initial, overrides]);
 
   function toggle(id: string) {
-    setListings((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, isFavorited: !l.isFavorited } : l))
-    );
+    const listing = initial.find((item) => item.id === id);
+    toggleFavorite(id, listing?.isFavorited ?? false);
   }
 
   return { listings, toggle };

@@ -4,6 +4,7 @@ import App from './App.tsx';
 import { ThemeProvider } from './lib/theme';
 import { LanguageProvider } from './lib/i18n';
 import { CurrencyProvider } from './lib/currency';
+import { FavoritesProvider } from './lib/favorites';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -11,7 +12,9 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <LanguageProvider>
         <CurrencyProvider>
-          <App />
+          <FavoritesProvider>
+            <App />
+          </FavoritesProvider>
         </CurrencyProvider>
       </LanguageProvider>
     </ThemeProvider>
