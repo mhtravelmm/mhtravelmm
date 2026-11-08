@@ -18,6 +18,7 @@
 - [x] Add `/travel-guide/:id` guide detail routes so existing `tg1`–`tg4` and `ctg1`–`ctg3` links work, with time-based itinerary stops and a Directions affordance.
 - [x] Reuse existing Myanmar photo assets and favorite IDs; keep Home Travel Guide cards unchanged, include the complete guide list in Favorites and Account, and preserve the global copyright/full-footer rules.
 - [x] Keep the Travel Guide interface and guide content available in Burmese and English.
+- [x] After the guide listing and Load More control, before copyright/full footer, render one horizontal row each for Top attractions → Restaurants → Cafes, in that order, reusing the existing listing and favorite behavior.
 
 ## Traveler authentication and Super Admin control center — Frontend complete
 

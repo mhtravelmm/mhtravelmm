@@ -272,6 +272,9 @@ Travel Guide:
   Culture / Food / City Tour filters, search, category/date/views/rating/distance,
   visible favorite toggles, and View Guide actions. The detail view keeps the
   planned time-based stops and directions affordance.
+- After the Travel Guide listing and its Load More control, place one horizontal
+  discovery row each for Top attractions, Restaurants, and Cafes, in that order,
+  before the global copyright strip. Keep the full footer exclusive to Home.
 
 ---
 

@@ -25,6 +25,8 @@ import { useLanguage } from '../../lib/i18n';
 import type { Language } from '../../types';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { TRAVEL_GUIDE_STORIES, type GuideCategory, type TravelGuideStory } from '../../data/travelGuideData';
+import { POPULAR_CAFES, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } from '../../data/cityPageData';
+import { ListingGridSection } from '../home/sections/ListingGridSection';
 
 const INITIAL_VISIBLE_GUIDES = 6;
 
@@ -291,6 +293,9 @@ export function TravelGuidePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_GUIDES);
   const favoriteState = useToggleFavorite(TRAVEL_GUIDE_STORIES);
+  const topAttractions = useToggleFavorite(TOP_ATTRACTIONS);
+  const restaurants = useToggleFavorite(POPULAR_RESTAURANTS);
+  const cafes = useToggleFavorite(POPULAR_CAFES);
 
   const favoriteById = useMemo(() => new Map(favoriteState.listings.map((guide) => [guide.id, guide.isFavorited])), [favoriteState.listings]);
   const guideWithFavorite = (guide: TravelGuideStory): TravelGuideStory => ({
@@ -443,6 +448,33 @@ export function TravelGuidePage() {
           </div>
         )}
       </section>
+      <ListingGridSection
+        title={t('section_top_attractions')}
+        viewAllHref="/attractions"
+        listings={topAttractions.listings}
+        onToggleFavorite={topAttractions.toggle}
+        columns={5}
+        cardSize="md"
+        singleRow
+      />
+      <ListingGridSection
+        title={t('section_restaurants')}
+        viewAllHref="/restaurants"
+        listings={restaurants.listings}
+        onToggleFavorite={restaurants.toggle}
+        columns={5}
+        cardSize="md"
+        singleRow
+      />
+      <ListingGridSection
+        title={t('section_cafes')}
+        viewAllHref="/cafes"
+        listings={cafes.listings}
+        onToggleFavorite={cafes.toggle}
+        columns={5}
+        cardSize="md"
+        singleRow
+      />
     </div>
   );
 }
