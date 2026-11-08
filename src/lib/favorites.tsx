@@ -1,6 +1,7 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 const STORAGE_KEY = 'mh-travel-favorite-overrides';
+const FAVORITES_CHANGED_EVENT = 'mh-travel-favorites-changed';
 type FavoriteOverrides = Record<string, boolean>;
 
 interface FavoritesContextValue {
@@ -24,12 +25,23 @@ function readOverrides(): FavoriteOverrides {
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [overrides, setOverrides] = useState<FavoriteOverrides>(readOverrides);
 
+  useEffect(() => {
+    const syncFavorites = () => setOverrides(readOverrides());
+    window.addEventListener(FAVORITES_CHANGED_EVENT, syncFavorites);
+    window.addEventListener('storage', syncFavorites);
+    return () => {
+      window.removeEventListener(FAVORITES_CHANGED_EVENT, syncFavorites);
+      window.removeEventListener('storage', syncFavorites);
+    };
+  }, []);
+
   function toggleFavorite(id: string, defaultValue = false) {
     setOverrides((current) => {
       const next = { ...current, [id]: !(current[id] ?? defaultValue) };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
+    window.dispatchEvent(new Event(FAVORITES_CHANGED_EVENT));
   }
 
   const value = useMemo<FavoritesContextValue>(() => ({
