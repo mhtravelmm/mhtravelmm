@@ -525,8 +525,8 @@ export function BlogsPage() {
           </section>
 
           <section aria-label={t('blog_filter_label')} className="mb-5">
-            <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
-              {CATEGORY_FILTERS.map(({ id, labelKey, icon: Icon, tone, activeTone }) => {
+            <div className="flex min-w-0 items-center gap-1.5 sm:flex-wrap sm:gap-2.5">
+              {CATEGORY_FILTERS.filter(({ id }) => id === 'all').map(({ id, labelKey, icon: Icon, tone, activeTone }) => {
                 const active = activeCategory === id;
                 return (
                   <button
@@ -534,12 +534,28 @@ export function BlogsPage() {
                     type="button"
                     onClick={() => { setActiveCategory(id); setVisibleCount(6); }}
                     aria-pressed={active}
-                    className={`inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border px-2.5 py-2 text-[10px] font-medium transition sm:min-h-11 sm:gap-2 sm:px-3.5 sm:text-xs ${active ? `${activeTone} border-transparent text-white shadow-lg shadow-black/10` : 'border-border bg-bg-card text-text-secondary hover:border-brand-blue/50 hover:bg-bg-cardAlt'}`}
+                    className={`inline-flex h-7 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-2 text-[9px] font-medium transition sm:h-11 sm:gap-2 sm:px-3.5 sm:text-xs ${active ? `${activeTone} border-transparent text-white shadow-sm sm:shadow-lg sm:shadow-black/10` : 'border-border bg-bg-card text-text-secondary hover:border-brand-blue/50 hover:bg-bg-cardAlt'}`}
                   >
-                    <Icon size={15} className={active ? 'text-white' : tone} />{t(labelKey)}
+                    <Icon size={12} className={active ? 'text-white' : tone} />{t(labelKey)}
                   </button>
                 );
               })}
+              <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto overscroll-x-contain whitespace-nowrap py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:whitespace-normal">
+                {CATEGORY_FILTERS.filter(({ id }) => id !== 'all').map(({ id, labelKey, icon: Icon, tone, activeTone }) => {
+                  const active = activeCategory === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => { setActiveCategory(id); setVisibleCount(6); }}
+                      aria-pressed={active}
+                      className={`inline-flex h-7 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-2 text-[9px] font-medium transition sm:h-11 sm:gap-2 sm:px-3.5 sm:text-xs ${active ? `${activeTone} border-transparent text-white shadow-sm sm:shadow-lg sm:shadow-black/10` : 'border-border bg-bg-card text-text-secondary hover:border-brand-blue/50 hover:bg-bg-cardAlt'}`}
+                    >
+                      <Icon size={12} className={active ? 'text-white' : tone} />{t(labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </section>
 

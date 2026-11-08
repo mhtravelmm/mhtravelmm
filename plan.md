@@ -220,6 +220,9 @@ Blog:
   dual-language (MM/EN).
 - Editorial categories are visible filter controls in the Blogs page, separate
   from SEO tags. SEO tags remain backend-only and are never shown in the app.
+- On phone screens, keep the All filter stationary on the left and place the
+  other categories in one compact, single-row horizontal scroller; chips stay
+  small and do not wrap into a large grid. Desktop may retain its wrapped row.
 - Interactions: favorite, share, view count.
 - Blogs Page follows the supplied responsive reference: an image-led Myanmar
   editorial hero and visible category filters, using nearly all available

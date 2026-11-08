@@ -86,3 +86,10 @@
 - [x] Include Content contact details: info@mhtravelmm.com, Facebook page, Telegram, Viber, and +95 9 400 686 925.
 - [x] Include Myanmar payment options KBZPay, AYA Pay, CB Pay, OK$, UAB Pay, MPU, and mytelpay; Download our app with App Store and Google Play; International payment options Visa, Mastercard, JCB, UnionPay, Amex, Discover, and Apple Pay; place © 2026 MH Travel. All rights reserved. at the end of the sidebar.
 - [x] Keep this phone-sidebar content on every route while preserving the full desktop footer as Home-only and the five-item phone bottom navigation.
+
+
+## Compact phone Blog category filters — Complete
+
+- [x] On phone, keep the All filter fixed at the left side and put Travel Tips, Nature, Food, Health, Culture, Safety, and Others in one horizontal swipeable row to its right.
+- [x] Use small, compact filter boxes on phone; prevent wrapping into multiple rows, while keeping every category reachable by horizontal scrolling.
+- [x] Leave the desktop filter presentation responsive and preserve selected-category filtering, active state, Burmese/English labels, and the All reset behavior.
