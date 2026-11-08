@@ -1,6 +1,7 @@
 import { Star, MapPin, Heart, Eye } from 'lucide-react';
 import type { CardListing } from '../../types';
 import { useCurrency } from '../../lib/currency';
+import { useFavorites } from '../../lib/favorites';
 
 interface ListingCardProps {
   listing: CardListing;
@@ -20,6 +21,7 @@ interface ListingCardProps {
  */
 export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 'default' }: ListingCardProps) {
   const { formatPrice } = useCurrency();
+  const { toggleFavorite } = useFavorites();
   const imageHeight = size === 'sm' ? 'h-11' : size === 'lg' ? 'h-28 md:h-32' : 'h-[70px] md:h-[90px]';
   const titleSize = size === 'sm' ? 'text-[10px]' : size === 'lg' ? 'text-sm md:text-base' : 'text-xs md:text-sm';
   const isGuide = variant === 'guide';
@@ -48,7 +50,8 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
           type="button"
           onClick={(e) => {
             e.preventDefault();
-            onToggleFavorite?.(listing.id);
+            if (onToggleFavorite) onToggleFavorite(listing.id);
+            else toggleFavorite(listing.id, listing.isFavorited);
           }}
           aria-label={listing.isFavorited ? 'Remove from favorites' : 'Save to favorites'}
           className={`absolute ${isGuide ? 'right-0.5 top-0.5' : 'right-1.5 top-1.5'} flex h-4 w-4 items-center justify-center rounded-full bg-white`}
