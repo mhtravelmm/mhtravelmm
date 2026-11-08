@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
@@ -47,6 +47,8 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
   const { isAuthenticated, isSuperAdmin } = useAuth();
+  const { pathname } = useLocation();
+  const isHomePage = pathname === '/';
 
   // Close on Escape, and stop the page behind from scrolling while open.
   useEffect(() => {
@@ -126,48 +128,52 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
           </button>
         </div>
 
-        <div className="border-t border-border px-4 py-3">
-          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-brand-blue">
-            {t('footer_legal')}
-          </p>
-          {LEGAL_LINKS.map((key) => (
-            <p key={key} className="py-0.5 text-[10px] text-text-faint">
-              {t(key)}
-            </p>
-          ))}
-        </div>
+        {isHomePage && (
+          <>
+            <div className="border-t border-border px-4 py-3">
+              <p className="mb-1.5 text-[10px] uppercase tracking-wide text-brand-blue">
+                {t('footer_legal')}
+              </p>
+              {LEGAL_LINKS.map((key) => (
+                <p key={key} className="py-0.5 text-[10px] text-text-faint">
+                  {t(key)}
+                </p>
+              ))}
+            </div>
 
-        <div className="border-t border-border px-4 py-3">
-          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-brand-blue">
-            {t('footer_help_support')}
-          </p>
-          {SUPPORT_LINKS.map((key) => (
-            <p key={key} className="py-0.5 text-[10px] text-text-faint">
-              {t(key)}
-            </p>
-          ))}
-        </div>
+            <div className="border-t border-border px-4 py-3">
+              <p className="mb-1.5 text-[10px] uppercase tracking-wide text-brand-blue">
+                {t('footer_help_support')}
+              </p>
+              {SUPPORT_LINKS.map((key) => (
+                <p key={key} className="py-0.5 text-[10px] text-text-faint">
+                  {t(key)}
+                </p>
+              ))}
+            </div>
 
-        <div className="border-t border-border px-4 py-3">
-          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-brand-blue">
-            {t('sidebar_payment_methods')}
-          </p>
-          <div className="mb-2.5 flex flex-wrap gap-1">
-            {MYANMAR_PAYMENT.map((p) => (
-              <span key={p} className="rounded bg-bg px-1.5 py-0.5 text-[8px] text-text-muted">
-                {p}
-              </span>
-            ))}
-          </div>
-          <div className="flex gap-1.5">
-            <span className="flex-1 rounded bg-bg py-1.5 text-center text-[9px] text-text-secondary">
-              {t('footer_app_store')}
-            </span>
-            <span className="flex-1 rounded bg-bg py-1.5 text-center text-[9px] text-text-secondary">
-              {t('footer_google_play')}
-            </span>
-          </div>
-        </div>
+            <div className="border-t border-border px-4 py-3">
+              <p className="mb-1.5 text-[10px] uppercase tracking-wide text-brand-blue">
+                {t('sidebar_payment_methods')}
+              </p>
+              <div className="mb-2.5 flex flex-wrap gap-1">
+                {MYANMAR_PAYMENT.map((p) => (
+                  <span key={p} className="rounded bg-bg px-1.5 py-0.5 text-[8px] text-text-muted">
+                    {p}
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-1.5">
+                <span className="flex-1 rounded bg-bg py-1.5 text-center text-[9px] text-text-secondary">
+                  {t('footer_app_store')}
+                </span>
+                <span className="flex-1 rounded bg-bg py-1.5 text-center text-[9px] text-text-secondary">
+                  {t('footer_google_play')}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="border-t border-border px-4 py-3">
           <Link
@@ -179,9 +185,7 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
           </Link>
         </div>
 
-        <p className="mt-auto border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">
-          {t('footer_copyright')}
-        </p>
+        {isHomePage && <p className="mt-auto border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">{t('footer_copyright')}</p>}
       </div>
     </div>,
     document.body

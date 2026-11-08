@@ -7,7 +7,7 @@
 - [x] Readers can favorite, share, and see view counts for blog posts.
 - [x] Every blog content card shows rating, distance, favorite state, and views.
 - [x] Story cards use an image-led layout with readable summaries and activity metrics.
-- [x] Blogs uses the shared header and full footer shown in the supplied reference.
+- [x] Blogs uses the shared header and no shared footer; footer content is reserved for Home.
 
 ## Traveler authentication and Super Admin control center — Frontend complete
 
@@ -23,17 +23,23 @@
 - [x] Supabase `public.profiles` table is created with unique usernames, display names, role checks, avatar metadata, timestamps, signup trigger, and Row Level Security policies.
 - [ ] Configure Google and Facebook OAuth provider credentials and callback URLs in Supabase Auth.
 
+## Home-only footer — Complete
+
+- [x] The full footer with MH Travel branding, social links, legal/help/navigation/contact columns, payment options, app-store links, and copyright is rendered on `/` only.
+- [x] No shared footer, including the copyright-only strip, appears on `/blogs`, `/account`, or any other non-home route.
+- [x] Footer-style Legal, Help/Support, payment, app-download, and copyright sections in the mobile drawer appear only while the current route is Home; keep other mobile navigation and account actions available.
+
 
 ## Traveler account dashboard UI refresh — Complete
 
-- [x] `/account` follows the supplied MH Travel dashboard reference: navy/cyan visual language, traveler profile and account navigation, destination welcome banner, four account stat cards, upcoming trip, quick actions, recent activity, Myanmar discovery panel, and full footer.
+- [x] `/account` follows the supplied MH Travel dashboard reference: navy/cyan visual language, traveler profile and account navigation, destination welcome banner, four account stat cards, upcoming trip, quick actions, recent activity, and Myanmar discovery panel; the shared footer is Home-only.
 - [x] The dashboard adapts to mobile widths with compact profile/navigation and stacked or compact card layouts while keeping account destinations accessible.
 - [x] Existing account destinations, favorite toggling, notification links, settings/support views, profile edit entry, and logout behavior remain usable.
 - [x] New account dashboard interface text is available in both Burmese and English.
 
 ## Blogs page responsive reference refresh — Complete
 
-- [x] `/blogs` follows the supplied MH Travel reference with a Shwedagon-at-dusk hero, bilingual blog heading/subheading, editorial category filters for All, Travel Tips, Nature, Food, Health, Culture, Safety, and Others, a responsive story-card layout, and the full footer.
+- [x] `/blogs` follows the supplied MH Travel reference with a Shwedagon-at-dusk hero, bilingual blog heading/subheading, editorial category filters for All, Travel Tips, Nature, Food, Health, Culture, Safety, and Others, and a responsive story-card layout; the shared footer is Home-only.
 - [x] Category chips filter by explicit editorial category; they do not expose or reuse backend-only `seoTags`.
 - [x] Desktop shows an image-led multi-column card grid; mobile uses compact horizontal story cards and a compact category grid.
 - [x] Story cards retain date, category, title, excerpt, reading/view/favorite metrics, favorite toggle, share action, and reader entry. Search, sorting, shareable story URLs, bilingual reader, and related content continue to work.

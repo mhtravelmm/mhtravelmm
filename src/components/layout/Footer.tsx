@@ -32,22 +32,9 @@ const FOOTER_COLUMNS: { headingKey: TranslationKey; linkKeys: TranslationKey[] }
 // Contact details are real values (email/phone/etc), not translated strings.
 const CONTENT_COLUMN_VALUES = ['info@mhtravelmm.com', 'Facebook page', 'Telegram', 'Viber', '+95 9 400 686 925'];
 
-/**
- * `variant="full"` is used on the Home Page and traveler account dashboard.
- * Other inner pages (City, Nearby, Hotel/Restaurant/Shop detail, Blog, etc.)
- * use `variant="minimal"` — copyright line only. This mirrors the approved
- * mockups.
- */
-export function Footer({ variant = 'minimal' }: { variant?: 'full' | 'minimal' }) {
+/** The full site footer is rendered only by the Home route. */
+export function Footer() {
   const { t } = useLanguage();
-
-  if (variant === 'minimal') {
-    return (
-      <footer className="mt-4 border-t border-border pt-2.5 text-center">
-        <p className="text-[9px] text-text-faint">{t('footer_copyright')}</p>
-      </footer>
-    );
-  }
 
   return (
     <footer className="mt-4 border-t border-border pt-3.5">

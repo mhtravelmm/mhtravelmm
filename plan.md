@@ -73,11 +73,11 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
 - Mobile/tablet: a hamburger menu opens a partial-width sidebar drawer, so
   a strip of the page stays visible on the right with a divider line (not a
   full opaque overlay). The drawer holds nav links, Favorite, Language,
-  Currency, Theme, Legal links, Help and Support links, payment method
-  icons, App Store/Google Play, Login/Registration and the copyright line.
-- Inner pages (City, Nearby, detail pages, Blog) use a copyright-only
-  footer. Only the Home Page has the full footer (legal, help and support,
-  navigate, content, payment methods, app download).
+  Currency, Theme, and Login/Registration. Legal links, Help and Support,
+  payment method icons, App Store/Google Play, and copyright appear in the
+  drawer only when the current route is Home.
+- Only the Home Page renders the shared footer. No footer, including a
+  copyright-only strip, appears on any other page.
 - Category-based template system: all pages of the same category share an
   identical design, while different categories can look completely
   different from each other.
@@ -271,9 +271,9 @@ it is a pre-arrival matter.
   panels. The desktop layout uses a profile/navigation rail beside the main
   dashboard; the mobile layout condenses profile/navigation and stacks the
   trip, quick-action, activity, and discovery cards for narrow screens.
-- The account dashboard retains the shared app header and uses the full footer
-  shown in the supplied reference. Newly added account UI copy stays bilingual
-  through the existing EN/MM translation system.
+- The account dashboard retains the shared app header and omits the shared
+  footer under the Home-only footer rule. Newly added account UI copy stays
+  bilingual through the existing EN/MM translation system.
 - Language: EN/MM with auto-translation fallback. Auto-translated text is
   cached and queued for Admin review.
 - Currency: MMK and USD display using an Admin-set exchange rate.
@@ -345,7 +345,7 @@ it is a pre-arrival matter.
   favorites, reviews, messages, settings, and support/legal views. Data is
   currently client-side sample state pending auth and Supabase wiring. The
   refreshed responsive UI follows the supplied dashboard reference, including
-  its navy/cyan visual treatment and full account footer.
+  its navy/cyan visual treatment; the shared footer is Home-only.
 - Full Notifications page implemented at `/notifications` and
   `/account/notifications`: the header dropdown's See all link now opens a
   bilingual notification inbox with All/Unread/Read filters, mark-all-read,
@@ -360,9 +360,10 @@ it is a pre-arrival matter.
 - Home now renders a dedicated ad slot immediately below Popular Hotels using
   the existing Admin Ads/AdSlot pipeline and collapse-when-empty behavior.
 - Blog posts now open as an in-page reader inside the normal Blogs route rather
-  than a fixed modal/overlay. The reader keeps the shared site header/footer,
-  supports back navigation, and renders sponsored slots above, within existing
-  ad blocks, and below the article content.
+  than a fixed modal/overlay. The reader keeps the shared site header and omits
+  the footer under the Home-only footer rule, supports back navigation, and
+  renders sponsored slots above, within existing ad blocks, and below the
+  article content.
 - The in-page Blog reader no longer uses a paper-like outer card; it follows the
   app background and page flow. Each article now ends with a related Popular
   Hotels row sourced from the existing hotel data and shared listing cards.

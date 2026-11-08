@@ -18,8 +18,8 @@ import { SuperAdminPage } from './features/superAdmin/SuperAdminPage';
 import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { AuthProvider, useAuth } from './lib/auth';
 
-function Shell({ children, footerVariant = 'minimal' }: { children: React.ReactNode; footerVariant?: 'full' | 'minimal' }) {
-  return <div className="min-h-screen bg-bg"><div className="sticky top-0 z-50 border-b border-border bg-bg/95 px-4 backdrop-blur md:px-8"><Header /></div><div className="px-4 py-3 md:px-8"><main>{children}</main><Footer variant={footerVariant} /></div></div>;
+function Shell({ children, showFooter = false }: { children: React.ReactNode; showFooter?: boolean }) {
+  return <div className="min-h-screen bg-bg"><div className="sticky top-0 z-50 border-b border-border bg-bg/95 px-4 backdrop-blur md:px-8"><Header /></div><div className="px-4 py-3 md:px-8"><main>{children}</main>{showFooter && <Footer />}</div></div>;
 }
 
 function PlaceholderPage({ title }: { title: string }) { return <Shell><p className="py-10 text-center text-sm text-text-muted">{title} — coming soon.</p></Shell>; }
@@ -33,7 +33,7 @@ function RequireSuperAdmin() {
 
 function AppRoutes() {
   return <Routes>
-    <Route path="/" element={<Shell footerVariant="full"><HomePage /></Shell>} />
+    <Route path="/" element={<Shell showFooter><HomePage /></Shell>} />
     <Route path="/cities" element={<Shell><CityPage /></Shell>} />
     <Route path="/nearby" element={<Shell><NearbyPage /></Shell>} />
     <Route path="/rentals" element={<Shell><RentalsPage /></Shell>} />
@@ -44,9 +44,9 @@ function AppRoutes() {
     <Route path="/ticketing" element={<Shell><TicketingPage /></Shell>} />
     <Route path="/travel-plans" element={<Shell><TravelPlansPage /></Shell>} />
     <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
-    <Route path="/blogs" element={<Shell footerVariant="full"><BlogsPage /></Shell>} />
+    <Route path="/blogs" element={<Shell><BlogsPage /></Shell>} />
     <Route path="/search" element={<PlaceholderPage title="Search" />} />
-    <Route path="/account" element={<Shell footerVariant="full"><AccountPage /></Shell>} />
+    <Route path="/account" element={<Shell><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
     <Route path="/admin/login" element={<AdminLoginPage />} />
