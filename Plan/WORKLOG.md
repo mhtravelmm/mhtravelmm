@@ -92,6 +92,8 @@
 - Valid bus orders now open a dedicated Order Confirmation screen instead of only an inline success message. It shows an order number, order status, route, bus line, departure date/time, passenger count, customer type, boarding point, drop-off point, selected seats, estimated total, and MH Travel follow-up guidance.
 - Cinema search starts with city and cinema name; after a cinema result is selected, the user chooses Movie 1 or Movie 2, Hall 1 or Hall 2, and then seats.
 - The initial search remains compact for every category: detailed boarding, hall, and seat fields appear only after the relevant result is chosen.
+- Ticketing services now carry route/venue metadata. After searching, Bus and Train results match the selected departure/destination pair, while Cinema results match the selected cinema; when the local preview has no exact mock match, the category results remain available as a fallback rather than showing a broken blank state.
+- Train, Event, and Cinema booking actions now advance through the same confirmation state instead of leaving a non-functional `Book now` button. Cinema keeps seat-count validation, while Train/Event can continue after selecting a service; all booking buttons show disabled styling until their required selection is valid.
 
 ## 3. Shared Favorites behavior
 
@@ -194,7 +196,7 @@
 - `/super-admin`
 - `/notifications`
 - `/account/notifications`
-- `/favorites` (placeholder)
+- `/favorites` (live categorized Favorites page)
 
 ## 7. Git delivery history for the recent work
 
