@@ -177,6 +177,13 @@ Common rules:
   keep the hero compact, stack the booking fields, allow route cards to swipe
   horizontally, and retain the project's fixed five-tab navigation. The global
   rule still reserves the full footer for Home and shows copyright elsewhere.
+- User correction (2026-11-08) supersedes the reference's Hotels / Car Rentals
+  tabs: the Ticketing hub is for tickets only, with five primary products—Flight
+  Tickets, Bus Tickets, Event Tickets, Cinema Tickets, and Train Tickets. Do not
+  show hotels or vehicle rentals in Ticketing; vehicle rental remains on the
+  separate `/rentals` page. Bus Tickets means coach/express bus tickets, not the
+  local YBS route-reference product. Keep ticket-specific search and purchase
+  flows; train provider integration may remain separate from the current mock UI.
 
 ---
 

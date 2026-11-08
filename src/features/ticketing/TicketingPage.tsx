@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react';
 import {
   ArrowRight,
-  BedDouble,
   BusFront,
   CalendarDays,
-  CarFront,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -32,21 +30,14 @@ import {
 
 const PRIMARY_PRODUCTS: { id: TicketType; icon: typeof Plane; labelKey: TranslationKey }[] = [
   { id: 'flight', icon: Plane, labelKey: 'ticketing_flights' },
-  { id: 'hotel', icon: BedDouble, labelKey: 'ticketing_hotels' },
-  { id: 'car', icon: CarFront, labelKey: 'ticketing_car_rentals' },
   { id: 'bus', icon: BusFront, labelKey: 'ticketing_bus_tickets' },
-];
-
-const ADDITIONAL_PRODUCTS: { id: TicketType; icon: typeof Plane; labelKey: TranslationKey }[] = [
-  { id: 'train', icon: TrainFront, labelKey: 'ticketing_train' },
   { id: 'events', icon: Ticket, labelKey: 'ticketing_events' },
   { id: 'cinema', icon: Clapperboard, labelKey: 'ticketing_cinema' },
+  { id: 'train', icon: TrainFront, labelKey: 'ticketing_train' },
 ];
 
 const PRODUCT_LABELS: Record<TicketType, TranslationKey> = {
   flight: 'ticketing_flights',
-  hotel: 'ticketing_hotels',
-  car: 'ticketing_car_rentals',
   bus: 'ticketing_bus_tickets',
   train: 'ticketing_train',
   events: 'ticketing_events',
@@ -60,6 +51,12 @@ function placeOptions(language: 'mm' | 'en'): FieldOption[] {
     value: place.id,
     label: `${place.name[language]}${place.code ? ` (${place.code})` : ''}`,
   }));
+}
+
+function eventPlaceOptions(language: 'mm' | 'en'): FieldOption[] {
+  return TICKETING_PLACES
+    .filter((place) => TICKETING_SERVICES.some((service) => service.type === 'events' && service.city === place.id))
+    .map((place) => ({ value: place.id, label: place.name[language] }));
 }
 
 function venuePlaceOptions(language: 'mm' | 'en'): FieldOption[] {
@@ -80,26 +77,18 @@ function formatDate(value: string, language: 'mm' | 'en'): string {
   }).format(new Date(`${value}T12:00:00`));
 }
 
-function getDateSpan(start: string, end: string): number {
-  const startTime = new Date(`${start}T12:00:00Z`).getTime();
-  const endTime = new Date(`${end}T12:00:00Z`).getTime();
-  if (!Number.isFinite(startTime) || !Number.isFinite(endTime) || endTime <= startTime) return 1;
-  return Math.ceil((endTime - startTime) / 86_400_000);
-}
-
 export function TicketingPage() {
   const { language, t } = useLanguage();
   const { formatPrice } = useCurrency();
   const [type, setType] = useState<TicketType>('flight');
   const [fromCity, setFromCity] = useState('yangon');
   const [toCity, setToCity] = useState('bangkok');
-  const [serviceCity, setServiceCity] = useState('yangon');
+  const [eventCity, setEventCity] = useState('yangon');
   const [venueCity, setVenueCity] = useState('yangon');
   const [venueId, setVenueId] = useState('j-yangon');
   const [date, setDate] = useState('2026-11-15');
   const [returnDate, setReturnDate] = useState('2026-11-18');
   const [passengers, setPassengers] = useState(1);
-  const [rooms, setRooms] = useState(1);
   const [customerType, setCustomerType] = useState<'citizen' | 'foreigner'>('citizen');
   const [searched, setSearched] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -110,19 +99,17 @@ export function TicketingPage() {
   const [movieId, setMovieId] = useState('movie-1');
   const [hall, setHall] = useState('hall-1');
   const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
-  const [moreOpen, setMoreOpen] = useState(false);
 
   const candidates = useMemo(() => TICKETING_SERVICES.filter((service) => service.type === type), [type]);
   const shown = useMemo(() => {
     if (!searched) return candidates;
     const matches = candidates.filter((service) => {
-      if (type === 'hotel' || type === 'car') return service.city === serviceCity;
       if (type === 'cinema') return service.venueId === venueId;
-      if (type === 'events') return true;
+      if (type === 'events') return service.city === eventCity;
       return service.from === fromCity && service.to === toCity;
     });
     return matches;
-  }, [candidates, searched, type, serviceCity, venueId, fromCity, toCity]);
+  }, [candidates, searched, type, eventCity, venueId, fromCity, toCity]);
 
   const selectedService = TICKETING_SERVICES.find((service) => service.id === selectedServiceId);
   const venues = TICKETING_CINEMA_VENUES.filter((venue) => venue.city === venueCity);
@@ -144,6 +131,8 @@ export function TicketingPage() {
     } else if (nextType === 'flight') {
       setFromCity('yangon');
       setToCity('bangkok');
+    } else if (nextType === 'events') {
+      setEventCity('yangon');
     }
   }
 
@@ -187,14 +176,8 @@ export function TicketingPage() {
 
   const canOrder = Boolean(selectedService)
     && (!selectedService || (selectedService.type !== 'bus' && selectedService.type !== 'cinema') || selectedSeats.length === passengers);
-  const stayNights = getDateSpan(date, returnDate);
-  const rentalDays = getDateSpan(date, returnDate);
-  const orderQuantity = selectedService?.type === 'hotel' ? rooms * stayNights : selectedService?.type === 'car' ? rentalDays : passengers;
-  const orderQuantityLabel = selectedService?.type === 'hotel'
-    ? `${rooms} · ${stayNights} ${t('ticketing_nights')}`
-    : selectedService?.type === 'car'
-      ? `${rentalDays} ${t('ticketing_days')}`
-      : String(passengers);
+  const orderQuantity = passengers;
+  const orderQuantityLabel = String(passengers);
 
   if (ordered && selectedService) {
     const orderNumber = `MH-${selectedService.id.toUpperCase()}-${date.replace(/-/g, '')}`;
@@ -210,8 +193,8 @@ export function TicketingPage() {
             <ConfirmationItem label={t('ticketing_product')} value={t(PRODUCT_LABELS[selectedService.type])} />
             <ConfirmationItem label={t('ticketing_provider')} value={selectedService.operator[language]} />
             <ConfirmationItem label={t('ticketing_trip')} value={selectedService.route[language]} />
-            <ConfirmationItem label={t('ticketing_date')} value={type === 'hotel' || type === 'car' || type === 'flight' ? `${formatDate(date, language)} – ${formatDate(returnDate, language)}` : `${formatDate(date, language)} · ${departureTime}`} />
-            <ConfirmationItem label={selectedService.type === 'hotel' ? t('ticketing_rooms') : selectedService.type === 'car' ? t('ticketing_duration') : t('ticketing_passengers')} value={orderQuantityLabel} />
+            <ConfirmationItem label={t('ticketing_date')} value={type === 'flight' ? `${formatDate(date, language)} – ${formatDate(returnDate, language)}` : `${formatDate(date, language)} · ${departureTime}`} />
+            <ConfirmationItem label={t(selectedService.type === 'events' || selectedService.type === 'cinema' ? 'ticketing_ticket_quantity' : 'ticketing_passengers')} value={orderQuantityLabel} />
             {(selectedService.type === 'bus' || selectedService.type === 'cinema') && <ConfirmationItem label={t('ticketing_selected_seats')} value={selectedSeats.join(', ')} />}
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-border pt-4 text-left"><span className="text-xs text-text-muted">{t('ticketing_total_estimate')}</span><strong className="text-lg text-brand-red">{formatPrice(selectedService.price * orderQuantity)}</strong></div>
@@ -257,19 +240,7 @@ export function TicketingPage() {
               </button>
             );
           })}
-          <button type="button" aria-expanded={moreOpen} onClick={() => setMoreOpen((open) => !open)} className={`ml-auto inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-2 text-[9px] font-semibold transition sm:text-[10px] ${moreOpen || ['train', 'events', 'cinema'].includes(type) ? 'bg-bg-cardAlt text-text-primary' : 'text-text-muted hover:bg-bg-cardAlt'}`}>
-            {['train', 'events', 'cinema'].includes(type) ? t(PRODUCT_LABELS[type]) : t('ticketing_more_products')}<ChevronDown size={13} className={`transition ${moreOpen ? 'rotate-180' : ''}`} />
-          </button>
         </div>
-        {moreOpen && (
-          <div className="flex flex-wrap gap-2 border-b border-border bg-bg-cardAlt/45 px-3 py-2.5">
-            {ADDITIONAL_PRODUCTS.map((product) => {
-              const Icon = product.icon;
-              const active = type === product.id;
-              return <button key={product.id} type="button" onClick={() => changeType(product.id)} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[9px] font-semibold transition ${active ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300' : 'border-border text-text-muted hover:text-text-primary'}`}><Icon size={12} />{t(product.labelKey)}</button>;
-            })}
-          </div>
-        )}
 
         <div id="ticket-search" className="p-3 sm:p-4 md:p-5">
           <div className="mb-3 flex items-center justify-between gap-2">
@@ -285,33 +256,23 @@ export function TicketingPage() {
               <NumberField label={t('ticketing_passengers')} value={passengers} onChange={(value) => { setPassengers(value); setSelectedSeats([]); }} max={9} />
               <SearchButton onClick={() => { setSearched(true); setSelectedServiceId(null); }} label={t(type === 'flight' ? 'ticketing_search_flights' : type === 'bus' ? 'ticketing_search_bus' : 'ticketing_search_train')} />
             </div>
-          ) : type === 'hotel' ? (
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
-              <SelectField label={t('ticketing_city')} value={serviceCity} onChange={(value) => { setServiceCity(value); setSearched(false); setSelectedServiceId(null); }} options={placeOptions(language)} icon={<MapPin size={13} />} />
-              <DateField date={date} setDate={(value) => { setDate(value); setSearched(false); }} label={t('ticketing_check_in')} />
-              <DateField date={returnDate} setDate={(value) => { setReturnDate(value); setSearched(false); }} label={t('ticketing_check_out')} />
-              <NumberField label={t('ticketing_rooms')} value={rooms} onChange={setRooms} max={8} />
-              <NumberField label={t('ticketing_passengers')} value={passengers} onChange={setPassengers} max={16} />
-              <SearchButton onClick={() => { setSearched(true); setSelectedServiceId(null); }} label={t('ticketing_search_hotels')} />
-            </div>
-          ) : type === 'car' ? (
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-              <SelectField label={t('ticketing_pickup_city')} value={serviceCity} onChange={(value) => { setServiceCity(value); setSearched(false); setSelectedServiceId(null); }} options={placeOptions(language)} icon={<MapPin size={13} />} />
-              <DateField date={date} setDate={(value) => { setDate(value); setSearched(false); }} label={t('ticketing_pickup_date')} />
-              <DateField date={returnDate} setDate={(value) => { setReturnDate(value); setSearched(false); }} label={t('ticketing_return_date')} />
-              <NumberField label={t('ticketing_passengers')} value={passengers} onChange={setPassengers} max={8} />
-              <SearchButton onClick={() => { setSearched(true); setSelectedServiceId(null); }} label={t('ticketing_search_cars')} />
+          ) : type === 'events' ? (
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto]">
+              <SelectField label={t('ticketing_city')} value={eventCity} onChange={(value) => { setEventCity(value); setSearched(false); setSelectedServiceId(null); }} options={eventPlaceOptions(language)} icon={<MapPin size={13} />} />
+              <DateField date={date} setDate={(value) => { setDate(value); setSearched(false); }} label={t('ticketing_date')} />
+              <NumberField label={t('ticketing_ticket_quantity')} value={passengers} onChange={setPassengers} max={9} />
+              <SearchButton onClick={() => { setSearched(true); setSelectedServiceId(null); }} label={t('ticketing_search_event')} />
             </div>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-[1fr_1.2fr_1fr_auto]">
               <SelectField label={t('ticketing_city')} value={venueCity} onChange={changeVenueCity} options={venuePlaceOptions(language)} icon={<MapPin size={13} />} />
-              <SelectField label={t(type === 'cinema' ? 'ticketing_cinema_name' : 'ticketing_event_name')} value={venue?.id ?? ''} onChange={(value) => { setVenueId(value); setSearched(false); setSelectedServiceId(null); }} options={venues.map((item) => ({ value: item.id, label: item.name[language] }))} />
+              <SelectField label={t('ticketing_cinema_name')} value={venue?.id ?? ''} onChange={(value) => { setVenueId(value); setSearched(false); setSelectedServiceId(null); }} options={venues.map((item) => ({ value: item.id, label: item.name[language] }))} />
               <DateField date={date} setDate={(value) => { setDate(value); setSearched(false); }} label={t('ticketing_date')} />
-              <SearchButton onClick={() => { setSearched(true); setSelectedServiceId(null); }} label={t(type === 'cinema' ? 'ticketing_search_cinema' : 'ticketing_search_event')} />
+              <SearchButton onClick={() => { setSearched(true); setSelectedServiceId(null); }} label={t('ticketing_search_cinema')} />
             </div>
           )}
           {searched && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-cyan-400/25 bg-cyan-400/5 px-3 py-2 text-[9px] text-text-secondary sm:text-[10px]">
-            <span>{type === 'flight' || type === 'bus' || type === 'train' ? `${getPlace(fromCity).name[language]}${getPlace(fromCity).code ? ` (${getPlace(fromCity).code})` : ''} → ${getPlace(toCity).name[language]}${getPlace(toCity).code ? ` (${getPlace(toCity).code})` : ''} · ${formatDate(date, language)}` : type === 'hotel' || type === 'car' ? `${getPlace(serviceCity).name[language]} · ${formatDate(date, language)} — ${formatDate(returnDate, language)}` : `${venue?.name[language]} · ${formatDate(date, language)}`}</span>
+            <span>{type === 'flight' || type === 'bus' || type === 'train' ? `${getPlace(fromCity).name[language]}${getPlace(fromCity).code ? ` (${getPlace(fromCity).code})` : ''} → ${getPlace(toCity).name[language]}${getPlace(toCity).code ? ` (${getPlace(toCity).code})` : ''} · ${formatDate(date, language)}` : type === 'events' ? `${getPlace(eventCity).name[language]} · ${formatDate(date, language)} · ${passengers} ${t('ticketing_ticket_quantity')}` : `${venue?.name[language]} · ${formatDate(date, language)}`}</span>
             <button type="button" onClick={() => setSearched(false)} className="font-semibold text-cyan-400 hover:text-cyan-200">{t('ticketing_edit')}</button>
           </div>}
         </div>
@@ -334,28 +295,29 @@ export function TicketingPage() {
         </div>
         <div className={selectedService ? 'grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_300px]' : ''}>
           <div className="space-y-2">
-            {shown.length > 0 ? shown.map((service) => <DealRow key={service.id} service={service} language={language} formatPrice={formatPrice} label={t(PRODUCT_LABELS[service.type])} remainingLabel={t(service.type === 'hotel' ? 'ticketing_rooms_left' : service.type === 'car' ? 'ticketing_cars_left' : service.type === 'events' ? 'ticketing_spots_left' : 'ticketing_seats_left')} selected={selectedServiceId === service.id} onSelect={() => selectService(service.id)} />) : (
+            {shown.length > 0 ? shown.map((service) => <DealRow key={service.id} service={service} language={language} formatPrice={formatPrice} label={t(PRODUCT_LABELS[service.type])} remainingLabel={t(service.type === 'events' ? 'ticketing_spots_left' : 'ticketing_seats_left')} selected={selectedServiceId === service.id} onSelect={() => selectService(service.id)} />) : (
               <div className="rounded-2xl border border-dashed border-border bg-bg-card px-4 py-9 text-center"><Plane className="mx-auto text-text-muted" size={24} /><p className="mt-2 text-xs font-semibold text-text-primary">{t('ticketing_no_deals')}</p><p className="mt-1 text-[10px] text-text-muted">{t('ticketing_no_deals_detail')}</p></div>
             )}
           </div>
           {selectedService && (
             <aside className="h-fit rounded-2xl border border-cyan-400/20 bg-bg-card p-3.5 shadow-sm sm:p-4">
               <div className="flex items-start justify-between gap-3"><div><p className="text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-400">{t('ticketing_booking_title')}</p><h3 className="mt-1 text-sm font-bold text-text-primary">{selectedService.operator[language]}</h3><p className="mt-1 text-[10px] text-text-muted">{selectedService.route[language]}</p></div><button type="button" onClick={() => { setSelectedServiceId(null); setSelectedSeats([]); }} aria-label={t('ticketing_close_booking')} className="rounded-full bg-bg-cardAlt p-1.5 text-text-muted hover:text-text-primary"><ChevronRight size={14} /></button></div>
-              <div className="mt-3 flex items-center justify-between border-y border-border py-2 text-[10px]"><span className="text-text-muted">{t('ticketing_price')}</span><strong className="text-sm text-brand-red">{formatPrice(selectedService.price)}{selectedService.type === 'hotel' ? t('ticketing_per_night') : selectedService.type === 'car' ? t('ticketing_per_day') : ''}</strong></div>
+              <div className="mt-3 flex items-center justify-between border-y border-border py-2 text-[10px]"><span className="text-text-muted">{t('ticketing_price')}</span><strong className="text-sm text-brand-red">{formatPrice(selectedService.price)}{t('ticketing_per_ticket')}</strong></div>
               {selectedService.type === 'bus' && <>
                 <div className="mt-3 grid grid-cols-2 gap-2"><NumberField label={t('ticketing_passengers')} value={passengers} onChange={(value) => { setPassengers(value); setSelectedSeats([]); }} max={8} /><SelectField label={t('ticketing_nationality')} value={customerType} onChange={(value) => setCustomerType(value as 'citizen' | 'foreigner')} options={[{ value: 'citizen', label: t('ticketing_citizen') }, { value: 'foreigner', label: t('ticketing_foreigner') }]} /></div>
                 <SelectField label={t('ticketing_departure_time')} value={departureTime} onChange={setDepartureTime} options={['06:00', '09:00', '12:00', '18:30', '20:00'].map((time) => ({ value: time, label: time }))} />
                 <SelectField label={t('ticketing_boarding_point')} value={boardingPoint} onChange={setBoardingPoint} options={[`${getPlace(fromCity).name.en} MH Travel Branch`, `${getPlace(fromCity).name.en} Central Bus Terminal`, 'Downtown Pickup Stop'].map((point) => ({ value: point, label: point }))} />
-                <SelectField label={t('ticketing_dropoff_point')} value={dropoffPoint} onChange={setDropoffPoint} options={[`${getPlace(toCity).name.en} Bus Station`, `${getPlace(toCity).name.en} Downtown Stop`, 'Hotel Drop-off Point'].map((point) => ({ value: point, label: point }))} />
+                <SelectField label={t('ticketing_dropoff_point')} value={dropoffPoint} onChange={setDropoffPoint} options={[`${getPlace(toCity).name.en} Bus Station`, `${getPlace(toCity).name.en} Downtown Stop`, `${getPlace(toCity).name.en} Airport Stop`].map((point) => ({ value: point, label: point }))} />
                 <SeatPicker selectedSeats={selectedSeats} passengers={passengers} onSeat={chooseSeat} label={t('ticketing_select_seats')} />
               </>}
               {selectedService.type === 'cinema' && <>
                 <SelectField label={t('ticketing_movie')} value={movieId} onChange={setMovieId} options={movies.map((movie) => ({ value: movie.id, label: movie.name }))} />
                 <SelectField label={t('ticketing_hall')} value={hall} onChange={setHall} options={[{ value: 'hall-1', label: t('ticketing_hall_one') }, { value: 'hall-2', label: t('ticketing_hall_two') }]} />
+                <NumberField label={t('ticketing_ticket_quantity')} value={passengers} onChange={(value) => { setPassengers(value); setSelectedSeats([]); }} max={9} />
                 <SeatPicker selectedSeats={selectedSeats} passengers={passengers} onSeat={chooseSeat} label={t('ticketing_select_seats')} />
               </>}
-              {selectedService.type === 'hotel' && <NumberField label={t('ticketing_rooms')} value={rooms} onChange={setRooms} max={8} />}
-              {selectedService.type !== 'bus' && selectedService.type !== 'cinema' && <NumberField label={t('ticketing_passengers')} value={passengers} onChange={setPassengers} max={9} />}
+              {selectedService.type === 'events' && <NumberField label={t('ticketing_ticket_quantity')} value={passengers} onChange={setPassengers} max={9} />}
+              {selectedService.type !== 'bus' && selectedService.type !== 'cinema' && selectedService.type !== 'events' && <NumberField label={t('ticketing_passengers')} value={passengers} onChange={setPassengers} max={9} />}
               <button type="button" disabled={!canOrder} onClick={() => setOrdered(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-red px-3 py-2.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">{t('ticketing_book_now')}<ArrowRight size={13} /></button>
               <p className="mt-2 text-center text-[9px] leading-4 text-text-faint">{selectedService.type === 'bus' || selectedService.type === 'cinema' ? `${selectedSeats.length}/${passengers} · ${t('ticketing_select_seats')}` : t('ticketing_confirmation_contact')}</p>
             </aside>
@@ -397,7 +359,7 @@ function DealRow({ service, language, formatPrice, label, remainingLabel, select
         </div>
       </div>
       <div className="col-span-2 flex items-center justify-between gap-3 border-t border-border pt-2 sm:col-span-1 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
-        <strong className="text-sm text-brand-red sm:text-base">{formatPrice(service.price)}{service.type === 'hotel' ? <small className="ml-1 text-[8px] font-normal text-text-faint">{language === 'mm' ? '/ ည' : '/ night'}</small> : service.type === 'car' ? <small className="ml-1 text-[8px] font-normal text-text-faint">{language === 'mm' ? '/ ရက်' : '/ day'}</small> : null}</strong>
+        <strong className="text-sm text-brand-red sm:text-base">{formatPrice(service.price)}<small className="ml-1 text-[8px] font-normal text-text-faint">{language === 'mm' ? '/ လက်မှတ်' : '/ ticket'}</small></strong>
         <button type="button" onClick={onSelect} className={`inline-flex items-center justify-center gap-1 rounded-lg px-2.5 py-1.5 text-[9px] font-bold text-white transition hover:brightness-110 sm:mt-1 sm:w-full ${selected ? 'bg-cyan-600' : 'bg-brand-blue'}`}>{selected ? (language === 'mm' ? 'ရွေးပြီး' : 'Selected') : (language === 'mm' ? 'ယခုမှာယူရန်' : 'Book Now')}<ArrowRight size={10} /></button>
       </div>
     </article>

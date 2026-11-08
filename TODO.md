@@ -121,11 +121,11 @@
 ## Ticketing page reference redesign — Complete
 
 - [x] Use the supplied dark navy/cyan Ticketing reference with an airplane-and-Shwedagon hero, Ticketing heading, short supporting copy, and a Search Flights CTA.
-- [x] Show Flights, Hotels, Car Rentals, and Bus Tickets as the primary category tabs; preserve Train, Events, and Cinema through an additional-options control rather than removing existing ticket types.
-- [x] Provide a responsive search form for the active product: route/airport codes, departure and return dates, and passengers for travel routes; city and relevant dates/guests for Hotels and Car Rentals; keep existing bus seat selection and order confirmation usable.
+- [x] Show Flight Tickets, Bus Tickets, Event Tickets, Cinema Tickets, and Train Tickets as the five primary Ticketing categories; do not show Hotels or Car Rentals here. Vehicle rentals remain on the separate Rentals page.
+- [x] Provide ticket-only search forms: Flights use origin/destination, departure/return dates, and passenger count; Bus and Train use origin/destination, travel date, and passenger count; Events use city/date/ticket quantity; Cinema uses city, venue, movie, date, ticket quantity, and seat selection. Keep existing bus/cinema seat selection and order confirmation usable.
 - [x] After search, show Popular Routes as one row of route/fare cards and Best Deals as compact operator rows with route, times, duration, price, and a working Book Now action.
-- [x] On phones, use a compact hero and stacked search fields, swipeable route cards, and compact deal rows without covering the shared five-tab bottom navigation.
-- [x] Keep Ticketing labels bilingual, highlight the active Ticketing header link, and preserve the rule that full footer content is Home-only while copyright remains global.
+- [x] On phones, use a compact hero and stacked search fields, swipeable route cards, compact deal rows, and a horizontally scrollable row that exposes all five ticket categories without covering the shared five-tab bottom navigation.
+- [x] Keep ticket-only labels bilingual, highlight the active Ticketing header link, and preserve the rule that full footer content is Home-only while copyright remains global.
 
 ## Rentals page reference redesign — Complete
 
