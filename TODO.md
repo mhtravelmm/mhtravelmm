@@ -130,7 +130,7 @@
 ## Rentals page reference redesign — Complete
 
 - [x] Match the supplied Rentals design: wide Shwedagon-at-sunset ride hero, Rentals heading, short Myanmar ride copy, and Browse Rentals CTA.
-- [x] Show Bicycle, E-Bike, Motorbike, Scooter, Car with Driver, and Self-drive Car categories; retain city-specific availability and keep Horse Carriage, Camping Tent, Motorboat, and Travel Guide rentals accessible as additional options.
+- [x] Keep Bicycle, Motorbike, Car with Driver, Self-drive Car, Camping Tent, Boat, Horse Carriage, E-Bike, and Scooter categories directly visible and filterable on the Rentals page rather than hiding the additional types behind View All; retain city-specific availability and other rental options such as Travel Guide.
 - [x] Add Search rentals filtering and a Popular Rentals section with the six reference cards, ratings, shared favorite hearts, daily prices, Rent Now actions, and View All affordance; preserve existing rental IDs `pre1`–`pre5` and make any new favorites resolve in Favorites and Account.
 - [x] Keep the existing rental request form usable after a Rent Now action: city and available category selection, start/end date rules (including two-day minimum for cars), citizen/foreigner price, car type, delivery/branch handover, address/phone, estimate, submission feedback, and existing city/category behavior; terms must be accepted before booking submission.
 - [x] Add the Safe & Reliable Rentals banner with Well-Maintained, Affordable Price, and 24/7 Support.

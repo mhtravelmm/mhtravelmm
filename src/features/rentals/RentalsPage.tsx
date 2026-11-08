@@ -69,6 +69,8 @@ const categoryInfo: Record<RentalCategory, CategoryInfo> = {
 
 const primaryCategories: RentalCategory[] = ['bicycle', 'ebike', 'motorbike', 'scooter', 'car', 'self_drive_car'];
 const additionalCategories: RentalCategory[] = ['horse_carriage', 'camping_tent', 'motorboat', 'travel_guide'];
+const categorySelectorOrder: RentalCategory[] = ['bicycle', 'motorbike', 'car', 'camping_tent', 'motorboat', 'horse_carriage', 'ebike', 'scooter', 'self_drive_car', 'travel_guide'];
+const allRentalCategories: RentalCategory[] = [...primaryCategories, ...additionalCategories];
 const favoriteIdByCategory: Record<RentalCategory, string> = {
   bicycle: 'pre3',
   ebike: 'pre6',
@@ -146,8 +148,8 @@ export function RentalsPage() {
   const locationReady = fulfillment === 'branch' ? Boolean(branch) : address.trim().length >= 3;
   const canSubmit = Boolean(category && phone.trim().length >= 7 && locationReady && termsAccepted);
   const availableCategories = useMemo(() => city.categories.map((item) => ({ id: item, ...categoryInfo[item] })), [city]);
-  const visibleCategoryIds = showAll || query.trim()
-    ? [...primaryCategories, ...additionalCategories]
+  const visibleCategoryIds = showAll || query.trim() || activeFilter
+    ? allRentalCategories
     : primaryCategories;
   const visibleRentals = visibleCategoryIds.filter((id) => {
     if (activeFilter && activeFilter !== id) return false;
@@ -204,8 +206,9 @@ export function RentalsPage() {
       </section>
 
       <section className="rounded-2xl border border-border bg-bg-card p-2.5 shadow-sm sm:p-3">
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {primaryCategories.map((id) => {
+        <p className="mb-2 px-1 text-[10px] font-semibold text-text-secondary">{t('rentals_choose_type')}</p>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+          {categorySelectorOrder.map((id) => {
             const Icon = categoryInfo[id].icon;
             const isActive = activeFilter === id;
             return (
