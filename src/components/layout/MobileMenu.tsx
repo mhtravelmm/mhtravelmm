@@ -1,18 +1,14 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
+import { Building, Car, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
-import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
 
 const NAV_LINKS: { key: TranslationKey; href: string; Icon: typeof Building }[] = [
   { key: 'nav_cities', href: '/cities', Icon: Building },
-  { key: 'nav_nearby', href: '/nearby', Icon: MapPin },
   { key: 'nav_rentals', href: '/rentals', Icon: Car },
-  { key: 'nav_ticketing', href: '/ticketing', Icon: Ticket },
-  { key: 'nav_travel_plans', href: '/travel-plans', Icon: Route },
   { key: 'nav_travel_guide', href: '/travel-guide', Icon: BookOpen },
   { key: 'nav_blogs', href: '/blogs', Icon: PenSquare },
 ];
@@ -46,7 +42,6 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
-  const { isAuthenticated, isSuperAdmin } = useAuth();
   const { pathname } = useLocation();
   const isHomePage = pathname === '/';
 
@@ -174,16 +169,6 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
             </div>
           </>
         )}
-
-        <div className="border-t border-border px-4 py-3">
-          <Link
-            to={isAuthenticated ? (isSuperAdmin ? '/super-admin' : '/account') : '/login'}
-            onClick={onClose}
-            className="block w-full rounded-lg bg-bg py-2.5 text-center text-xs text-text-secondary transition hover:text-text-primary"
-          >
-            {isAuthenticated ? (isSuperAdmin ? t('admin_super_admin') : t('account_overview')) : t('sidebar_login_registration')}
-          </Link>
-        </div>
 
         <p className="mt-auto border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">
           {t('footer_copyright')}

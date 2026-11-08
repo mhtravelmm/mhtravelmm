@@ -76,10 +76,12 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   Currency, Theme, and Login/Registration. Legal links, Help and Support,
   payment method icons, and App Store/Google Play appear in the drawer only on
   Home; the copyright line stays at the drawer bottom on every route.
-- Phone views also keep a fixed bottom navigation visible while reading posts,
-  with Home, Nearby, Cities, Rentals, Travel Plans, and More. More opens the
-  existing drawer; content reserves the bottom safe area so the bar does not
-  cover reading text, and the drawer layers above it while open.
+- Phone views keep a fixed bottom navigation visible on every public page,
+  including Blog reading, with exactly Home, Nearby, Ticketing, Travel Plans,
+  and User Account. These five destinations belong in the bottom bar rather
+  than being repeated in the sidebar. The hamburger continues to open the
+  sidebar for remaining destinations, Favorites and settings; content reserves
+  bottom safe-area space so the bar does not cover reading text.
 - On desktop the Home Page alone renders the full shared footer, including its
   copyright row. Every other page renders only the copyright line at the
   bottom. On phones, the page-flow footer is hidden and copyright is placed at

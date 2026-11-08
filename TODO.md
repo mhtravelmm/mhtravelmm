@@ -71,6 +71,7 @@
 
 ## Persistent phone bottom navigation — Complete
 
-- [x] On phone-sized views, keep a fixed bottom navigation visible on public pages, including Blog article reading, with Home, Nearby, Cities, Rentals, Travel Plans, and More.
-- [x] Highlight the active destination, and make More open the existing mobile sidebar/menu without losing the current route.
-- [x] Reserve safe-area-aware space beneath page content so the bar does not cover Blog text, controls, related stories, or copyright; when the sidebar is open, it layers above the bottom bar.
+- [x] On phone-sized public pages, including Blog article reading, show exactly five fixed bottom tabs: Home, Nearby, Ticketing, Travel Plans, and User Account.
+- [x] Highlight the active destination; User Account opens the signed-in account or admin destination, and opens login when signed out.
+- [x] Do not duplicate Home, Nearby, Ticketing, Travel Plans, or User Account in the mobile sidebar. Keep the remaining destinations, Favorites, language/currency/theme controls, and Home-only footer sections in the sidebar.
+- [x] Reserve safe-area-aware space beneath page content so the bar does not cover Blog text, controls, related stories, or copyright; the existing hamburger continues to open the sidebar.

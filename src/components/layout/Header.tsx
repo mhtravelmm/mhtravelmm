@@ -52,14 +52,6 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
     setMobileMenuOpen((open) => !open);
   }
 
-  function openMoreMenu() {
-    if (searchOpen) setSearchOpen(false);
-    if (!mobileMenuOpen) {
-      const wrapper = headerRef.current?.parentElement ?? headerRef.current;
-      if (wrapper) setMenuTop(Math.round(wrapper.getBoundingClientRect().bottom));
-    }
-    setMobileMenuOpen(true);
-  }
   const unreadCount = unreadNotifications ?? notifications.filter((n) => !n.isRead).length;
 
   function markAllRead() {
@@ -119,7 +111,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
             </button>
           </form>
         </header>
-        <MobileBottomNav menuOpen={mobileMenuOpen} onMoreClick={openMoreMenu} />
+        <MobileBottomNav />
         {mobileMenuOpen && <MobileMenu top={menuTop} onClose={() => setMobileMenuOpen(false)} />}
       </>
     );
@@ -223,7 +215,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
         </div>
       </header>
 
-      <MobileBottomNav menuOpen={mobileMenuOpen} onMoreClick={openMoreMenu} />
+      <MobileBottomNav />
       {mobileMenuOpen && (
         <MobileMenu top={menuTop} onClose={() => setMobileMenuOpen(false)} />
       )}
