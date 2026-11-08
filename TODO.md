@@ -22,3 +22,11 @@
 - [ ] Replace the local preview session store with Supabase Auth and connect the existing auth UI to the backend session.
 - [x] Supabase `public.profiles` table is created with unique usernames, display names, role checks, avatar metadata, timestamps, signup trigger, and Row Level Security policies.
 - [ ] Configure Google and Facebook OAuth provider credentials and callback URLs in Supabase Auth.
+
+
+## Traveler account dashboard UI refresh — Complete
+
+- [x] `/account` follows the supplied MH Travel dashboard reference: navy/cyan visual language, traveler profile and account navigation, destination welcome banner, four account stat cards, upcoming trip, quick actions, recent activity, Myanmar discovery panel, and full footer.
+- [x] The dashboard adapts to mobile widths with compact profile/navigation and stacked or compact card layouts while keeping account destinations accessible.
+- [x] Existing account destinations, favorite toggling, notification links, settings/support views, profile edit entry, and logout behavior remain usable.
+- [x] New account dashboard interface text is available in both Burmese and English.

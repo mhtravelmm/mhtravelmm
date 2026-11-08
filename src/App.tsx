@@ -46,7 +46,7 @@ function AppRoutes() {
     <Route path="/travel-guide" element={<PlaceholderPage title="Travel Guide" />} />
     <Route path="/blogs" element={<Shell><BlogsPage /></Shell>} />
     <Route path="/search" element={<PlaceholderPage title="Search" />} />
-    <Route path="/account" element={<Shell><AccountPage /></Shell>} />
+    <Route path="/account" element={<Shell footerVariant="full"><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
     <Route path="/admin/login" element={<AdminLoginPage />} />

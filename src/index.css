@@ -14,6 +14,11 @@
   --color-review-bg: 233 230 223;
   --color-review-text: 26 26 26;
   --color-review-text-muted: 74 74 72;
+  --color-account-bg: 6 19 38;
+  --color-account-surface: 12 32 57;
+  --color-account-elevated: 18 42 71;
+  --color-account-border: 31 64 95;
+  --color-account-accent: 0 183 239;
 }
 
 .light {
@@ -28,6 +33,11 @@
   --color-review-bg: 255 255 255;
   --color-review-text: 26 26 26;
   --color-review-text-muted: 90 95 103;
+  --color-account-bg: 239 246 250;
+  --color-account-surface: 255 255 255;
+  --color-account-elevated: 231 241 247;
+  --color-account-border: 202 218 230;
+  --color-account-accent: 0 137 191;
 }
 
 body {

@@ -42,6 +42,13 @@ export default {
           warningBg: '#3a2e1e',
           rating: '#ffcf5c',
         },
+        account: {
+          bg: 'rgb(var(--color-account-bg) / <alpha-value>)',
+          surface: 'rgb(var(--color-account-surface) / <alpha-value>)',
+          elevated: 'rgb(var(--color-account-elevated) / <alpha-value>)',
+          border: 'rgb(var(--color-account-border) / <alpha-value>)',
+          accent: 'rgb(var(--color-account-accent) / <alpha-value>)',
+        },
         ad: {
           bg: '#1e1416',
           border: '#4a2224',

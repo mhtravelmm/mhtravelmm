@@ -262,8 +262,16 @@ it is a pre-arrival matter.
 
 - Auth phase 1: email and Google. Phase 2: phone, Apple, Facebook.
 - User profile: profile header, My Bookings, My Travel Plans, Favorites, My
-  Reviews, Messages, Settings, Support/Legal. Visual detail to be refined
-  during the build.
+  Reviews, Messages, Settings, Support/Legal.
+- Account dashboard visual direction follows the supplied MH Travel user
+  dashboard reference: deep navy surfaces, bright cyan accents, a Myanmar
+  destination banner, compact travel-stat cards, and clear booking/activity
+  panels. The desktop layout uses a profile/navigation rail beside the main
+  dashboard; the mobile layout condenses profile/navigation and stacks the
+  trip, quick-action, activity, and discovery cards for narrow screens.
+- The account dashboard retains the shared app header and uses the full footer
+  shown in the supplied reference. Newly added account UI copy stays bilingual
+  through the existing EN/MM translation system.
 - Language: EN/MM with auto-translation fallback. Auto-translated text is
   cached and queued for Admin review.
 - Currency: MMK and USD display using an Admin-set exchange rate.
@@ -333,7 +341,9 @@ it is a pre-arrival matter.
 - User Account Dashboard implemented at `/account`: profile header and stats,
   dashboard navigation, bookings, custom plans with quotation status,
   favorites, reviews, messages, settings, and support/legal views. Data is
-  currently client-side sample state pending auth and Supabase wiring.
+  currently client-side sample state pending auth and Supabase wiring. The
+  refreshed responsive UI follows the supplied dashboard reference, including
+  its navy/cyan visual treatment and full account footer.
 - Full Notifications page implemented at `/notifications` and
   `/account/notifications`: the header dropdown's See all link now opens a
   bilingual notification inbox with All/Unread/Read filters, mark-all-read,

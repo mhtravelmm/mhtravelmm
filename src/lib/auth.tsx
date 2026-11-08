@@ -53,7 +53,7 @@ function readUsers(): StoredUser[] {
 }
 
 function saveUsers(users: StoredUser[]) { window.localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
-function publicUser(user: StoredUser): AuthUser { const { password: _password, ...safeUser } = user; return safeUser; }
+function publicUser(user: StoredUser): AuthUser { const safeUser = { ...user }; Reflect.deleteProperty(safeUser, 'password'); return safeUser; }
 function readSession(): AuthUser | null { if (typeof window === 'undefined') return null; try { const stored = window.localStorage.getItem(SESSION_KEY); return stored ? (JSON.parse(stored) as AuthUser) : null; } catch { return null; } }
 function emitAuthChange() { window.dispatchEvent(new Event(AUTH_EVENT)); }
 function clearLocalSession() { window.localStorage.removeItem(SESSION_KEY); window.localStorage.removeItem('mh-travel-authenticated'); }
