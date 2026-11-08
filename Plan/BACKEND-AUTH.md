@@ -84,4 +84,4 @@ Facebook App credentials were provided during setup, but they were not entered b
 
 ## Account creation note
 
-No real traveler or Super Admin account was inserted because the owner has not yet provided the exact account email and temporary password. Create the account through Supabase Auth so the profile trigger creates the linked `public.profiles` row automatically, then promote the profile through an authorized Super Admin/backend operation. Never insert a fake `auth.users` row directly into the database.
+The first Supabase Auth account was created through the Dashboard and its linked profile was promoted to `super_admin` through a one-time SQL role update. The account email still needs to be confirmed in Supabase Auth before password login can succeed if email confirmation is enabled. Never insert a fake `auth.users` row directly into the database.
