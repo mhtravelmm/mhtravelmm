@@ -142,7 +142,7 @@
 
 - [x] Build the `/nearby` page around the supplied navy/cyan reference: Shwedagon-at-sunset hero with map-pin accents, “Nearby” heading, “Discover great places around you” subtitle, and compact supporting copy.
 - [x] Add a Yangon location selector, 500 m / 1 km / 5 km / 10 km radius controls, nearby-place search field, and Search action; preserve browser geolocation, permission feedback, and Yangon fallback.
-- [x] Show an icon category grid for Hotels, Guesthouses, Restaurants, Cafes, Bars, Exchange, Hospitals, Clinics, Bookstores, Gyms, Temples/Attractions, City Markets, and the existing Rentals category; selecting a category filters results.
+- [x] Show “All” and the 13 place categories as circular icon buttons in one single horizontal row that continuously moves from right to left. Keep category selection filtering results, pause motion on hover/focus, and respect reduced-motion preferences with a static, manually scrollable row.
 - [x] Show six image-led Nearby Places cards on desktop with rating, category, distance, address/summary, favorite state, View Details, and View All; on phones use a compact single-column card/list treatment.
 - [x] Add Quick Filters for Within 1 km, 1–5 km, 5–10 km, Top Rated, Near Me, and Open Now; they must update visible nearby results and remain clearable.
 - [x] Preserve existing `near-*` IDs, give new records unique IDs, and register the full Nearby catalog in the Favorites page and Account dashboard so each Nearby heart resolves by its stable ID across pages.

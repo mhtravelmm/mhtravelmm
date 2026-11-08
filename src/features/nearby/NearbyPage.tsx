@@ -45,6 +45,11 @@ const CATEGORY_META: { id: NearbyCategory; label: TranslationKey; icon: LucideIc
   { id: 'rental', label: 'nearby_category_rental', icon: Bike },
 ];
 
+const CATEGORY_ITEMS = [
+  { id: 'all' as const, label: 'nearby_all_categories' as const, icon: MapPin },
+  ...CATEGORY_META,
+];
+
 const DISTANCE_OPTIONS: { value: number; label: TranslationKey }[] = [
   { value: 0.5, label: 'nearby_distance_500m' },
   { value: 1, label: 'nearby_distance_1km' },
@@ -272,25 +277,34 @@ export function NearbyPage() {
       </section>
 
       <section className="mb-5">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-text-primary">{t('nearby_categories_title')}</h2>
-          <button type="button" onClick={() => setCategory('all')} className={`shrink-0 rounded-full px-2.5 py-1 text-[9px] font-medium ${category === 'all' ? 'bg-brand-blue/10 text-brand-blue' : 'text-text-muted hover:bg-bg-card'}`}>
-            {t('nearby_all_categories')}
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-          {CATEGORY_META.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => { setCategory((current) => current === id ? 'all' : id); setShowAllPlaces(false); }}
-              aria-pressed={category === id}
-              className={`flex min-h-[62px] flex-col items-center justify-center gap-1.5 rounded-lg border px-1.5 py-2 transition sm:min-h-[70px] ${id === 'rental' ? 'col-start-2 sm:col-start-3' : ''} ${category === id ? 'border-brand-blue/40 bg-brand-blue/10 text-brand-blue' : 'border-border bg-bg-card text-text-secondary hover:border-brand-blue/30 hover:bg-bg-cardAlt'}`}
-            >
-              <Icon size={17} strokeWidth={1.8} />
-              <span className="line-clamp-1 text-center text-[9px] font-medium sm:text-[10px]">{t(label)}</span>
-            </button>
-          ))}
+        <h2 className="mb-2 text-sm font-semibold text-text-primary">{t('nearby_categories_title')}</h2>
+        <div className="nearby-category-marquee rounded-card border border-border bg-bg-card py-2.5" role="region" aria-label={t('nearby_categories_title')}>
+          <div className="nearby-category-track">
+            {[0, 1].map((copyIndex) => (
+              <div
+                key={copyIndex}
+                className={`nearby-category-group flex w-max shrink-0 items-start gap-3 px-3 ${copyIndex === 1 ? 'nearby-category-copy--repeat' : ''}`}
+                aria-hidden={copyIndex === 1}
+              >
+                {CATEGORY_ITEMS.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={`${copyIndex}-${id}`}
+                    type="button"
+                    tabIndex={copyIndex === 1 ? -1 : undefined}
+                    onClick={() => { setCategory((current) => id === 'all' || current === id ? 'all' : id); setShowAllPlaces(false); }}
+                    aria-label={t(label)}
+                    aria-pressed={category === id}
+                    className="flex w-[76px] shrink-0 flex-col items-center gap-1.5 text-center text-text-secondary transition hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-card"
+                  >
+                    <span className={`grid h-12 w-12 place-items-center rounded-full border transition ${category === id ? 'border-brand-blue bg-brand-blue text-white shadow-[0_0_0_4px_rgb(59_130_246/0.12)]' : 'border-border bg-bg text-text-secondary hover:border-brand-blue/50 hover:bg-brand-blue/10 hover:text-brand-blue'}`}>
+                      <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
+                    </span>
+                    <span className="line-clamp-2 min-h-[22px] w-full text-[9px] font-medium leading-tight sm:text-[10px]">{t(label)}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

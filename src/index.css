@@ -77,3 +77,50 @@ body {
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+
+/* Nearby categories: one circular-icon rail that travels right-to-left. */
+@keyframes nearby-category-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.nearby-category-marquee {
+  overflow: hidden;
+}
+
+.nearby-category-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: nearby-category-marquee 42s linear infinite;
+}
+
+.nearby-category-marquee:hover .nearby-category-track,
+.nearby-category-marquee:focus-within .nearby-category-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nearby-category-marquee {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nearby-category-marquee::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nearby-category-track {
+    animation: none;
+    will-change: auto;
+  }
+
+  .nearby-category-copy--repeat {
+    display: none;
+  }
+}
