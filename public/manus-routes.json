@@ -1,0 +1,26 @@
+{
+  "routes": [
+    { "path": "/", "title": "Home" },
+    { "path": "/cities", "title": "Cities" },
+    { "path": "/nearby", "title": "Nearby" },
+    { "path": "/rentals", "title": "Rentals" },
+    { "path": "/restaurants", "title": "Restaurants" },
+    { "path": "/restaurants/:id", "title": "Restaurant details" },
+    { "path": "/book-shops", "title": "Book shops" },
+    { "path": "/book-shops/:id", "title": "Book shop details" },
+    { "path": "/ticketing", "title": "Ticketing" },
+    { "path": "/travel-plans", "title": "Travel plans" },
+    { "path": "/travel-guide", "title": "Travel Guide" },
+    { "path": "/travel-guide/:guideId", "title": "Travel Guide details" },
+    { "path": "/blogs", "title": "Blogs" },
+    { "path": "/search", "title": "Search" },
+    { "path": "/account", "title": "User account" },
+    { "path": "/login", "title": "Login" },
+    { "path": "/signup", "title": "Registration" },
+    { "path": "/admin/login", "title": "Admin login" },
+    { "path": "/super-admin", "title": "Super Admin" },
+    { "path": "/notifications", "title": "Notifications" },
+    { "path": "/account/notifications", "title": "Account notifications" },
+    { "path": "/favorites", "title": "Favorites" }
+  ]
+}

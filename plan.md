@@ -258,6 +258,20 @@ Travel Guide:
 - "Follow this route" is stop by stop, with a Directions button per stop
   reusing the existing How-to-Get-There module. A full auto-sequenced
   version may come later.
+- User-provided UI reference: [MH Travel Guide_ Myanmar Journeys.png](https://drive.google.com/file/d/1I_dJ-Dc9AbfY07iwBFOtTf6vsAH1f9g-/view?usp=sharing).
+  The desktop design uses a selected Travel Guide nav tab, a Shwedagon-at-dusk
+  hero with a backpacking traveler, title/subtitle/description and Explore CTA;
+  category filters and search; then image-led guide cards in a three-column
+  grid with category, favorite, date/views and View Guide actions. The phone
+  design keeps the hero compact, uses a 3-column category grid with search, and
+  shows compact horizontal guide cards above the five-item bottom navigation.
+- Replace the current `/travel-guide` placeholder with a bilingual guide
+  listing and a `/travel-guide/:id` detail view, keeping existing `tg1`–`tg4`
+  links and shared favorite IDs valid. Reuse the project's existing Myanmar
+  photography for the hero/cards, and include All/ Myanmar / Nature / Adventure /
+  Culture / Food / City Tour filters, search, category/date/views/rating/distance,
+  visible favorite toggles, and View Guide actions. The detail view keeps the
+  planned time-based stops and directions affordance.
 
 ---
 

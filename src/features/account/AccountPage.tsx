@@ -31,7 +31,8 @@ import type { LucideIcon } from 'lucide-react';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
-import { TRAVEL_PLANS, TRAVEL_GUIDES, BLOGS, POPULARS } from '../../data/homeData';
+import { TRAVEL_PLANS, BLOGS, POPULARS } from '../../data/homeData';
+import { TRAVEL_GUIDE_STORIES } from '../../data/travelGuideData';
 import { TOP_ATTRACTIONS, POPULAR_HOTELS, POPULAR_RESTAURANTS, POPULAR_BOOK_SHOPS, POPULAR_RENTALS, POPULAR_TRANSPORT, POPULAR_CAFES, POPULAR_MARKETS } from '../../data/cityPageData';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
@@ -59,7 +60,7 @@ const menu: DashboardMenuItem[] = [
 
 const allListings = [
   ...TRAVEL_PLANS,
-  ...TRAVEL_GUIDES,
+  ...TRAVEL_GUIDE_STORIES,
   ...BLOGS,
   ...POPULARS,
   ...TOP_ATTRACTIONS,
@@ -409,7 +410,7 @@ function Plans() {
 
 function Guides({ listings, toggle }: { listings: typeof allListings; toggle: (id: string) => void }) {
   const { t } = useLanguage();
-  const guideIds = new Set(TRAVEL_GUIDES.map((guide) => guide.id));
+  const guideIds = new Set(TRAVEL_GUIDE_STORIES.map((guide) => guide.id));
   const guides = listings.filter((listing) => guideIds.has(listing.id));
   return <PagePanel title={t('account_guides')} intro={t('account_guides_intro')}>
     {guides.length > 0 ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{guides.map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggle} size="md" />)}</div> : <EmptyState text={t('account_guides_empty')} />}

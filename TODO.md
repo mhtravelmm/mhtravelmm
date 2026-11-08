@@ -9,6 +9,16 @@
 - [x] Story cards use an image-led layout with readable summaries and activity metrics.
 - [x] Blogs uses the shared header; full footer content is reserved for Home while the copyright line follows the global placement rule.
 
+## Travel Guide page from user reference — Complete
+
+- [x] Replace the `/travel-guide` placeholder with a bilingual landing page matching the shared Drive reference: active Travel Guide navigation, Shwedagon-at-dusk hero, title/subtitle/description and Explore CTA.
+- [x] Include All Guides, Myanmar, Nature, Adventure, Culture, Food, and City Tour category controls that filter the guide cards, plus guide search.
+- [x] Show image-led guide cards with category, prominent favorite control, published date, title, summary, rating, distance, views, and View Guide action in a three-column desktop layout.
+- [x] On phones, keep a compact hero, a three-column category grid with the search input, compact horizontal guide cards, and the shared five-item bottom navigation.
+- [x] Add `/travel-guide/:id` guide detail routes so existing `tg1`–`tg4` and `ctg1`–`ctg3` links work, with time-based itinerary stops and a Directions affordance.
+- [x] Reuse existing Myanmar photo assets and favorite IDs; keep Home Travel Guide cards unchanged, include the complete guide list in Favorites and Account, and preserve the global copyright/full-footer rules.
+- [x] Keep the Travel Guide interface and guide content available in Burmese and English.
+
 ## Traveler authentication and Super Admin control center — Frontend complete
 
 - [x] Users can open separate Login and Registration routes from the account entry point.
