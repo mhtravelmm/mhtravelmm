@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Activity, BarChart3, BookOpen, Building2, ChevronRight, FileText, LogOut, Megaphone, Settings, ShieldCheck, Ticket, Users, WalletCards } from 'lucide-react';
+import { Activity, BarChart3, BookOpen, Building2, ChevronRight, FileText, Globe2, LogOut, Megaphone, Moon, Settings, ShieldCheck, Sun, Ticket, Users, WalletCards } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../lib/i18n';
 import { useAuth } from '../../lib/auth';
+import { useTheme } from '../../lib/theme';
 
 type AdminView = 'overview' | 'users' | 'content' | 'bookings' | 'settings';
 
@@ -14,7 +15,8 @@ const activities = [
 ];
 
 export function SuperAdminPage() {
-  const { t } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<AdminView>('overview');
@@ -22,7 +24,7 @@ export function SuperAdminPage() {
   function signOut() { logout(); navigate('/admin/login', { replace: true }); }
 
   return <div className="mx-auto max-w-7xl pb-10 pt-2 sm:pt-5">
-    <section className="relative overflow-hidden rounded-card border border-brand-blue/30 bg-gradient-to-br from-brand-blueDark/50 via-bg-card to-bg-card p-5 sm:p-7"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-brand-blue/15 blur-3xl" /><div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brand-blue"><ShieldCheck size={14} />{t('admin_super_admin')}</div><h1 className="mt-3 text-2xl font-medium text-white sm:text-3xl">{t('admin_dashboard_title')}</h1><p className="mt-2 max-w-2xl text-xs leading-5 text-blue-100/65">{t('admin_dashboard_intro')}</p></div><div className="flex items-center gap-3"><div className="text-right"><p className="text-xs font-medium text-white">{user?.name}</p><p className="mt-1 text-[10px] text-blue-100/60">{user?.email}</p></div><button type="button" onClick={signOut} className="inline-flex items-center gap-2 rounded-md border border-brand-red/50 bg-brand-red/15 px-3 py-2 text-xs font-medium text-white transition hover:bg-brand-red/30" aria-label={t('account_logout')}><LogOut size={14} />{t('account_logout')}</button></div></div></section>
+    <section className="relative overflow-hidden rounded-card border border-brand-blue/30 bg-gradient-to-br from-brand-blueDark/50 via-bg-card to-bg-card p-5 sm:p-7"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-brand-blue/15 blur-3xl" /><div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div><div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-brand-blue"><ShieldCheck size={14} />{t('admin_super_admin')}</div><h1 className="mt-3 text-2xl font-medium text-white sm:text-3xl">{t('admin_dashboard_title')}</h1><p className="mt-2 max-w-2xl text-xs leading-5 text-blue-100/65">{t('admin_dashboard_intro')}</p></div><div className="flex flex-wrap items-center justify-end gap-2"><button type="button" onClick={toggleLanguage} className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/10 px-2.5 py-2 text-[10px] font-medium text-white transition hover:bg-white/15" aria-label={t('admin_language_toggle')}><Globe2 size={13} />{language === 'mm' ? 'မြန်မာ' : 'English'}</button><button type="button" onClick={toggleTheme} className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/10 px-2.5 py-2 text-[10px] font-medium text-white transition hover:bg-white/15" aria-label={theme === 'dark' ? t('admin_theme_light') : t('admin_theme_dark')}>{theme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}{theme === 'dark' ? t('admin_theme_light') : t('admin_theme_dark')}</button><div className="ml-1 border-l border-white/15 pl-3 text-right"><p className="text-xs font-medium text-white">{user?.name}</p><p className="mt-1 text-[10px] text-blue-100/60">{user?.email}</p></div><button type="button" onClick={signOut} className="inline-flex items-center gap-2 rounded-md border border-brand-red/50 bg-brand-red/15 px-3 py-2 text-xs font-medium text-white transition hover:bg-brand-red/30" aria-label={t('account_logout')}><LogOut size={14} />{t('account_logout')}</button></div></div></section>
     <div className="mt-4 grid gap-4 lg:grid-cols-[205px_1fr]">
       <aside className="rounded-card border border-border bg-bg-card p-2"><p className="px-3 pb-2 pt-1 text-[9px] uppercase tracking-[0.18em] text-text-faint">{t('admin_control_center')}</p><nav className="space-y-1">{([['overview', BarChart3, 'admin_overview'], ['users', Users, 'admin_users'], ['content', FileText, 'admin_content'], ['bookings', Ticket, 'admin_bookings'], ['settings', Settings, 'account_settings']] as const).map(([id, Icon, key]) => <button type="button" key={id} onClick={() => setView(id)} className={`flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-xs transition ${view === id ? 'bg-brand-blue text-white' : 'text-text-secondary hover:bg-bg-cardAlt hover:text-text-primary'}`}><Icon size={14} />{t(key)}{id === 'users' && <span className="ml-auto rounded-full bg-brand-red px-1.5 py-0.5 text-[9px] text-white">1</span>}</button>)}</nav><div className="mt-4 border-t border-border px-3 pt-4"><p className="text-[10px] leading-4 text-text-faint">{t('admin_role_note')}</p></div></aside>
       <main className="min-w-0">{view === 'overview' && <Overview />}{view === 'users' && <UsersPanel />}{view === 'content' && <ContentPanel />}{view === 'bookings' && <BookingsPanel />}{view === 'settings' && <SettingsPanel />}</main>

@@ -528,6 +528,9 @@ const translations = {
 
   // Super Admin dashboard
   admin_super_admin: { mm: 'Super Admin', en: 'Super Admin' },
+  admin_language_toggle: { mm: 'ဘာသာစကား ပြောင်းရန်', en: 'Switch language' },
+  admin_theme_light: { mm: 'အလင်းရောင်', en: 'Light mode' },
+  admin_theme_dark: { mm: 'အမှောင်ရောင်', en: 'Dark mode' },
   admin_portal: { mm: 'Admin Portal', en: 'Admin Portal' },
   admin_login_title: { mm: 'Super Admin ဝင်ရန်', en: 'Super Admin sign in' },
   admin_login_intro: { mm: 'ဒီနေရာက MH Travel Admin များအတွက် သီးသန့်ဝင်ရောက်ရန်နေရာ ဖြစ်ပါတယ်။', en: 'This private sign-in is for MH Travel administrators only.' },

@@ -137,6 +137,7 @@
 - Super Admin sees the dashboard only, not the traveler website pages.
 - Dashboard includes overview metrics, recent activity, users, content/listings, bookings, settings, role notes, and quick actions.
 - A clearly labeled `Logout / ထွက်မည်` button is visible in the dashboard header and returns to `/admin/login`.
+- Super Admin Dashboard header now includes a Burmese/English language switcher and a Dark/Light theme toggle using the shared app providers. The controls work inside the standalone admin portal and persist the same app-wide preferences used by the traveler UI.
 - Admin Login now redirects explicitly to `/super-admin` after success. When Supabase is configured, it authenticates only a real Supabase Auth user whose linked profile has `super_admin` role; the local preview account is not used in that production path.
 
 ## 5. Supabase backend work completed
