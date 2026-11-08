@@ -3,7 +3,6 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
-  Clock3,
   Eye,
   Heart,
   Landmark,
@@ -108,17 +107,17 @@ function StoryMetrics({
   return (
     <div className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 text-text-muted ${compact ? 'text-[9px] sm:text-[10px]' : 'text-[11px]'}`}>
       <span className="inline-flex items-center gap-1 text-status-rating" aria-label={`${t('blog_rating')}: ${formatNumber(post.rating, language, 1)}`}>
-        <Star size={13} fill="currentColor" />
+        <Star size={compact ? 10 : 13} fill="currentColor" />
         <span>{formatNumber(post.rating, language, 1)}</span>
       </span>
       {showDistance && <span className="inline-flex items-center gap-1">
-        <MapPin size={13} />
+        <MapPin size={compact ? 10 : 13} />
         <span>
           {formatNumber(post.distanceKm, language, 1)} km {t('blog_away')}
         </span>
       </span>}
       <span className="inline-flex items-center gap-1">
-        <Eye size={13} />
+        <Eye size={compact ? 10 : 13} />
         <span>{formatCompactCount(views, language)}</span>
       </span>
     </div>
@@ -154,8 +153,8 @@ function StoryCard({
   const publishedDate = formatDate(post.publishedAt, language);
 
   return (
-    <article className="group flex min-w-0 overflow-hidden rounded-2xl border border-border bg-bg-card shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-xl hover:shadow-black/15 sm:flex-col">
-      <div className="relative h-[178px] w-[116px] shrink-0 overflow-hidden bg-bg-cardAlt sm:h-44 sm:w-full">
+    <article className="group flex min-w-0 overflow-hidden rounded-xl border border-border bg-bg-card shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-black/15 sm:flex-col">
+      <div className="relative h-auto min-h-[126px] w-[98px] shrink-0 self-stretch overflow-hidden bg-bg-cardAlt sm:h-[140px] sm:min-h-0 sm:w-full sm:self-auto 2xl:h-[150px]">
         <button
           type="button"
           onClick={onOpen}
@@ -170,55 +169,52 @@ function StoryCard({
           />
         </button>
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/15" />
-        {category && <span className="absolute left-3 top-3 hidden items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/65 px-2.5 py-1.5 text-[10px] font-semibold text-white shadow backdrop-blur sm:inline-flex">
-          <CategoryIcon size={13} className={category.tone} />{categoryLabel}
+        {category && <span className="absolute left-2 top-2 hidden items-center gap-1 rounded-full border border-white/15 bg-slate-950/65 px-2 py-1 text-[9px] font-semibold text-white shadow backdrop-blur sm:inline-flex">
+          <CategoryIcon size={11} className={category.tone} />{categoryLabel}
         </span>}
-        <time dateTime={post.publishedAt} className="absolute right-3 top-3 hidden items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/65 px-2.5 py-1.5 text-[10px] text-white shadow backdrop-blur sm:inline-flex">
-          <CalendarDays size={12} />{publishedDate}
+        <time dateTime={post.publishedAt} className="absolute right-2 top-2 hidden items-center gap-1 rounded-full border border-white/15 bg-slate-950/65 px-2 py-1 text-[9px] text-white shadow backdrop-blur sm:inline-flex">
+          <CalendarDays size={10} />{publishedDate}
         </time>
-        <span className="absolute bottom-2 left-2 flex items-center gap-1 text-[9px] text-white sm:bottom-3 sm:left-3 sm:text-[10px]">
-          <MapPin size={9} />
+        <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[8px] text-white sm:bottom-2 sm:left-2 sm:text-[9px]">
+          <MapPin size={8} />
           {post.location[language]}
         </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-between p-3 sm:p-3.5">
+      <div className="flex min-w-0 flex-1 flex-col justify-between p-2 sm:p-2.5">
         <div>
-          <div className="mb-2 flex items-center justify-between gap-1.5 sm:hidden">
-            <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-bg-cardAlt px-2 py-1 text-[9px] font-medium text-text-secondary">
-              <CategoryIcon size={11} className={category?.tone ?? 'text-brand-blue'} /><span className="truncate">{categoryLabel}</span>
+          <div className="mb-1.5 flex items-center justify-between gap-1 sm:hidden">
+            <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-bg-cardAlt px-1.5 py-0.5 text-[8px] font-medium text-text-secondary">
+              <CategoryIcon size={10} className={category?.tone ?? 'text-brand-blue'} /><span className="truncate">{categoryLabel}</span>
             </span>
-            <time dateTime={post.publishedAt} className="inline-flex shrink-0 items-center gap-1 text-[8px] text-text-faint"><CalendarDays size={10} />{publishedDate}</time>
+            <time dateTime={post.publishedAt} className="inline-flex shrink-0 items-center gap-1 text-[8px] text-text-faint"><CalendarDays size={9} />{publishedDate}</time>
           </div>
           <button type="button" onClick={onOpen} className="text-left">
-            <h2 className="line-clamp-2 font-semibold leading-snug text-text-primary transition group-hover:text-brand-blue sm:text-base">
+            <h2 className="line-clamp-2 text-[11px] font-semibold leading-[1.3] text-text-primary transition group-hover:text-brand-blue sm:text-sm">
               {copy.title}
             </h2>
           </button>
-          <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-text-muted sm:line-clamp-3 sm:text-xs sm:leading-5">{copy.excerpt}</p>
-          <div className="mt-2 hidden items-center gap-1.5 text-[9px] text-text-faint sm:flex">
-            <Clock3 size={11} />{getReadTime(post.readMinutes, language, t)}<span className="mx-0.5 text-border">·</span>{t('blog_author_prefix')} {post.author[language]}
-          </div>
-          <div className="mt-2">
+          <p className="mt-1 line-clamp-2 text-[9px] leading-[1.4] text-text-muted sm:text-[11px] sm:leading-4">{copy.excerpt}</p>
+          <div className="mt-1.5">
             <StoryMetrics post={post} views={views} language={language} t={t} showDistance={showDistance} compact />
           </div>
         </div>
 
-        <div className="mt-2.5 flex items-center justify-between gap-1.5 border-t border-border pt-2">
-          <div className="flex items-center gap-1.5">
+        <div className="mt-1.5 flex items-center justify-between gap-1 border-t border-border pt-1.5">
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={onToggleFavorite}
               aria-label={t(isFavorited ? 'blog_saved' : 'blog_save')}
               aria-pressed={isFavorited}
-              className={`inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] transition hover:bg-brand-red/10 ${isFavorited ? 'text-brand-redLight' : 'text-text-muted'}`}
+              className={`inline-flex items-center gap-1 rounded-lg px-1 py-1 text-[9px] transition hover:bg-brand-red/10 ${isFavorited ? 'text-brand-redLight' : 'text-text-muted'}`}
             >
-              <Heart size={13} fill={isFavorited ? 'currentColor' : 'none'} />{formatCompactCount(favoriteTotal, language)}
+              <Heart size={11} fill={isFavorited ? 'currentColor' : 'none'} />{formatCompactCount(favoriteTotal, language)}
             </button>
-            <button type="button" onClick={onShare} aria-label={t('blog_share')} className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition hover:bg-bg-cardAlt hover:text-brand-blue"><Share2 size={13} /></button>
+            <button type="button" onClick={onShare} aria-label={t('blog_share')} className="flex h-6 w-6 items-center justify-center rounded-lg text-text-muted transition hover:bg-bg-cardAlt hover:text-brand-blue"><Share2 size={11} /></button>
           </div>
-          <button type="button" onClick={onOpen} aria-label={`${t('blog_read_story')}: ${copy.title}`} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-blue px-2.5 py-1.5 text-[9px] font-semibold text-white transition hover:bg-brand-blueDark sm:px-3 sm:text-[10px]">
-            <span className="hidden sm:inline">{t('blog_read_story')}</span><ArrowRight size={12} />
+          <button type="button" onClick={onOpen} aria-label={`${t('blog_read_story')}: ${copy.title}`} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-blue px-2 py-1 text-[8px] font-semibold text-white transition hover:bg-brand-blueDark sm:px-2.5 sm:text-[9px]">
+            <span className="hidden sm:inline">{t('blog_read_story')}</span><ArrowRight size={11} />
           </button>
         </div>
       </div>
@@ -588,7 +584,7 @@ export function BlogsPage() {
             </div>
 
             {displayedPosts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 xl:gap-4">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-3">
                 {displayedPosts.map((post) => (
                   <StoryCard
                     key={post.id}

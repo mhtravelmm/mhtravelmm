@@ -39,3 +39,10 @@
 - [x] Story cards retain date, category, title, excerpt, reading/view/favorite metrics, favorite toggle, share action, and reader entry. Search, sorting, shareable story URLs, bilingual reader, and related content continue to work.
 - [x] A Load More control reveals additional matching stories and resets appropriately when search or category filters change.
 - [x] New Blogs interface text is available in Burmese and English.
+
+
+## Compact Blogs cards for desktop and phone — Complete
+
+- [x] Reduce oversized story boxes to the tighter proportions of the supplied Blogs reference, using a denser desktop grid and shorter card image/body spacing.
+- [x] Keep phone story cards compact and horizontal with a small thumbnail on the left, readable title/excerpt and category/date on the right, and accessible favorite/share/read controls without horizontal overflow.
+- [x] Preserve category filtering, search, sorting, reader links, bilingual labels, metrics, and the Load More interaction while changing card dimensions.
