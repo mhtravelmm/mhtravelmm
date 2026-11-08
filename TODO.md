@@ -125,3 +125,12 @@
 - [x] On phone, place “Latest stories” and the “Newest” sort selector on the same row.
 - [x] Place the Search bar on the next row below both, spanning the available content width.
 - [x] Keep the desktop heading, Search, and sort controls inline and preserve their existing filtering/sorting behavior.
+
+## Ticketing page reference redesign — Complete
+
+- [x] Use the supplied dark navy/cyan Ticketing reference with an airplane-and-Shwedagon hero, Ticketing heading, short supporting copy, and a Search Flights CTA.
+- [x] Show Flights, Hotels, Car Rentals, and Bus Tickets as the primary category tabs; preserve Train, Events, and Cinema through an additional-options control rather than removing existing ticket types.
+- [x] Provide a responsive search form for the active product: route/airport codes, departure and return dates, and passengers for travel routes; city and relevant dates/guests for Hotels and Car Rentals; keep existing bus seat selection and order confirmation usable.
+- [x] After search, show Popular Routes as one row of route/fare cards and Best Deals as compact operator rows with route, times, duration, price, and a working Book Now action.
+- [x] On phones, use a compact hero and stacked search fields, swipeable route cards, and compact deal rows without covering the shared five-tab bottom navigation.
+- [x] Keep Ticketing labels bilingual, highlight the active Ticketing header link, and preserve the rule that full footer content is Home-only while copyright remains global.

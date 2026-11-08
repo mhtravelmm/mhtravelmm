@@ -169,6 +169,14 @@ Common rules:
   lead to the same seat-selection and purchase flow.
 - Seat map status is queried live when the booking flow opens, never
   pre-cached.
+- User-provided UI reference: [MH Travel Ticketing Experience.png](https://drive.google.com/file/d/1e1ZsDTFRMX65GZOPAx9AGAfnHnhGomnz/view?usp=sharing).
+  It shows a dark navy/cyan ticket hub, an airplane-and-Shwedagon hero with
+  search CTA, primary Flights / Hotels / Car Rentals / Bus Tickets tabs, a
+  route/date/return/passenger search form, Popular Routes cards, and Best Deals
+  rows with operator, departure/arrival, duration, fare, and Book Now. On phones,
+  keep the hero compact, stack the booking fields, allow route cards to swipe
+  horizontally, and retain the project's fixed five-tab navigation. The global
+  rule still reserves the full footer for Home and shows copyright elsewhere.
 
 ---
 
