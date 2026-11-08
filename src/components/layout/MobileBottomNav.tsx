@@ -12,7 +12,7 @@ const ITEMS: { key: TranslationKey; href: string; Icon: typeof Home; account?: b
   { key: 'nav_account', href: '/account', Icon: UserRound, account: true },
 ];
 
-export function MobileBottomNav() {
+export function MobileBottomNav({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
   const { isAuthenticated, isSuperAdmin } = useAuth();
   const { t } = useLanguage();
@@ -34,6 +34,7 @@ export function MobileBottomNav() {
             <Link
               key={key}
               to={destination}
+              onClick={onNavigate}
               aria-current={active ? 'page' : undefined}
               className={`flex min-w-0 flex-col items-center justify-center gap-1 px-0.5 text-center transition-colors ${active ? 'text-brand-blue' : 'text-text-faint hover:text-text-primary'}`}
             >

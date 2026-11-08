@@ -75,6 +75,7 @@
 - [x] Highlight the active destination; User Account opens the signed-in account or admin destination, and opens login when signed out.
 - [x] Keep exactly Home, Nearby, Ticketing, Travel Plans, and User Account in the bottom bar. Home and User Account are not duplicated as standalone sidebar links; Nearby, Ticketing, and Travel Plans also appear in the requested footer Navigate list, alongside Cities, Rentals, Travel Guide, and Blogs.
 - [x] Reserve safe-area-aware space beneath page content so the bar does not cover Blog text, controls, related stories, or copyright; the existing hamburger continues to open the sidebar.
+- [x] Keep the sidebar panel and backdrop above the bottom bar so all five tabs remain visible and clickable while the sidebar is open; choosing a tab navigates and closes the sidebar.
 
 
 ## Complete footer information in the phone sidebar — Complete

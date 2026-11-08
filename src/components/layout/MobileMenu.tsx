@@ -78,7 +78,7 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-x-0 bottom-0 z-[60] md:hidden" style={{ top }}>
+    <div className="fixed inset-x-0 bottom-[calc(3.625rem_+_env(safe-area-inset-bottom))] z-[60] md:hidden" style={{ top }}>
       <button
         type="button"
         aria-label="Close menu"

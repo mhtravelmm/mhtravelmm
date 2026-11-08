@@ -111,7 +111,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
             </button>
           </form>
         </header>
-        <MobileBottomNav />
+        <MobileBottomNav onNavigate={() => setMobileMenuOpen(false)} />
         {mobileMenuOpen && <MobileMenu top={menuTop} onClose={() => setMobileMenuOpen(false)} />}
       </>
     );
@@ -215,7 +215,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
         </div>
       </header>
 
-      <MobileBottomNav />
+      <MobileBottomNav onNavigate={() => setMobileMenuOpen(false)} />
       {mobileMenuOpen && (
         <MobileMenu top={menuTop} onClose={() => setMobileMenuOpen(false)} />
       )}
