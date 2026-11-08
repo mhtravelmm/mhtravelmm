@@ -229,6 +229,8 @@ Blog:
   other categories in one compact, single-row horizontal scroller; chips stay
   small and do not wrap into a large grid. Desktop may retain its wrapped row.
 - Interactions: favorite, share, view count.
+- On phones, place Latest stories and the Newest sort selector on one row,
+  with the Search bar directly below; preserve the desktop inline controls.
 - Blogs Page follows the supplied responsive reference: an image-led Myanmar
   editorial hero and visible category filters, using nearly all available
   viewport width with only narrow responsive edge gutters rather than a

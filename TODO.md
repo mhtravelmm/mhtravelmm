@@ -101,3 +101,10 @@
 - [x] Reuse the existing Home attraction, restaurant, and cafe listings and favorite toggles; move those sections to the bottom rather than duplicate their cards elsewhere.
 - [x] Keep each section as one horizontal row: show five cards across on wide screens and allow horizontal swipe scrolling on phones without wrapping to extra rows.
 - [x] Preserve the existing bilingual section titles, view-all destinations, listing-card metrics, and working favorite controls.
+
+
+## Phone Blogs header, sort, and search layout — Complete
+
+- [x] On phone, place “Latest stories” and the “Newest” sort selector on the same row.
+- [x] Place the Search bar on the next row below both, spanning the available content width.
+- [x] Keep the desktop heading, Search, and sort controls inline and preserve their existing filtering/sorting behavior.

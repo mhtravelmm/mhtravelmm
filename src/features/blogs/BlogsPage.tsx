@@ -560,47 +560,45 @@ export function BlogsPage() {
           </section>
 
           <section aria-label={t('blog_story_count')}>
-            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-text-primary sm:text-xl">{t('blog_latest_title')}</h2>
+            <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 sm:flex sm:items-end sm:justify-between sm:gap-3">
+              <div className="min-w-0">
+                <h2 className="whitespace-nowrap text-base font-semibold text-text-primary sm:text-xl">{t('blog_latest_title')}</h2>
                 <p className="mt-0.5 text-[10px] text-text-faint sm:text-xs">{t('blog_story_count').replace('{count}', formatNumber(visiblePosts.length, language))}</p>
               </div>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                <label className="relative block min-w-0 sm:w-64">
-                  <span className="sr-only">{t('blog_search_label')}</span>
-                  <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" />
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={(event) => { setQuery(event.target.value); setVisibleCount(6); }}
-                    placeholder={t('blog_search_placeholder')}
-                    aria-label={t('blog_search_label')}
-                    className="w-full rounded-full border border-border bg-bg-card py-2.5 pl-9 pr-10 text-xs text-text-primary outline-none transition placeholder:text-text-faint focus:border-brand-blue/70"
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={() => { setQuery(''); setVisibleCount(6); }}
-                      aria-label={t('blog_clear_search')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-faint hover:text-text-primary"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </label>
-                <label>
-                  <span className="sr-only">{t('blog_sort_label')}</span>
-                  <select
-                    value={sortMode}
-                    onChange={(event) => { setSortMode(event.target.value as SortMode); setVisibleCount(6); }}
-                    aria-label={t('blog_sort_label')}
-                    className="w-full rounded-full border border-border bg-bg-card px-4 py-2.5 text-xs text-text-secondary outline-none transition focus:border-brand-blue/70 sm:w-auto"
+              <label className="relative col-span-2 row-start-2 block min-w-0 sm:order-2 sm:col-span-1 sm:w-64">
+                <span className="sr-only">{t('blog_search_label')}</span>
+                <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => { setQuery(event.target.value); setVisibleCount(6); }}
+                  placeholder={t('blog_search_placeholder')}
+                  aria-label={t('blog_search_label')}
+                  className="w-full rounded-full border border-border bg-bg-card py-2.5 pl-9 pr-10 text-xs text-text-primary outline-none transition placeholder:text-text-faint focus:border-brand-blue/70"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => { setQuery(''); setVisibleCount(6); }}
+                    aria-label={t('blog_clear_search')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-faint hover:text-text-primary"
                   >
-                    <option value="latest">{t('blog_sort_latest')}</option>
-                    <option value="popular">{t('blog_sort_popular')}</option>
-                  </select>
-                </label>
-              </div>
+                    <X size={14} />
+                  </button>
+                )}
+              </label>
+              <label className="col-start-2 row-start-1 min-w-0 sm:order-3">
+                <span className="sr-only">{t('blog_sort_label')}</span>
+                <select
+                  value={sortMode}
+                  onChange={(event) => { setSortMode(event.target.value as SortMode); setVisibleCount(6); }}
+                  aria-label={t('blog_sort_label')}
+                  className="w-[112px] rounded-full border border-border bg-bg-card px-3 py-2.5 text-xs text-text-secondary outline-none transition focus:border-brand-blue/70 sm:w-auto sm:px-4"
+                >
+                  <option value="latest">{t('blog_sort_latest')}</option>
+                  <option value="popular">{t('blog_sort_popular')}</option>
+                </select>
+              </label>
             </div>
 
             {displayedPosts.length > 0 ? (
