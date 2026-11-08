@@ -371,7 +371,7 @@ it is a pre-arrival matter.
 
 ## 16. Open Items
 
-- Favorites page (the header heart currently links to a placeholder).
+- Favorites page implemented: saved listings resolve through shared categories and client-side favorite state; backend persistence remains pending.
 - City page: wire favorite toggling (same fix already done on Home).
 - Blogs page implemented: bilingual editorial listing and reader; favorite,
   share, and view counts currently use client-side storage pending backend wiring.
@@ -385,8 +385,8 @@ it is a pre-arrival matter.
   request into the MH Travel quotation flow: MH Travel calculates the cost,
   contacts the user before confirmation, and negotiates requested destinations
   or services. No extra intro banner is shown.
-- Remaining pages: Nearby, Rentals, Ticketing, Travel Guide,
-  detail pages, Search, Account.
+- Remaining pages: detail pages and Search; Nearby, Rentals, Ticketing, Travel Guide,
+  Account, and Favorites page UI are implemented with client-side mock data pending backend wiring.
 - Homepage reference alignment: local Myanmar photography now fills Travel
   Plan, Travel Guide, Blog, and Popular cards; Travel Guide uses the compact
   circular-image row treatment from the reference. Hero ad creative remains
@@ -402,10 +402,8 @@ it is a pre-arrival matter.
   Attractions, Popular Hotels, Restaurants, Book Shops, Rentals, Transport
   Services, Cafes, Markets, and Popular Searches in the same section pattern
   as the deployed `/cities` page.
-- Nearby page implemented at `/nearby`: browser geolocation with Yangon
-  fallback, direct keyword/category search, rating and distance filters, an
-  eight-card nearest-place grid spanning two desktop rows, and category-grouped
-  highly rated recommendations for places that are a little farther away.
+- Nearby page at `/nearby` follows the user's [Drive visual reference](https://drive.google.com/file/d/1eiuGD1sIiv8jlmkKHHOnHBGHWsIPFVaW/view?usp=sharing): a Shwedagon/map-pin hero; Yangon selector, 500 m/1 km/5 km/10 km radius chips and search; icon categories for Hotels, Guesthouses, Restaurants, Cafes, Bars, Exchange, Hospitals, Clinics, Bookstores, Gyms, Temples, and City Markets, plus the existing Rentals category; a six-card Nearby Places grid with View All; Quick Filters for distance, Top Rated, Near Me, and Open Now; and a Popular Nearby row.
+- Preserve browser geolocation with Yangon fallback, live keyword/category filtering, rating/distance behavior and shared favorite state. Keep existing `near-*` IDs, use unique IDs for added records, and include the full Nearby catalog in Favorites and Account resolution. On phones, use a compact hero, three-column category tiles, stacked search controls and compact place cards while retaining the persistent five-tab bottom navigation. The full footer remains Home-only and copyright remains global.
 - User Account Dashboard implemented at `/account`: profile header and stats,
   dashboard navigation, bookings, custom plans with quotation status,
   favorites, reviews, messages, settings, and support/legal views. Data is

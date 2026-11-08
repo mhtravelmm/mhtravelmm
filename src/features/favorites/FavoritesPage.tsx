@@ -6,19 +6,21 @@ import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { BLOGS, POPULARS, TRAVEL_PLANS } from '../../data/homeData';
 import { TRAVEL_GUIDE_STORIES } from '../../data/travelGuideData';
 import { TOP_ATTRACTIONS, POPULAR_CAFES, POPULAR_HOTELS, POPULAR_BOOK_SHOPS, POPULAR_MARKETS, RENTAL_PAGE_LISTINGS, POPULAR_RESTAURANTS, POPULAR_TRANSPORT } from '../../data/cityPageData';
+import { NEARBY_LISTINGS } from '../../data/nearbyData';
 import type { CardListing } from '../../types';
 
-type FavoriteCategory = 'all' | 'blogs' | 'plans' | 'guides' | 'hotels' | 'restaurants' | 'bookshops' | 'rentals' | 'transport' | 'cafes' | 'markets' | 'attractions';
+type FavoriteCategory = 'all' | 'blogs' | 'plans' | 'guides' | 'nearby' | 'hotels' | 'restaurants' | 'bookshops' | 'rentals' | 'transport' | 'cafes' | 'markets' | 'attractions';
 
 type FavoriteGroup = { id: FavoriteCategory; label: TranslationKey; listings: CardListing[] };
 
-const ALL_LISTINGS = [...TRAVEL_PLANS, ...TRAVEL_GUIDE_STORIES, ...BLOGS, ...POPULARS, ...TOP_ATTRACTIONS, ...POPULAR_HOTELS, ...POPULAR_RESTAURANTS, ...POPULAR_BOOK_SHOPS, ...RENTAL_PAGE_LISTINGS, ...POPULAR_TRANSPORT, ...POPULAR_CAFES, ...POPULAR_MARKETS];
+const ALL_LISTINGS = [...TRAVEL_PLANS, ...TRAVEL_GUIDE_STORIES, ...BLOGS, ...POPULARS, ...TOP_ATTRACTIONS, ...POPULAR_HOTELS, ...POPULAR_RESTAURANTS, ...POPULAR_BOOK_SHOPS, ...RENTAL_PAGE_LISTINGS, ...POPULAR_TRANSPORT, ...POPULAR_CAFES, ...POPULAR_MARKETS, ...NEARBY_LISTINGS];
 
 const GROUPS: FavoriteGroup[] = [
   { id: 'all', label: 'favorites_all', listings: ALL_LISTINGS },
   { id: 'blogs', label: 'favorites_blogs', listings: BLOGS },
   { id: 'plans', label: 'favorites_plans', listings: TRAVEL_PLANS },
   { id: 'guides', label: 'favorites_guides', listings: TRAVEL_GUIDE_STORIES },
+  { id: 'nearby', label: 'favorites_nearby', listings: NEARBY_LISTINGS },
   { id: 'hotels', label: 'favorites_hotels', listings: POPULAR_HOTELS },
   { id: 'restaurants', label: 'favorites_restaurants', listings: POPULAR_RESTAURANTS },
   { id: 'bookshops', label: 'favorites_bookshops', listings: POPULAR_BOOK_SHOPS },

@@ -136,3 +136,15 @@
 - [x] Add the Safe & Reliable Rentals banner with Well-Maintained, Affordable Price, and 24/7 Support.
 - [x] On phones, use a compact hero, three-column category tiles, search, compact rental rows/cards and horizontal swipe where appropriate; keep the shared five-tab bottom navigation unobstructed.
 - [x] Keep the Rentals UI bilingual, preserve global copyright on this page, and keep the full footer exclusive to Home.
+
+
+## Nearby page reference redesign — Complete
+
+- [x] Build the `/nearby` page around the supplied navy/cyan reference: Shwedagon-at-sunset hero with map-pin accents, “Nearby” heading, “Discover great places around you” subtitle, and compact supporting copy.
+- [x] Add a Yangon location selector, 500 m / 1 km / 5 km / 10 km radius controls, nearby-place search field, and Search action; preserve browser geolocation, permission feedback, and Yangon fallback.
+- [x] Show an icon category grid for Hotels, Guesthouses, Restaurants, Cafes, Bars, Exchange, Hospitals, Clinics, Bookstores, Gyms, Temples/Attractions, City Markets, and the existing Rentals category; selecting a category filters results.
+- [x] Show six image-led Nearby Places cards on desktop with rating, category, distance, address/summary, favorite state, View Details, and View All; on phones use a compact single-column card/list treatment.
+- [x] Add Quick Filters for Within 1 km, 1–5 km, 5–10 km, Top Rated, Near Me, and Open Now; they must update visible nearby results and remain clearable.
+- [x] Preserve existing `near-*` IDs, give new records unique IDs, and register the full Nearby catalog in the Favorites page and Account dashboard so each Nearby heart resolves by its stable ID across pages.
+- [x] Add a Popular Nearby horizontal row with compact image cards, rating/category/distance, favorites, and View All, reusing the existing Nearby data and stable favorite IDs.
+- [x] Keep the page bilingual; retain the shared five-tab phone bottom navigation, global copyright on Nearby, and Home-only full footer. Keep all controls responsive without horizontal page overflow.
