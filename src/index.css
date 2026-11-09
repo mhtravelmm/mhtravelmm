@@ -77,3 +77,20 @@ body {
 .animate-marquee:hover {
   animation-play-state: paused;
 }
+
+/* Shared page hero banner size: identical across discovery pages. */
+.mh-page-hero {
+  height: 190px;
+}
+
+@media (min-width: 640px) {
+  .mh-page-hero {
+    height: 230px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mh-page-hero {
+    height: 250px;
+  }
+}

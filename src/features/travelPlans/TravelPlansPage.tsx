@@ -133,12 +133,12 @@ export function TravelPlansPage() {
 
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-3 sm:pt-5">
-      <section className="relative isolate mb-4 min-h-[176px] overflow-hidden rounded-2xl bg-slate-950 sm:min-h-[214px] md:min-h-[242px]">
+      <section className="mh-page-hero relative isolate mb-4 overflow-hidden rounded-2xl bg-slate-950">
         <img src="/images/blog/bagan-sunrise.webp" alt="Bagan temples at sunrise" className="absolute inset-0 h-full w-full object-cover object-center" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#06162c]/95 via-[#071a31]/72 to-[#071a31]/15" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#06162c]/45 via-transparent to-[#06162c]/10" />
         <MapPinned className="absolute right-[12%] top-8 hidden text-cyan-200/80 drop-shadow-[0_8px_20px_rgba(0,0,0,0.5)] md:block" size={72} strokeWidth={1.35} />
-        <div className="relative z-10 flex min-h-[176px] items-center px-4 py-5 sm:min-h-[214px] sm:px-7 md:min-h-[242px] md:px-10">
+        <div className="relative z-10 flex h-full items-center px-4 py-5 sm:px-7 md:px-10">
           <div className="max-w-xl">
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200/25 bg-slate-950/45 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-100 backdrop-blur sm:text-[10px]">
               <MapPinned size={12} /> {t('travel_plans_hero_badge')}

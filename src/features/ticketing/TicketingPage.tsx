@@ -207,13 +207,13 @@ export function TicketingPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-4 pb-10 pt-2 sm:space-y-5 sm:pt-5">
-      <section className="relative isolate min-h-[176px] overflow-hidden rounded-2xl bg-slate-950 sm:min-h-[214px] md:min-h-[242px]">
+      <section className="mh-page-hero relative isolate overflow-hidden rounded-2xl bg-slate-950">
         <img src="/images/blog/shwedagon-evening.webp" alt="Shwedagon Pagoda at dusk" className="absolute inset-0 h-full w-full object-cover object-[68%_67%]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#06162c]/95 via-[#071a31]/75 to-[#071a31]/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#06162c]/45 via-transparent to-[#06162c]/10" />
         <Plane className="absolute right-[24%] top-8 hidden -rotate-6 text-white/85 drop-shadow-[0_8px_20px_rgba(0,0,0,0.5)] md:block" size={76} strokeWidth={1.5} />
         <Plane className="absolute right-5 top-5 rotate-[-10deg] text-white/75 drop-shadow-lg md:hidden" size={34} strokeWidth={1.5} />
-        <div className="relative z-10 flex min-h-[176px] items-center px-4 py-5 sm:min-h-[214px] sm:px-7 md:min-h-[242px] md:px-10">
+        <div className="relative z-10 flex h-full items-center px-4 py-5 sm:px-7 md:px-10">
           <div className="max-w-xl">
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200/25 bg-slate-950/45 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-100 backdrop-blur sm:text-[10px]">
               <Ticket size={12} /> {t('ticketing_eyebrow')}

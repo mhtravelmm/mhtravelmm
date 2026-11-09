@@ -347,14 +347,14 @@ export function TravelGuidePage() {
 
   return (
     <div className="mx-auto w-full max-w-[1440px] space-y-4 sm:space-y-5 md:space-y-6">
-      <section className="relative isolate min-h-[176px] overflow-hidden rounded-2xl bg-slate-950 sm:min-h-[210px] md:min-h-[245px]">
+      <section className="mh-page-hero relative isolate overflow-hidden rounded-2xl bg-slate-950">
         <img
           src="/images/blog/shwedagon-evening.webp"
           alt="Shwedagon Pagoda glowing at dusk in Yangon"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/60 to-slate-950/10" />
-        <div className="relative flex min-h-[176px] max-w-3xl flex-col items-start justify-center px-4 py-5 text-white sm:min-h-[210px] sm:px-7 md:min-h-[245px] md:px-10">
+        <div className="relative flex h-full max-w-3xl flex-col items-start justify-center px-4 py-5 text-white sm:px-7 md:px-10">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[9px] font-semibold tracking-wide text-cyan-100 backdrop-blur sm:text-[10px]">
             <BookOpen size={12} />
             {t('guide_page_title')}

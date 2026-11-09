@@ -159,13 +159,13 @@ export function NearbyPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl pb-10 pt-2 sm:pt-4">
-      <section className="relative mb-4 min-h-[150px] overflow-hidden rounded-card border border-border bg-bg-card sm:min-h-[190px]">
+      <section className="mh-page-hero relative mb-4 overflow-hidden rounded-card border border-border bg-bg-card">
         <img src="/images/blog/shwedagon-evening.webp" alt="Shwedagon Pagoda at sunset" className="absolute inset-0 h-full w-full object-cover object-[50%_62%]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#071a37]/95 via-[#071a37]/80 to-[#071a37]/20" />
         <div aria-hidden="true" className="absolute right-[8%] top-[10%] hidden h-36 w-36 rounded-full border border-white/15 bg-white/5 sm:block" />
         <MapPin aria-hidden="true" size={42} className="absolute right-[22%] top-[23%] hidden fill-brand-blue text-brand-blue drop-shadow-lg sm:block" />
         <MapPin aria-hidden="true" size={22} className="absolute right-[12%] bottom-[25%] hidden fill-cyan-400 text-cyan-400 sm:block" />
-        <div className="relative z-10 flex min-h-[150px] items-center px-4 py-4 sm:min-h-[190px] sm:px-8">
+        <div className="relative z-10 flex h-full items-center px-4 py-4 sm:px-8">
           <div className="max-w-2xl">
             <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/20 px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.16em] text-cyan-200">
               <MapPin size={11} />{t('nearby_hero_badge')}

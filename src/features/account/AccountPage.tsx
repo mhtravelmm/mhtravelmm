@@ -197,7 +197,7 @@ function Overview({
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <section className="account-welcome-banner relative isolate flex min-h-[190px] items-end overflow-hidden rounded-2xl border border-account-border p-5 sm:min-h-[210px] sm:p-7 lg:min-h-[230px] lg:items-center lg:p-8">
+      <section className="mh-page-hero account-welcome-banner relative isolate flex items-end overflow-hidden rounded-2xl border border-account-border p-5 sm:p-7 lg:items-center lg:p-8">
         <img
           src="/images/blog/shwedagon-evening.webp"
           alt={t('account_banner_alt')}

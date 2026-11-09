@@ -516,7 +516,7 @@ export function BlogsPage() {
     <div className="w-full pb-8 pt-3 sm:pt-5">
       {!selectedPost && (
         <>
-          <section aria-labelledby="blog-hero-title" className="relative isolate mb-5 flex min-h-[190px] overflow-hidden rounded-2xl border border-border sm:min-h-[210px] lg:min-h-[235px]">
+          <section aria-labelledby="blog-hero-title" className="mh-page-hero relative isolate mb-5 flex overflow-hidden rounded-2xl border border-border">
             <img src="/images/blog/shwedagon-evening.webp" alt={t('blog_hero_alt')} className="absolute inset-0 -z-20 h-full w-full object-cover object-center" />
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#04172c]/95 via-[#04172c]/75 to-[#04172c]/15" />
             <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#06172c]/45 to-transparent" />

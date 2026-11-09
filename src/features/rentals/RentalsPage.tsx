@@ -182,7 +182,7 @@ export function RentalsPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-4 pb-10 pt-2 sm:space-y-5 sm:pt-5">
-      <section className="relative isolate min-h-[190px] overflow-hidden rounded-2xl bg-slate-950 sm:min-h-[230px] md:min-h-[270px]">
+      <section className="mh-page-hero relative isolate overflow-hidden rounded-2xl bg-slate-950">
         <img src="/images/blog/shwedagon-evening.webp" alt="" className="absolute inset-0 h-full w-full object-cover object-[68%_55%]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#06162c]/95 via-[#071a31]/75 to-[#071a31]/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#06162c]/55 via-transparent to-[#06162c]/10" />
@@ -190,7 +190,7 @@ export function RentalsPage() {
           <Car size={116} strokeWidth={1.25} />
         </div>
         <div className="absolute bottom-5 right-5 text-white/85 drop-shadow-lg md:hidden"><Car size={52} strokeWidth={1.4} /></div>
-        <div className="relative z-10 flex min-h-[190px] items-center px-4 py-5 sm:min-h-[230px] sm:px-7 md:min-h-[270px] md:px-10">
+        <div className="relative z-10 flex h-full items-center px-4 py-5 sm:px-7 md:px-10">
           <div className="max-w-xl">
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200/25 bg-slate-950/45 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-100 backdrop-blur sm:text-[10px]">
               <Bike size={13} /> MH Travel Rentals
