@@ -90,11 +90,6 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
       />
 
       <div className="relative flex h-full w-[82%] max-w-[320px] flex-col overflow-y-auto border-r border-border bg-bg-card">
-        <div className="border-b border-border px-4 py-4">
-          <p className="text-sm font-semibold text-brand-blue">MH Travel</p>
-          <p className="mt-1 text-[10px] leading-4 text-text-faint">{t('footer_tagline')}</p>
-        </div>
-
         <SidebarSection heading={t('footer_navigate')}>
           <nav className="flex flex-col gap-0.5" aria-label={t('footer_navigate')}>
             {NAV_LINKS.map(({ key, href, Icon }) => (
