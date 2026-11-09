@@ -26,8 +26,9 @@
   (`wrangler.jsonc`, `assets.directory = ./dist`,
   `not_found_handling = single-page-application`). Pushes to `main` on
   GitHub deploy automatically.
-- Cloudflare Workers also serve data as JSON so direct URLs stay hidden.
-  Cloudflare R2 is used for file storage.
+- Cloudflare Workers/static hosting are part of the target deployment architecture.
+  The checked-out repository currently contains the static Wrangler asset
+  configuration, but no Worker JSON API or R2 data-access implementation.
 - Claude writes the application code directly. For Cloudflare Workers and
   Supabase, Claude writes the code/SQL and the owner applies or deploys it,
   with Claude guiding each step.
@@ -93,6 +94,45 @@ This section records what is already implemented in the repository. It is intent
 - Google and Facebook OAuth provider credentials and callback configuration still need to be completed in the Supabase Dashboard.
 - Username-to-auth identity lookup/login and real traveler/Super Admin account provisioning still need production verification.
 - Admin-managed content, rental ads, owner/admin account workflows, audit logs, payouts, and the broader Owner/Admin business model remain roadmap work.
+
+### Code-level audit record (2026-11-09)
+
+The following findings were checked against the source files, not inferred from screenshots or earlier notes.
+
+#### Runtime and route verification
+
+- `src/App.tsx` is the authoritative route table. It currently declares the Home, Cities, Nearby, Rentals, Restaurants (including `:id`), Book Shops (including `:id`), Ticketing, Travel Plans, Travel Guide (including `:guideId`), Blogs, Search, Account, Login, Signup, Admin Login, Super Admin, Notifications, Account Notifications, and Favorites routes, plus a wildcard Not Found page.
+- `public/manus-routes.json` matches the concrete routes. It intentionally does not describe the wildcard route.
+- There is no `/cities/:id`, `/attractions/:id`, `/hotels`, `/hotels/:id`, `/cafes/:id`, `/markets/:id`, `/rentals/:id`, `/ticketing/:id`, or `/travel-plans/:id` route. Static links to those paths therefore fall through to the Not Found page.
+- `src/features/blogs/BlogsPage.tsx` uses the implemented query-string reader format `/blogs?story=<slug>`, but legacy `CardListing` data still contains `/blogs/<id>` hrefs. Those legacy paths do not match the router.
+- Restaurant and Book Shop dynamic URLs currently render the same static page regardless of the `:id`; they do not select records by route parameter. The same limitation applies to the static detail content shown by those pages.
+
+#### Persistence and backend boundary
+
+- The app contains no `supabase/` migration directory or SQL source. The profile migration and RLS status are recorded in `Plan/BACKEND-AUTH.md` as work applied directly to the connected Supabase project; they are not independently reproducible from this checkout.
+- The only application Supabase calls found in source are optional Auth/session calls and `public.profiles` lookup in `src/lib/auth.tsx`. Catalogs, bookings, custom-plan requests, notifications, reviews, views, Favorites, Ticketing inventory, payments, and admin metrics do not call Supabase or another application API.
+- Home, City, Nearby, Travel Plan, Blog, Restaurant, Book Shop, Rental, Travel Guide, and Ticketing records are compiled TypeScript data or page-local arrays. Search deliberately searches only the imported Travel Plans, Travel Guides, Blogs, and Popular arrays.
+- Favorites are shared and synchronized, but only through the browser `localStorage` key `mh-travel-favorite-overrides` and same-tab/storage events in `src/lib/favorites.tsx`. They are not user-scoped and remain after logout or when another local user uses the same browser.
+- Custom Plan submission, Rental submission, and Ticketing order confirmation change local React state only. They do not create request IDs, persist payloads, notify MH Travel, reserve inventory, lock seats, take payment, or send contact requests.
+- Blog views use local storage and seeded metrics. Blog geolocation permission gates display behavior, but the code does not calculate a distance from the user to each article; displayed distances are seeded data.
+- Currency uses a persisted MMK/USD choice with a hard-coded `MMK_PER_USD = 4500` in `src/lib/currency.tsx`; there is no Admin-managed exchange-rate read/write path.
+
+#### Auth and admin verification
+
+- `src/lib/auth.tsx` is hybrid: configured Supabase environments use Auth session hydration, email/password auth, OAuth initiation, profile lookup, role checks, and sign-out; unconfigured environments use a localStorage preview store.
+- The local preview store keeps demo users and plaintext passwords in localStorage and contains a frontend demo Super Admin credential. This path is not production authentication.
+- Configured Supabase login supports an email identifier; username-only login still falls back to local preview lookup. Secure username-to-email resolution is not implemented.
+- `/super-admin` is client-side role guarded. `/admin/login` is a public login form in a standalone layout, not itself a protected route. The Super Admin dashboard content is static/sample UI; its metrics, users, listings, bookings, settings, and quick actions are not wired to management APIs.
+- The frontend role type is only `traveler | super_admin`; other roles documented by the backend handoff are currently collapsed to traveler by `mapRole()` and are not separately authorized in the UI.
+- Google and Facebook buttons call `signInWithOAuth` only when Supabase is configured. Provider credentials, callback configuration, OAuth username completion, and production verification remain external setup work.
+
+#### Verified source-level issues to keep in the backlog
+
+- Home, Blog, City, Nearby, ad, and static catalog links point to several routes that are not declared, especially `/hotels`, `/markets`, `/cafes`, `/attractions`, `/travel-plans/:id`, and `/blogs/:id`.
+- The Restaurant menu category selector changes state but the displayed dish list is not filtered by category. The Book Shop category selector similarly changes state without filtering the displayed books.
+- Restaurant and Book Shop directions, call, map, view-all, and related CTA controls are mostly visual buttons without navigation or external-action handlers.
+- Account, Notifications, and Super Admin screens render useful UI sections, but their visible bookings, messages, reviews, activity, metrics, and notification data are sample/frontend state until backend data sources are connected.
+- No automated test runner is defined in `package.json`. The repository has typecheck, build, and lint evidence, but no automated behavioral test evidence. The latest lint audit passed with warnings only; the existing Browserslist and bundle-size warnings are non-blocking.
 
 ---
 
@@ -402,7 +442,9 @@ it is a pre-arrival matter.
   account UI copy stays bilingual through the existing EN/MM translation system.
 - Language: EN/MM with auto-translation fallback. Auto-translated text is
   cached and queued for Admin review.
-- Currency: MMK and USD display using an Admin-set exchange rate.
+- Currency: MMK and USD display using the current frontend formatter and a
+  hard-coded preview rate; an Admin/Supabase-managed exchange rate is planned,
+  not implemented.
 - Weather is one centralized service (Cloudflare Worker with caching)
   reused everywhere, not duplicated per page.
 
@@ -419,7 +461,10 @@ it is a pre-arrival matter.
   isFavorited and views required.
 - Card prices are stored as `priceUsd` and rendered through the currency
   formatter, never as a hardcoded string.
-- All user-facing strings go through the translation helper.
+- New feature UI strings should go through the translation helper. A source audit
+  still finds hard-coded English labels, accessibility text, and seeded catalog
+  content, so this is an implementation rule with remaining cleanup rather than
+  a claim that every visible string is already translated.
 - Ad slots use the shared `AdSlot` component so the collapse rule lives in
   one place.
 - Overlays that use `position: fixed` (drawers, modals) must render through
@@ -435,18 +480,21 @@ it is a pre-arrival matter.
 - City page: wire favorite toggling (same fix already done on Home).
 - Blogs page implemented: bilingual editorial listing and reader; favorite,
   share, and view counts currently use client-side storage pending backend wiring.
-- Travel Plans page implemented: compact shared-card grid with bilingual UI,
+- Travel Plans page implemented as a frontend preview: compact shared-card grid with bilingual UI,
   route search, duration filters, sorting, price display, and client-side
   favorite toggles. The page starts directly with the plan tools and ends with
   a bilingual custom-plan builder for start point, destinations, days,
   travelers, nationality, budget, transport, accommodation, hotel choice, and
   notes; selectable hotels and places come only from existing MH Travel data,
-  and hotel selection may be left for later. Submitting sends a custom-plan
-  request into the MH Travel quotation flow: MH Travel calculates the cost,
-  contacts the user before confirmation, and negotiates requested destinations
-  or services. No extra intro banner is shown.
-- Remaining pages: detail pages and Search; Nearby, Rentals, Ticketing, Travel Guide,
-  Account, and Favorites page UI are implemented with client-side mock data pending backend wiring.
+  and hotel selection may be left for later. Submission currently changes local
+  UI state and displays the intended MH Travel quotation/contact/negotiation
+  handoff copy; it does not yet persist or send a request. No extra intro banner
+  is shown.
+- Travel Guide and Search frontend pages are now implemented. Remaining detail
+  routes include City, Hotel, Attraction, Cafe, Market, Rental, Ticketing, and
+  Travel Plan detail destinations referenced by static cards. Nearby, Rentals,
+  Ticketing, Travel Guide, Account, Search, and Favorites are frontend UI over
+  local/static data pending backend wiring.
 - Homepage reference alignment: local Myanmar photography now fills Travel
   Plan, Travel Guide, Blog, and Popular cards; Travel Guide uses the compact
   circular-image row treatment from the reference. Hero ad creative remains
