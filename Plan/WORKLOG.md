@@ -186,9 +186,9 @@
 - `/book-shops/:id`
 - `/ticketing`
 - `/travel-plans`
-- `/travel-guide` (placeholder)
+- `/travel-guide` and `/travel-guide/:id` (bilingual guide listing/detail)
 - `/blogs`
-- `/search` (placeholder)
+- `/search` (bilingual aggregated search results)
 - `/account`
 - `/login`
 - `/signup`

@@ -17,6 +17,7 @@ import { AdminLoginPage } from './features/auth/AdminLoginPage';
 import { SuperAdminPage } from './features/superAdmin/SuperAdminPage';
 import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { TravelGuidePage } from './features/travelGuide/TravelGuidePage';
+import { SearchPage } from './features/search/SearchPage';
 import { AuthProvider, useAuth } from './lib/auth';
 
 function Shell({ children, showFooter = false, fullWidth = false }: { children: React.ReactNode; showFooter?: boolean; fullWidth?: boolean }) {
@@ -71,7 +72,7 @@ function AppRoutes() {
     <Route path="/travel-guide" element={<Shell fullWidth><TravelGuidePage /></Shell>} />
     <Route path="/travel-guide/:guideId" element={<Shell fullWidth><TravelGuidePage /></Shell>} />
     <Route path="/blogs" element={<Shell fullWidth><BlogsPage /></Shell>} />
-    <Route path="/search" element={<PlaceholderPage title="Search" />} />
+    <Route path="/search" element={<Shell><SearchPage /></Shell>} />
     <Route path="/account" element={<Shell><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
