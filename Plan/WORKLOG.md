@@ -44,6 +44,7 @@
 
 - Location-aware Nearby page includes search, category grouping, rating filters, distance filters, closest results, and recommended higher-rated results.
 - Location permission state is handled explicitly; fallback messaging exists when location is unavailable.
+- Nearby Categories now uses the same compact Home Categories visual system: 36px icon circles, 64px item width, 16px icons, 8px labels, shared 22-second marquee animation, hover pause behavior, and the same duplicated continuous-scroll pattern. Nearby retains its own All/category filtering and active-state behavior.
 
 ### Account and Notifications
 

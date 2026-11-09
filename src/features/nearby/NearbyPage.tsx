@@ -278,12 +278,12 @@ export function NearbyPage() {
 
       <section className="mb-5">
         <h2 className="mb-2 text-sm font-semibold text-text-primary">{t('nearby_categories_title')}</h2>
-        <div className="nearby-category-marquee rounded-card border border-border bg-bg-card py-2.5" role="region" aria-label={t('nearby_categories_title')}>
-          <div className="nearby-category-track">
+        <div className="overflow-hidden" role="region" aria-label={t('nearby_categories_title')}>
+          <div className="animate-marquee flex w-max gap-4">
             {[0, 1].map((copyIndex) => (
               <div
                 key={copyIndex}
-                className={`nearby-category-group flex w-max shrink-0 items-start gap-3 px-3 ${copyIndex === 1 ? 'nearby-category-copy--repeat' : ''}`}
+                className="flex w-max shrink-0 items-start gap-4"
                 aria-hidden={copyIndex === 1}
               >
                 {CATEGORY_ITEMS.map(({ id, label, icon: Icon }) => (
@@ -294,12 +294,12 @@ export function NearbyPage() {
                     onClick={() => { setCategory((current) => id === 'all' || current === id ? 'all' : id); setShowAllPlaces(false); }}
                     aria-label={t(label)}
                     aria-pressed={category === id}
-                    className="flex w-[76px] shrink-0 flex-col items-center gap-1.5 text-center text-text-secondary transition hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg-card"
+                    className="flex shrink-0 basis-[64px] flex-col items-center gap-1 text-center text-text-secondary transition hover:text-brand-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                   >
-                    <span className={`grid h-12 w-12 place-items-center rounded-full border transition ${category === id ? 'border-brand-blue bg-brand-blue text-white shadow-[0_0_0_4px_rgb(59_130_246/0.12)]' : 'border-border bg-bg text-text-secondary hover:border-brand-blue/50 hover:bg-brand-blue/10 hover:text-brand-blue'}`}>
-                      <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-full transition ${category === id ? 'bg-brand-blue text-white shadow-[0_0_0_4px_rgb(59_130_246/0.12)]' : 'bg-brand-blueDark/20 text-brand-blue hover:bg-brand-blue/30'}`}>
+                      <Icon size={16} aria-hidden="true" />
                     </span>
-                    <span className="line-clamp-2 min-h-[22px] w-full text-[9px] font-medium leading-tight sm:text-[10px]">{t(label)}</span>
+                    <span className="whitespace-nowrap text-center text-[8px] text-text-muted">{t(label)}</span>
                   </button>
                 ))}
               </div>
