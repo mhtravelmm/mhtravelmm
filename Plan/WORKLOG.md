@@ -35,6 +35,7 @@
 ### Travel Plans
 
 - Search, duration filter, sorting, compact route cards, price display, and favorite toggles are implemented.
+- Added a bilingual page-level Travel Plans hero banner with Bagan sunrise imagery, compact dark/cyan overlay styling, a browse-plans CTA, and a direct anchor to the plan results.
 - Custom Plan builder lets users choose starting point, destinations from MH Travel data, days, travelers, nationality, budget, transport, accommodation, hotel choice, and notes.
 - Hotel selection can be left for later.
 - Custom Plan requests describe the MH Travel quotation flow: MH Travel reviews the request, calculates the cost, contacts the user, and negotiates destinations/services.

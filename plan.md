@@ -490,6 +490,7 @@ it is a pre-arrival matter.
   UI state and displays the intended MH Travel quotation/contact/negotiation
   handoff copy; it does not yet persist or send a request. No extra intro banner
   is shown.
+- Hero audit completed: Home, Nearby, Rentals, Ticketing, Blogs, Travel Guide, Account, Restaurant, and Book Shop already have page-level hero/banner treatments; City uses the configured ad-based hero slot; Search, Favorites, Notifications, and other utility/auth pages do not need a discovery hero. Travel Plans was the missing discovery page and now has a bilingual Bagan-sunrise hero with a Browse plans anchor CTA.
 - Travel Guide and Search frontend pages are now implemented. Remaining detail
   routes include City, Hotel, Attraction, Cafe, Market, Rental, Ticketing, and
   Travel Plan detail destinations referenced by static cards. Nearby, Rentals,

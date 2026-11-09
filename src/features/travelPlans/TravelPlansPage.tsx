@@ -133,6 +133,26 @@ export function TravelPlansPage() {
 
   return (
     <div className="mx-auto max-w-7xl pb-8 pt-3 sm:pt-5">
+      <section className="relative isolate mb-4 min-h-[176px] overflow-hidden rounded-2xl bg-slate-950 sm:min-h-[214px] md:min-h-[242px]">
+        <img src="/images/blog/bagan-sunrise.webp" alt="Bagan temples at sunrise" className="absolute inset-0 h-full w-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#06162c]/95 via-[#071a31]/72 to-[#071a31]/15" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#06162c]/45 via-transparent to-[#06162c]/10" />
+        <MapPinned className="absolute right-[12%] top-8 hidden text-cyan-200/80 drop-shadow-[0_8px_20px_rgba(0,0,0,0.5)] md:block" size={72} strokeWidth={1.35} />
+        <div className="relative z-10 flex min-h-[176px] items-center px-4 py-5 sm:min-h-[214px] sm:px-7 md:min-h-[242px] md:px-10">
+          <div className="max-w-xl">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200/25 bg-slate-950/45 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-100 backdrop-blur sm:text-[10px]">
+              <MapPinned size={12} /> {t('travel_plans_hero_badge')}
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl md:text-[40px]">{t('travel_plans_hero_title')}</h1>
+            <p className="mt-1.5 text-xs font-semibold text-white sm:text-sm md:text-base">{t('travel_plans_hero_subtitle')}</p>
+            <p className="mt-1 text-[10px] text-slate-200 sm:text-xs">{t('travel_plans_hero_detail')}</p>
+            <a href="#travel-plan-list" className="mt-3 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-3.5 py-2 text-[10px] font-bold text-slate-950 shadow-lg shadow-cyan-950/35 transition hover:-translate-y-0.5 hover:bg-cyan-300 sm:mt-4 sm:px-4 sm:py-2.5 sm:text-xs">
+              {t('travel_plans_hero_browse')} <Search size={13} />
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section className="mb-4 flex flex-col gap-2 rounded-card border border-border bg-bg-card p-2 sm:flex-row sm:items-center">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">{t('travel_plans_search_label')}</span>
@@ -176,7 +196,7 @@ export function TravelPlansPage() {
         </div>
       </section>
 
-      <div className="mb-2 flex items-center justify-between text-[10px] text-text-faint">
+      <div id="travel-plan-list" className="mb-2 flex scroll-mt-24 items-center justify-between text-[10px] text-text-faint">
         <span className="inline-flex items-center gap-1"><SlidersHorizontal size={11} /> {t('travel_plans_results')}</span>
         <span>{visiblePlans.length}</span>
       </div>
