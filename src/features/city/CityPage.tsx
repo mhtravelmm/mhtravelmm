@@ -1,4 +1,4 @@
-import { Search as SearchIcon } from 'lucide-react';
+import { MapPin, Search as SearchIcon } from 'lucide-react';
 import { AdSlot } from '../../components/ui/AdSlot';
 import { fetchMockAd } from '../../data/ads';
 import { ListingGridSection } from '../home/sections/ListingGridSection';
@@ -32,11 +32,27 @@ export function CityPage() {
 
   return (
     <>
-      <div className="mb-5">
-        <AdSlot placement="city_hero" fetchAd={fetchMockAd} />
-      </div>
+      <section className="relative isolate mb-5 min-h-[176px] overflow-hidden rounded-2xl bg-slate-950 sm:min-h-[214px] md:min-h-[242px]">
+        <img src="/images/blog/shwedagon-evening.webp" alt="Shwedagon Pagoda at dusk" className="absolute inset-0 h-full w-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#06162c]/95 via-[#071a31]/72 to-[#071a31]/15" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#06162c]/45 via-transparent to-[#06162c]/10" />
+        <MapPin className="absolute right-[13%] top-8 hidden text-cyan-200/80 drop-shadow-[0_8px_20px_rgba(0,0,0,0.5)] md:block" size={74} strokeWidth={1.35} />
+        <div className="relative z-10 flex min-h-[176px] items-center px-4 py-5 sm:min-h-[214px] sm:px-7 md:min-h-[242px] md:px-10">
+          <div className="max-w-xl">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-200/25 bg-slate-950/45 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-cyan-100 backdrop-blur sm:text-[10px]">
+              <MapPin size={12} /> {t('city_hero_badge')}
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl md:text-[40px]">{t('city_hero_title')}</h1>
+            <p className="mt-1.5 text-xs font-semibold text-white sm:text-sm md:text-base">{t('city_hero_subtitle')}</p>
+            <p className="mt-1 text-[10px] text-slate-200 sm:text-xs">{t('city_hero_detail')}</p>
+            <a href="#city-list" className="mt-3 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-3.5 py-2 text-[10px] font-bold text-slate-950 shadow-lg shadow-cyan-950/35 transition hover:-translate-y-0.5 hover:bg-cyan-300 sm:mt-4 sm:px-4 sm:py-2.5 sm:text-xs">
+              {t('city_hero_browse')} <SearchIcon size={13} />
+            </a>
+          </div>
+        </div>
+      </section>
 
-      <section className="mb-5">
+      <section id="city-list" className="mb-5 scroll-mt-24">
         <div className="mb-2.5 flex items-center justify-between gap-3">
           <h1 className="text-base font-medium text-text-primary">{t('section_cities')}</h1>
           <div className="flex w-40 items-center gap-2 rounded-full bg-bg-card px-3 py-1.5">

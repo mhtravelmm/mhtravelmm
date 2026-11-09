@@ -51,7 +51,7 @@ This section records what is already implemented in the repository. It is intent
 ### Traveler-facing pages
 
 - Home is implemented with categories, marquee discovery, travel plans, Travel Guide, Blogs, Populars, reviews, awards, partners, ads, Top Attractions, Restaurants, Cafes, and the requested responsive card sizing.
-- Cities includes city discovery sections for attractions, hotels, restaurants, book shops, rentals, transport, cafes, and markets.
+- Cities includes a persistent bilingual Shwedagon hero banner with an Explore cities anchor CTA, followed by discovery sections for attractions, hotels, restaurants, book shops, rentals, transport, cafes, and markets. The hero is independent of the optional ad response so it cannot disappear when no ad creative is returned.
 - Nearby supports browser location permission, fallback distance, direct search, category, rating, distance filters, closest results, and higher-rated recommendations.
 - Blogs has a bilingual listing and in-app article reader, compact cards, categories, search, sorting, share, view count, rating, geolocation-gated distance, related stories, related hotels, and ad slots.
 - Travel Plans has search, duration filtering, sorting, compact route cards, currency-aware prices, Favorites, and a detailed Custom Plan builder covering start point, MH Travel destinations, days, travelers, nationality, budget, transport, accommodation, optional hotel selection, and notes.
@@ -183,11 +183,12 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   sidebar is open; selecting a tab closes the sidebar.
 - The implemented drawer order is now Navigate, Favorites plus
   language/currency/theme controls, Help & Support, Content/contact, Myanmar
-  payments, app downloads, international payments, Legal, and finally the
-  authenticated Account Dashboard or unauthenticated Login / Registration action
-  immediately above copyright. Notifications stay in the phone header and are
-  not duplicated in the drawer. The duplicate MH Travel tagline block was
-  removed because the fixed phone header already provides the brand identity.
+  payments, app downloads, international payments, Legal, and copyright. The
+  Account Dashboard or Login / Registration destination appears only in the
+  fixed bottom navigation, not in the drawer. Notifications stay in the phone
+  header and are not duplicated in the drawer. The duplicate MH Travel tagline
+  block was removed because the fixed phone header already provides the brand
+  identity.
 - Phone views keep a fixed bottom navigation visible on every public page,
   including Blog reading, with exactly Home, Nearby, Ticketing, Travel Plans,
   and User Account. The phone drawer may also contain Nearby, Ticketing, and

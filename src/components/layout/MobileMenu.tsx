@@ -1,11 +1,10 @@
 import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun, UserRound } from 'lucide-react';
+import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
-import { useAuth } from '../../lib/auth';
 
 const NAV_LINKS: { key: TranslationKey; href: string; Icon: typeof Building }[] = [
   { key: 'nav_cities', href: '/cities', Icon: Building },
@@ -64,8 +63,6 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
-  const { isAuthenticated } = useAuth();
-  const accountHref = isAuthenticated ? '/account' : '/login';
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -199,18 +196,7 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
           </div>
         </SidebarSection>
 
-        <div className="mt-auto border-t border-border px-3 py-3">
-          <Link
-            to={accountHref}
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-lg bg-brand-blue px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-brand-blue/90"
-          >
-            <UserRound size={15} />
-            {isAuthenticated ? t('nav_account') : t('sidebar_login_registration')}
-          </Link>
-        </div>
-
-        <p className="border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">
+        <p className="mt-auto border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">
           {t('footer_copyright')}
         </p>
       </div>

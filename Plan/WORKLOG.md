@@ -10,7 +10,7 @@
 - Mobile sidebar uses a partial-width drawer and renders fixed overlays through a portal.
 - User-provided visual references are followed for Home, restaurant, bookstore, compact travel cards, and the `/cities` discovery sections.
 - City discovery rows were corrected from six to five desktop columns because each City catalog currently contains five cards. Restaurants, Book Shops, Rentals, Hotels, Attractions, Transport, Cafes, and Markets now fill the available row width without an empty sixth-column gap.
-- Mobile drawer order was corrected to follow the intended phone flow: Navigate links, Favorites and display controls, Help & Support, Content/contact, payment/download sections, Legal, then the Account/Login action at the bottom above copyright. The duplicate MH Travel tagline block was removed because the fixed phone header already shows MH Travel. Notifications remain in the phone header and are not duplicated in the drawer.
+- Mobile drawer order was corrected to follow the intended phone flow: Navigate links, Favorites and display controls, Help & Support, Content/contact, payment/download sections, Legal, then copyright. The duplicate MH Travel tagline block and duplicate Account/Login action were removed because the fixed phone header and bottom navigation already provide those destinations. Notifications remain in the phone header and are not duplicated in the drawer.
 
 ## 2. Completed traveler-facing pages
 
@@ -20,6 +20,10 @@
 - Travel Guide and Popular cards were resized and aligned to the compact shared card system.
 - Local Myanmar photography is used across Travel Plan, Travel Guide, Blog, and Popular cards.
 - Home ad positions use the shared `AdSlot` component and collapse when no ad is available.
+
+### Cities
+
+- City page now has a persistent visible bilingual hero banner with Shwedagon imagery, city discovery copy, and an Explore cities anchor CTA. It no longer depends on the optional `city_hero` ad response to show its page hero.
 
 ### Blogs
 
