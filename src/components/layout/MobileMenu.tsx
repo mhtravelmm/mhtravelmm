@@ -1,10 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
+import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
+import { useAuth } from '../../lib/auth';
 
 const NAV_LINKS: { key: TranslationKey; href: string; Icon: typeof Building }[] = [
   { key: 'nav_cities', href: '/cities', Icon: Building },
@@ -63,6 +64,8 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
+  const { isAuthenticated } = useAuth();
+  const accountHref = isAuthenticated ? '/account' : '/login';
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -91,6 +94,22 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
           <p className="text-sm font-semibold text-brand-blue">MH Travel</p>
           <p className="mt-1 text-[10px] leading-4 text-text-faint">{t('footer_tagline')}</p>
         </div>
+
+        <SidebarSection heading={t('footer_navigate')}>
+          <nav className="flex flex-col gap-0.5" aria-label={t('footer_navigate')}>
+            {NAV_LINKS.map(({ key, href, Icon }) => (
+              <Link
+                key={href}
+                to={href}
+                onClick={onClose}
+                className="flex items-center gap-2 rounded-md py-1.5 text-[10px] text-text-faint transition hover:text-text-primary"
+              >
+                <Icon size={12} />
+                {t(key)}
+              </Link>
+            ))}
+          </nav>
+        </SidebarSection>
 
         <div className="flex flex-col gap-0.5 px-3 py-3">
           <Link
@@ -130,36 +149,12 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
           </button>
         </div>
 
-        <SidebarSection heading={t('footer_legal')}>
-          <div className="space-y-1">
-            {LEGAL_LINKS.map((key) => (
-              <p key={key} className="text-[10px] leading-4 text-text-faint">{t(key)}</p>
-            ))}
-          </div>
-        </SidebarSection>
-
         <SidebarSection heading={t('footer_help_support')}>
           <div className="space-y-1">
             {SUPPORT_LINKS.map((key) => (
               <p key={key} className="text-[10px] leading-4 text-text-faint">{t(key)}</p>
             ))}
           </div>
-        </SidebarSection>
-
-        <SidebarSection heading={t('footer_navigate')}>
-          <nav className="flex flex-col gap-0.5" aria-label={t('footer_navigate')}>
-            {NAV_LINKS.map(({ key, href, Icon }) => (
-              <Link
-                key={href}
-                to={href}
-                onClick={onClose}
-                className="flex items-center gap-2 rounded-md py-1 text-[10px] text-text-faint transition hover:text-text-primary"
-              >
-                <Icon size={12} />
-                {t(key)}
-              </Link>
-            ))}
-          </nav>
         </SidebarSection>
 
         <SidebarSection heading={t('footer_content')}>
@@ -201,7 +196,26 @@ export function MobileMenu({ top, onClose }: MobileMenuProps) {
           </div>
         </SidebarSection>
 
-        <p className="mt-auto border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">
+        <SidebarSection heading={t('footer_legal')}>
+          <div className="space-y-1">
+            {LEGAL_LINKS.map((key) => (
+              <p key={key} className="text-[10px] leading-4 text-text-faint">{t(key)}</p>
+            ))}
+          </div>
+        </SidebarSection>
+
+        <div className="mt-auto border-t border-border px-3 py-3">
+          <Link
+            to={accountHref}
+            onClick={onClose}
+            className="flex items-center gap-3 rounded-lg bg-brand-blue px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-brand-blue/90"
+          >
+            <UserRound size={15} />
+            {isAuthenticated ? t('nav_account') : t('sidebar_login_registration')}
+          </Link>
+        </div>
+
+        <p className="border-t border-border px-4 py-3 text-center text-[9px] text-text-faint">
           {t('footer_copyright')}
         </p>
       </div>

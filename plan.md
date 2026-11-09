@@ -181,6 +181,12 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   ends with the copyright line. Its panel and backdrop stop above the fixed
   bottom navigation so all five tabs remain visible and clickable while the
   sidebar is open; selecting a tab closes the sidebar.
+- The implemented drawer order is now brand/tagline, Navigate, Favorites plus
+  language/currency/theme controls, Help & Support, Content/contact, Myanmar
+  payments, app downloads, international payments, Legal, and finally the
+  authenticated Account Dashboard or unauthenticated Login / Registration action
+  immediately above copyright. Notifications stay in the phone header and are
+  not duplicated in the drawer.
 - Phone views keep a fixed bottom navigation visible on every public page,
   including Blog reading, with exactly Home, Nearby, Ticketing, Travel Plans,
   and User Account. The phone drawer may also contain Nearby, Ticketing, and
