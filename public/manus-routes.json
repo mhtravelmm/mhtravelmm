@@ -19,6 +19,7 @@
     { "path": "/signup", "title": "Registration" },
     { "path": "/admin/login", "title": "Admin login" },
     { "path": "/super-admin", "title": "Super Admin" },
+    { "path": "/shop-owner", "title": "Shop Owner Dashboard" },
     { "path": "/notifications", "title": "Notifications" },
     { "path": "/account/notifications", "title": "Account notifications" },
     { "path": "/favorites", "title": "Favorites" }

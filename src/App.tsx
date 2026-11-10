@@ -15,6 +15,7 @@ import { TicketingPage } from './features/ticketing/TicketingPage';
 import { AuthPage } from './features/auth/AuthPage';
 import { AdminLoginPage } from './features/auth/AdminLoginPage';
 import { SuperAdminPage } from './features/superAdmin/SuperAdminPage';
+import { ShopOwnerPage } from './features/shopOwner/ShopOwnerPage';
 import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { TravelGuidePage } from './features/travelGuide/TravelGuidePage';
 import { SearchPage } from './features/search/SearchPage';
@@ -84,6 +85,7 @@ function AppRoutes() {
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
     <Route path="/admin/login" element={<StandalonePageLayout><AdminLoginPage /></StandalonePageLayout>} />
     <Route path="/super-admin" element={<RequireSuperAdmin />} />
+    <Route path="/shop-owner" element={<ShopOwnerPage />} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />
