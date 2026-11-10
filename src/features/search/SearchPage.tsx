@@ -22,12 +22,13 @@ import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import type { CardListing } from '../../types';
 
 type ResultCategory = 'plans' | 'guides' | 'blogs' | 'hotels' | 'restaurants' | 'bookshops' | 'cafes' | 'rentals' | 'attractions' | 'markets' | 'transport';
-type ResultFilter = 'all' | ResultCategory | 'yangon' | 'naypyidaw' | 'mandalay' | 'bagan';
+type SearchCity = 'yangon' | 'naypyidaw' | 'mandalay' | 'bagan' | 'other';
+type ResultFilter = 'all' | ResultCategory | Exclude<SearchCity, 'other'>;
 
 type SearchEntry = {
   listing: CardListing;
   category: ResultCategory;
-  city: 'yangon' | 'naypyidaw' | 'mandalay' | 'bagan';
+  city: SearchCity;
 };
 
 const entries = (listing: CardListing, category: ResultCategory, city: SearchEntry['city'] = 'yangon'): SearchEntry => ({ listing, category, city });
@@ -37,7 +38,7 @@ const SEARCH_ENTRIES: SearchEntry[] = [
   ...TRAVEL_GUIDES.map((item) => entries(item, 'guides', 'yangon')),
   ...BLOGS.map((item) => entries(item, 'blogs', 'yangon')),
   ...POPULARS.map((item) => entries(item, item.href?.includes('/hotels/') ? 'hotels' : item.href?.includes('/book-shops/') ? 'bookshops' : 'markets', 'yangon')),
-  ...CITIES.map((item) => entries(item, 'attractions', item.id === 'bagan' ? 'bagan' : item.id === 'mandalay' ? 'mandalay' : 'yangon')),
+  ...CITIES.map((item) => entries(item, 'attractions', item.id === 'yangon' ? 'yangon' : item.id === 'bagan' ? 'bagan' : item.id === 'mandalay' ? 'mandalay' : 'other')),
   ...TOP_ATTRACTIONS.map((item) => entries(item, 'attractions', item.title.toLowerCase().includes('bein') ? 'mandalay' : 'yangon')),
   ...POPULAR_HOTELS.map((item) => entries(item, 'hotels', 'yangon')),
   ...POPULAR_RESTAURANTS.map((item) => entries(item, 'restaurants', 'yangon')),
@@ -68,12 +69,24 @@ const CITY_FILTERS: { id: Extract<ResultFilter, 'yangon' | 'naypyidaw' | 'mandal
   { id: 'bagan', key: 'search_bagan' },
 ];
 
+function normalizeSearchTerm(value: string) {
+  const term = value.trim().toLowerCase();
+  if (term === 'ရန်ကုန်') return 'yangon';
+  if (term === 'နေပြည်တော်') return 'naypyidaw';
+  if (term === 'မန္တလေး') return 'mandalay';
+  if (term === 'ပုဂံ') return 'bagan';
+  if (term === 'စားသောက်ဆိုင်' || term === 'စားသောက်ဆိုင်များ') return 'restaurants';
+  if (term === 'ဟိုတယ်' || term === 'ဟိုတယ်များ') return 'hotels';
+  if (term === 'ကဖေး' || term === 'ကဖေးများ') return 'cafes';
+  if (term === 'စာအုပ်ဆိုင်' || term === 'စာအုပ်ဆိုင်များ') return 'bookshops';
+  return term;
+}
+
 function matchesQuery(entry: SearchEntry, query: string) {
-  const term = query.trim().toLowerCase();
+  const term = normalizeSearchTerm(query);
   if (!term) return true;
   const haystack = `${entry.listing.title} ${entry.listing.subtitle ?? ''} ${entry.category} ${entry.city}`.toLowerCase();
-  const aliases = term === 'restaurant' || term === 'restaurants' ? 'restaurants' : term;
-  return haystack.includes(aliases);
+  return haystack.includes(term === 'restaurant' ? 'restaurants' : term);
 }
 
 export function SearchPage() {
@@ -81,7 +94,7 @@ export function SearchPage() {
   const [params] = useSearchParams();
   const query = params.get('q')?.trim() ?? '';
   const [filter, setFilter] = useState<ResultFilter>('all');
-  const categoryQuery = /hotel|restaurant|book|cafe|rental|attraction|market|plan|guide|blog|ticket/i.test(query);
+  const categoryQuery = /hotel|restaurant|book|cafe|rental|attraction|market|plan|guide|blog|ticket|ဟိုတယ်|စားသောက်ဆိုင်|စာအုပ်ဆိုင်|ကဖေး|ငှားရမ်း|လည်ပတ်စရာ|ဈေး/i.test(query);
   const cityQuery = /yangon|ရန်ကုန်|naypyidaw|နေပြည်တော်|mandalay|မန္တလေး|bagan|ပုဂံ/i.test(query);
 
   const results = useMemo(() => SEARCH_ENTRIES.filter((entry) => {
