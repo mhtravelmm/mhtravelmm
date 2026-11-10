@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { Header } from './components/layout/Header';
 import { Footer, PageCopyright } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
@@ -50,6 +50,11 @@ function StandalonePageLayout({ children }: { children: React.ReactNode }) {
 
 function PlaceholderPage({ title }: { title: string }) { return <Shell><p className="py-10 text-center text-sm text-text-muted">{title} — coming soon.</p></Shell>; }
 
+function LegacyBlogRedirect() {
+  const { storyId } = useParams<{ storyId: string }>();
+  return <Navigate to={`/blogs?story=${encodeURIComponent(storyId ?? '')}`} replace />;
+}
+
 function RequireSuperAdmin() {
   const { isAuthenticated, isSuperAdmin } = useAuth();
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
@@ -72,6 +77,7 @@ function AppRoutes() {
     <Route path="/travel-guide" element={<Shell fullWidth><TravelGuidePage /></Shell>} />
     <Route path="/travel-guide/:guideId" element={<Shell fullWidth><TravelGuidePage /></Shell>} />
     <Route path="/blogs" element={<Shell fullWidth><BlogsPage /></Shell>} />
+    <Route path="/blogs/:storyId" element={<LegacyBlogRedirect />} />
     <Route path="/search" element={<Shell><SearchPage /></Shell>} />
     <Route path="/account" element={<Shell><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
