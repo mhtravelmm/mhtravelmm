@@ -504,6 +504,7 @@ it is a pre-arrival matter.
 - A city query is catalog-wide: typing `ရန်ကုန်` or `Yangon` returns all cards assigned to Yangon across Hotels, Restaurants, Book Shops, Cafes, Rentals, Attractions, Markets, Guides, Plans, and related content. Burmese city/category terms are normalized, while Bagan, Mandalay, and other city cards are kept out of Yangon results.
 - Category searches present city chips directly under the category result row, with no `By city` label. The compact city choices include Yangon, Bago, Naypyidaw, Mandalay, and Bagan; choosing a city refines the selected category cards without opening another search control.
 - Search query modes are now explicit: city-only queries show all listings in that city; category-only queries show city cards only; and city-plus-category queries show only the requested category in the requested city. City-only result lists provide `Top rated` and `Nearby` sorting instead of repeating city filters.
+- Category-only city cards are interactive: selecting a city drills into that category in the selected city and reveals `Top rated` and `Nearby` sorting. This makes `Hotel` → Yangon → Yangon hotels equivalent to the direct `ရန်ကုန် ဟိုတယ်` query.
 - Travel Guide and Search frontend pages are now implemented. Remaining detail
   routes include City, Hotel, Attraction, Cafe, Market, Rental, Ticketing, and
   Travel Plan detail destinations referenced by static cards. Nearby, Rentals,

@@ -102,11 +102,15 @@ export function SearchPage() {
   const combined = Boolean(category && city);
   const [filter, setFilter] = useState<ResultFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('default');
+  const selectedCategoryCity = categoryOnly && filter !== 'all' && CITY_ALIASES.some(({ id }) => id === filter)
+    ? filter as Exclude<SearchCity, 'other'>
+    : undefined;
 
   const resultEntries = useMemo(() => {
     let result = SEARCH_ENTRIES.filter((entry) => {
       if (combined) return entry.category === category && entry.city === city;
       if (cityOnly) return entry.city === city;
+      if (selectedCategoryCity) return entry.category === category && entry.city === selectedCategoryCity;
       if (categoryOnly) return false;
       if (filter === 'all') return !query || `${entry.listing.title} ${entry.listing.subtitle ?? ''}`.toLowerCase().includes(query);
       return entry.category === filter || entry.city === filter;
@@ -115,7 +119,7 @@ export function SearchPage() {
     if (sortMode === 'rating') result = [...result].sort((a, b) => b.listing.rating - a.listing.rating);
     if (sortMode === 'nearby') result = [...result].sort((a, b) => a.listing.distanceKm - b.listing.distanceKm);
     return result;
-  }, [category, categoryOnly, city, cityOnly, combined, filter, query, sortMode]);
+  }, [category, categoryOnly, city, cityOnly, combined, filter, query, selectedCategoryCity, sortMode]);
 
   const cityResults = categoryOnly
     ? CITY_CARDS.filter((item) => item.title.toLowerCase() !== 'inle lake')
@@ -135,10 +139,10 @@ export function SearchPage() {
           <h1 className="text-lg font-medium text-text-primary">{t('search_title')}</h1>
           <p className="mt-1 text-[11px] text-text-muted">{rawQuery ? `${t('search_results_for')} “${rawQuery}”` : t('search_all_results')}</p>
         </div>
-        {!categoryOnly && <span className="text-[10px] text-text-faint">{resultEntries.length} {t('search_matches')}</span>}
+        {(!categoryOnly || selectedCategoryCity) && <span className="text-[10px] text-text-faint">{resultEntries.length} {t('search_matches')}</span>}
       </div>
 
-      {categoryOnly && (
+      {categoryOnly && !selectedCategoryCity && (
         <section aria-label={t('search_city_results')}>
           <div className="mb-2 flex items-center justify-between">
             <h2 className="text-sm font-medium text-text-primary">{filterLabel(category!, t)} · {t('search_cities_only')}</h2>
@@ -153,16 +157,16 @@ export function SearchPage() {
         </section>
       )}
 
-      {cityOnly && (
+      {(cityOnly || combined || selectedCategoryCity) && (
         <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-border pb-2 scrollbar-hide">
           <button type="button" onClick={() => setSortMode('rating')} className={chipClass(sortMode === 'rating')}>{t('search_rating')}</button>
           <button type="button" onClick={() => setSortMode('nearby')} className={chipClass(sortMode === 'nearby')}>{t('search_nearby')}</button>
         </div>
       )}
 
-      {!categoryOnly && (
+      {(!categoryOnly || selectedCategoryCity) && (
         <>
-          {combined && <p className="mb-3 text-[11px] text-text-muted">{filterLabel(category!, t)} · {filterLabel(city!, t)}</p>}
+          {(combined || selectedCategoryCity) && <p className="mb-3 text-[11px] text-text-muted">{filterLabel(category!, t)} · {filterLabel(combined ? city! : selectedCategoryCity!, t)}</p>}
           {resultEntries.length ? (
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
               {resultEntries.map(({ listing }) => <ListingCard key={listing.id} listing={listing} size="md" />)}
