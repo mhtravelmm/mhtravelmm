@@ -109,7 +109,7 @@ export function SearchPage() {
   const resultEntries = useMemo(() => {
     let result = SEARCH_ENTRIES.filter((entry) => {
       if (combined) return entry.category === category && entry.city === city;
-      if (cityOnly) return entry.city === city;
+      if (cityOnly) return entry.city === city && (filter === 'all' || entry.category === filter);
       if (selectedCategoryCity) return entry.category === category && entry.city === selectedCategoryCity;
       if (categoryOnly) return false;
       if (filter === 'all') return !query || `${entry.listing.title} ${entry.listing.subtitle ?? ''}`.toLowerCase().includes(query);
@@ -157,7 +157,18 @@ export function SearchPage() {
         </section>
       )}
 
-      {(cityOnly || combined || selectedCategoryCity) && (
+      {cityOnly && (
+        <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-border pb-2 scrollbar-hide">
+          <button type="button" onClick={() => { setFilter('all'); setSortMode('default'); }} className={chipClass(filter === 'all' && sortMode === 'default')}>{t('search_all')}</button>
+          <button type="button" onClick={() => { setFilter('all'); setSortMode('rating'); }} className={chipClass(sortMode === 'rating')}>{t('search_rating')}</button>
+          <button type="button" onClick={() => { setFilter('all'); setSortMode('nearby'); }} className={chipClass(sortMode === 'nearby')}>{t('search_nearby')}</button>
+          {CATEGORY_ALIASES.filter(({ id }) => !['plans', 'guides', 'blogs'].includes(id)).map(({ id, key }) => (
+            <button key={id} type="button" onClick={() => { setFilter(id); setSortMode('default'); }} className={chipClass(filter === id)}>{t(key)}</button>
+          ))}
+        </div>
+      )}
+
+      {(combined || selectedCategoryCity) && (
         <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-border pb-2 scrollbar-hide">
           <button type="button" onClick={() => setSortMode('rating')} className={chipClass(sortMode === 'rating')}>{t('search_rating')}</button>
           <button type="button" onClick={() => setSortMode('nearby')} className={chipClass(sortMode === 'nearby')}>{t('search_nearby')}</button>
