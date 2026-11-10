@@ -83,7 +83,7 @@ function AppRoutes() {
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
     <Route path="/admin/login" element={<StandalonePageLayout><AdminLoginPage /></StandalonePageLayout>} />
-    <Route path="/super-admin" element={<StandalonePageLayout><RequireSuperAdmin /></StandalonePageLayout>} />
+    <Route path="/super-admin" element={<RequireSuperAdmin />} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />
