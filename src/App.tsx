@@ -79,7 +79,7 @@ function AppRoutes() {
     <Route path="/blogs" element={<Shell fullWidth><BlogsPage /></Shell>} />
     <Route path="/blogs/:storyId" element={<LegacyBlogRedirect />} />
     <Route path="/search" element={<Shell><SearchPage /></Shell>} />
-    <Route path="/account" element={<Shell><AccountPage /></Shell>} />
+    <Route path="/account" element={<Shell showFooter fullWidth><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
     <Route path="/admin/login" element={<StandalonePageLayout><AdminLoginPage /></StandalonePageLayout>} />

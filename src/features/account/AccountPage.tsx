@@ -3,6 +3,7 @@ import { useNavigate, type NavigateFunction } from 'react-router-dom';
 import {
   ArrowRight,
   BadgeCheck,
+  Briefcase,
   Bell,
   BookOpen,
   CalendarDays,
@@ -26,6 +27,7 @@ import {
   Star,
   UserRound,
   WalletCards,
+  Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
@@ -224,7 +226,7 @@ function Overview({
       </section>
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <StatCard icon={CalendarDays} value="3" label={t('account_stat_bookings')} tone="blue" onClick={() => onOpen('bookings')} />
+        <StatCard icon={Briefcase} value="3" label={t('account_stat_bookings')} tone="blue" onClick={() => onOpen('bookings')} />
         <StatCard icon={MapPin} value="2" label={t('account_stat_plans')} tone="cyan" onClick={() => onOpen('plans')} />
         <StatCard icon={Heart} value={String(favoriteCount)} label={t('account_stat_saved')} tone="rose" onClick={() => onOpen('favorites')} />
         <StatCard icon={Star} value="5" label={t('account_stat_reviews')} tone="gold" onClick={() => onOpen('reviews')} />
@@ -322,7 +324,7 @@ function QuickActions({ onNavigate }: { onNavigate: (path: string) => void }) {
   ];
   return (
     <section className="rounded-2xl border border-account-border bg-account-surface p-3.5 sm:p-4">
-      <PanelTitle icon={ArrowRight} title={t('account_quick_actions')} />
+      <PanelTitle icon={Zap} title={t('account_quick_actions')} />
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         {actions.map(({ icon: Icon, key, path, tone }) => (
           <button key={key} type="button" onClick={() => onNavigate(path)} className="group flex min-h-[82px] flex-col items-center justify-center gap-2 rounded-xl border border-account-border bg-account-elevated p-2 text-center transition hover:border-account-accent/60 hover:bg-account-accent/10 sm:min-h-[94px]">
