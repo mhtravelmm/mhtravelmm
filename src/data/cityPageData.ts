@@ -28,11 +28,11 @@ export const TOP_ATTRACTIONS: CardListing[] = [
 ];
 
 export const POPULAR_HOTELS: CardListing[] = [
-  { id: 'ph1', title: 'Sedona hotel Yangon', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.8, distanceKm: 2.5, isFavorited: false, views: 1500, href: '/hotels/sedona-yangon' },
-  { id: 'ph2', title: 'Pan Pacific Yangon', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.7, distanceKm: 3.1, isFavorited: false, views: 1500, href: '/hotels/pan-pacific' },
-  { id: 'ph3', title: 'Lotte hotel Yangon', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.6, distanceKm: 1.8, isFavorited: false, views: 1500, href: '/hotels/lotte' },
-  { id: 'ph4', title: 'Melia Yangon', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.5, distanceKm: 2.2, isFavorited: false, views: 1500, href: '/hotels/melia' },
-  { id: 'ph5', title: 'Wyndham grand', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.4, distanceKm: 4.0, isFavorited: false, views: 1500, href: '/hotels/wyndham' },
+  { id: 'ph1', title: 'Sedona hotel Yangon', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.8, distanceKm: 2.5, isFavorited: false, views: 1500, priceUsd: 120, href: '/hotels/sedona-yangon' },
+  { id: 'ph2', title: 'Pan Pacific Yangon', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.7, distanceKm: 3.1, isFavorited: false, views: 1500, priceUsd: 105, href: '/hotels/pan-pacific' },
+  { id: 'ph3', title: 'Lotte hotel Yangon', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.6, distanceKm: 1.8, isFavorited: false, views: 1500, priceUsd: 95, href: '/hotels/lotte' },
+  { id: 'ph4', title: 'Melia Yangon', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.5, distanceKm: 2.2, isFavorited: false, views: 1500, priceUsd: 88, href: '/hotels/melia' },
+  { id: 'ph5', title: 'Wyndham grand', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.4, distanceKm: 4.0, isFavorited: false, views: 1500, priceUsd: 76, href: '/hotels/wyndham' },
 ];
 
 export const POPULAR_RESTAURANTS: CardListing[] = [

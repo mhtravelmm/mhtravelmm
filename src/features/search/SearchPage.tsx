@@ -174,6 +174,7 @@ export function SearchPage() {
 
       {(combined || selectedCategoryCity) && (
         <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-border pb-2 scrollbar-hide">
+          <button type="button" onClick={() => setSortMode('default')} className={chipClass(sortMode === 'default')}>{t('search_all')}</button>
           <button type="button" onClick={() => setSortMode('rating')} className={chipClass(sortMode === 'rating')}>{t('search_rating')}</button>
           <button type="button" onClick={() => setSortMode('nearby')} className={chipClass(sortMode === 'nearby')}>{t('search_nearby')}</button>
         </div>
