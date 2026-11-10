@@ -500,6 +500,7 @@ it is a pre-arrival matter.
   is shown.
 - Hero audit completed: Home, Nearby, Rentals, Ticketing, Blogs, Travel Guide, Account, Restaurant, and Book Shop already have page-level hero/banner treatments; City uses the configured ad-based hero slot; Search, Favorites, Notifications, and other utility/auth pages do not need a discovery hero. Travel Plans was the missing discovery page and now has a bilingual Bagan-sunrise hero with a Browse plans anchor CTA.
 - Generic catalog/discovery heroes now use one shared responsive dimension utility: 190px on phones, 230px on small/tablet widths, and 250px on web/medium widths. This is applied to City, Nearby, Rentals, Ticketing, Travel Plans, Travel Guide listing, Blogs, and Account overview; content-heavy detail headers remain separate so their longer information does not clip.
+- Search uses one input in the Header. After submission, `/search?q=...` shows the matching Yangon or category results directly without a duplicate Search Results input. The result page keeps compact static filter chips for All, categories, and cities including Yangon, Naypyidaw, Mandalay, and Bagan; selecting a chip updates the visible cards in place.
 - Travel Guide and Search frontend pages are now implemented. Remaining detail
   routes include City, Hotel, Attraction, Cafe, Market, Rental, Ticketing, and
   Travel Plan detail destinations referenced by static cards. Nearby, Rentals,
