@@ -22,7 +22,7 @@ import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import type { CardListing } from '../../types';
 
 type ResultCategory = 'plans' | 'guides' | 'blogs' | 'hotels' | 'restaurants' | 'bookshops' | 'cafes' | 'rentals' | 'attractions' | 'markets' | 'transport';
-type SearchCity = 'yangon' | 'naypyidaw' | 'mandalay' | 'bagan' | 'other';
+type SearchCity = 'yangon' | 'bago' | 'naypyidaw' | 'mandalay' | 'bagan' | 'other';
 type ResultFilter = 'all' | ResultCategory | Exclude<SearchCity, 'other'>;
 
 type SearchEntry = {
@@ -38,10 +38,10 @@ const SEARCH_ENTRIES: SearchEntry[] = [
   ...TRAVEL_GUIDES.map((item) => entries(item, 'guides', 'yangon')),
   ...BLOGS.map((item) => entries(item, 'blogs', 'yangon')),
   ...POPULARS.map((item) => entries(item, item.href?.includes('/hotels/') ? 'hotels' : item.href?.includes('/book-shops/') ? 'bookshops' : 'markets', 'yangon')),
-  ...CITIES.map((item) => entries(item, 'attractions', item.id === 'yangon' ? 'yangon' : item.id === 'bagan' ? 'bagan' : item.id === 'mandalay' ? 'mandalay' : 'other')),
+  ...CITIES.map((item) => entries(item, 'attractions', item.id === 'yangon' ? 'yangon' : item.id === 'bago' ? 'bago' : item.id === 'bagan' ? 'bagan' : item.id === 'mandalay' ? 'mandalay' : 'other')),
   ...TOP_ATTRACTIONS.map((item) => entries(item, 'attractions', item.title.toLowerCase().includes('bein') ? 'mandalay' : 'yangon')),
-  ...POPULAR_HOTELS.map((item) => entries(item, 'hotels', 'yangon')),
-  ...POPULAR_RESTAURANTS.map((item) => entries(item, 'restaurants', 'yangon')),
+  ...POPULAR_HOTELS.map((item, index) => entries(item, 'hotels', index > 2 ? 'bago' : 'yangon')),
+  ...POPULAR_RESTAURANTS.map((item, index) => entries(item, 'restaurants', index % 2 === 1 ? 'bago' : 'yangon')),
   ...POPULAR_BOOK_SHOPS.map((item) => entries(item, 'bookshops', 'yangon')),
   ...POPULAR_RENTALS.map((item) => entries(item, 'rentals', 'yangon')),
   ...POPULAR_CAFES.map((item) => entries(item, 'cafes', 'yangon')),
@@ -62,8 +62,9 @@ const CATEGORY_FILTERS: { id: ResultCategory; key: TranslationKey }[] = [
   { id: 'markets', key: 'search_markets' },
 ];
 
-const CITY_FILTERS: { id: Extract<ResultFilter, 'yangon' | 'naypyidaw' | 'mandalay' | 'bagan'>; key: TranslationKey }[] = [
+const CITY_FILTERS: { id: Extract<ResultFilter, 'yangon' | 'bago' | 'naypyidaw' | 'mandalay' | 'bagan'>; key: TranslationKey }[] = [
   { id: 'yangon', key: 'search_yangon' },
+  { id: 'bago', key: 'search_bago' },
   { id: 'naypyidaw', key: 'search_naypyidaw' },
   { id: 'mandalay', key: 'search_mandalay' },
   { id: 'bagan', key: 'search_bagan' },
@@ -72,6 +73,7 @@ const CITY_FILTERS: { id: Extract<ResultFilter, 'yangon' | 'naypyidaw' | 'mandal
 function normalizeSearchTerm(value: string) {
   const term = value.trim().toLowerCase();
   if (term === 'ရန်ကုန်') return 'yangon';
+  if (term === 'ပဲခူး') return 'bago';
   if (term === 'နေပြည်တော်') return 'naypyidaw';
   if (term === 'မန္တလေး') return 'mandalay';
   if (term === 'ပုဂံ') return 'bagan';
@@ -95,7 +97,7 @@ export function SearchPage() {
   const query = params.get('q')?.trim() ?? '';
   const [filter, setFilter] = useState<ResultFilter>('all');
   const categoryQuery = /hotel|restaurant|book|cafe|rental|attraction|market|plan|guide|blog|ticket|ဟိုတယ်|စားသောက်ဆိုင်|စာအုပ်ဆိုင်|ကဖေး|ငှားရမ်း|လည်ပတ်စရာ|ဈေး/i.test(query);
-  const cityQuery = /yangon|ရန်ကုန်|naypyidaw|နေပြည်တော်|mandalay|မန္တလေး|bagan|ပုဂံ/i.test(query);
+  const cityQuery = /yangon|ရန်ကုန်|bago|ပဲခူး|naypyidaw|နေပြည်တော်|mandalay|မန္တလေး|bagan|ပုဂံ/i.test(query);
 
   const results = useMemo(() => SEARCH_ENTRIES.filter((entry) => {
     if (!matchesQuery(entry, query)) return false;
@@ -126,7 +128,6 @@ export function SearchPage() {
         </div>
         {(categoryQuery || cityQuery || query.length === 0) && (
           <div className="flex gap-1.5 overflow-x-auto border-t border-border/70 pt-2 scrollbar-hide" aria-label={t('search_city_filters')}>
-            <span className="self-center pr-1 text-[9px] text-text-faint">{t('search_by_city')}</span>
             {CITY_FILTERS.map(({ id, key }) => (
               <button key={id} type="button" onClick={() => setFilter(id)} className={chipClass(filter === id)}>{t(key)}</button>
             ))}

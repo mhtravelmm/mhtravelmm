@@ -44,6 +44,7 @@ const translations = {
   search_city_filters: { mm: 'မြို့များ', en: 'Search cities' },
   search_by_city: { mm: 'မြို့အလိုက်', en: 'By city' },
   search_yangon: { mm: 'ရန်ကုန်', en: 'Yangon' },
+  search_bago: { mm: 'ပဲခူး', en: 'Bago' },
   search_naypyidaw: { mm: 'နေပြည်တော်', en: 'Naypyidaw' },
   search_mandalay: { mm: 'မန္တလေး', en: 'Mandalay' },
   search_bagan: { mm: 'ပုဂံ', en: 'Bagan' },
