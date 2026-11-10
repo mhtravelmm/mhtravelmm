@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { BLOGS, POPULARS, TRAVEL_GUIDES, TRAVEL_PLANS } from '../../data/homeData';
@@ -66,11 +66,6 @@ const CITY_ALIASES: { id: Exclude<SearchCity, 'other'>; terms: string[]; key: Tr
   { id: 'bagan', terms: ['bagan', 'ပုဂံ'], key: 'search_bagan' },
 ];
 
-const CITY_CARDS: CardListing[] = [
-  ...CITIES,
-  { id: 'naypyidaw', title: 'Naypyidaw', rating: 4.4, distanceKm: 0, isFavorited: false, views: 1500, href: '/cities/naypyidaw' },
-];
-
 function normalizeQuery(value: string) {
   return value.trim().toLowerCase().replace(/[,၊]/g, ' ');
 }
@@ -111,6 +106,7 @@ export function SearchPage() {
       if (combined) return entry.category === category && entry.city === city;
       if (cityOnly) return entry.city === city && (filter === 'all' || entry.category === filter);
       if (selectedCategoryCity) return entry.category === category && entry.city === selectedCategoryCity;
+      if (categoryOnly && sortMode !== 'default') return entry.category === category;
       if (categoryOnly) return false;
       if (filter === 'all') return !query || `${entry.listing.title} ${entry.listing.subtitle ?? ''}`.toLowerCase().includes(query);
       return entry.category === filter || entry.city === filter;
@@ -121,9 +117,17 @@ export function SearchPage() {
     return result;
   }, [category, categoryOnly, city, cityOnly, combined, filter, query, selectedCategoryCity, sortMode]);
 
-  const cityResults = categoryOnly
-    ? CITY_CARDS.filter((item) => item.title.toLowerCase() !== 'inle lake')
-    : [];
+  const [cityWindowStart, setCityWindowStart] = useState(0);
+
+  useEffect(() => {
+    if (!categoryOnly) return undefined;
+    const timer = window.setInterval(() => {
+      setCityWindowStart((current) => (current + 1) % CITY_ALIASES.length);
+    }, 10000);
+    return () => window.clearInterval(timer);
+  }, [categoryOnly]);
+
+  const visibleCityAliases = CITY_ALIASES.map((_, index) => CITY_ALIASES[(cityWindowStart + index) % CITY_ALIASES.length]).slice(0, 3);
 
   const chipClass = (active: boolean) => `shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-medium transition sm:px-3 sm:py-1.5 sm:text-[10px] ${active ? 'border-brand-blue bg-brand-blue text-white' : 'border-border bg-bg-card text-text-muted hover:border-brand-blue/50 hover:text-text-primary'}`;
 
@@ -142,17 +146,17 @@ export function SearchPage() {
         {(!categoryOnly || selectedCategoryCity) && <span className="text-[10px] text-text-faint">{resultEntries.length} {t('search_matches')}</span>}
       </div>
 
-      {categoryOnly && !selectedCategoryCity && (
-        <section aria-label={t('search_city_results')}>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-text-primary">{filterLabel(category!, t)} · {t('search_cities_only')}</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-6">
-            {cityResults.map((item) => (
-              <button key={item.id} type="button" onClick={() => chooseCity(CITY_ALIASES.find((cityItem) => cityItem.terms.some((term) => item.title.toLowerCase().includes(term)))?.id ?? 'yangon')} className="text-left">
-                <ListingCard listing={item} size="sm" />
-              </button>
-            ))}
+      {categoryOnly && (
+        <section aria-label={t('search_city_results')} className="mb-4 border-b border-border pb-2">
+          <div className="flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
+            <button type="button" onClick={() => { setFilter('all'); setSortMode('default'); }} className={chipClass(filter === 'all' && sortMode === 'default')}>{t('search_all')}</button>
+            <button type="button" onClick={() => { setFilter('all'); setSortMode('rating'); }} className={chipClass(sortMode === 'rating')}>{t('search_rating')}</button>
+            <button type="button" onClick={() => { setFilter('all'); setSortMode('nearby'); }} className={chipClass(sortMode === 'nearby')}>{t('search_nearby')}</button>
+            <div className="flex min-w-0 shrink-0 gap-1.5" key={cityWindowStart}>
+              {visibleCityAliases.map(({ id, key }) => (
+                <button key={id} type="button" onClick={() => chooseCity(id)} className={chipClass(filter === id)}>{t(key)}</button>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -175,7 +179,7 @@ export function SearchPage() {
         </div>
       )}
 
-      {(!categoryOnly || selectedCategoryCity) && (
+      {(!categoryOnly || selectedCategoryCity || sortMode !== 'default') && (
         <>
           {(combined || selectedCategoryCity) && <p className="mb-3 text-[11px] text-text-muted">{filterLabel(category!, t)} · {filterLabel(combined ? city! : selectedCategoryCity!, t)}</p>}
           {resultEntries.length ? (
