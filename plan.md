@@ -485,7 +485,7 @@ it is a pre-arrival matter.
 ## 16. Open Items
 
 - Favorites page implemented: saved listings resolve through shared categories and client-side favorite state; backend persistence remains pending.
-- City page: wire favorite toggling (same fix already done on Home).
+- City page cards use the shared ListingCard favorite fallback, so their hearts stay synchronized with the global Favorites provider; City detail destinations remain a separate route backlog item.
 - Blogs page implemented: bilingual editorial listing and reader; favorite,
   share, and view counts currently use client-side storage pending backend wiring.
 - Travel Plans page implemented as a frontend preview: compact shared-card grid with bilingual UI,
@@ -498,7 +498,7 @@ it is a pre-arrival matter.
   UI state and displays the intended MH Travel quotation/contact/negotiation
   handoff copy; it does not yet persist or send a request. No extra intro banner
   is shown.
-- Hero audit completed: Home, Nearby, Rentals, Ticketing, Blogs, Travel Guide, Account, Restaurant, and Book Shop already have page-level hero/banner treatments; City uses the configured ad-based hero slot; Search, Favorites, Notifications, and other utility/auth pages do not need a discovery hero. Travel Plans was the missing discovery page and now has a bilingual Bagan-sunrise hero with a Browse plans anchor CTA.
+- Hero audit completed: Home, City, Nearby, Rentals, Ticketing, Blogs, Travel Guide, Account, Restaurant, and Book Shop have page-level hero/banner treatments; City uses a persistent visible bilingual Shwedagon hero independent of optional ad data; Search, Favorites, Notifications, and other utility/auth pages do not need a discovery hero. Travel Plans was the missing discovery page and now has a bilingual Bagan-sunrise hero with a Browse plans anchor CTA.
 - Generic catalog/discovery heroes now use one shared responsive dimension utility: 190px on phones, 230px on small/tablet widths, and 250px on web/medium widths. This is applied to City, Nearby, Rentals, Ticketing, Travel Plans, Travel Guide listing, Blogs, and Account overview; content-heavy detail headers remain separate so their longer information does not clip.
 - Search uses one input in the Header. After submission, `/search?q=...` shows the matching Yangon or category results directly without a duplicate Search Results input. The result page keeps compact static filter chips for All, categories, and cities including Yangon, Naypyidaw, Mandalay, and Bagan; selecting a chip updates the visible cards in place.
 - A city query is catalog-wide: typing `ရန်ကုန်` or `Yangon` returns all cards assigned to Yangon across Hotels, Restaurants, Book Shops, Cafes, Rentals, Attractions, Markets, Guides, Plans, and related content. Burmese city/category terms are normalized, while Bagan, Mandalay, and other city cards are kept out of Yangon results.
@@ -549,7 +549,8 @@ it is a pre-arrival matter.
   Today/Earlier grouping, unread styling, and linked notification destinations.
 - Account Recent activity is intentionally a short preview of the same
   notification stream; its View all action opens the full inbox. On phone
-  layouts, Account and Notifications are now visible in the mobile drawer.
+  layouts, Notifications remain in the header and Account/Login remains only
+  in the fixed bottom navigation; neither is duplicated in the mobile drawer.
 - Book Shop detail page implemented at `/book-shops` and `/book-shops/:id`,
   following the supplied reference structure while preserving MH Travel's
   existing theme: hero and shop facts, services, About section, books,
