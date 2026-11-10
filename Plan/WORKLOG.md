@@ -229,3 +229,44 @@
 5. Complete Travel Guide detail, Search results, Favorites, and remaining detail pages.
 6. Connect bookings, custom plan requests, favorites, views, notifications, and reviews to Supabase tables and RLS policies.
 7. Add Admin-managed content tables, owner/admin account provisioning, audit logs, and production role management.
+
+
+## 9. Dashboard work completed — 2026-11-10
+
+### Traveler User Dashboard
+
+- Refined `/account` to follow the supplied MH Travel traveler-dashboard reference with the full-width navy/cyan shell, profile navigation, welcome banner, four statistic cards, upcoming trip, quick actions, recent activity, discovery panel, responsive behavior, and full desktop footer treatment.
+- Preserved existing account navigation, Favorites, notifications, settings/support views, and logout behavior.
+- Delivery commit: `420f69f` — `feat: refine traveler user dashboard`.
+
+### Super Admin Dashboard and Ads Management
+
+- Redesigned the standalone Super Admin control center to match the supplied reference with a dark navy/cyan admin shell, responsive sidebar, hero, KPI cards, analytics, distribution, quick actions, recent bookings, popular cities, and recent users.
+- Added a dedicated Ads Management section with campaign inventory, advertisers, placements, impressions, CTR, Live/Paused state, preview/edit/pause actions, priority/approval controls, and placement health.
+- Added the legacy blog URL redirect used by older blog card links.
+- Delivery commit: `16d7362` — `feat: add super admin ads management`.
+
+### Shop Owner creation and dashboard
+
+- Added the Super Admin Shop Owners section and Create Shop Owner workflow. The form collects owner/business name, email, phone, city, and business category; created records enter the local list as Pending for review.
+- Added the separate responsive `/shop-owner` dashboard based on the supplied Royal Myanmar Restaurant reference. It includes the owner profile/verified state, bookings/orders/reviews/revenue cards, booking chart, popular menu, recent bookings, quick actions, owner navigation, mobile menu, notifications, and workspace sections.
+- Added a Preview dashboard action from the Super Admin Shop Owners list and registered `/shop-owner` in `public/manus-routes.json`.
+- Delivery commits: `07d13fa` — `feat: add shop owner creation`; `b541cfc` — `feat: add shop owner dashboard`.
+
+### Admin Management
+
+- Added the Super Admin Admin Management section and Create Admin Quick Action. The frontend workflow collects name, email, phone, admin role, and permission group, and adds newly created records as Pending invite.
+- Added role choices for Content Manager, Support Manager, Operations Admin, Finance Admin, and Ads Manager; permission groups cover content, support, bookings/orders, payments/reports, and Ads Management.
+- Added admin summary cards, admin account table, status display, review actions, audit-log entry point, and explicit separation between platform admins and Shop Owners.
+- Delivery commit: `ee684e4` — `feat: add admin management`.
+
+### Current boundary for all dashboard work
+
+The dashboard screens, forms, local state, and preview interactions are complete and typechecked/build-validated. Admin invitations, Owner Admin accounts, shop ownership, permissions, audit logs, campaign persistence, real metrics, Supabase Auth roles, email invitations, and RLS policies are still backend integration work. The current frontend auth role model remains `traveler | super_admin`; the Shop Owner route is therefore a preview route until `owner_admin` authorization is added.
+
+### Validation for the dashboard sequence
+
+- `npm run typecheck` passed.
+- `npm run build` passed.
+- `npm run lint` passed with the repository's existing seven non-blocking warnings only.
+- `git diff --check` passed before delivery.

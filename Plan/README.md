@@ -11,10 +11,10 @@
 
 လက်ရှိ project သည် Vite + React + TypeScript + Tailwind ဖြင့် တည်ဆောက်ထားပြီး dark theme ကို အခြေခံထားသည်။ Burmese/English translation system၊ currency/theme hooks၊ shared listing cards နှင့် responsive mobile sidebar တို့ကို ဆက်လက်အသုံးပြုထားသည်။
 
-Traveler Web နှင့် Admin Portal ကို သီးခြားခွဲထားသည်။ Traveler user များသည် website ၏ pages အားလုံးကို အသုံးပြုနိုင်ပြီး Super Admin သည် dedicated Admin Login နှင့် dashboard ကိုသာ အသုံးပြုသည်။
+Traveler Web နှင့် Admin Portal ကို သီးခြားခွဲထားသည်။ Traveler user များသည် website ၏ pages အားလုံးကို အသုံးပြုနိုင်ပြီး Super Admin သည် dedicated Admin Login နှင့် dashboard ကိုသာ အသုံးပြုသည်။ Super Admin အတွင်း Ads Management၊ Shop Owner creation၊ Admin Management နှင့် `/shop-owner` frontend preview dashboard တို့ကိုလည်း မှတ်တမ်းတင်ပြီး implementation ပြီးစီးထားသည်။
 
 Supabase project ထဲတွင် account profiles table၊ username uniqueness၊ role checks၊ signup trigger နှင့် RLS policies များကို SQL migrations ဖြင့် တည်ဆောက်ပြီးဖြစ်သည်။ Frontend တွင် Supabase session, email signup/login, logout နှင့် Google/Facebook OAuth calls ကို ချိတ်ပြီးဖြစ်သည်။ Plan folder ထဲတွင် SQL source မဟုတ်ဘဲ ထို backend/OAuth work ၏ implementation record နှင့် လက်ရှိအခြေအနေကိုသာ ထားထားသည်။ Provider Client ID/Secret များ ထည့်ရန်သာ ကျန်ရှိသည်။
 
 ## Important current limitation
 
-Frontend auth UI သည် local preview session store ကို အသုံးပြုနေသေးသည်။ Supabase `public.profiles` schema နှင့် RLS ကို တကယ်တည်ဆောက်ပြီးဖြစ်သော်လည်း Supabase Auth session၊ username lookup/login၊ Google OAuth နှင့် Facebook OAuth ကို production အဖြစ် ချိတ်ဆက်ရန် ဆက်လုပ်ရမည်။
+Frontend auth UI သည် local preview session store ကို အသုံးပြုနေသေးသည်။ Supabase `public.profiles` schema နှင့် RLS ကို တကယ်တည်ဆောက်ပြီးဖြစ်သော်လည်း Supabase Auth session၊ username lookup/login၊ Google OAuth၊ Facebook OAuth၊ `owner_admin`/scoped admin roles နှင့် dashboard form persistence/invitations များကို production အဖြစ် ချိတ်ဆက်ရန် ဆက်လုပ်ရမည်။

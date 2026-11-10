@@ -37,7 +37,7 @@
 
 ---
 
-## 2A. Completed Implementation Inventory (verified 2026-11-09)
+## 2A. Completed Implementation Inventory (verified 2026-11-10)
 
 This section records what is already implemented in the repository. It is intentionally separate from the roadmap below so that completed work is not mistaken for planned work.
 
@@ -73,7 +73,7 @@ This section records what is already implemented in the repository. It is intent
 
 - Traveler Login and Signup are separate routes. Signup supports username, display name, email, password, confirmation, and branded Google/Facebook entry points; Login accepts username or email plus password.
 - Traveler logout clears session/local state and returns to Login. Traveler access and Super Admin access are kept separate.
-- `/admin/login` is a standalone protected entry point and `/super-admin` is a role-protected dashboard with metrics, users, content/listings, bookings, settings, activity, language toggle, dark/light toggle, and visible logout.
+- `/admin/login` is a standalone protected entry point and `/super-admin` is a role-protected dashboard with metrics, users, content/listings, bookings, settings, activity, Ads Management, Shop Owner creation, Admin Management, language toggle, dark/light toggle, and visible logout. The separate `/shop-owner` frontend dashboard route is also implemented for Owner Admin preview.
 - Supabase session hydration, auth-state listening, email signup/login, sign-out, OAuth calls, profile-role checks, and signup metadata wiring exist in the frontend.
 
 ### Supabase/backend work already applied
@@ -93,7 +93,7 @@ This section records what is already implemented in the repository. It is intent
 - Ticketing availability, payment, final booking persistence, and live seat locking are still preview/handoff behavior.
 - Google and Facebook OAuth provider credentials and callback configuration still need to be completed in the Supabase Dashboard.
 - Username-to-auth identity lookup/login and real traveler/Super Admin account provisioning still need production verification.
-- Admin-managed content, rental ads, owner/admin account workflows, audit logs, payouts, and the broader Owner/Admin business model remain roadmap work.
+- Admin-managed content, rental ads, owner/admin account provisioning, audit-log persistence, payouts, and the broader Owner/Admin business model still need backend/API integration. Their frontend dashboard workflows and preview states are implemented and documented in the 2026-11-10 dashboard work record below.
 
 ### Code-level audit record (2026-11-09)
 
@@ -101,7 +101,7 @@ The following findings were checked against the source files, not inferred from 
 
 #### Runtime and route verification
 
-- `src/App.tsx` is the authoritative route table. It currently declares the Home, Cities, Nearby, Rentals, Restaurants (including `:id`), Book Shops (including `:id`), Ticketing, Travel Plans, Travel Guide (including `:guideId`), Blogs, Search, Account, Login, Signup, Admin Login, Super Admin, Notifications, Account Notifications, and Favorites routes, plus a wildcard Not Found page.
+- `src/App.tsx` is the authoritative route table. It currently declares the Home, Cities, Nearby, Rentals, Restaurants (including `:id`), Book Shops (including `:id`), Ticketing, Travel Plans, Travel Guide (including `:guideId`), Blogs, Search, Account, Login, Signup, Admin Login, Super Admin, Shop Owner, Notifications, Account Notifications, and Favorites routes, plus a wildcard Not Found page.
 - `public/manus-routes.json` matches the concrete routes. It intentionally does not describe the wildcard route.
 - There is no `/cities/:id`, `/attractions/:id`, `/hotels`, `/hotels/:id`, `/cafes/:id`, `/markets/:id`, `/rentals/:id`, `/ticketing/:id`, or `/travel-plans/:id` route. Static links to those paths therefore fall through to the Not Found page.
 - `src/features/blogs/BlogsPage.tsx` uses the implemented query-string reader format `/blogs?story=<slug>`, but legacy `CardListing` data still contains `/blogs/<id>` hrefs. Those legacy paths do not match the router.
@@ -122,8 +122,8 @@ The following findings were checked against the source files, not inferred from 
 - `src/lib/auth.tsx` is hybrid: configured Supabase environments use Auth session hydration, email/password auth, OAuth initiation, profile lookup, role checks, and sign-out; unconfigured environments use a localStorage preview store.
 - The local preview store keeps demo users and plaintext passwords in localStorage and contains a frontend demo Super Admin credential. This path is not production authentication.
 - Configured Supabase login supports an email identifier; username-only login still falls back to local preview lookup. Secure username-to-email resolution is not implemented.
-- `/super-admin` is client-side role guarded. `/admin/login` is a public login form in a standalone layout, not itself a protected route. The Super Admin dashboard content is static/sample UI; its metrics, users, listings, bookings, settings, and quick actions are not wired to management APIs.
-- The frontend role type is only `traveler | super_admin`; other roles documented by the backend handoff are currently collapsed to traveler by `mapRole()` and are not separately authorized in the UI.
+- `/super-admin` is client-side role guarded. `/admin/login` is a public login form in a standalone layout, not itself a protected route. The Super Admin dashboard metrics and management sections are frontend preview/local state and are not wired to management APIs yet.
+- The frontend role type is only `traveler | super_admin`; other roles documented by the backend handoff are currently collapsed to traveler by `mapRole()` and are not separately authorized in the UI. `/shop-owner` is currently a frontend preview route until `owner_admin` authentication and authorization are added.
 - Google and Facebook buttons call `signInWithOAuth` only when Supabase is configured. Provider credentials, callback configuration, OAuth username completion, and production verification remain external setup work.
 
 #### Verified source-level issues to keep in the backlog
@@ -574,3 +574,42 @@ it is a pre-arrival matter.
 - Desktop reference has a three-column footer, but the existing MH Travel rule remains authoritative: full footer only on Home; other pages retain the global copyright strip. On phones, keep the compact hero, three-column ride-category tiles, search, compact stacked/horizontal-swipe rental list, and the existing persistent five-tab bottom navigation.
 
 - Data integration: preserve `POPULAR_RENTALS` unchanged for Home and City; build a Rentals-page catalog that reuses stable IDs `pre1`–`pre5` and adds unique `pre6`–`pre10`. Rentals favorites resolve in Favorites and Account while existing Home/City rows remain unchanged.
+
+
+## 18. Dashboard implementation record — 2026-11-10
+
+This section records the dashboard work completed from the supplied visual references and the follow-up Super Admin requests. These are frontend implementations and are intentionally distinguished from the backend provisioning work that remains.
+
+### Super Admin Dashboard
+
+- The standalone `/super-admin` dashboard was redesigned around the supplied MH Travel control-center reference: dark navy/cyan shell, responsive sidebar, hero banner, platform KPI cards, analytics, service distribution, quick actions, recent bookings, popular cities, and recent users.
+- A backward-compatible redirect was added for legacy blog card URLs so `/blogs/:storyId` redirects to the implemented `/blogs?story=<slug>` reader format.
+- The dashboard keeps the standalone Admin Login boundary, visible logout, Burmese/English toggle, theme toggle, mobile navigation, and existing protected Super Admin route behavior.
+
+### Ads Management
+
+- Super Admin now has a dedicated `Ads Management` sidebar section and a `Manage Ads` Quick Action.
+- The Ads console includes active-campaign, placement, impressions, and CTR summary cards; campaign inventory; advertiser and placement columns; Live/Paused status; preview/edit/pause controls; Admin Ads priority; auto-pause expired ads; creative approval; and placement-health indicators.
+- It reuses the repository's existing mock Admin Ads placement vocabulary and remains frontend/local state until ad campaigns, budgets, scheduling, creative storage, reporting, and AdSense/AdMob fallback are connected to Supabase or an ad provider.
+
+### Shop Owner creation and dashboard
+
+- Super Admin has a dedicated `Shop Owners` section and a `Create Shop Owner` Quick Action.
+- The Shop Owner form collects owner name, shop/business name, email, phone, city, and business category. New records appear as `Pending`, with a review action and separate owner/shop/city/category/status columns.
+- The frontend Shop Owner dashboard is available at `/shop-owner` and follows the supplied Royal Myanmar Restaurant reference: verified business profile, welcome hero, bookings/orders/reviews/revenue KPI cards, booking statistics chart, popular menu items, recent bookings, quick actions, responsive owner sidebar, mobile menu, notifications, and owner workspace sections.
+- The Super Admin Shop Owners table includes a `Preview dashboard` action that opens `/shop-owner`.
+- The `/shop-owner` route is currently a frontend preview route. It must become an `owner_admin` protected route after real Owner Admin authentication and shop ownership records are added.
+
+### Admin Management
+
+- Super Admin now has a dedicated `Admin Management` sidebar section and a `Create Admin` Quick Action.
+- The Admin Management form collects admin name, work email, phone, admin role, and permission group. Supported frontend role choices are Content Manager, Support Manager, Operations Admin, Finance Admin, and Ads Manager.
+- The page includes total-admin, active-admin, pending-invite, and permission-group summaries; an admin account table; role/permission/status display; review actions; audit-log entry point; invite-created local state; and a clear separation between platform Admin roles and Shop Owner accounts.
+- Current Admin creation is a frontend/local-state invitation workflow. Production work must add Supabase Auth invitations, an explicit role enum, permission/group tables, RLS policies, invite acceptance, password setup, status transitions, audit logs, and route guards.
+
+### Routes, validation, and delivery
+
+- `src/App.tsx` now includes the `/shop-owner` route, and `public/manus-routes.json` is synchronized with it.
+- The implementation uses the existing Vite + React + TypeScript + Tailwind stack and existing local image assets; no new external assets or secrets were added.
+- The dashboard work passed `npm run typecheck`, `npm run build`, and `npm run lint` with no errors. Existing lint warnings, Browserslist freshness warnings, and bundle-size warnings remain non-blocking.
+- GitHub delivery commits for this dashboard sequence are: `420f69f` traveler dashboard refinement, `16d7362` Ads Management, `07d13fa` Shop Owner creation, `b541cfc` Shop Owner dashboard, and `ee684e4` Admin Management.

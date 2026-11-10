@@ -148,3 +148,24 @@
 - [x] Preserve existing `near-*` IDs, give new records unique IDs, and register the full Nearby catalog in the Favorites page and Account dashboard so each Nearby heart resolves by its stable ID across pages.
 - [x] Add a Popular Nearby horizontal row with compact image cards, rating/category/distance, favorites, and View All, reusing the existing Nearby data and stable favorite IDs.
 - [x] Keep the page bilingual; retain the shared five-tab phone bottom navigation, global copyright on Nearby, and Home-only full footer. Keep all controls responsive without horizontal page overflow.
+
+
+## Dashboard management sequence — 2026-11-10
+
+### Completed frontend outcomes
+
+- [x] Refine the traveler `/account` dashboard to match the supplied MH Travel reference, including responsive profile navigation, hero, stats, upcoming trip, quick actions, recent activity, discovery content, and footer behavior.
+- [x] Add a dedicated Super Admin Ads Management area with campaign inventory, advertiser/placement data, impressions, CTR, Live/Paused controls, preview/edit/pause actions, ad priority, creative approval, and placement health.
+- [x] Add Super Admin Shop Owner creation with owner/business name, email, phone, city, category, Pending status, review list, and Quick Action access.
+- [x] Add the responsive `/shop-owner` dashboard reference implementation with verified business profile, bookings, orders, reviews, revenue, booking statistics, popular menu, recent bookings, quick actions, mobile navigation, and owner workspace sections.
+- [x] Add Super Admin Admin Management with Create Admin Quick Action, name/email/phone form, role choices, permission groups, Pending invite status, admin list, review action, audit-log entry point, and clear Shop Owner/platform Admin separation.
+- [x] Register `/shop-owner` in `src/App.tsx` and `public/manus-routes.json`, and add a Super Admin Preview dashboard action.
+- [x] Validate the dashboard sequence with typecheck, production build, lint, and `git diff --check`; lint has no errors and only the repository's existing non-blocking warnings remain.
+
+### Backend integration still required
+
+- [ ] Extend the auth role model beyond `traveler | super_admin` with `owner_admin` and scoped platform-admin roles.
+- [ ] Connect Create Admin and Create Shop Owner forms to Supabase Auth invitations, profile/business records, email setup, role assignment, and acceptance/password flows.
+- [ ] Add permission groups, per-feature access checks, RLS policies, admin status transitions, audit logs, and protected routes for each dashboard role.
+- [ ] Replace seeded dashboard metrics, campaigns, owners, admins, menu items, bookings, orders, reviews, and revenue with user/shop/admin-scoped Supabase queries.
+- [ ] Connect Ads Management to campaign persistence, creative storage, scheduling, budgets, reporting, and the existing Admin Ads/AdSlot fallback pipeline.
