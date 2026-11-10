@@ -1,12 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ListingCard } from '../../components/ui/ListingCard';
-import {
-  BLOGS,
-  POPULARS,
-  TRAVEL_GUIDES,
-  TRAVEL_PLANS,
-} from '../../data/homeData';
+import { BLOGS, POPULARS, TRAVEL_GUIDES, TRAVEL_PLANS } from '../../data/homeData';
 import {
   CITIES,
   POPULAR_BOOK_SHOPS,
@@ -24,6 +19,7 @@ import type { CardListing } from '../../types';
 type ResultCategory = 'plans' | 'guides' | 'blogs' | 'hotels' | 'restaurants' | 'bookshops' | 'cafes' | 'rentals' | 'attractions' | 'markets' | 'transport';
 type SearchCity = 'yangon' | 'bago' | 'naypyidaw' | 'mandalay' | 'bagan' | 'other';
 type ResultFilter = 'all' | ResultCategory | Exclude<SearchCity, 'other'>;
+type SortMode = 'default' | 'rating' | 'nearby';
 
 type SearchEntry = {
   listing: CardListing;
@@ -31,121 +27,150 @@ type SearchEntry = {
   city: SearchCity;
 };
 
-const entries = (listing: CardListing, category: ResultCategory, city: SearchEntry['city'] = 'yangon'): SearchEntry => ({ listing, category, city });
+const entries = (listing: CardListing, category: ResultCategory, city: SearchCity = 'yangon'): SearchEntry => ({ listing, category, city });
 
 const SEARCH_ENTRIES: SearchEntry[] = [
-  ...TRAVEL_PLANS.map((item) => entries(item, 'plans', 'yangon')),
-  ...TRAVEL_GUIDES.map((item) => entries(item, 'guides', 'yangon')),
-  ...BLOGS.map((item) => entries(item, 'blogs', 'yangon')),
-  ...POPULARS.map((item) => entries(item, item.href?.includes('/hotels/') ? 'hotels' : item.href?.includes('/book-shops/') ? 'bookshops' : 'markets', 'yangon')),
+  ...TRAVEL_PLANS.map((item) => entries(item, 'plans')),
+  ...TRAVEL_GUIDES.map((item) => entries(item, 'guides')),
+  ...BLOGS.map((item) => entries(item, 'blogs')),
+  ...POPULARS.map((item) => entries(item, item.href?.includes('/hotels/') ? 'hotels' : item.href?.includes('/book-shops/') ? 'bookshops' : 'markets')),
   ...CITIES.map((item) => entries(item, 'attractions', item.id === 'yangon' ? 'yangon' : item.id === 'bago' ? 'bago' : item.id === 'bagan' ? 'bagan' : item.id === 'mandalay' ? 'mandalay' : 'other')),
   ...TOP_ATTRACTIONS.map((item) => entries(item, 'attractions', item.title.toLowerCase().includes('bein') ? 'mandalay' : 'yangon')),
   ...POPULAR_HOTELS.map((item, index) => entries(item, 'hotels', index > 2 ? 'bago' : 'yangon')),
   ...POPULAR_RESTAURANTS.map((item, index) => entries(item, 'restaurants', index % 2 === 1 ? 'bago' : 'yangon')),
-  ...POPULAR_BOOK_SHOPS.map((item) => entries(item, 'bookshops', 'yangon')),
-  ...POPULAR_RENTALS.map((item) => entries(item, 'rentals', 'yangon')),
-  ...POPULAR_CAFES.map((item) => entries(item, 'cafes', 'yangon')),
-  ...POPULAR_MARKETS.map((item) => entries(item, 'markets', 'yangon')),
-  ...POPULAR_TRANSPORT.map((item) => entries(item, 'transport', item.title.toLowerCase().includes('inle') ? 'bagan' : 'yangon')),
+  ...POPULAR_BOOK_SHOPS.map((item) => entries(item, 'bookshops')),
+  ...POPULAR_RENTALS.map((item) => entries(item, 'rentals')),
+  ...POPULAR_CAFES.map((item) => entries(item, 'cafes')),
+  ...POPULAR_MARKETS.map((item) => entries(item, 'markets')),
+  ...POPULAR_TRANSPORT.map((item) => entries(item, 'transport', item.title.toLowerCase().includes('inle') ? 'other' : 'yangon')),
 ];
 
-const CATEGORY_FILTERS: { id: ResultCategory; key: TranslationKey }[] = [
-  { id: 'plans', key: 'search_plans' },
-  { id: 'guides', key: 'search_guides' },
-  { id: 'blogs', key: 'search_blogs' },
-  { id: 'hotels', key: 'search_hotels' },
-  { id: 'restaurants', key: 'search_restaurants' },
-  { id: 'bookshops', key: 'search_bookshops' },
-  { id: 'cafes', key: 'search_cafes' },
-  { id: 'rentals', key: 'search_rentals' },
-  { id: 'attractions', key: 'search_attractions' },
-  { id: 'markets', key: 'search_markets' },
+const CATEGORY_ALIASES: { id: ResultCategory; terms: string[]; key: TranslationKey }[] = [
+  { id: 'hotels', terms: ['hotel', 'hotels', 'ဟိုတယ်', 'ဟိုတယ်များ'], key: 'search_hotels' },
+  { id: 'restaurants', terms: ['restaurant', 'restaurants', 'စားသောက်ဆိုင်', 'စားသောက်ဆိုင်များ'], key: 'search_restaurants' },
+  { id: 'bookshops', terms: ['book', 'bookshop', 'bookshops', 'စာအုပ်ဆိုင်', 'စာအုပ်ဆိုင်များ'], key: 'search_bookshops' },
+  { id: 'cafes', terms: ['cafe', 'cafes', 'ကဖေး', 'ကဖေးများ'], key: 'search_cafes' },
+  { id: 'rentals', terms: ['rental', 'rentals', 'ငှားရမ်း', 'ငှားရမ်းရန်'], key: 'search_rentals' },
+  { id: 'attractions', terms: ['attraction', 'attractions', 'လည်ပတ်စရာ', 'လည်ပတ်စရာများ'], key: 'search_attractions' },
+  { id: 'markets', terms: ['market', 'markets', 'ဈေး', 'ဈေးများ'], key: 'search_markets' },
+  { id: 'plans', terms: ['plan', 'plans', 'ခရီးစဉ်'], key: 'search_plans' },
+  { id: 'guides', terms: ['guide', 'guides', 'လမ်းညွှန်'], key: 'search_guides' },
+  { id: 'blogs', terms: ['blog', 'blogs', 'ဘလော့'], key: 'search_blogs' },
 ];
 
-const CITY_FILTERS: { id: Extract<ResultFilter, 'yangon' | 'bago' | 'naypyidaw' | 'mandalay' | 'bagan'>; key: TranslationKey }[] = [
-  { id: 'yangon', key: 'search_yangon' },
-  { id: 'bago', key: 'search_bago' },
-  { id: 'naypyidaw', key: 'search_naypyidaw' },
-  { id: 'mandalay', key: 'search_mandalay' },
-  { id: 'bagan', key: 'search_bagan' },
+const CITY_ALIASES: { id: Exclude<SearchCity, 'other'>; terms: string[]; key: TranslationKey }[] = [
+  { id: 'yangon', terms: ['yangon', 'ရန်ကုန်'], key: 'search_yangon' },
+  { id: 'bago', terms: ['bago', 'ပဲခူး'], key: 'search_bago' },
+  { id: 'naypyidaw', terms: ['naypyidaw', 'nay pyi taw', 'နေပြည်တော်'], key: 'search_naypyidaw' },
+  { id: 'mandalay', terms: ['mandalay', 'မန္တလေး'], key: 'search_mandalay' },
+  { id: 'bagan', terms: ['bagan', 'ပုဂံ'], key: 'search_bagan' },
 ];
 
-function normalizeSearchTerm(value: string) {
-  const term = value.trim().toLowerCase();
-  if (term === 'ရန်ကုန်') return 'yangon';
-  if (term === 'ပဲခူး') return 'bago';
-  if (term === 'နေပြည်တော်') return 'naypyidaw';
-  if (term === 'မန္တလေး') return 'mandalay';
-  if (term === 'ပုဂံ') return 'bagan';
-  if (term === 'စားသောက်ဆိုင်' || term === 'စားသောက်ဆိုင်များ') return 'restaurants';
-  if (term === 'ဟိုတယ်' || term === 'ဟိုတယ်များ') return 'hotels';
-  if (term === 'ကဖေး' || term === 'ကဖေးများ') return 'cafes';
-  if (term === 'စာအုပ်ဆိုင်' || term === 'စာအုပ်ဆိုင်များ') return 'bookshops';
-  return term;
+const CITY_CARDS: CardListing[] = [
+  ...CITIES,
+  { id: 'naypyidaw', title: 'Naypyidaw', rating: 4.4, distanceKm: 0, isFavorited: false, views: 1500, href: '/cities/naypyidaw' },
+];
+
+function normalizeQuery(value: string) {
+  return value.trim().toLowerCase().replace(/[,၊]/g, ' ');
 }
 
-function matchesQuery(entry: SearchEntry, query: string) {
-  const term = normalizeSearchTerm(query);
-  if (!term) return true;
-  const haystack = `${entry.listing.title} ${entry.listing.subtitle ?? ''} ${entry.category} ${entry.city}`.toLowerCase();
-  return haystack.includes(term === 'restaurant' ? 'restaurants' : term);
+function findCategory(query: string) {
+  return CATEGORY_ALIASES.find(({ terms }) => terms.some((term) => query.includes(term)))?.id;
+}
+
+function findCity(query: string) {
+  return CITY_ALIASES.find(({ terms }) => terms.some((term) => query.includes(term)))?.id;
+}
+
+function filterLabel(filter: ResultFilter, t: (key: TranslationKey) => string) {
+  if (filter === 'all') return t('search_all');
+  const category = CATEGORY_ALIASES.find((item) => item.id === filter);
+  if (category) return t(category.key);
+  return t(CITY_ALIASES.find((item) => item.id === filter)?.key ?? 'search_all');
 }
 
 export function SearchPage() {
   const { t } = useLanguage();
   const [params] = useSearchParams();
-  const query = params.get('q')?.trim() ?? '';
+  const rawQuery = params.get('q')?.trim() ?? '';
+  const query = normalizeQuery(rawQuery);
+  const category = findCategory(query);
+  const city = findCity(query);
+  const categoryOnly = Boolean(category && !city);
+  const cityOnly = Boolean(city && !category);
+  const combined = Boolean(category && city);
   const [filter, setFilter] = useState<ResultFilter>('all');
-  const categoryQuery = /hotel|restaurant|book|cafe|rental|attraction|market|plan|guide|blog|ticket|ဟိုတယ်|စားသောက်ဆိုင်|စာအုပ်ဆိုင်|ကဖေး|ငှားရမ်း|လည်ပတ်စရာ|ဈေး/i.test(query);
-  const cityQuery = /yangon|ရန်ကုန်|bago|ပဲခူး|naypyidaw|နေပြည်တော်|mandalay|မန္တလေး|bagan|ပုဂံ/i.test(query);
+  const [sortMode, setSortMode] = useState<SortMode>('default');
 
-  const results = useMemo(() => SEARCH_ENTRIES.filter((entry) => {
-    if (!matchesQuery(entry, query)) return false;
-    if (filter === 'all') return true;
-    return entry.category === filter || entry.city === filter;
-  }), [filter, query]);
+  const resultEntries = useMemo(() => {
+    let result = SEARCH_ENTRIES.filter((entry) => {
+      if (combined) return entry.category === category && entry.city === city;
+      if (cityOnly) return entry.city === city;
+      if (categoryOnly) return false;
+      if (filter === 'all') return !query || `${entry.listing.title} ${entry.listing.subtitle ?? ''}`.toLowerCase().includes(query);
+      return entry.category === filter || entry.city === filter;
+    });
+
+    if (sortMode === 'rating') result = [...result].sort((a, b) => b.listing.rating - a.listing.rating);
+    if (sortMode === 'nearby') result = [...result].sort((a, b) => a.listing.distanceKm - b.listing.distanceKm);
+    return result;
+  }, [category, categoryOnly, city, cityOnly, combined, filter, query, sortMode]);
+
+  const cityResults = categoryOnly
+    ? CITY_CARDS.filter((item) => item.title.toLowerCase() !== 'inle lake')
+    : [];
 
   const chipClass = (active: boolean) => `shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-medium transition sm:px-3 sm:py-1.5 sm:text-[10px] ${active ? 'border-brand-blue bg-brand-blue text-white' : 'border-border bg-bg-card text-text-muted hover:border-brand-blue/50 hover:text-text-primary'}`;
+
+  function chooseCity(cityId: Exclude<SearchCity, 'other'>) {
+    setFilter(cityId);
+    setSortMode('default');
+  }
 
   return (
     <div className="mx-auto max-w-7xl py-3 sm:py-4">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-medium text-text-primary">{t('search_title')}</h1>
-          <p className="mt-1 text-[11px] text-text-muted">
-            {query ? `${t('search_results_for')} “${query}”` : t('search_all_results')}
-          </p>
+          <p className="mt-1 text-[11px] text-text-muted">{rawQuery ? `${t('search_results_for')} “${rawQuery}”` : t('search_all_results')}</p>
         </div>
-        <span className="text-[10px] text-text-faint">{results.length} {t('search_matches')}</span>
+        {!categoryOnly && <span className="text-[10px] text-text-faint">{resultEntries.length} {t('search_matches')}</span>}
       </div>
 
-      <div className="space-y-2 rounded-card border border-border bg-bg-card/60 p-2.5">
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide" aria-label={t('search_category_filters')}>
-          <button type="button" onClick={() => setFilter('all')} className={chipClass(filter === 'all')}>{t('search_all')}</button>
-          {CATEGORY_FILTERS.map(({ id, key }) => (
-            <button key={id} type="button" onClick={() => setFilter(id)} className={chipClass(filter === id)}>{t(key)}</button>
-          ))}
-        </div>
-        {(categoryQuery || cityQuery || query.length === 0) && (
-          <div className="flex gap-1.5 overflow-x-auto border-t border-border/70 pt-2 scrollbar-hide" aria-label={t('search_city_filters')}>
-            {CITY_FILTERS.map(({ id, key }) => (
-              <button key={id} type="button" onClick={() => setFilter(id)} className={chipClass(filter === id)}>{t(key)}</button>
+      {categoryOnly && (
+        <section aria-label={t('search_city_results')}>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-text-primary">{filterLabel(category!, t)} · {t('search_cities_only')}</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-6">
+            {cityResults.map((item) => (
+              <button key={item.id} type="button" onClick={() => chooseCity(CITY_ALIASES.find((cityItem) => cityItem.terms.some((term) => item.title.toLowerCase().includes(term)))?.id ?? 'yangon')} className="text-left">
+                <ListingCard listing={item} size="sm" />
+              </button>
             ))}
           </div>
-        )}
-      </div>
+        </section>
+      )}
 
-      <div className="mb-3 mt-5 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-text-primary">{query ? `${t('search_results_for')} “${query}”` : t('search_all_results')}</h2>
-        {filter !== 'all' && <button type="button" onClick={() => setFilter('all')} className="text-[10px] text-brand-blue">{t('search_clear_filter')}</button>}
-      </div>
-
-      {results.length ? (
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-          {results.map(({ listing }) => <ListingCard key={listing.id} listing={listing} size="md" />)}
+      {cityOnly && (
+        <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-border pb-2 scrollbar-hide">
+          <button type="button" onClick={() => setSortMode('rating')} className={chipClass(sortMode === 'rating')}>{t('search_rating')}</button>
+          <button type="button" onClick={() => setSortMode('nearby')} className={chipClass(sortMode === 'nearby')}>{t('search_nearby')}</button>
         </div>
-      ) : (
-        <div className="rounded-card border border-dashed border-border p-10 text-center text-xs text-text-muted">{t('search_no_results')}</div>
+      )}
+
+      {!categoryOnly && (
+        <>
+          {combined && <p className="mb-3 text-[11px] text-text-muted">{filterLabel(category!, t)} · {filterLabel(city!, t)}</p>}
+          {resultEntries.length ? (
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+              {resultEntries.map(({ listing }) => <ListingCard key={listing.id} listing={listing} size="md" />)}
+            </div>
+          ) : (
+            <div className="rounded-card border border-dashed border-border p-10 text-center text-xs text-text-muted">{t('search_no_results')}</div>
+          )}
+        </>
       )}
     </div>
   );
