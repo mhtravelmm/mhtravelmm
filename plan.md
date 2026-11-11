@@ -203,6 +203,42 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   identical design, while different categories can look completely
   different from each other.
 
+### Shop Owner Web UI/UX template marketplace
+
+- Every Shop Owner receives one default Shop Page Web UI/UX template at no
+  additional cost. The free template is the baseline experience and remains
+  available even when an Owner does not subscribe to a paid template.
+- MH Travel will provide multiple alternative Shop Page templates with
+  materially different layouts, visual systems, navigation patterns, hero
+  treatments, menus/catalog presentation, booking CTAs, galleries, and mobile
+  experiences. Templates are presentation layers only: the Shop Owner's
+  business profile, menu/products, photos, services, prices, reviews, and
+  booking data must remain reusable when switching templates.
+- An Owner may preview available templates before applying one. Switching
+  from the included free template to an alternative template requires a
+  monthly subscription of **2,000 MMK per Shop Owner shop**. The subscription
+  grants access to one selected paid template at a time; changing to another
+  paid template keeps the same monthly entitlement and does not duplicate
+  shop content.
+- Owners may switch back to the free template at any time. If a paid
+  subscription is cancelled, expires, or remains unpaid after the defined
+  grace period, the Shop Page falls back to the free template without deleting
+  the Owner's content or booking data.
+- The template selector must show Free/Paid status, the 2,000 MMK monthly
+  price, active template, preview, apply/switch, renewal, cancellation, and
+  subscription status. It must clearly distinguish Shop Page appearance
+  changes from business-data changes.
+- Platform Admin controls the template catalog, availability, versioning,
+  screenshots/previews, compatibility by business category, pricing, and
+  retirement/rollback. A retired template must not break Shops already using
+  it; affected Owners need a migration notice and a safe replacement path.
+- Production implementation requires Shop Owner template entitlements,
+  subscription/invoice/payment records, renewal and grace-period states,
+  template version records, preview/apply audit events, and RLS so an Owner
+  can change only their own Shop Page. The UI/UX work is planned separately
+  from the existing Shop Owner dashboard and does not change the standard
+  `/shop-owner` management workspace.
+
 ---
 
 ## 5. Home Page

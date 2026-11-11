@@ -203,3 +203,24 @@
 - [x] Add keyword search and result counts for hotels, restaurants, attractions, book shops, rentals, transport, cafes, and markets.
 - [x] Add responsive expanded business grids with Show more/Show less.
 - [ ] Replace seeded category arrays with city-scoped Supabase businesses, real pagination, map distance, open/closed status, and review counts.
+
+
+## Shop Owner Web UI/UX template subscription — New Plan
+
+### Product and UX requirements
+
+- [ ] Create a Shop Page template catalog with one included Free template and multiple alternative Shop UI/UX templates.
+- [ ] Make templates presentation-only so Shop profile, products/menu, photos, services, prices, reviews, and bookings survive template switching.
+- [ ] Add Owner template preview, active-template state, category compatibility, mobile preview, and apply/switch controls.
+- [ ] Show the paid-template price clearly as **2,000 MMK per month per Shop Owner shop**.
+- [ ] Allow one paid template entitlement at a time; switching between paid templates must not create duplicate content or duplicate subscriptions.
+- [ ] Allow Owners to return to the Free template at any time and preserve all Shop data.
+- [ ] Define cancellation, failed-payment, renewal, grace-period, expiry, fallback-to-Free, and reactivation states.
+
+### Backend and admin requirements
+
+- [ ] Add template catalog/version/compatibility records and Platform Admin template management.
+- [ ] Add Shop Owner template entitlement, subscription, invoice/payment, renewal, cancellation, and audit records with RLS.
+- [ ] Add payment integration for the 2,000 MMK monthly subscription and verify payment status server-side.
+- [ ] Add safe template retirement, migration notice, rollback, and version compatibility behavior.
+- [ ] Add analytics for template adoption, preview-to-apply conversion, churn, failed payments, and active paid templates.
