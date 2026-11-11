@@ -304,3 +304,10 @@ The dashboard screens, forms, local state, and preview interactions are complete
 - Added `/travel-plans/:planId` detail routes so plan cards no longer lead to an undeclared route. The detail view includes a bilingual hero, duration/rating/views, schedule and traveler summary, day-by-day itinerary generated from the plan destinations, estimated starting price, Request this plan CTA, and Browse all plans action.
 - Added the `#custom-plan` anchor to the request builder and registered the detail route in `public/manus-routes.json`.
 - Typecheck, build, lint, and whitespace validation passed; existing lint/Browserslist/bundle-size warnings remain non-blocking.
+
+## 13. City detail page — 2026-11-11
+
+- Added `/cities/:cityId` so every City card can open a real detail route instead of falling through to Not Found.
+- Added city-specific hero imagery and English/Myanmar city introductions for Yangon, Bagan, Mandalay, Inle Lake, Ngapali, Bago, Mawlamyine, Kyaiktiyo, Taunggyi, and Kalaw.
+- Added best-for, recommended-stay, getting-there facts, attraction/hotel/restaurant recommendation sections, Back to Cities navigation, Plan a trip CTA, and a Custom Plan CTA.
+- Registered the route in `public/manus-routes.json`; typecheck, build, lint, preview URL, and whitespace validation passed.

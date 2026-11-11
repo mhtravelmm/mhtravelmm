@@ -2,7 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from '
 import { Header } from './components/layout/Header';
 import { Footer, PageCopyright } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
-import { CityPage } from './features/city/CityPage';
+import { CityDetailPage, CityPage } from './features/city/CityPage';
 import { BlogsPage } from './features/blogs/BlogsPage';
 import { TravelPlanDetailPage, TravelPlansPage } from './features/travelPlans/TravelPlansPage';
 import { RestaurantPage } from './features/restaurants/RestaurantPage';
@@ -77,6 +77,7 @@ function AppRoutes() {
   return <Routes>
     <Route path="/" element={<Shell showFooter><HomePage /></Shell>} />
     <Route path="/cities" element={<Shell><CityPage /></Shell>} />
+    <Route path="/cities/:cityId" element={<Shell><CityDetailPage /></Shell>} />
     <Route path="/nearby" element={<Shell><NearbyPage /></Shell>} />
     <Route path="/rentals" element={<Shell><RentalsPage /></Shell>} />
     <Route path="/restaurants" element={<Shell><RestaurantPage /></Shell>} />

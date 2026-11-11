@@ -2,6 +2,7 @@
   "routes": [
     { "path": "/", "title": "Home" },
     { "path": "/cities", "title": "Cities" },
+    { "path": "/cities/:cityId", "title": "City details" },
     { "path": "/nearby", "title": "Nearby" },
     { "path": "/rentals", "title": "Rentals" },
     { "path": "/restaurants", "title": "Restaurants" },

@@ -189,3 +189,10 @@
 - [x] Add `/travel-plans/:planId` detail pages with bilingual itinerary hero, summary metadata, day-by-day itinerary, estimated price, Request this plan CTA, and Browse all plans action.
 - [x] Register the Travel Plan detail route in `src/App.tsx` and `public/manus-routes.json`.
 - [ ] Connect Travel Plan detail/request data to Supabase, real quotations, availability, booking persistence, and traveler-scoped request history.
+
+## City detail page — 2026-11-11
+
+- [x] Add `/cities/:cityId` route and make City cards open the corresponding detail page.
+- [x] Add bilingual city hero, intro, city facts, attractions, hotels, restaurants, and trip-planning CTAs.
+- [x] Register the City detail route in `public/manus-routes.json`.
+- [ ] Replace shared seeded recommendations with city-scoped Supabase listings, map coordinates, availability, and traveler reviews.

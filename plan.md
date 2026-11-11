@@ -103,7 +103,7 @@ The following findings were checked against the source files, not inferred from 
 
 - `src/App.tsx` is the authoritative route table. It currently declares the Home, Cities, Nearby, Rentals, Restaurants (including `:id`), Book Shops (including `:id`), Ticketing, Travel Plans (including `:planId` details), Travel Guide (including `:guideId`), Blogs, Search, Account, Login, Signup, Admin Login, Super Admin, Shop Owner, Notifications, Account Notifications, and Favorites routes, plus a wildcard Not Found page.
 - `public/manus-routes.json` matches the concrete routes. It intentionally does not describe the wildcard route.
-- There is no `/cities/:id`, `/attractions/:id`, `/hotels`, `/hotels/:id`, `/cafes/:id`, `/markets/:id`, `/rentals/:id`, `/ticketing/:id`, or `/travel-plans/:id` route. Static links to those paths therefore fall through to the Not Found page.
+- City cards now resolve through `/cities/:cityId`; the remaining undeclared catalog paths include `/attractions/:id`, `/hotels`, `/hotels/:id`, `/cafes/:id`, `/markets/:id`, `/rentals/:id`, `/ticketing/:id`, and legacy `/travel-plans/:id` links. Static links to those remaining paths fall through to the Not Found page.
 - `src/features/blogs/BlogsPage.tsx` uses the implemented query-string reader format `/blogs?story=<slug>`, but legacy `CardListing` data still contains `/blogs/<id>` hrefs. Those legacy paths do not match the router.
 - Restaurant and Book Shop dynamic URLs currently render the same static page regardless of the `:id`; they do not select records by route parameter. The same limitation applies to the static detail content shown by those pages.
 
@@ -128,7 +128,7 @@ The following findings were checked against the source files, not inferred from 
 
 #### Verified source-level issues to keep in the backlog
 
-- Home, Blog, City, Nearby, ad, and static catalog links point to several routes that are not declared, especially `/hotels`, `/markets`, `/cafes`, `/attractions`, `/travel-plans/:id`, and `/blogs/:id`.
+- Home, Blog, Nearby, ad, and static catalog links still point to several routes that are not declared, especially `/hotels`, `/markets`, `/cafes`, `/attractions`, `/travel-plans/:id`, and `/blogs/:id`; City card links now resolve to the implemented `/cities/:cityId` detail route.
 - The Restaurant menu category selector changes state but the displayed dish list is not filtered by category. The Book Shop category selector similarly changes state without filtering the displayed books.
 - Restaurant and Book Shop directions, call, map, view-all, and related CTA controls are mostly visual buttons without navigation or external-action handlers.
 - Account, Notifications, and Super Admin screens render useful UI sections, but their visible bookings, messages, reviews, activity, metrics, and notification data are sample/frontend state until backend data sources are connected.
@@ -485,7 +485,7 @@ it is a pre-arrival matter.
 ## 16. Open Items
 
 - Favorites page implemented: saved listings resolve through shared categories and client-side favorite state; backend persistence remains pending.
-- City page cards use the shared ListingCard favorite fallback, so their hearts stay synchronized with the global Favorites provider; City detail destinations remain a separate route backlog item.
+- City page cards use the shared ListingCard favorite fallback, so their hearts stay synchronized with the global Favorites provider. City cards now open `/cities/:cityId` detail pages with a city-specific hero and Burmese/English intro, best-for/stay/getting-there facts, attraction/hotel/restaurant recommendations, and a Custom Plan CTA.
 - Blogs page implemented: bilingual editorial listing and reader; favorite,
   share, and view counts currently use client-side storage pending backend wiring.
 - Travel Plans page implemented as a frontend preview: compact shared-card grid with bilingual UI,
