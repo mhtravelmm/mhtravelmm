@@ -192,6 +192,7 @@
 - Role-change trigger blocks traveler self-escalation and allows Super Admin role management.
 - Current Supabase profile row count was zero because no real user account details were provided yet.
 - Two Supabase migrations were applied to create the profile schema and then allow verified Super Admin role management. The Plan folder records what those migrations did and their current status; SQL source files are intentionally not stored in Plan.
+- Core data migration applied directly to Supabase: `favorites`, `custom_plan_requests`, `bookings`, `notifications`, `reviews`, `ads`, and `admin_audit_logs` now exist with RLS, ownership/admin policies, checks, timestamps, triggers, and indexes. A follow-up hardening migration moved the new admin helper into the private schema and indexed Ads/audit foreign keys. The project currently has no Edge Functions because no function contract has been specified.
 
 ## 6. Routes currently in the app
 

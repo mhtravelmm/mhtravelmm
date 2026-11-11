@@ -485,6 +485,7 @@ it is a pre-arrival matter.
 ## 16. Open Items
 
 - Favorites page implemented: saved listings resolve through shared categories and client-side favorite state; backend persistence remains pending.
+- Supabase core data foundation is now applied: `favorites`, `custom_plan_requests`, `bookings`, `notifications`, `reviews`, `ads`, and `admin_audit_logs` tables have RLS, owner/admin policies, validation checks, UTC timestamps, update triggers, and indexes. Frontend forms still need to be wired to these tables; no Edge Function was deployed because no function contract is defined yet.
 - City page cards use the shared ListingCard favorite fallback, so their hearts stay synchronized with the global Favorites provider. City cards now open `/cities/:cityId` detail pages with a city-specific hero and Burmese/English intro, best-for/stay/getting-there facts, attraction/hotel/restaurant recommendations, and a Custom Plan CTA. The detail page also has a Search-like category explorer for All, Attractions, Hotels, Restaurants, Book Shops, Rentals, Transport, Cafes, and Markets, with keyword search, result counts, and Show more/Show less for the expanded business inventory.
 - Blogs page implemented: bilingual editorial listing and reader; favorite,
   share, and view counts currently use client-side storage pending backend wiring.

@@ -17,7 +17,15 @@ Created `public.profiles` with a foreign key to `auth.users(id)`, unique usernam
 
 Updated the role protection trigger so travelers cannot escalate themselves, while a verified Super Admin can change roles through an authorized backend/admin operation.
 
-The Plan folder intentionally stores only this implementation record, not the SQL source. The SQL was applied directly to the Supabase project through the two migrations above.
+### `create_core_travel_data_and_rls`
+
+Created RLS-protected `favorites`, `custom_plan_requests`, `bookings`, `notifications`, `reviews`, `ads`, and `admin_audit_logs` tables. Added ownership/admin policies, status and data checks, UTC timestamps, update triggers, indexes, and a public active-ad read policy. The schema matches the current Favorites, custom-plan quotation handoff, rentals/ticket bookings, notifications, reviews, and Super Admin Ads/Audit roadmap.
+
+### `harden_core_rls_helper_and_indexes`
+
+Moved the new admin-role helper into the non-exposed `private` schema, optimized the new policies to evaluate auth context once per query, and added indexes for the Ads and audit-log foreign keys. No Edge Functions were deployed because the current frontend has no defined function contract yet.
+
+The Plan folder intentionally stores only this implementation record, not the SQL source. The SQL was applied directly to the Supabase project through the four migrations above.
 
 ## Roles
 
