@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../lib/auth';
 
 type OwnerView = 'dashboard' | 'shop' | 'bookings' | 'orders' | 'menu' | 'gallery' | 'reviews' | 'analytics' | 'payments' | 'promotions' | 'settings' | 'support';
 
@@ -68,6 +69,7 @@ function PanelHeading({ icon: Icon, title, action, onAction }: { icon: LucideIco
 
 export function ShopOwnerPage() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [view, setView] = useState<OwnerView>('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [period, setPeriod] = useState('Last 30 Days');
@@ -84,7 +86,8 @@ export function ShopOwnerPage() {
   }
 
   function signOut() {
-    navigate('/login');
+    logout();
+    navigate('/admin/login');
   }
 
   return <div className="min-h-screen overflow-x-hidden bg-[#f4f8fc] text-[#0b2147]">

@@ -123,7 +123,7 @@ The following findings were checked against the source files, not inferred from 
 - The local preview store keeps demo users and plaintext passwords in localStorage and contains a frontend demo Super Admin credential. This path is not production authentication.
 - Configured Supabase login supports an email identifier; username-only login still falls back to local preview lookup. Secure username-to-email resolution is not implemented.
 - `/super-admin` is client-side role guarded. `/admin/login` is a public login form in a standalone layout, not itself a protected route. The Super Admin dashboard metrics and management sections are frontend preview/local state and are not wired to management APIs yet.
-- The frontend role type is only `traveler | super_admin`; other roles documented by the backend handoff are currently collapsed to traveler by `mapRole()` and are not separately authorized in the UI. `/shop-owner` is currently a frontend preview route until `owner_admin` authentication and authorization are added.
+- The frontend role type now includes `traveler | super_admin | owner_admin`; scoped platform-admin roles documented by the backend handoff are still not separately authorized in the UI. `/shop-owner` uses a local `owner_admin` guard until production Supabase authorization is connected.
 - Google and Facebook buttons call `signInWithOAuth` only when Supabase is configured. Provider credentials, callback configuration, OAuth username completion, and production verification remain external setup work.
 
 #### Verified source-level issues to keep in the backlog
@@ -607,9 +607,10 @@ This section records the dashboard work completed from the supplied visual refer
 - Super Admin has a dedicated `Shop Owners` section and a `Create Shop Owner` Quick Action.
 - The Shop Owner form collects owner name, shop/business name, email, phone, city, business category, login username, and temporary password. A Generate username + password action can create lowercase username credentials and a temporary password; new records appear as `Pending`, with a review action and separate owner/shop/username/city/category/status columns.
 - After creation, the generated username and temporary password are shown once in a credential notice so Super Admin can securely deliver them to the owner. The account list never displays the password.
+- In the local preview auth flow, Create Shop Owner also persists an `owner_admin` account in the shared auth store. The Admin Login portal accepts that username/password and redirects the authenticated Owner Admin to `/shop-owner`; the protected route rejects travelers and unauthenticated visitors.
 - The frontend Shop Owner dashboard is available at `/shop-owner` and follows the supplied Royal Myanmar Restaurant reference: verified business profile, welcome hero, bookings/orders/reviews/revenue KPI cards, booking statistics chart, popular menu items, recent bookings, quick actions, responsive owner sidebar, mobile menu, notifications, and owner workspace sections.
 - The Super Admin Shop Owners table includes a `Preview dashboard` action that opens `/shop-owner`.
-- The `/shop-owner` route is currently a frontend preview route. It must become an `owner_admin` protected route after real Owner Admin authentication, secure invite/password-reset delivery, credential hashing, and shop ownership records are added.
+- The `/shop-owner` route is protected for the local `owner_admin` preview role. Production still needs real Owner Admin Supabase authentication, secure invite/password-reset delivery, credential hashing, and shop ownership records.
 
 ### Admin Management
 

@@ -271,7 +271,7 @@
 
 ### Current boundary for all dashboard work
 
-The dashboard screens, forms, local state, and preview interactions are complete and typechecked/build-validated. Admin invitations, Owner Admin accounts, shop ownership, permissions, audit logs, campaign persistence, real metrics, Supabase Auth roles, email invitations, and RLS policies are still backend integration work. The current frontend auth role model remains `traveler | super_admin`; the Shop Owner route is therefore a preview route until `owner_admin` authorization is added.
+The dashboard screens, forms, local state, and preview interactions are complete and typechecked/build-validated. Admin invitations, shop ownership, permissions, audit logs, campaign persistence, real metrics, Supabase Auth invitations, email delivery, and RLS policies are still backend integration work. The frontend auth role model now includes local `owner_admin`; production role authorization remains pending.
 
 ### Validation for the dashboard sequence
 
@@ -288,3 +288,12 @@ The dashboard screens, forms, local state, and preview interactions are complete
 - After account creation, the new Owner Admin record is added as `Pending`, the username is visible in the account list, and the username/password are shown once in a credential notice for secure delivery. Passwords are deliberately not displayed in the account table.
 - Added validation for username format and minimum password length, reset the credential fields after creation, and preserved the `/shop-owner` dashboard preview action.
 - This is still a frontend/local-state credential handoff. Production must use Supabase Auth invite or password-reset flows, never store plaintext passwords, hash credentials server-side, enforce unique usernames, and require the owner to change the temporary password on first login.
+
+
+## 11. Super Admin to Shop Owner login connection — 2026-11-11
+
+- Extended the frontend auth role model with `owner_admin` and added a shared `createShopOwner` auth action. Creating a Shop Owner from Super Admin now persists the username/password account in the local preview auth store instead of only adding a visual row.
+- Updated the standalone Admin Login portal to accept either email or username. A created Shop Owner can sign in with the generated username and temporary password; the role-aware redirect sends Super Admin to `/super-admin` and Owner Admin to `/shop-owner`.
+- Added a protected `RequireShopOwner` route guard. Unauthenticated users go to Admin Login, Super Admin users go to Super Admin, travelers go to the traveler Account page, and only `owner_admin` sessions can open the Shop Owner dashboard.
+- Shop Owner logout now clears the shared auth session and returns to `/admin/login`.
+- The connected flow is a local preview bridge. Production still requires Supabase Auth invitations, real `owner_admin` profiles, secure password-reset/temporary-password rotation, unique username enforcement, shop ownership records, and RLS-backed route authorization.

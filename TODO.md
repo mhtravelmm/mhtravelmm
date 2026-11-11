@@ -165,9 +165,19 @@
 
 ### Backend integration still required
 
-- [ ] Extend the auth role model beyond `traveler | super_admin` with `owner_admin` and scoped platform-admin roles.
+- [ ] Extend the auth role model beyond `traveler | super_admin | owner_admin` with scoped platform-admin roles.
 - [ ] Connect Create Admin and Create Shop Owner forms to Supabase Auth invitations, profile/business records, email setup, role assignment, and acceptance/password flows.
 - [ ] Replace the frontend Shop Owner credential handoff with a secure Supabase Auth invite or password-reset flow; never persist plaintext passwords, enforce unique usernames, hash credentials server-side, and require a temporary-password change at first login.
 - [ ] Add permission groups, per-feature access checks, RLS policies, admin status transitions, audit logs, and protected routes for each dashboard role.
 - [ ] Replace seeded dashboard metrics, campaigns, owners, admins, menu items, bookings, orders, reviews, and revenue with user/shop/admin-scoped Supabase queries.
 - [ ] Connect Ads Management to campaign persistence, creative storage, scheduling, budgets, reporting, and the existing Admin Ads/AdSlot fallback pipeline.
+
+
+## Shop Owner authentication connection — 2026-11-11
+
+- [x] Persist Super Admin-created Shop Owner credentials in the shared local preview auth store with the `owner_admin` role.
+- [x] Allow the standalone Admin Login portal to accept Shop Owner username/password credentials.
+- [x] Redirect a successful Shop Owner login to `/shop-owner` and keep Super Admin login redirected to `/super-admin`.
+- [x] Protect `/shop-owner` so only `owner_admin` sessions can view the dashboard; travelers and unauthenticated visitors are redirected safely.
+- [x] Make Shop Owner logout clear the session and return to Admin Login.
+- [ ] Replace the local preview bridge with Supabase Auth Owner Admin invitations, profile roles, secure temporary-password rotation, username uniqueness, shop ownership records, and RLS authorization.

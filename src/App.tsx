@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { Header } from './components/layout/Header';
 import { Footer, PageCopyright } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
@@ -63,6 +63,16 @@ function RequireSuperAdmin() {
   return <SuperAdminPage />;
 }
 
+function RequireShopOwner() {
+  const { isAuthenticated, isShopOwner, isSuperAdmin } = useAuth();
+  const location = useLocation();
+  if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
+  if (isSuperAdmin && location.search === '?preview=1') return <ShopOwnerPage />;
+  if (isSuperAdmin) return <Navigate to="/super-admin" replace />;
+  if (!isShopOwner) return <Navigate to="/account" replace />;
+  return <ShopOwnerPage />;
+}
+
 function AppRoutes() {
   return <Routes>
     <Route path="/" element={<Shell showFooter><HomePage /></Shell>} />
@@ -85,7 +95,7 @@ function AppRoutes() {
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
     <Route path="/admin/login" element={<StandalonePageLayout><AdminLoginPage /></StandalonePageLayout>} />
     <Route path="/super-admin" element={<RequireSuperAdmin />} />
-    <Route path="/shop-owner" element={<ShopOwnerPage />} />
+    <Route path="/shop-owner" element={<RequireShopOwner />} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />

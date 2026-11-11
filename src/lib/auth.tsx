@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { isSupabaseConfigured, supabase } from './supabase';
 
-export type AuthRole = 'traveler' | 'super_admin';
+export type AuthRole = 'traveler' | 'super_admin' | 'owner_admin';
 export type OAuthProvider = 'google' | 'facebook';
 
 export interface AuthUser {
@@ -15,13 +15,16 @@ export interface AuthUser {
 }
 
 type StoredUser = AuthUser & { password: string };
+type AuthResult = { ok: boolean; message?: string; role?: AuthRole };
 
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isSuperAdmin: boolean;
-  login: (identifier: string, password: string) => Promise<{ ok: boolean; message?: string }>;
-  loginAdmin: (email: string, password: string) => Promise<{ ok: boolean; message?: string }>;
+  isShopOwner: boolean;
+  login: (identifier: string, password: string) => Promise<AuthResult>;
+  loginAdmin: (identifier: string, password: string) => Promise<AuthResult>;
+  createShopOwner: (input: { owner: string; shop: string; email: string; phone: string; username: string; password: string; city: string; category: string }) => Promise<AuthResult>;
   loginWithProvider: (provider: OAuthProvider) => Promise<{ ok: boolean; message?: string }>;
   signup: (input: { username: string; name: string; email: string; password: string }) => Promise<{ ok: boolean; message?: string }>;
   logout: () => void;
@@ -57,7 +60,7 @@ function publicUser(user: StoredUser): AuthUser { const safeUser = { ...user }; 
 function readSession(): AuthUser | null { if (typeof window === 'undefined') return null; try { const stored = window.localStorage.getItem(SESSION_KEY); return stored ? (JSON.parse(stored) as AuthUser) : null; } catch { return null; } }
 function emitAuthChange() { window.dispatchEvent(new Event(AUTH_EVENT)); }
 function clearLocalSession() { window.localStorage.removeItem(SESSION_KEY); window.localStorage.removeItem('mh-travel-authenticated'); }
-function mapRole(value: unknown): AuthRole { return value === 'super_admin' ? 'super_admin' : 'traveler'; }
+function mapRole(value: unknown): AuthRole { return value === 'super_admin' || value === 'owner_admin' ? value : 'traveler'; }
 function setLocalSession(user: StoredUser, setUser: (user: AuthUser) => void) { const safeUser = publicUser(user); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -102,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: Boolean(user),
     isSuperAdmin: user?.role === 'super_admin',
+    isShopOwner: user?.role === 'owner_admin',
     async login(identifier, password) {
       const normalizedIdentifier = identifier.trim().toLowerCase();
       if (isSupabaseConfigured && supabase && normalizedIdentifier.includes('@')) {
@@ -112,23 +116,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!match) return { ok: false, message: 'auth_invalid_credentials' };
       const safeUser = publicUser(match); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); return { ok: true };
     },
-    async loginAdmin(email, password) {
-      const normalizedEmail = email.trim().toLowerCase();
-      if (isSupabaseConfigured && supabase) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+    async loginAdmin(identifier, password) {
+      const normalizedIdentifier = identifier.trim().toLowerCase();
+      if (isSupabaseConfigured && supabase && normalizedIdentifier.includes('@')) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedIdentifier, password });
         if (!error && data.user) {
           const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
-          if (profile?.role === 'super_admin') return { ok: true };
+          if (profile?.role === 'super_admin' || profile?.role === 'owner_admin') return { ok: true, role: profile.role };
           await supabase.auth.signOut();
           return { ok: false, message: 'auth_admin_required' };
         }
-        // When Supabase is configured, Admin Login must use a real Supabase
-        // Auth user whose linked public.profiles row has super_admin role.
         return { ok: false, message: 'auth_admin_invalid_credentials' };
       }
-      const match = readUsers().find((candidate) => candidate.email === normalizedEmail && candidate.password === password && candidate.role === 'super_admin');
+      const match = readUsers().find((candidate) => (candidate.email === normalizedIdentifier || candidate.username === normalizedIdentifier) && candidate.password === password && (candidate.role === 'super_admin' || candidate.role === 'owner_admin'));
       if (!match) return { ok: false, message: 'auth_admin_invalid_credentials' };
-      setLocalSession(match, setUser); return { ok: true };
+      setLocalSession(match, setUser); return { ok: true, role: match.role };
+    },
+    async createShopOwner(input) {
+      const username = input.username.trim().toLowerCase();
+      const email = input.email.trim().toLowerCase();
+      if (!/^[a-z0-9_]{3,32}$/.test(username)) return { ok: false, message: 'auth_username_invalid' };
+      if (input.password.length < 8) return { ok: false, message: 'auth_password_short' };
+      const users = readUsers();
+      if (users.some((candidate) => candidate.username === username)) return { ok: false, message: 'auth_username_exists' };
+      if (users.some((candidate) => candidate.email === email)) return { ok: false, message: 'auth_email_exists' };
+      const created: StoredUser = { id: `owner-${Date.now()}`, name: input.owner, username, email, password: input.password, role: 'owner_admin', createdAt: new Date().toISOString() };
+      users.push(created);
+      saveUsers(users);
+      return { ok: true, role: 'owner_admin' };
     },
     async loginWithProvider(provider) {
       if (!isSupabaseConfigured || !supabase) return { ok: false, message: 'auth_social_setup_pending' };
