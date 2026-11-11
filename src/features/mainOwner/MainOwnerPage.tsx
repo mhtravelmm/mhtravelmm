@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { createBranchAccount, readPreviewBranchAccounts, type BranchAccount, type BranchAccountInput, type BranchAccountResult, type BranchField, type BranchFieldErrors } from '../../lib/mainOwnerApi';
 
  type MainOwnerView = 'overview' | 'branches' | 'wallets' | 'tickets' | 'revenue' | 'settings';
- type BranchStatus = 'Active' | 'Pending' | 'Suspended';
- type Branch = { id: number; station: string; city: string; owner: string; username: string; fee: string; share: string; sales: string; wallet: string; status: BranchStatus };
+ type Branch = BranchAccount;
 
 const navItems: { id: MainOwnerView; label: string; icon: LucideIcon }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -33,10 +33,10 @@ const navItems: { id: MainOwnerView; label: string; icon: LucideIcon }[] = [
 ];
 
 const initialBranches: Branch[] = [
-  { id: 1, station: 'Hlaing Tharyar Gate', city: 'Yangon', owner: 'Ko Min Htet', username: 'jj_hlaingtharyar', fee: '10,000 MMK', share: '82%', sales: '2,840,000 MMK', wallet: '1,925,000 MMK', status: 'Active' },
-  { id: 2, station: 'Aung Mingalar Gate', city: 'Yangon', owner: 'Daw Thandar', username: 'jj_aungmingalar', fee: '10,000 MMK', share: '80%', sales: '2,410,000 MMK', wallet: '1,650,000 MMK', status: 'Active' },
-  { id: 3, station: 'Mandalay Station', city: 'Mandalay', owner: 'U Zaw Lin', username: 'jj_mandalay', fee: '10,000 MMK', share: '78%', sales: '1,780,000 MMK', wallet: '1,110,000 MMK', status: 'Active' },
-  { id: 4, station: 'Naypyidaw Terminal', city: 'Naypyidaw', owner: 'Pending invite', username: 'jj_naypyidaw', fee: '10,000 MMK', share: '80%', sales: '—', wallet: '—', status: 'Pending' },
+  { id: 'seed-1', station: 'Hlaing Tharyar Gate', city: 'Yangon', owner: 'Ko Min Htet', username: 'jj_hlaingtharyar', fee: '10,000 MMK', share: '82%', sales: '2,840,000 MMK', wallet: '1,925,000 MMK', status: 'Active' },
+  { id: 'seed-2', station: 'Aung Mingalar Gate', city: 'Yangon', owner: 'Daw Thandar', username: 'jj_aungmingalar', fee: '10,000 MMK', share: '80%', sales: '2,410,000 MMK', wallet: '1,650,000 MMK', status: 'Active' },
+  { id: 'seed-3', station: 'Mandalay Station', city: 'Mandalay', owner: 'U Zaw Lin', username: 'jj_mandalay', fee: '10,000 MMK', share: '78%', sales: '1,780,000 MMK', wallet: '1,110,000 MMK', status: 'Active' },
+  { id: 'seed-4', station: 'Naypyidaw Terminal', city: 'Naypyidaw', owner: 'Pending invite', username: 'jj_naypyidaw', fee: '10,000 MMK', share: '80%', sales: '—', wallet: '—', status: 'Pending' },
 ];
 
 function Panel({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -53,7 +53,7 @@ export function MainOwnerPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [notice, setNotice] = useState('');
-  const [branches, setBranches] = useState(initialBranches);
+  const [branches, setBranches] = useState<Branch[]>(() => [...initialBranches, ...readPreviewBranchAccounts()]);
 
   function notify(message: string) {
     setNotice(message);
@@ -65,11 +65,14 @@ export function MainOwnerPage() {
     setMobileOpen(false);
   }
 
-  function createBranch(branch: Branch) {
-    setBranches((current) => [branch, ...current]);
-    setShowCreate(false);
-    setView('branches');
-    notify(`${branch.station} branch account created as Pending`);
+  async function createBranch(input: BranchAccountInput): Promise<BranchAccountResult> {
+    const result = await createBranchAccount(input);
+    if (result.ok) {
+      setBranches((current) => [result.branch, ...current]);
+      setView('branches');
+      notify(`${result.branch.station} branch account created as Pending${result.source === 'preview' ? ' (preview)' : ''}`);
+    }
+    return result;
   }
 
   return <div className="min-h-screen overflow-x-hidden bg-[#06172b] text-[#dbeeff]">
@@ -108,5 +111,41 @@ function Branches({ branches, onCreate, onNotify }: { branches: Branch[]; onCrea
 
 function OwnerSection({ view, branches, onNotify }: { view: Exclude<MainOwnerView, 'overview' | 'branches'>; branches: Branch[]; onNotify: (message: string) => void }) { const item = navItems.find((nav) => nav.id === view) ?? navItems[2]; const Icon = item.icon; const isWallet = view === 'wallets'; return <div className="mx-auto max-w-[1450px] space-y-4"><div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300">Main Owner controls</p><h1 className="mt-1 text-2xl font-extrabold text-white">{item.label}</h1><p className="mt-1 text-xs text-slate-400">{isWallet ? 'Separate MH Platform, Main Owner, and Branch wallet ledgers.' : `Manage ${item.label.toLowerCase()} across your operator account.`}</p></div><Panel><Heading icon={Icon} title={item.label} action={view === 'wallets' ? 'Withdraw request' : 'Add new'} onAction={() => onNotify(view === 'wallets' ? 'Withdrawal request opened for review' : `Create new ${item.label} item`)} /><div className="grid gap-3 p-4 sm:grid-cols-3"><WalletCard label="Main Owner" value="18,450,000 MMK" detail="Consolidated operator balance" tone="cyan" /><WalletCard label="Branch Wallets" value="6,925,000 MMK" detail={`${branches.length} branch ledgers`} tone="green" /><WalletCard label="MH Platform" value="1,245,000 MMK" detail="Fees, commissions & adjustments" tone="purple" /></div><div className="m-4 overflow-x-auto rounded-xl border border-[#244568]"><table className="w-full min-w-[720px] text-left text-[11px]"><thead className="bg-[#071a31] text-slate-400"><tr><th className="px-4 py-3">Date</th><th className="px-2 py-3">Activity</th><th className="px-2 py-3">Scope</th><th className="px-2 py-3">Amount</th><th className="px-4 py-3">Status</th></tr></thead><tbody>{[['Nov 12, 2026', 'Ticket settlement', 'Hlaing Tharyar Gate', '+1,925,000 MMK', 'Available'], ['Nov 11, 2026', 'Branch account fee', 'Aung Mingalar Gate', '-10,000 MMK', 'Completed'], ['Nov 10, 2026', 'MH commission', 'Operator account', '-245,000 MMK', 'Completed'], ['Nov 09, 2026', 'Ticket sale', 'Mandalay Station', '+1,110,000 MMK', 'Pending']].map(([date, activity, scope, amount, status]) => <tr key={`${date}-${activity}`} className="border-t border-[#1b3a5d] text-slate-300"><td className="px-4 py-3">{date}</td><td className="px-2 py-3 font-semibold text-white">{activity}</td><td className="px-2 py-3">{scope}</td><td className={`px-2 py-3 font-bold ${amount.startsWith('+') ? 'text-green-300' : 'text-amber-300'}`}>{amount}</td><td className="px-4 py-3 text-cyan-300">{status}</td></tr>)}</tbody></table></div></Panel></div>; }
 
-function CreateBranch({ onClose, onCreate }: { onClose: () => void; onCreate: (branch: Branch) => void }) { const [form, setForm] = useState({ station: '', city: 'Yangon', address: '', owner: '', username: '', phone: '', share: '80' }); function update(key: keyof typeof form, value: string) { setForm((current) => ({ ...current, [key]: value })); } function submit(event: React.FormEvent) { event.preventDefault(); onCreate({ id: Date.now(), station: form.station, city: form.city, owner: form.owner || 'Pending invite', username: form.username || `jj_${form.station.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`, fee: '10,000 MMK', share: `${form.share}%`, sales: '—', wallet: '—', status: 'Pending' }); } return <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"><div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-[#315c87] bg-[#091f3b] shadow-2xl sm:rounded-2xl"><div className="flex items-center justify-between border-b border-[#244568] px-5 py-4"><div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300">Main Owner action</p><h2 className="mt-1 text-lg font-extrabold text-white">Create Branch Account</h2><p className="mt-1 text-[11px] text-slate-400">Create a scoped station account billed at 10,000 MMK/month.</p></div><button type="button" onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Close"><X size={19} /></button></div><form onSubmit={submit} className="grid gap-3 p-5 sm:grid-cols-2"><Field label="Station / Branch name" value={form.station} onChange={(value) => update('station', value)} placeholder="Hlaing Tharyar Gate" required /><Field label="City" value={form.city} onChange={(value) => update('city', value)} placeholder="Yangon" required /><Field label="Station address" value={form.address} onChange={(value) => update('address', value)} placeholder="Bayint Naung Road" /><Field label="Branch Owner name" value={form.owner} onChange={(value) => update('owner', value)} placeholder="Ko Min Htet" /><Field label="Login username" value={form.username} onChange={(value) => update('username', value)} placeholder="jj_hlaingtharyar" required /><Field label="Phone number" value={form.phone} onChange={(value) => update('phone', value)} placeholder="09 400 686 925" /><label className="block"><span className="mb-1.5 block text-[10px] font-semibold text-slate-400">Monthly account fee</span><div className="rounded-lg border border-amber-300/30 bg-amber-300/10 px-3 py-2.5 text-xs font-bold text-amber-200">10,000 MMK / month</div></label><label className="block"><span className="mb-1.5 block text-[10px] font-semibold text-slate-400">Branch revenue share</span><div className="flex items-center gap-2 rounded-lg border border-[#315c87] bg-[#071a31] px-3 py-2.5"><input type="number" min="0" max="100" value={form.share} onChange={(event) => update('share', event.target.value)} className="w-full bg-transparent text-xs text-white outline-none" /><span className="text-xs text-cyan-300">%</span></div></label><div className="flex flex-col-reverse gap-2 border-t border-[#244568] pt-4 sm:col-span-2 sm:flex-row sm:justify-end"><button type="button" onClick={onClose} className="rounded-lg border border-[#315c87] px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-white/10">Cancel</button><button type="submit" disabled={!form.station.trim() || !form.username.trim()} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#168df4] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#2aa6ff] disabled:cursor-not-allowed disabled:opacity-40"><Plus size={15} /> Create Pending Branch</button></div></form></div></div>; }
-function Field({ label, value, onChange, placeholder, required = false }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; required?: boolean }) { return <label className="block"><span className="mb-1.5 block text-[10px] font-semibold text-slate-400">{label}</span><input required={required} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-[#315c87] bg-[#071a31] px-3 py-2.5 text-xs text-white outline-none placeholder:text-slate-600 focus:border-cyan-300" /></label>; }
+function CreateBranch({ onClose, onCreate }: { onClose: () => void; onCreate: (input: BranchAccountInput) => Promise<BranchAccountResult> }) {
+  const [form, setForm] = useState<BranchAccountInput>({ station: '', city: 'Yangon', address: '', owner: '', username: '', phone: '', share: '80' });
+  const [errors, setErrors] = useState<BranchFieldErrors>({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function update(key: keyof BranchAccountInput, value: string) {
+    setForm((current) => ({ ...current, [key]: value }));
+    setErrors((current) => ({ ...current, [key]: undefined }));
+    setSubmitError('');
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setSubmitError('');
+    const result = await onCreate(form);
+    setIsSubmitting(false);
+    if (!result.ok) {
+      setErrors(result.errors ?? {});
+      setSubmitError(result.message);
+      return;
+    }
+    onClose();
+  }
+
+  const fields: { key: BranchField; label: string; placeholder: string; required?: boolean }[] = [
+    { key: 'station', label: 'Station / Branch name', placeholder: 'Hlaing Tharyar Gate', required: true },
+    { key: 'city', label: 'City', placeholder: 'Yangon', required: true },
+    { key: 'address', label: 'Station address', placeholder: 'Bayint Naung Road' },
+    { key: 'owner', label: 'Branch Owner name', placeholder: 'Ko Min Htet' },
+    { key: 'username', label: 'Login username', placeholder: 'jj_hlaingtharyar', required: true },
+    { key: 'phone', label: 'Phone number', placeholder: '09 400 686 925', required: true },
+  ];
+
+  return <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"><div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-[#315c87] bg-[#091f3b] shadow-2xl sm:rounded-2xl"><div className="flex items-center justify-between border-b border-[#244568] px-5 py-4"><div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300">Main Owner action</p><h2 className="mt-1 text-lg font-extrabold text-white">Create Branch Account</h2><p className="mt-1 text-[11px] text-slate-400">Create a scoped station account billed at 10,000 MMK/month.</p></div><button type="button" onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Close"><X size={19} /></button></div><form onSubmit={submit} noValidate className="grid gap-3 p-5 sm:grid-cols-2">{fields.map((field) => <Field key={field.key} label={field.label} value={form[field.key]} onChange={(value) => update(field.key, value)} placeholder={field.placeholder} required={field.required} error={errors[field.key]} />)}<label className="block"><span className="mb-1.5 block text-[10px] font-semibold text-slate-400">Monthly account fee</span><div className="rounded-lg border border-amber-300/30 bg-amber-300/10 px-3 py-2.5 text-xs font-bold text-amber-200">10,000 MMK / month</div></label><label className="block"><span className="mb-1.5 block text-[10px] font-semibold text-slate-400">Branch revenue share</span><div className={`flex items-center gap-2 rounded-lg border bg-[#071a31] px-3 py-2.5 ${errors.share ? 'border-red-400/70' : 'border-[#315c87]'}`}><input type="number" min="0" max="100" step="0.01" value={form.share} onChange={(event) => update('share', event.target.value)} aria-invalid={Boolean(errors.share)} className="w-full bg-transparent text-xs text-white outline-none" /><span className="text-xs text-cyan-300">%</span></div>{errors.share && <p className="mt-1 text-[10px] text-red-300">{errors.share}</p>}</label>{submitError && <div role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-[11px] text-red-200 sm:col-span-2">{submitError}</div>}<div className="flex flex-col-reverse gap-2 border-t border-[#244568] pt-4 sm:col-span-2 sm:flex-row sm:justify-end"><button type="button" onClick={onClose} disabled={isSubmitting} className="rounded-lg border border-[#315c87] px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-white/10 disabled:opacity-50">Cancel</button><button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#168df4] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#2aa6ff] disabled:cursor-wait disabled:opacity-50"><Plus size={15} /> {isSubmitting ? 'Creating…' : 'Create Pending Branch'}</button></div></form></div></div>;
+}
+function Field({ label, value, onChange, placeholder, required = false, error }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; required?: boolean; error?: string }) { return <label className="block"><span className="mb-1.5 block text-[10px] font-semibold text-slate-400">{label}{required && <span className="text-cyan-300"> *</span>}</span><input required={required} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} aria-invalid={Boolean(error)} className={`w-full rounded-lg border bg-[#071a31] px-3 py-2.5 text-xs text-white outline-none placeholder:text-slate-600 focus:border-cyan-300 ${error ? 'border-red-400/70' : 'border-[#315c87]'}`} />{error && <p className="mt-1 text-[10px] text-red-300">{error}</p>}</label>; }

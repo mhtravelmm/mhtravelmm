@@ -428,6 +428,15 @@ Common rules:
   share summaries, wallet activity, and a branch management table. This UI
   is preview/local-state only until the planned parent-child backend,
   billing, RLS, revenue-share, and wallet services are connected.
+- Branch Account creation now has a shared API service with client-side
+  validation for station/city/name lengths, username format and uniqueness,
+  Myanmar phone format, address length, and 0–100% revenue share. When
+  Supabase is configured it inserts into `operator_branches` with a fixed
+  10,000 MMK monthly fee and Pending status; without Supabase it uses a
+  local preview store so the form remains testable. API, validation, loading,
+  duplicate, and server-error states are shown in the modal. The
+  `operator_branches` migration and RLS policies remain required for
+  production.
 
 ---
 

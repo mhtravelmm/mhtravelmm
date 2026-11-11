@@ -268,3 +268,21 @@
 - [ ] Persist Branch Owner invitations, branch-account subscription billing at 10,000 MMK/month, status lifecycle, and audit events.
 - [ ] Persist ticket attribution, revenue-share snapshots, MH/Main Owner/Branch wallet ledgers, settlements, payouts, refunds, and adjustments.
 - [ ] Replace all dashboard metrics and ledger rows with Main Owner-scoped Supabase/API data and enforce server-side permissions.
+
+
+## Branch Account form validation and API integration — 2026-11-12
+
+### Completed frontend/API behavior
+
+- [x] Validate station name, city, address length, Branch Owner name, lowercase username format, Myanmar phone number, and 0–100% revenue share.
+- [x] Reject duplicate preview usernames before submission.
+- [x] Submit the modal asynchronously with loading state, disabled controls, field-level errors, API/server error display, and success notification.
+- [x] Use Supabase `operator_branches` insertion when configured, including operator ID, station/contact fields, fixed 10,000 MMK monthly fee, revenue share, and Pending status.
+- [x] Use local preview storage when Supabase is not configured so created Pending Branch Accounts persist during preview testing.
+
+### Production backend still required
+
+- [ ] Create the `operator_branches` migration/table with a unique username constraint and operator/branch foreign keys.
+- [ ] Add authenticated Main Owner identity instead of the current demo `jj-express-demo` operator ID.
+- [ ] Add server-side validation, Main Owner ownership checks, branch-level RLS, invitation/auth provisioning, and audit logging.
+- [ ] Replace preview metrics and local branch rows with operator-scoped API queries and add retry/idempotency handling for create requests.
