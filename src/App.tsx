@@ -16,6 +16,7 @@ import { AuthPage } from './features/auth/AuthPage';
 import { AdminLoginPage } from './features/auth/AdminLoginPage';
 import { SuperAdminPage } from './features/superAdmin/SuperAdminPage';
 import { ShopOwnerPage } from './features/shopOwner/ShopOwnerPage';
+import { MainOwnerPage } from './features/mainOwner/MainOwnerPage';
 import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { TravelGuidePage } from './features/travelGuide/TravelGuidePage';
 import { SearchPage } from './features/search/SearchPage';
@@ -73,6 +74,16 @@ function RequireShopOwner() {
   return <ShopOwnerPage />;
 }
 
+function RequireMainOwner() {
+  const { isAuthenticated, isShopOwner, isSuperAdmin } = useAuth();
+  const location = useLocation();
+  if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
+  if (isSuperAdmin && location.search === '?preview=1') return <MainOwnerPage />;
+  if (isSuperAdmin) return <Navigate to="/super-admin" replace />;
+  if (!isShopOwner) return <Navigate to="/account" replace />;
+  return <MainOwnerPage />;
+}
+
 function AppRoutes() {
   return <Routes>
     <Route path="/" element={<Shell showFooter><HomePage /></Shell>} />
@@ -98,6 +109,7 @@ function AppRoutes() {
     <Route path="/admin/login" element={<StandalonePageLayout><AdminLoginPage /></StandalonePageLayout>} />
     <Route path="/super-admin" element={<RequireSuperAdmin />} />
     <Route path="/shop-owner" element={<RequireShopOwner />} />
+    <Route path="/main-owner" element={<RequireMainOwner />} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />

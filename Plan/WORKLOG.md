@@ -336,3 +336,12 @@ The Ticketing plan now defines an operator hierarchy. A company such as JJ Expre
 Each Branch Owner account costs **10,000 MMK per month**, billed to the Main Owner. This fee is separate from the 2,000 MMK Shop Page template subscription and from ticket transaction commissions. Ticket sales must retain both Main Owner/operator attribution and Branch Owner/station attribution, with a configurable revenue-share rule snapshotted on every transaction.
 
 The planned wallet model separates the MH Platform ledger for MH fees, account charges, commissions, refunds, and adjustments; the Main Owner consolidated wallet for operator and branch earnings; and branch-level wallets/ledgers for each station. Final commission percentage, payout schedule, minimum payout, refund/chargeback responsibility, withdrawal rules, and direct-versus-consolidated settlement remain open for the next ticketing business discussion. This is a documentation-only update; no branch account, payment, revenue-share, or wallet UI/backend was implemented.
+
+
+## 17. Main Owner Branch Account and Wallet Admin Panel — 2026-11-12
+
+- Added a protected `/main-owner` route with a Super Admin `?preview=1` path for design review while the distinct production Main Owner role is still pending.
+- Added a dark navy/cyan Main Owner control center for JJ Express-style operators with Overview, Branch Accounts, Wallets & Ledger, Ticket Sales, Revenue Share, and Operator Settings navigation.
+- Added a responsive Create Branch Account modal that captures station/branch name, city, address, Branch Owner name, login username, phone, fixed 10,000 MMK monthly account fee, and revenue-share percentage. New local preview records enter `Pending` status and appear in the branch table.
+- Added Main Owner overview metrics, branch wallet snapshot, ticket-sales chart, recent wallet activity, branch account table, consolidated Main Owner wallet, Branch Wallets, MH Platform Ledger, settlement preview, and ledger/activity rows.
+- Typecheck passed, production build passed, lint passed with the repository's existing seven non-blocking warnings, and the route manifest was updated. The UI remains local preview state; real branch roles, billing, revenue-share persistence, wallet ledgers, payments, and RLS remain backend work.

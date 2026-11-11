@@ -417,6 +417,17 @@ Common rules:
   branch-account subscription records, transaction attribution, wallet
   ledgers, revenue-share snapshots, payout/adjustment records, and an
   auditable Main Owner branch-management flow.
+- Frontend preview delivered at `/main-owner`: a responsive Main Owner
+  control center with Overview, Branch Accounts, Wallets & Ledger, Ticket
+  Sales, Revenue Share, and Operator Settings sections. The Branch Account
+  modal captures station, city, address, Branch Owner, username, phone,
+  fixed 10,000 MMK monthly fee, and configurable revenue-share percentage;
+  newly created branches enter a Pending state in local preview data.
+- The panel also previews separate MH Platform, Main Owner consolidated, and
+  Branch Wallet balances, settlement/activity ledger rows, branch sales and
+  share summaries, wallet activity, and a branch management table. This UI
+  is preview/local-state only until the planned parent-child backend,
+  billing, RLS, revenue-share, and wallet services are connected.
 
 ---
 

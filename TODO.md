@@ -250,3 +250,21 @@
 
 - [ ] Add parent-child operator/branch tables, branch-level RLS, branch subscriptions, transaction attribution, wallet ledger entries, revenue-share snapshots, payouts, refunds, and adjustment records.
 - [ ] Add auditable Main Owner branch-management APIs and ticketing integration without duplicating the operator's core ticket inventory.
+
+
+## Main Owner Branch Account and Wallet Admin Panel — 2026-11-12
+
+### Frontend preview completed
+
+- [x] Add a protected `/main-owner` Main Owner control-center route with Super Admin `?preview=1` access for design review.
+- [x] Add responsive navigation for Overview, Branch Accounts, Wallets & Ledger, Ticket Sales, Revenue Share, and Operator Settings.
+- [x] Add Create Branch Account modal with station name, city, address, Branch Owner name, username, phone, fixed 10,000 MMK monthly fee, and configurable revenue-share percentage.
+- [x] Add Pending branch creation behavior, branch account table, active/pending status badges, account fee, revenue share, ticket sales, wallet balance, and Manage actions.
+- [x] Add Main Owner consolidated wallet, Branch Wallets, MH Platform Ledger, settlement preview, wallet activity, ticket-sales chart, and branch snapshot cards.
+
+### Backend still required
+
+- [ ] Connect the panel to real `main_owner`/`branch_owner` roles, parent-child operator records, branch-level RLS, and scoped APIs.
+- [ ] Persist Branch Owner invitations, branch-account subscription billing at 10,000 MMK/month, status lifecycle, and audit events.
+- [ ] Persist ticket attribution, revenue-share snapshots, MH/Main Owner/Branch wallet ledgers, settlements, payouts, refunds, and adjustments.
+- [ ] Replace all dashboard metrics and ledger rows with Main Owner-scoped Supabase/API data and enforce server-side permissions.

@@ -22,6 +22,7 @@
     { "path": "/admin/login", "title": "Admin login" },
     { "path": "/super-admin", "title": "Super Admin" },
     { "path": "/shop-owner", "title": "Shop Owner Dashboard" },
+    { "path": "/main-owner", "title": "Main Owner Control Center" },
     { "path": "/notifications", "title": "Notifications" },
     { "path": "/account/notifications", "title": "Account notifications" },
     { "path": "/favorites", "title": "Favorites" }
