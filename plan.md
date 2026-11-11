@@ -373,6 +373,51 @@ Common rules:
 - Every listing has open and close times; hotels also have check-in and
   check-out times.
 
+### Ticketing operator Main Owner and Branch Owner model
+
+- A ticket operator such as JJ Express may have one **Main Owner** shop
+  account. The Main Owner represents the operator/company and owns the
+  relationship with MH Travel.
+- The Main Owner can create and manage scoped **Branch Owner** accounts for
+  its own stations, for example `JJ Express · Yangon Hlaing Tharyar Gate`
+  and `JJ Express · Aung Mingalar Gate`. A Branch Owner account must not be
+  able to see or manage another operator's data or another branch's private
+  operations.
+- Each Branch Owner account costs **10,000 MMK per month**, billed to the
+  Main Owner/operator. The branch-account subscription is separate from the
+  Shop Page UI/UX template subscription and from ticket transaction
+  commissions. Creating, activating, suspending, renewing, and removing a
+  branch account must have an explicit status and audit history.
+- Main Owner permissions include creating/deactivating Branch Owners,
+  assigning a station, viewing branch bookings and ticket sales, managing
+  operator-level schedules/fares/inventory, viewing consolidated earnings,
+  and reviewing branch performance. Branch Owners are limited to their
+  assigned station, staff/operations, schedules, inventory, bookings, and
+  branch reports.
+- Ticket sales and other revenue must retain both the operator/Main Owner
+  attribution and the selling Branch Owner/station attribution. Revenue
+  sharing is planned as a configurable percentage or rule per operator or
+  branch, with the applied percentage snapshotted on each transaction for
+  audit and dispute handling.
+- The wallet model has separate ledgers/views: an MH Platform wallet for MH
+  fees, branch-account subscription charges, commissions, refunds, and
+  settlement adjustments; a Main Owner consolidated wallet showing the
+  operator's total earnings and all branch earnings; and branch-level wallet
+  ledgers showing the amount attributable to each station. The Main Owner
+  can see the branch wallets and consolidated balance, while a Branch Owner
+  sees only its own branch wallet and permitted reports.
+- The final commission percentage, branch revenue-share formula, payout
+  schedule, minimum payout, refund/chargeback responsibility, wallet
+  withdrawal rules, and whether a branch can receive direct settlement are
+  intentionally left for the next ticketing business discussion. Until
+  finalized, these values must remain Admin-configurable rather than being
+  hard-coded.
+- Production implementation requires a parent-child operator/branch data
+  model, `main_owner` and `branch_owner` scoped roles, branch-level RLS,
+  branch-account subscription records, transaction attribution, wallet
+  ledgers, revenue-share snapshots, payout/adjustment records, and an
+  auditable Main Owner branch-management flow.
+
 ---
 
 ## 10. Content: Blog and Travel Guide

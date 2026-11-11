@@ -224,3 +224,29 @@
 - [ ] Add payment integration for the 2,000 MMK monthly subscription and verify payment status server-side.
 - [ ] Add safe template retirement, migration notice, rollback, and version compatibility behavior.
 - [ ] Add analytics for template adoption, preview-to-apply conversion, churn, failed payments, and active paid templates.
+
+
+## Ticketing Main Owner and Branch Owner model — New Plan
+
+### Account hierarchy and access
+
+- [ ] Add a ticket operator Main Owner account, such as a JJ Express operator account.
+- [ ] Let Main Owners create, activate, suspend, renew, and remove scoped Branch Owner accounts for stations such as Yangon Hlaing Tharyar Gate and Aung Mingalar Gate.
+- [ ] Add `main_owner` and `branch_owner` scoped roles and prevent a Branch Owner from seeing another branch or operator's private data.
+- [ ] Scope Branch Owner workspace to its assigned station, staff/operations, schedules, ticket inventory, bookings, and branch reports.
+- [ ] Give Main Owners operator-level schedule/fare/inventory controls, branch performance views, consolidated bookings, and branch-management actions.
+
+### Fees, revenue share, and wallets
+
+- [ ] Charge the Main Owner **10,000 MMK per month for each Branch Owner account**; keep this fee separate from the 2,000 MMK Shop Page template subscription and ticket commissions.
+- [ ] Add branch account lifecycle, billing, renewal, suspension, expiry, and audit states.
+- [ ] Attribute every ticket sale to both the Main Owner/operator and the selling Branch Owner/station.
+- [ ] Add configurable branch revenue-share rules with the applied percentage/rule snapshotted on each transaction.
+- [ ] Add separate MH Platform, Main Owner consolidated, and Branch Owner wallet/ledger views.
+- [ ] Let Main Owners see consolidated operator earnings and branch wallet balances; restrict Branch Owners to their own branch wallet and permitted reports.
+- [ ] Define and implement commission percentages, payout schedule, minimum payout, refund/chargeback responsibility, withdrawal rules, and direct-vs-consolidated settlement after the next business discussion.
+
+### Production backend
+
+- [ ] Add parent-child operator/branch tables, branch-level RLS, branch subscriptions, transaction attribution, wallet ledger entries, revenue-share snapshots, payouts, refunds, and adjustment records.
+- [ ] Add auditable Main Owner branch-management APIs and ticketing integration without duplicating the operator's core ticket inventory.
