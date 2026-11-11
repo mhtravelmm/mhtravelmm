@@ -485,7 +485,7 @@ it is a pre-arrival matter.
 ## 16. Open Items
 
 - Favorites page implemented: saved listings resolve through shared categories and client-side favorite state; backend persistence remains pending.
-- City page cards use the shared ListingCard favorite fallback, so their hearts stay synchronized with the global Favorites provider. City cards now open `/cities/:cityId` detail pages with a city-specific hero and Burmese/English intro, best-for/stay/getting-there facts, attraction/hotel/restaurant recommendations, and a Custom Plan CTA.
+- City page cards use the shared ListingCard favorite fallback, so their hearts stay synchronized with the global Favorites provider. City cards now open `/cities/:cityId` detail pages with a city-specific hero and Burmese/English intro, best-for/stay/getting-there facts, attraction/hotel/restaurant recommendations, and a Custom Plan CTA. The detail page also has a Search-like category explorer for All, Attractions, Hotels, Restaurants, Book Shops, Rentals, Transport, Cafes, and Markets, with keyword search, result counts, and Show more/Show less for the expanded business inventory.
 - Blogs page implemented: bilingual editorial listing and reader; favorite,
   share, and view counts currently use client-side storage pending backend wiring.
 - Travel Plans page implemented as a frontend preview: compact shared-card grid with bilingual UI,

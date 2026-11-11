@@ -196,3 +196,10 @@
 - [x] Add bilingual city hero, intro, city facts, attractions, hotels, restaurants, and trip-planning CTAs.
 - [x] Register the City detail route in `public/manus-routes.json`.
 - [ ] Replace shared seeded recommendations with city-scoped Supabase listings, map coordinates, availability, and traveler reviews.
+
+## City categories and expanded business explorer — 2026-11-11
+
+- [x] Add Search-like category chips inside City Detail pages.
+- [x] Add keyword search and result counts for hotels, restaurants, attractions, book shops, rentals, transport, cafes, and markets.
+- [x] Add responsive expanded business grids with Show more/Show less.
+- [ ] Replace seeded category arrays with city-scoped Supabase businesses, real pagination, map distance, open/closed status, and review counts.

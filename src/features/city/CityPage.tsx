@@ -5,6 +5,7 @@ import { ListingGridSection } from '../home/sections/ListingGridSection';
 import { SectionHeader } from '../home/sections/SectionHeader';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { useLanguage } from '../../lib/i18n';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   CITIES,
@@ -191,22 +192,43 @@ export function CityDetailPage() {
   const { cityId } = useParams<{ cityId: string }>();
   const city = CITIES.find((item) => item.id === cityId || item.href?.endsWith(`/${cityId}`));
   const content = city ? CITY_DETAIL_CONTENT[city.id] : undefined;
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [businessQuery, setBusinessQuery] = useState('');
+  const [showAllBusinesses, setShowAllBusinesses] = useState(false);
 
   if (!city || !content) return <div className="mx-auto max-w-3xl px-4 py-16 text-center"><p className="text-sm text-text-muted">City not found.</p><button type="button" onClick={() => navigate('/cities')} className="mt-4 inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-xs font-semibold text-white"><ArrowLeft size={14} /> Back to Cities</button></div>;
 
   const title = language === 'mm' ? content.mmTitle : city.title;
   const intro = language === 'mm' ? content.mmIntro : content.intro;
-  const destinations = [
-    { id: 'attractions', title: language === 'mm' ? `${title} ၏ ထင်ရှားရာနေရာများ` : `${title} attractions`, items: TOP_ATTRACTIONS },
-    { id: 'hotels', title: language === 'mm' ? `${title} တွင် တည်းခိုရန်` : `Where to stay in ${title}`, items: POPULAR_HOTELS },
-    { id: 'restaurants', title: language === 'mm' ? `${title} အစားအသောက်` : `Eat and drink in ${title}`, items: POPULAR_RESTAURANTS },
+  const categoryGroups = [
+    { id: 'all', label: language === 'mm' ? 'အားလုံး' : 'All', items: [...TOP_ATTRACTIONS, ...POPULAR_HOTELS, ...POPULAR_RESTAURANTS, ...POPULAR_BOOK_SHOPS, ...POPULAR_RENTALS, ...POPULAR_TRANSPORT, ...POPULAR_CAFES, ...POPULAR_MARKETS] },
+    { id: 'attractions', label: language === 'mm' ? 'လည်ပတ်စရာ' : 'Attractions', items: TOP_ATTRACTIONS },
+    { id: 'hotels', label: language === 'mm' ? 'ဟိုတယ်များ' : 'Hotels', items: POPULAR_HOTELS },
+    { id: 'restaurants', label: language === 'mm' ? 'စားသောက်ဆိုင်များ' : 'Restaurants', items: POPULAR_RESTAURANTS },
+    { id: 'bookshops', label: language === 'mm' ? 'စာအုပ်ဆိုင်များ' : 'Book shops', items: POPULAR_BOOK_SHOPS },
+    { id: 'rentals', label: language === 'mm' ? 'ငှားရမ်းမှုများ' : 'Rentals', items: POPULAR_RENTALS },
+    { id: 'transport', label: language === 'mm' ? 'သယ်ယူပို့ဆောင်ရေး' : 'Transport', items: POPULAR_TRANSPORT },
+    { id: 'cafes', label: language === 'mm' ? 'ကဖေးများ' : 'Cafes', items: POPULAR_CAFES },
+    { id: 'markets', label: language === 'mm' ? 'ဈေးများ' : 'Markets', items: POPULAR_MARKETS },
   ];
+  const selectedCategory = categoryGroups.find((item) => item.id === activeCategory) ?? categoryGroups[0];
+  const needle = businessQuery.trim().toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
+  const filteredBusinesses = selectedCategory.items.filter((item) => !needle || item.title.toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US').includes(needle));
+  const visibleBusinesses = showAllBusinesses ? filteredBusinesses : filteredBusinesses.slice(0, 12);
 
   return <div className="mx-auto max-w-7xl pb-10 pt-3 sm:pt-5">
     <button type="button" onClick={() => navigate('/cities')} className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue hover:text-brand-blueLight"><ArrowLeft size={14} /> {language === 'mm' ? 'မြို့များသို့ ပြန်သွားရန်' : 'Back to Cities'}</button>
     <section className="relative overflow-hidden rounded-2xl border border-border bg-slate-950"><img src={content.image} alt={title} className="h-64 w-full object-cover sm:h-80 md:h-[360px]" /><div className="absolute inset-0 bg-gradient-to-t from-[#06162c] via-[#06162c]/60 to-transparent" /><div className="absolute inset-x-0 bottom-0 p-5 sm:p-8"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{language === 'mm' ? 'မြန်မာနိုင်ငံကို ရှာဖွေပါ' : 'Discover Myanmar'}</p><h1 className="mt-1 text-3xl font-extrabold text-white sm:text-5xl">{title}</h1><p className="mt-2 max-w-2xl text-xs leading-5 text-slate-200 sm:text-sm">{intro}</p></div><button type="button" onClick={() => navigate('/travel-plans')} className="inline-flex items-center gap-2 rounded-full bg-cyan-400 px-4 py-2.5 text-xs font-bold text-slate-950 hover:bg-cyan-300"><Compass size={15} /> {language === 'mm' ? 'ခရီးစဉ်စီစဉ်မည်' : 'Plan a trip'}</button></div></div></section>
     <div className="mt-4 grid gap-3 sm:grid-cols-3"><CityFact icon={MapPin} label={language === 'mm' ? 'လည်ပတ်ရန်အကောင်းဆုံး' : 'Best for'} value={content.bestFor} /><CityFact icon={CalendarDays} label={language === 'mm' ? 'အကြံပြုရက်' : 'Recommended stay'} value={content.stay} /><CityFact icon={Compass} label={language === 'mm' ? 'သွားလာရန်' : 'Getting there'} value={content.travel} /></div>
-    <section className="mt-7"><div className="mb-3 flex items-center justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-blue">{language === 'mm' ? 'မြို့အတွင်း ရှာဖွေပါ' : 'Explore the city'}</p><h2 className="mt-1 text-xl font-bold text-text-primary">{language === 'mm' ? `${title} အတွက် အကြံပြုချက်များ` : `Things to do in ${title}`}</h2></div><span className="hidden text-xs text-text-muted sm:block">★ {city.rating.toFixed(1)} · {city.views.toLocaleString()} views</span></div><div className="space-y-7">{destinations.map((section) => <section key={section.id}><SectionHeader title={section.title} viewAllHref={section.id === 'restaurants' ? '/restaurants' : section.id === 'hotels' ? '/hotels' : '/attractions'} /><div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-5">{section.items.map((item) => <ListingCard key={item.id} listing={item} />)}</div></section>)}</div></section>
+    <section className="mt-7">
+      <div className="mb-3 flex items-center justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-blue">{language === 'mm' ? 'မြို့အတွင်း ရှာဖွေပါ' : 'Explore the city'}</p><h2 className="mt-1 text-xl font-bold text-text-primary">{language === 'mm' ? `${title} မှ လုပ်ငန်းများနှင့် နေရာများ` : `Places and businesses in ${title}`}</h2></div><span className="hidden text-xs text-text-muted sm:block">★ {city.rating.toFixed(1)} · {city.views.toLocaleString()} views</span></div>
+      <div className="rounded-2xl border border-border bg-bg-card p-3 sm:p-4">
+        <div className="flex flex-col gap-2 sm:flex-row"><label className="relative min-w-0 flex-1"><span className="sr-only">Search businesses</span><SearchIcon size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" /><input value={businessQuery} onChange={(event) => { setBusinessQuery(event.target.value); setShowAllBusinesses(false); }} placeholder={language === 'mm' ? `${title} အတွင်း ရှာဖွေပါ...` : `Search hotels, restaurants, places in ${title}...`} className="w-full rounded-md border border-border bg-bg py-2.5 pl-9 pr-3 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60" /></label><span className="flex items-center justify-center rounded-md bg-brand-blue/10 px-3 py-2 text-[11px] font-semibold text-brand-blue">{filteredBusinesses.length} {language === 'mm' ? 'ခုတွေ့ရှိ' : 'results'}</span></div>
+        <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">{categoryGroups.map((category) => <button key={category.id} type="button" onClick={() => { setActiveCategory(category.id); setShowAllBusinesses(false); }} className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[10px] font-semibold transition ${activeCategory === category.id ? 'bg-brand-blue text-white' : 'bg-bg text-text-secondary hover:bg-brand-blue/10 hover:text-brand-blue'}`}>{category.label}<span className="ml-1 opacity-70">{category.items.length}</span></button>)}</div>
+        {visibleBusinesses.length > 0 ? <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">{visibleBusinesses.map((item, index) => <ListingCard key={`${activeCategory}-${item.id}-${index}`} listing={item} />)}</div> : <div className="mt-4 rounded-lg border border-dashed border-border px-4 py-10 text-center text-xs text-text-muted">{language === 'mm' ? 'ကိုက်ညီသော လုပ်ငန်းမတွေ့ပါ။' : 'No matching businesses found.'}</div>}
+        {filteredBusinesses.length > 12 && <button type="button" onClick={() => setShowAllBusinesses((current) => !current)} className="mt-4 w-full rounded-md border border-brand-blue/30 px-4 py-2.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue/10">{showAllBusinesses ? (language === 'mm' ? 'လျှော့ပြမည်' : 'Show less') : (language === 'mm' ? `နောက်ထပ် ${filteredBusinesses.length - 12} ခုကြည့်မည်` : `Show ${filteredBusinesses.length - 12} more`)}</button>}
+      </div>
+    </section>
     <section className="mt-7 rounded-2xl border border-brand-blue/25 bg-bg-card p-4 sm:p-6"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-blue">{language === 'mm' ? 'သင့်ခရီးစဉ်ကို စတင်ပါ' : 'Start your journey'}</p><h2 className="mt-1 text-xl font-bold text-text-primary">{language === 'mm' ? `${title} ခရီးစဉ်ကို စီစဉ်ပါ` : `Plan your ${title} trip`}</h2><p className="mt-1 text-xs leading-5 text-text-muted">{language === 'mm' ? 'နေ့ရက်၊ သယ်ယူပို့ဆောင်ရေးနှင့် တည်းခိုနေရာကို စိတ်ကြိုက်ရွေးချယ်ပြီး MH Travel quotation တောင်းနိုင်ပါသည်။' : 'Choose your dates, transport, and stay preferences, then request a personalized MH Travel quotation.'}</p></div><button type="button" onClick={() => navigate('/travel-plans#custom-plan')} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-brand-red px-4 py-3 text-xs font-semibold text-white hover:brightness-110">{language === 'mm' ? 'Custom Plan တောင်းမည်' : 'Build a Custom Plan'}</button></div></section>
   </div>;
 }
