@@ -4,7 +4,7 @@ import { Footer, PageCopyright } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
 import { CityPage } from './features/city/CityPage';
 import { BlogsPage } from './features/blogs/BlogsPage';
-import { TravelPlansPage } from './features/travelPlans/TravelPlansPage';
+import { TravelPlanDetailPage, TravelPlansPage } from './features/travelPlans/TravelPlansPage';
 import { RestaurantPage } from './features/restaurants/RestaurantPage';
 import { NearbyPage } from './features/nearby/NearbyPage';
 import { AccountPage } from './features/account/AccountPage';
@@ -85,6 +85,7 @@ function AppRoutes() {
     <Route path="/book-shops/:id" element={<Shell><BookShopPage /></Shell>} />
     <Route path="/ticketing" element={<Shell><TicketingPage /></Shell>} />
     <Route path="/travel-plans" element={<Shell><TravelPlansPage /></Shell>} />
+    <Route path="/travel-plans/:planId" element={<Shell><TravelPlanDetailPage /></Shell>} />
     <Route path="/travel-guide" element={<Shell fullWidth><TravelGuidePage /></Shell>} />
     <Route path="/travel-guide/:guideId" element={<Shell fullWidth><TravelGuidePage /></Shell>} />
     <Route path="/blogs" element={<Shell fullWidth><BlogsPage /></Shell>} />

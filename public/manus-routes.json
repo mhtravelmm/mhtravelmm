@@ -10,6 +10,7 @@
     { "path": "/book-shops/:id", "title": "Book shop details" },
     { "path": "/ticketing", "title": "Ticketing" },
     { "path": "/travel-plans", "title": "Travel plans" },
+    { "path": "/travel-plans/:planId", "title": "Travel plan details" },
     { "path": "/travel-guide", "title": "Travel Guide" },
     { "path": "/travel-guide/:guideId", "title": "Travel Guide details" },
     { "path": "/blogs", "title": "Blogs" },

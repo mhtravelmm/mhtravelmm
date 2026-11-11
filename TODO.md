@@ -181,3 +181,11 @@
 - [x] Protect `/shop-owner` so only `owner_admin` sessions can view the dashboard; travelers and unauthenticated visitors are redirected safely.
 - [x] Make Shop Owner logout clear the session and return to Admin Login.
 - [ ] Replace the local preview bridge with Supabase Auth Owner Admin invitations, profile roles, secure temporary-password rotation, username uniqueness, shop ownership records, and RLS authorization.
+
+
+## Travel Plans entry and detail page — 2026-11-11
+
+- [x] Keep the Travel Plans entry page with bilingual Bagan hero, search, duration filters, sorting, shared favorites, and custom-plan request builder.
+- [x] Add `/travel-plans/:planId` detail pages with bilingual itinerary hero, summary metadata, day-by-day itinerary, estimated price, Request this plan CTA, and Browse all plans action.
+- [x] Register the Travel Plan detail route in `src/App.tsx` and `public/manus-routes.json`.
+- [ ] Connect Travel Plan detail/request data to Supabase, real quotations, availability, booking persistence, and traveler-scoped request history.
