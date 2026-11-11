@@ -279,3 +279,12 @@ The dashboard screens, forms, local state, and preview interactions are complete
 - `npm run build` passed.
 - `npm run lint` passed with the repository's existing seven non-blocking warnings only.
 - `git diff --check` passed before delivery.
+
+
+## 10. Shop Owner login credentials — 2026-11-11
+
+- Extended the Super Admin Shop Owner creation form to include a required login username and temporary password.
+- Added a `Generate username + password` action that derives a lowercase username from the shop name with a numeric suffix and creates a temporary password for the owner.
+- After account creation, the new Owner Admin record is added as `Pending`, the username is visible in the account list, and the username/password are shown once in a credential notice for secure delivery. Passwords are deliberately not displayed in the account table.
+- Added validation for username format and minimum password length, reset the credential fields after creation, and preserved the `/shop-owner` dashboard preview action.
+- This is still a frontend/local-state credential handoff. Production must use Supabase Auth invite or password-reset flows, never store plaintext passwords, hash credentials server-side, enforce unique usernames, and require the owner to change the temporary password on first login.

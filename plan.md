@@ -605,10 +605,11 @@ This section records the dashboard work completed from the supplied visual refer
 ### Shop Owner creation and dashboard
 
 - Super Admin has a dedicated `Shop Owners` section and a `Create Shop Owner` Quick Action.
-- The Shop Owner form collects owner name, shop/business name, email, phone, city, and business category. New records appear as `Pending`, with a review action and separate owner/shop/city/category/status columns.
+- The Shop Owner form collects owner name, shop/business name, email, phone, city, business category, login username, and temporary password. A Generate username + password action can create lowercase username credentials and a temporary password; new records appear as `Pending`, with a review action and separate owner/shop/username/city/category/status columns.
+- After creation, the generated username and temporary password are shown once in a credential notice so Super Admin can securely deliver them to the owner. The account list never displays the password.
 - The frontend Shop Owner dashboard is available at `/shop-owner` and follows the supplied Royal Myanmar Restaurant reference: verified business profile, welcome hero, bookings/orders/reviews/revenue KPI cards, booking statistics chart, popular menu items, recent bookings, quick actions, responsive owner sidebar, mobile menu, notifications, and owner workspace sections.
 - The Super Admin Shop Owners table includes a `Preview dashboard` action that opens `/shop-owner`.
-- The `/shop-owner` route is currently a frontend preview route. It must become an `owner_admin` protected route after real Owner Admin authentication and shop ownership records are added.
+- The `/shop-owner` route is currently a frontend preview route. It must become an `owner_admin` protected route after real Owner Admin authentication, secure invite/password-reset delivery, credential hashing, and shop ownership records are added.
 
 ### Admin Management
 

@@ -157,6 +157,7 @@
 - [x] Refine the traveler `/account` dashboard to match the supplied MH Travel reference, including responsive profile navigation, hero, stats, upcoming trip, quick actions, recent activity, discovery content, and footer behavior.
 - [x] Add a dedicated Super Admin Ads Management area with campaign inventory, advertiser/placement data, impressions, CTR, Live/Paused controls, preview/edit/pause actions, ad priority, creative approval, and placement health.
 - [x] Add Super Admin Shop Owner creation with owner/business name, email, phone, city, category, Pending status, review list, and Quick Action access.
+- [x] Add Shop Owner login account fields: generated or manually entered lowercase username, temporary password, one-time credential notice after creation, username column, and password-hidden account list.
 - [x] Add the responsive `/shop-owner` dashboard reference implementation with verified business profile, bookings, orders, reviews, revenue, booking statistics, popular menu, recent bookings, quick actions, mobile navigation, and owner workspace sections.
 - [x] Add Super Admin Admin Management with Create Admin Quick Action, name/email/phone form, role choices, permission groups, Pending invite status, admin list, review action, audit-log entry point, and clear Shop Owner/platform Admin separation.
 - [x] Register `/shop-owner` in `src/App.tsx` and `public/manus-routes.json`, and add a Super Admin Preview dashboard action.
@@ -166,6 +167,7 @@
 
 - [ ] Extend the auth role model beyond `traveler | super_admin` with `owner_admin` and scoped platform-admin roles.
 - [ ] Connect Create Admin and Create Shop Owner forms to Supabase Auth invitations, profile/business records, email setup, role assignment, and acceptance/password flows.
+- [ ] Replace the frontend Shop Owner credential handoff with a secure Supabase Auth invite or password-reset flow; never persist plaintext passwords, enforce unique usernames, hash credentials server-side, and require a temporary-password change at first login.
 - [ ] Add permission groups, per-feature access checks, RLS policies, admin status transitions, audit logs, and protected routes for each dashboard role.
 - [ ] Replace seeded dashboard metrics, campaigns, owners, admins, menu items, bookings, orders, reviews, and revenue with user/shop/admin-scoped Supabase queries.
 - [ ] Connect Ads Management to campaign persistence, creative storage, scheduling, budgets, reporting, and the existing Admin Ads/AdSlot fallback pipeline.
