@@ -286,3 +286,23 @@
 - [ ] Add authenticated Main Owner identity instead of the current demo `jj-express-demo` operator ID.
 - [ ] Add server-side validation, Main Owner ownership checks, branch-level RLS, invitation/auth provisioning, and audit logging.
 - [ ] Replace preview metrics and local branch rows with operator-scoped API queries and add retry/idempotency handling for create requests.
+
+
+## Super Admin Blog Post Management — 2026-11-12
+
+### Completed frontend workflow
+
+- [x] Add a dedicated Blogs view in the Super Admin navigation.
+- [x] Connect the Dashboard Add Blog Quick Action to the Blog Post editor.
+- [x] Add bilingual English/Myanmar title, excerpt, and body fields.
+- [x] Add category, author, location, cover image URL, internal SEO tags, publishing status, and schedule-time fields.
+- [x] Add Save Draft, Publish Post, Schedule Post, Edit, Preview, search, status filters, and All/Published/Drafts/Scheduled summary cards.
+- [x] Seed the management inventory from the existing `BLOG_POSTS` catalog without changing the public Blog reader data.
+
+### Production content backend still required
+
+- [ ] Add Blog Post, localized content/block, category, SEO metadata, status, schedule, author, and revision tables.
+- [ ] Connect approved image upload/storage and cover-image validation instead of accepting only a URL in preview.
+- [ ] Add Content Manager permissions, moderation/review workflow, audit history, draft autosave, and optimistic-concurrency protection.
+- [ ] Add scheduled publishing worker/trigger, timezone handling, publish/unpublish/restore actions, and public cache invalidation.
+- [ ] Replace local post state with Supabase/API queries and make newly published posts appear in the public Blogs page and search index.

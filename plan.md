@@ -719,12 +719,14 @@ This section records the dashboard work completed from the supplied visual refer
 - The `/shop-owner` route is protected for the local `owner_admin` preview role. Production still needs real Owner Admin Supabase authentication, secure invite/password-reset delivery, credential hashing, and shop ownership records.
 
 ### Admin Management
-
 - Super Admin now has a dedicated `Admin Management` sidebar section and a `Create Admin` Quick Action.
 - The Admin Management form collects admin name, work email, phone, admin role, and permission group. Supported frontend role choices are Content Manager, Support Manager, Operations Admin, Finance Admin, and Ads Manager.
 - The page includes total-admin, active-admin, pending-invite, and permission-group summaries; an admin account table; role/permission/status display; review actions; audit-log entry point; invite-created local state; and a clear separation between platform Admin roles and Shop Owner accounts.
 - Current Admin creation is a frontend/local-state invitation workflow. Production work must add Supabase Auth invitations, an explicit role enum, permission/group tables, RLS policies, invite acceptance, password setup, status transitions, audit logs, and route guards.
-
+### Blog Post Management
+- Super Admin now has a dedicated `Blogs` navigation view and the existing `Add Blog` Quick Action opens a bilingual Blog Post editor instead of a placeholder notification.
+- The editor captures English/Myanmar title, excerpt, and body, category, author, location, cover image URL, internal SEO tags, publishing status, and schedule time. It supports Save Draft, Publish Post, Schedule Post, edit, preview, search, status filters, and Published/Draft/Scheduled inventory summaries.
+- Published posts, drafts, and scheduled posts are currently frontend/local preview state seeded from the existing `BLOG_POSTS` data. Production still needs Blog Post tables, media storage, authorization, scheduling workers, moderation/audit history, and a public query/cache path for new posts.
 ### Routes, validation, and delivery
 
 - `src/App.tsx` now includes the `/shop-owner` route, and `public/manus-routes.json` is synchronized with it.
