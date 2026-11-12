@@ -437,6 +437,9 @@ Common rules:
   duplicate, and server-error states are shown in the modal. The
   `operator_branches` migration and RLS policies remain required for
   production.
+- Status: **frontend validation and API adapter complete**; production
+  persistence, authentication, uniqueness enforcement, and authorization
+  remain open backend work.
 
 ---
 
