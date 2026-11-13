@@ -407,3 +407,9 @@ Typecheck and production build passed. Lint passed with the repository's existin
 ## 26. Site-wide right-click and zoom interaction guard — 2026-11-14
 
 Added `SiteInteractionGuard` at the application root to prevent page context menus, page-level Ctrl/Cmd zoom shortcuts, and Ctrl/Cmd + mouse-wheel zoom. The HTML viewport now requests a maximum scale of 1 and disables user-scalable pinch zoom where supported. Browser menu/settings zoom remains intentionally documented as outside website control. Typecheck and production build passed; lint remains at the repository's existing seven non-blocking warnings.
+
+## 27. All dashboards third compact-density pass — 2026-11-14
+
+A third, tighter density pass was applied across Super Admin/Admin, Shop Owner, and User dashboards. Shell widths and outer padding, sidebar/header heights, hero banners, KPI/stat cards, charts, quick-action tiles, forms, panels, and tables were reduced again to minimize unused space. No dashboard content or actions were removed, and responsive layouts and route guards remain intact.
+
+Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.

@@ -385,3 +385,11 @@
 
 ### Browser limitation
 - [ ] Browser menu/settings zoom cannot be forcibly controlled by website JavaScript; this remains browser-level behavior.
+
+## All dashboards third compact-density pass — 2026-11-14
+
+### Completed frontend behavior
+- [x] Tighten Super Admin and Admin Management dashboard shell, hero, KPI, chart, quick-action, form, and table density again.
+- [x] Tighten Shop Owner dashboard shell, sidebar, header, hero, KPI, chart, quick-action, form, and table density again.
+- [x] Tighten User Dashboard shell, sidebar, hero, stat cards, panels, and quick-action density again.
+- [x] Preserve all role dashboard content, actions, route guards, responsive layouts, and mobile navigation.
