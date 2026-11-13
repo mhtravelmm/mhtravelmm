@@ -337,3 +337,17 @@
 - [ ] Persist gallery media records and returned R2 keys together with the Blog Post transaction.
 - [ ] Render ordered gallery photos in the public Blog reader and add public image alt/caption editing.
 - [ ] Delete replaced/orphaned gallery objects from R2 after the database update is confirmed.
+
+## Compact inline Blog story composer and schedule controls — 2026-11-14
+
+### Completed frontend behavior
+- [x] Replace the large body text areas with bilingual text blocks that can be separated by image blocks.
+- [x] Let Super Admin insert compressed photos between text blocks, add further text blocks, preview the flow, and remove blocks.
+- [x] Keep one Cover Photo plus Additional Photos while also supporting Inline Story Photos.
+- [x] Replace typed schedule datetime text with separate calendar Date and Time controls and require both for Scheduled posts.
+- [x] Reduce modal, input, cards, table, thumbnail, and action-button sizing for a compact editor UI.
+
+### Production reader/storage still required
+- [ ] Persist ordered bilingual story blocks and image metadata in Blog Post content records.
+- [ ] Render text/image blocks in order in the public Blog reader, including alt text and captions.
+- [ ] Keep R2 object keys tied to each block and clean up removed/replaced inline media safely.
