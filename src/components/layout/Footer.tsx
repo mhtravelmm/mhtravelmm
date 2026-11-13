@@ -122,3 +122,18 @@ export function PageCopyright({ className = '' }: { className?: string }) {
     </footer>
   );
 }
+
+/** Minimal dashboard footer: only the requested Facebook and YouTube links. */
+export function DashboardCopyright({ className = '' }: { className?: string }) {
+  const { t } = useLanguage();
+
+  return (
+    <footer className={`flex items-center justify-center gap-2 border-t border-border py-1.5 text-center ${className}`}>
+      <p className="text-[8px] text-text-faint">{t('footer_copyright')}</p>
+      <span className="flex items-center gap-1.5 text-text-muted" aria-label="Dashboard social links">
+        <Facebook size={11} aria-label="Facebook" />
+        <Youtube size={11} aria-label="YouTube" />
+      </span>
+    </footer>
+  );
+}

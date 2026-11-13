@@ -401,3 +401,11 @@
 - [x] Reduce Shop Owner footer copyright box height, padding, and logo/text spacing.
 - [x] Reduce shared User Dashboard Footer/PageCopyright spacing and copyright row height.
 - [x] Apply another compact spacing pass to all requested dashboards without removing data or actions.
+
+## Dashboard social footer simplification — 2026-11-14
+
+### Completed frontend behavior
+- [x] Keep only Facebook and YouTube in dashboard copyright/social areas.
+- [x] Add a compact Facebook/YouTube-only footer for the User Dashboard.
+- [x] Remove extra social markers from the Super Admin dashboard footer.
+- [x] Preserve copyright text and responsive footer alignment.

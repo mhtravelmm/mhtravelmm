@@ -782,3 +782,8 @@ This section records the dashboard work completed from the supplied visual refer
 - Reduced Super Admin and Shop Owner custom copyright footer boxes to short, low-padding rows with smaller logo/social elements.
 - Reduced the shared public Footer and PageCopyright height/padding used below the User Dashboard so the copyright area no longer consumes a large block.
 - Further tightened Super Admin/Admin, Shop Owner, and User shell/hero/chart/action spacing while preserving all dashboard content, controls, route guards, and responsive layouts.
+
+### Dashboard social footer simplification — 2026-11-14
+- Dashboard copyright areas now show only two compact social markers: Facebook and YouTube.
+- Added a reusable `DashboardCopyright` component for the User Dashboard so its footer is a short copyright row rather than the full public-site footer.
+- Removed the extra Telegram/Viber-style social markers from the Super Admin footer while preserving the copyright text and responsive layout.

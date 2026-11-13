@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { Header } from './components/layout/Header';
-import { Footer, PageCopyright } from './components/layout/Footer';
+import { DashboardCopyright, Footer, PageCopyright } from './components/layout/Footer';
 import { HomePage } from './features/home/HomePage';
 import { CityDetailPage, CityPage } from './features/city/CityPage';
 import { BlogsPage } from './features/blogs/BlogsPage';
@@ -22,7 +22,7 @@ import { TravelGuidePage } from './features/travelGuide/TravelGuidePage';
 import { SearchPage } from './features/search/SearchPage';
 import { AuthProvider, useAuth } from './lib/auth';
 
-function Shell({ children, showFooter = false, fullWidth = false }: { children: React.ReactNode; showFooter?: boolean; fullWidth?: boolean }) {
+function Shell({ children, showFooter = false, fullWidth = false, dashboardFooter = false }: { children: React.ReactNode; showFooter?: boolean; fullWidth?: boolean; dashboardFooter?: boolean }) {
   const headerSpacing = fullWidth ? 'px-2 sm:px-3 md:px-4' : 'px-4 md:px-8';
   const pageSpacing = fullWidth
     ? 'px-1.5 py-2 pb-[calc(4.25rem_+_env(safe-area-inset-bottom))] sm:px-2 sm:py-3 md:px-3 md:pb-3'
@@ -35,7 +35,7 @@ function Shell({ children, showFooter = false, fullWidth = false }: { children: 
       </div>
       <div className={`${pageSpacing} flex flex-1 flex-col`}>
         <main className="flex-1">{children}</main>
-        {showFooter ? <div className="hidden md:block"><Footer /></div> : <PageCopyright className="mt-auto hidden md:block" />}
+        {showFooter ? <div className="hidden md:block">{dashboardFooter ? <DashboardCopyright /> : <Footer />}</div> : <PageCopyright className="mt-auto hidden md:block" />}
       </div>
     </div>
   );
@@ -103,7 +103,7 @@ function AppRoutes() {
     <Route path="/blogs" element={<Shell fullWidth><BlogsPage /></Shell>} />
     <Route path="/blogs/:storyId" element={<LegacyBlogRedirect />} />
     <Route path="/search" element={<Shell><SearchPage /></Shell>} />
-    <Route path="/account" element={<Shell showFooter fullWidth><AccountPage /></Shell>} />
+    <Route path="/account" element={<Shell showFooter dashboardFooter fullWidth><AccountPage /></Shell>} />
     <Route path="/login" element={<Shell><AuthPage /></Shell>} />
     <Route path="/signup" element={<Shell><AuthPage /></Shell>} />
     <Route path="/admin/login" element={<StandalonePageLayout><AdminLoginPage /></StandalonePageLayout>} />

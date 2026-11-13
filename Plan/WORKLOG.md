@@ -419,3 +419,7 @@ Typecheck and production build passed. Lint passed with the repository's existin
 Reduced the oversized copyright/footer boxes beneath the dashboard experiences. Super Admin and Shop Owner custom footers now use short rows, smaller padding, and smaller brand/social elements. The shared Footer/PageCopyright used by the User Dashboard was also tightened. A further compact pass reduced shell, hero, chart, table, and action spacing across Super Admin/Admin, Shop Owner, and User dashboards while preserving content, actions, route guards, and responsiveness.
 
 Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
+
+## 29. Dashboard social footer simplification — 2026-11-14
+
+Simplified dashboard social footer content to Facebook and YouTube only, both rendered at compact sizes. Added reusable `DashboardCopyright` and connected it to the User Dashboard route, replacing the larger public footer there. Super Admin's custom footer now also keeps only the two requested social markers. Typecheck and production build passed; lint remains at the repository's existing seven non-blocking warnings.
