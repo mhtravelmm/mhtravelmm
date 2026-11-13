@@ -751,3 +751,8 @@ This section records the dashboard work completed from the supplied visual refer
 - Replaced free-typed schedule datetime text with native calendar date and clock time controls. A Scheduled post requires both values; Draft and Published posts remain compact.
 - The editor spacing, input heights, modal width, table density, summary cards, thumbnail sizes, and action buttons were reduced to avoid oversized boxes while preserving responsive mobile behavior.
 - Production still needs the public Blog reader to render ordered text/image blocks and the database schema to persist block order and media metadata.
+
+### Super Admin compact density pass — 2026-11-14
+- Reduced the Super Admin shell footprint with a narrower desktop sidebar, shorter header, tighter navigation rows, smaller main-page padding, and compact mobile menu buttons.
+- Reduced Overview hero height, KPI card height/padding/icon size, chart height, distribution panel footprint, Quick Action tiles, panel headers, table cell padding, and common panel radius while retaining all dashboard content and controls.
+- Applied the same density direction to the existing Shop Owner, Ads, Admin Management, and generic Admin section cards/forms where they share the Super Admin layout, so the dashboard uses less vertical space without hiding data.

@@ -351,3 +351,11 @@
 - [ ] Persist ordered bilingual story blocks and image metadata in Blog Post content records.
 - [ ] Render text/image blocks in order in the public Blog reader, including alt text and captions.
 - [ ] Keep R2 object keys tied to each block and clean up removed/replaced inline media safely.
+
+## Super Admin compact dashboard density — 2026-11-14
+
+### Completed frontend behavior
+- [x] Reduce oversized Super Admin panels, cards, forms, charts, tables, and navigation spacing.
+- [x] Keep all existing dashboard content and controls while reducing padding, gaps, row heights, icon sizes, and panel radii.
+- [x] Reduce desktop sidebar/header footprint and preserve responsive mobile navigation.
+- [x] Apply compact density consistently across Overview, Shop Owners, Ads Management, Admin Management, and generic admin sections.
