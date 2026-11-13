@@ -322,3 +322,18 @@
 - [ ] Configure the R2 public/custom-domain URL or signed-download policy and CORS for the admin origin.
 - [ ] Persist the R2 URL/key and custom category in Blog Post/category database records; replace local editor state and preview data URLs with API records.
 - [ ] Add orphan-image cleanup when a draft is abandoned or a cover image is replaced, plus audit logging and rate limits.
+
+## Blog Post Cover Photo and Gallery Photos — 2026-11-14
+
+### Completed frontend behavior
+- [x] Keep one Cover Photo field for the Blog Post.
+- [x] Add an Additional Photos multi-file picker so one post can contain multiple gallery photos.
+- [x] Compress and upload every gallery photo through the same WebP/450 KB media pipeline used by the cover.
+- [x] Show gallery thumbnails in the editor and allow each additional photo to be removed before saving.
+- [x] Keep gallery photo URLs in the local preview post model separately from the cover URL.
+
+### Production content storage still required
+- [ ] Add ordered Blog Post media rows for gallery URLs, alt text, captions, and display order.
+- [ ] Persist gallery media records and returned R2 keys together with the Blog Post transaction.
+- [ ] Render ordered gallery photos in the public Blog reader and add public image alt/caption editing.
+- [ ] Delete replaced/orphaned gallery objects from R2 after the database update is confirmed.

@@ -739,3 +739,8 @@ This section records the dashboard work completed from the supplied visual refer
 - Cover images now accept JPEG, PNG, and WebP uploads. The browser validates the file type and original size, resizes the longest edge to at most 1600px, converts the image to WebP, and repeatedly compresses it to a maximum of 450 KB before upload.
 - `src/lib/blogMediaApi.ts` sends the compressed file as multipart form data to `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT`, with `folder=blog-posts`. The expected endpoint returns the durable Cloudflare R2 URL and object key; the editor stores that URL in the Blog Post cover-image field and reports the final KB size.
 - When the upload endpoint is not configured, the editor uses a local data-URL preview fallback so design testing remains usable. Production still requires the Cloudflare Worker/Pages Function endpoint, R2 binding, authenticated Super Admin authorization, object-key sanitization, content-type/size validation, and the public URL/CDN policy.
+
+### Blog post cover and gallery photo support — 2026-11-14
+- A Blog Post now supports one required Cover Photo plus multiple Additional Photos. Additional photos can be selected in one multi-file picker, previewed as thumbnails, and removed individually before saving.
+- Every gallery image uses the same media pipeline as the cover: type/original-size validation, longest-edge resize, WebP conversion, compression to the configured size limit, and upload under the `blog-posts` folder through the R2 media endpoint.
+- The local preview post model now carries `galleryUrls[]`; production Blog Post persistence must store ordered gallery media rows separately from the cover URL so public article rendering can preserve the selected order.
