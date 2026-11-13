@@ -762,3 +762,7 @@ This section records the dashboard work completed from the supplied visual refer
 - Shop Owner now uses a narrower sidebar, shorter header, smaller verified-business profile, shorter welcome hero, smaller KPI cards, shorter chart, tighter tables, and compact quick actions/forms.
 - Super Admin Admin Management and Shop Owner management forms now use smaller inputs, labels, gaps, buttons, summary cards, credential notices, and table rows.
 - All existing content, actions, responsive behavior, and route protection remain unchanged.
+
+### User Dashboard compact density pass — 2026-11-14
+- Reduced the traveler User Dashboard shell width/padding, sidebar width, profile spacing, navigation rows, welcome banner, stat cards, booking/activity panels, quick actions, discovery banner, wallet/message/settings cards, and secondary view containers.
+- Preserved all dashboard content, navigation actions, favorite flows, booking controls, responsive mobile behavior, and footer content while using less space.

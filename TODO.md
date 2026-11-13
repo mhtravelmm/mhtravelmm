@@ -367,3 +367,10 @@
 - [x] Compact Shop Owner dashboard sidebar, header, profile, welcome hero, KPI cards, chart, tables, quick actions, and section cards.
 - [x] Keep Super Admin and Shop Owner responsive layouts and all existing actions intact.
 - [x] Keep compact density consistent across the three dashboard roles.
+
+## User Dashboard compact density — 2026-11-14
+
+### Completed frontend behavior
+- [x] Reduce User Dashboard outer shell, sidebar, profile area, navigation rows, and main content gaps.
+- [x] Reduce welcome banner, stat cards, booking/activity panels, quick actions, discovery card, wallet, messages, settings, and secondary view cards.
+- [x] Preserve dashboard data, navigation actions, favorites, booking actions, responsive layout, and footer.

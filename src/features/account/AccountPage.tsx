@@ -98,10 +98,10 @@ export function AccountPage() {
   }
 
   return (
-    <div className="account-dashboard mx-auto w-full max-w-[1500px] rounded-2xl bg-account-bg p-3 text-text-primary shadow-2xl shadow-black/10 sm:rounded-3xl sm:p-4 lg:p-5">
-      <div className="grid gap-4 lg:grid-cols-[228px_minmax(0,1fr)] lg:gap-5">
-        <aside className="account-sidebar self-start rounded-2xl border border-account-border bg-account-surface p-3 sm:p-4 lg:sticky lg:top-20">
-          <div className="flex items-center gap-3 lg:flex-col lg:gap-2 lg:py-2 lg:text-center">
+    <div className="account-dashboard mx-auto w-full max-w-[1400px] rounded-xl bg-account-bg p-3 text-text-primary shadow-2xl shadow-black/10 sm:rounded-2xl sm:p-2.5 lg:p-4">
+      <div className="grid gap-3 lg:grid-cols-[196px_minmax(0,1fr)] lg:gap-3">
+        <aside className="account-sidebar self-start rounded-xl border border-account-border bg-account-surface p-2.5 sm:p-2.5 lg:sticky lg:top-20">
+          <div className="flex items-center gap-3 lg:flex-col lg:gap-2 lg:py-1 lg:text-center">
             <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-account-accent/80 bg-gradient-to-br from-sky-400 to-blue-700 text-base font-bold text-white shadow-lg shadow-sky-900/30 sm:h-16 sm:w-16">
               {initials || 'MH'}
               <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-account-surface bg-account-accent text-white">
@@ -127,14 +127,14 @@ export function AccountPage() {
             </button>
           </div>
 
-          <nav aria-label={t('account_navigation')} className="scrollbar-hide mt-4 flex gap-1.5 overflow-x-auto border-t border-account-border pt-3 lg:flex-col lg:overflow-visible lg:border-0 lg:pt-1">
+          <nav aria-label={t('account_navigation')} className="scrollbar-hide mt-3 flex gap-1 overflow-x-auto border-t border-account-border pt-2 lg:flex-col lg:overflow-visible lg:border-0 lg:pt-1">
             {menu.map(({ id, icon: Icon, key }) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => setView(id)}
                 aria-current={view === id ? 'page' : undefined}
-                className={`inline-flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-medium transition sm:text-[13px] lg:w-full ${view === id ? 'bg-account-accent text-white shadow-lg shadow-sky-950/25' : 'text-text-secondary hover:bg-account-elevated hover:text-text-primary'}`}
+                className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition sm:text-[13px] lg:w-full ${view === id ? 'bg-account-accent text-white shadow-lg shadow-sky-950/25' : 'text-text-secondary hover:bg-account-elevated hover:text-text-primary'}`}
               >
                 <Icon size={16} className="shrink-0" />
                 <span>{t(key)}</span>
@@ -144,7 +144,7 @@ export function AccountPage() {
             <button
               type="button"
               onClick={signOut}
-              className="inline-flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-medium text-rose-300 transition hover:bg-rose-500/10 sm:text-[13px] lg:mt-2 lg:w-full lg:border-t lg:border-account-border lg:pt-4"
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-rose-300 transition hover:bg-rose-500/10 sm:text-[13px] lg:mt-2 lg:w-full lg:border-t lg:border-account-border lg:pt-3"
             >
               <LogOut size={16} />{t('account_logout')}
             </button>
@@ -153,7 +153,7 @@ export function AccountPage() {
           <button
             type="button"
             onClick={() => setView('settings')}
-            className="mt-4 hidden w-full items-center justify-center gap-1.5 rounded-xl border border-account-border px-3 py-2.5 text-xs text-text-secondary transition hover:border-account-accent/60 hover:text-account-accent lg:flex"
+            className="mt-3 hidden w-full items-center justify-center gap-1.5 rounded-lg border border-account-border px-2.5 py-2 text-xs text-text-secondary transition hover:border-account-accent/60 hover:text-account-accent lg:flex"
           >
             <Edit3 size={13} />{t('account_edit_profile')}
           </button>
@@ -198,8 +198,8 @@ function Overview({
   const firstName = name.split(/\s+/)[0] || name;
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <section className="mh-page-hero account-welcome-banner relative isolate flex items-end overflow-hidden rounded-2xl border border-account-border p-5 sm:p-7 lg:items-center lg:p-8">
+    <div className="space-y-3 sm:space-y-4">
+      <section className="mh-page-hero account-welcome-banner relative isolate flex items-end overflow-hidden rounded-xl border border-account-border p-3 sm:p-4 lg:items-center lg:p-5">
         <img
           src="/images/blog/shwedagon-evening.webp"
           alt={t('account_banner_alt')}
@@ -211,33 +211,33 @@ function Overview({
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-slate-950/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-200 backdrop-blur-sm">
             <Compass size={12} />MH TRAVEL · MYANMAR
           </span>
-          <h2 className="mt-3 text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl">
+          <h2 className="mt-2 text-xl font-bold leading-tight text-white sm:text-2xl lg:text-3xl">
             {t('account_welcome').replace('{name}', firstName)}
           </h2>
           <p className="mt-2 max-w-xl text-xs leading-5 text-slate-100/90 sm:text-sm sm:leading-6">{t('account_overview_intro')}</p>
           <button
             type="button"
             onClick={() => onNavigate('/travel-plans')}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-account-accent px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-sky-950/25 transition hover:-translate-y-0.5 hover:bg-sky-500 sm:text-sm"
+            className="mt-3 inline-flex items-center gap-2 rounded-full bg-account-accent px-3 py-2 text-[10px] font-semibold text-white shadow-lg shadow-sky-950/25 transition hover:-translate-y-0.5 hover:bg-sky-500 sm:text-sm"
           >
             {t('account_plan_trip_cta')}<ArrowRight size={15} />
           </button>
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
         <StatCard icon={Briefcase} value="3" label={t('account_stat_bookings')} tone="blue" onClick={() => onOpen('bookings')} />
         <StatCard icon={MapPin} value="2" label={t('account_stat_plans')} tone="cyan" onClick={() => onOpen('plans')} />
         <StatCard icon={Heart} value={String(favoriteCount)} label={t('account_stat_saved')} tone="rose" onClick={() => onOpen('favorites')} />
         <StatCard icon={Star} value="5" label={t('account_stat_reviews')} tone="gold" onClick={() => onOpen('reviews')} />
       </div>
 
-      <div className="grid gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid gap-3 2xl:grid-cols-[1.2fr_0.8fr]">
         <UpcomingTrip onViewAll={() => onOpen('bookings')} onManage={() => onOpen('bookings')} />
         <QuickActions onNavigate={onNavigate} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
         <ActivityFeed />
         <DiscoveryCard onExplore={() => onNavigate('/cities')} />
       </div>
@@ -268,13 +268,13 @@ function StatCard({
     <button
       type="button"
       onClick={onClick}
-      className="group flex min-w-0 items-center gap-3 rounded-2xl border border-account-border bg-account-surface p-3 text-left transition hover:-translate-y-0.5 hover:border-account-accent/60 hover:bg-account-elevated sm:p-4"
+      className="group flex min-w-0 items-center gap-2 rounded-xl border border-account-border bg-account-surface p-2.5 text-left transition hover:-translate-y-0.5 hover:border-account-accent/60 hover:bg-account-elevated sm:p-4"
     >
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${tones[tone]}`}>
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${tones[tone]}`}>
         <Icon size={22} strokeWidth={2.2} />
       </span>
       <span className="min-w-0">
-        <span className="block text-lg font-bold leading-none text-text-primary sm:text-2xl">{value}</span>
+        <span className="block text-base font-bold leading-none text-text-primary sm:text-xl">{value}</span>
         <span className="mt-1 block truncate text-[10px] text-text-muted sm:text-xs">{label}</span>
       </span>
       <ChevronRight size={14} className="ml-auto hidden shrink-0 text-text-faint transition group-hover:translate-x-0.5 group-hover:text-account-accent sm:block" />
@@ -285,10 +285,10 @@ function StatCard({
 function UpcomingTrip({ onViewAll, onManage }: { onViewAll: () => void; onManage: () => void }) {
   const { t } = useLanguage();
   return (
-    <section className="min-w-0 rounded-2xl border border-account-border bg-account-surface p-3.5 sm:p-4">
+    <section className="min-w-0 rounded-xl border border-account-border bg-account-surface p-3">
       <PanelTitle icon={Plane} title={t('account_upcoming_trip')} action={t('account_view_all')} onClick={onViewAll} />
-      <div className="mt-3 grid gap-3 rounded-xl border border-account-border/70 bg-account-elevated p-2.5 sm:grid-cols-[148px_minmax(0,1fr)] sm:p-3">
-        <div className="relative h-32 overflow-hidden rounded-lg sm:h-full sm:min-h-[145px]">
+      <div className="mt-2 grid gap-2 rounded-lg border border-account-border/70 bg-account-elevated p-2.5 sm:grid-cols-[148px_minmax(0,1fr)] sm:p-2.5">
+        <div className="relative h-32 overflow-hidden rounded-lg sm:h-full sm:min-h-[120px]">
           <img src="/images/blog/shwedagon-evening.webp" alt={t('account_banner_alt')} className="h-full w-full object-cover" />
           <span className="absolute left-2 top-2 rounded-full bg-emerald-500 px-2 py-1 text-[9px] font-semibold text-white shadow">{t('account_confirmed')}</span>
         </div>
@@ -304,7 +304,7 @@ function UpcomingTrip({ onViewAll, onManage }: { onViewAll: () => void; onManage
             <span className="inline-flex items-center gap-1.5"><CalendarDays size={13} className="text-account-accent" />{t('account_trip_dates')}</span>
             <span className="inline-flex items-center gap-1.5"><UserRound size={13} className="text-account-accent" />{t('account_travelers_two')}</span>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             <button type="button" onClick={onManage} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-account-accent px-3 py-2 text-[10px] font-semibold text-white transition hover:bg-sky-500 sm:text-xs">{t('account_view_details')}<ArrowRight size={13} /></button>
             <button type="button" onClick={onManage} className="rounded-lg border border-account-accent/50 px-3 py-2 text-[10px] font-medium text-text-primary transition hover:bg-account-accent/10 sm:text-xs">{t('account_manage_booking')}</button>
           </div>
@@ -323,11 +323,11 @@ function QuickActions({ onNavigate }: { onNavigate: (path: string) => void }) {
     { icon: MapPin, key: 'account_explore_cities', path: '/cities', tone: 'text-sky-300' },
   ];
   return (
-    <section className="rounded-2xl border border-account-border bg-account-surface p-3.5 sm:p-4">
+    <section className="rounded-xl border border-account-border bg-account-surface p-3">
       <PanelTitle icon={Zap} title={t('account_quick_actions')} />
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         {actions.map(({ icon: Icon, key, path, tone }) => (
-          <button key={key} type="button" onClick={() => onNavigate(path)} className="group flex min-h-[82px] flex-col items-center justify-center gap-2 rounded-xl border border-account-border bg-account-elevated p-2 text-center transition hover:border-account-accent/60 hover:bg-account-accent/10 sm:min-h-[94px]">
+          <button key={key} type="button" onClick={() => onNavigate(path)} className="group flex min-h-[60px] flex-col items-center justify-center gap-2 rounded-xl border border-account-border bg-account-elevated p-2 text-center transition hover:border-account-accent/60 hover:bg-account-accent/10 sm:min-h-[70px]">
             <Icon size={25} className={`${tone} transition group-hover:-translate-y-0.5`} />
             <span className="text-[10px] font-medium text-text-secondary sm:text-xs">{t(key)}</span>
           </button>
@@ -342,13 +342,13 @@ function ActivityFeed() {
   const navigate = useNavigate();
   const activity = NOTIFICATIONS.slice(0, 3);
   return (
-    <section className="rounded-2xl border border-account-border bg-account-surface p-3.5 sm:p-4">
+    <section className="rounded-xl border border-account-border bg-account-surface p-3">
       <PanelTitle icon={Bell} title={t('account_recent_activity')} action={t('account_view_all')} onClick={() => navigate('/account/notifications')} />
       <div className="mt-3 divide-y divide-account-border/80">
         {activity.map((item) => {
           const Icon = item.href.includes('booking') ? CalendarDays : item.href.includes('hotels') ? Hotel : BookOpen;
           return (
-            <div key={item.id} className="flex items-start gap-3 py-3 first:pt-1 last:pb-0">
+            <div key={item.id} className="flex items-start gap-3 py-2 first:pt-1 last:pb-0">
               <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/5 text-white" style={{ background: `linear-gradient(145deg, ${item.thumbnailFrom}, ${item.thumbnailTo})` }}>
                 <Icon size={16} />
               </span>
@@ -368,14 +368,14 @@ function ActivityFeed() {
 function DiscoveryCard({ onExplore }: { onExplore: () => void }) {
   const { t } = useLanguage();
   return (
-    <section className="relative isolate flex min-h-[235px] flex-col justify-end overflow-hidden rounded-2xl border border-account-border p-5 sm:min-h-[265px] sm:p-6">
+    <section className="relative isolate flex min-h-[165px] flex-col justify-end overflow-hidden rounded-xl border border-account-border p-3 sm:min-h-[190px] sm:p-4">
       <img src="/images/blog/inle-stilt-houses.webp" alt={t('account_discovery_alt')} className="absolute inset-0 -z-20 h-full w-full object-cover" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#031326]/95 via-[#031326]/45 to-[#031326]/5" />
       <div className="max-w-md">
         <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-sky-200">{t('account_discover_eyebrow')}</span>
         <h2 className="mt-1.5 text-xl font-bold leading-tight text-white sm:text-2xl">{t('account_discover_heading')}</h2>
         <p className="mt-1.5 text-xs leading-5 text-slate-100/90">{t('account_discover_intro')}</p>
-        <button type="button" onClick={onExplore} className="mt-3 inline-flex items-center gap-2 rounded-full bg-account-accent px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-sky-500">{t('account_discover_button')}<ArrowRight size={14} /></button>
+        <button type="button" onClick={onExplore} className="mt-3 inline-flex items-center gap-2 rounded-full bg-account-accent px-3 py-2 text-[10px] font-semibold text-white transition hover:bg-sky-500">{t('account_discover_button')}<ArrowRight size={14} /></button>
       </div>
     </section>
   );
@@ -404,10 +404,10 @@ function BookingRow({ title, date, status, image }: { title: string; date: strin
 function Plans() {
   const { t } = useLanguage();
   return <PagePanel title={t('account_plans')} intro={t('account_plans_intro')}>
-    <div className="rounded-xl border border-account-accent/20 bg-account-accent/5 p-4 sm:p-5">
+    <div className="rounded-lg border border-account-accent/20 bg-account-accent/5 p-3 sm:p-3">
       <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold text-text-primary">Yangon → Bagan → Inle Lake</p><span className="rounded-full bg-amber-400/10 px-2.5 py-1 text-[10px] font-medium text-amber-300">{t('account_quotation_pending')}</span></div>
       <p className="mt-2 text-xs leading-5 text-text-muted">{t('account_plan_review_message')}</p>
-      <div className="mt-4 flex flex-wrap gap-2 text-[10px] text-text-secondary"><span className="rounded-full bg-account-elevated px-2.5 py-1">7 days</span><span className="rounded-full bg-account-elevated px-2.5 py-1">2 travelers</span><span className="rounded-full bg-account-elevated px-2.5 py-1">Myanmar</span></div>
+      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-text-secondary"><span className="rounded-full bg-account-elevated px-2.5 py-1">7 days</span><span className="rounded-full bg-account-elevated px-2.5 py-1">2 travelers</span><span className="rounded-full bg-account-elevated px-2.5 py-1">Myanmar</span></div>
     </div>
   </PagePanel>;
 }
@@ -437,15 +437,15 @@ function Reviews() {
 }
 
 function ReviewRow({ title, text }: { title: string; text: string }) {
-  return <article className="rounded-xl border border-account-border bg-account-elevated p-4"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold text-text-primary">{title}</p><span className="flex items-center gap-0.5 text-amber-300" aria-label="5 stars">{Array.from({ length: 5 }, (_, index) => <Star key={index} size={13} fill="currentColor" />)}</span></div><p className="mt-2 text-xs leading-5 text-text-muted">{text}</p></article>;
+  return <article className="rounded-lg border border-account-border bg-account-elevated p-3"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold text-text-primary">{title}</p><span className="flex items-center gap-0.5 text-amber-300" aria-label="5 stars">{Array.from({ length: 5 }, (_, index) => <Star key={index} size={13} fill="currentColor" />)}</span></div><p className="mt-2 text-xs leading-5 text-text-muted">{text}</p></article>;
 }
 
 function WalletView({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { t } = useLanguage();
   return <PagePanel title={t('account_wallet')} intro={t('account_wallet_intro')}>
     <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
-      <div className="rounded-xl border border-account-accent/20 bg-gradient-to-br from-sky-600/25 to-blue-900/20 p-4 sm:p-5"><div className="flex items-center justify-between"><span className="text-xs text-text-muted">{t('account_wallet_balance')}</span><WalletCards size={19} className="text-account-accent" /></div><p className="mt-3 text-2xl font-bold text-text-primary">$ 125.00</p><p className="mt-1 text-[10px] text-text-faint">{t('account_wallet_currency')}</p></div>
-      <button type="button" onClick={onOpenSettings} className="flex min-h-28 items-center justify-between rounded-xl border border-dashed border-account-border bg-account-elevated p-4 text-left transition hover:border-account-accent/60"><span><span className="flex items-center gap-2 text-sm font-medium text-text-primary"><CreditCard size={16} className="text-account-accent" />{t('account_wallet_payment_methods')}</span><span className="mt-1 block text-[11px] text-text-muted">{t('account_payment_methods')}</span></span><Plus size={18} className="text-account-accent" /></button>
+      <div className="rounded-lg border border-account-accent/20 bg-gradient-to-br from-sky-600/25 to-blue-900/20 p-3"><div className="flex items-center justify-between"><span className="text-xs text-text-muted">{t('account_wallet_balance')}</span><WalletCards size={19} className="text-account-accent" /></div><p className="mt-3 text-2xl font-bold text-text-primary">$ 125.00</p><p className="mt-1 text-[10px] text-text-faint">{t('account_wallet_currency')}</p></div>
+      <button type="button" onClick={onOpenSettings} className="flex min-h-20 items-center justify-between rounded-lg border border-dashed border-account-border bg-account-elevated p-3 text-left transition hover:border-account-accent/60"><span><span className="flex items-center gap-2 text-sm font-medium text-text-primary"><CreditCard size={16} className="text-account-accent" />{t('account_wallet_payment_methods')}</span><span className="mt-1 block text-[11px] text-text-muted">{t('account_payment_methods')}</span></span><Plus size={18} className="text-account-accent" /></button>
     </div>
   </PagePanel>;
 }
@@ -453,7 +453,7 @@ function WalletView({ onOpenSettings }: { onOpenSettings: () => void }) {
 function Messages() {
   const { t } = useLanguage();
   return <PagePanel title={t('account_messages')} intro={t('account_messages_intro')}>
-    <div className="flex gap-3 rounded-xl border border-account-border bg-account-elevated p-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-account-accent/10 text-account-accent"><MessageCircle size={18} /></span><div><p className="text-sm font-semibold text-text-primary">MH Travel Support</p><p className="mt-1 text-xs leading-5 text-text-muted">{t('account_message_sample')}</p></div></div>
+    <div className="flex gap-3 rounded-lg border border-account-border bg-account-elevated p-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-account-accent/10 text-account-accent"><MessageCircle size={18} /></span><div><p className="text-sm font-semibold text-text-primary">MH Travel Support</p><p className="mt-1 text-xs leading-5 text-text-muted">{t('account_message_sample')}</p></div></div>
   </PagePanel>;
 }
 
@@ -465,7 +465,7 @@ function SettingsView({ name, email }: { name: string; email: string }) {
 }
 
 function SettingRow({ icon: Icon, title, value }: { icon: LucideIcon; title: string; value: string }) {
-  return <button type="button" className="flex w-full items-center justify-between gap-3 rounded-xl border border-account-border bg-account-elevated p-3.5 text-left transition hover:border-account-accent/40"><span className="flex items-center gap-2.5 text-xs font-medium text-text-primary"><Icon size={15} className="shrink-0 text-account-accent" />{title}</span><span className="flex items-center gap-1 text-right text-[10px] text-text-muted">{value}<ChevronRight size={13} className="shrink-0" /></span></button>;
+  return <button type="button" className="flex w-full items-center justify-between gap-3 rounded-lg border border-account-border bg-account-elevated p-2.5 text-left transition hover:border-account-accent/40"><span className="flex items-center gap-2.5 text-xs font-medium text-text-primary"><Icon size={15} className="shrink-0 text-account-accent" />{title}</span><span className="flex items-center gap-1 text-right text-[10px] text-text-muted">{value}<ChevronRight size={13} className="shrink-0" /></span></button>;
 }
 
 function Support() {
@@ -476,11 +476,11 @@ function Support() {
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <div className="rounded-xl border border-dashed border-account-border bg-account-elevated/50 p-10 text-center text-xs text-text-muted">{text}</div>;
+  return <div className="rounded-lg border border-dashed border-account-border bg-account-elevated/50 p-6 text-center text-xs text-text-muted">{text}</div>;
 }
 
 function PagePanel({ title, intro, children }: { title: string; intro: string; children: React.ReactNode }) {
-  return <section className="rounded-2xl border border-account-border bg-account-surface p-4 sm:p-5 lg:p-6"><h2 className="text-lg font-semibold text-text-primary sm:text-xl">{title}</h2><p className="mt-1 text-xs leading-5 text-text-muted">{intro}</p><div className="mt-5">{children}</div></section>;
+  return <section className="rounded-xl border border-account-border bg-account-surface p-3 sm:p-4 lg:p-5"><h2 className="text-lg font-semibold text-text-primary sm:text-xl">{title}</h2><p className="mt-1 text-xs leading-5 text-text-muted">{intro}</p><div className="mt-3">{children}</div></section>;
 }
 
 function PanelTitle({ icon: Icon, title, action, onClick }: { icon: LucideIcon; title: string; action?: string; onClick?: () => void }) {
