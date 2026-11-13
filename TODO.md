@@ -359,3 +359,11 @@
 - [x] Keep all existing dashboard content and controls while reducing padding, gaps, row heights, icon sizes, and panel radii.
 - [x] Reduce desktop sidebar/header footprint and preserve responsive mobile navigation.
 - [x] Apply compact density consistently across Overview, Shop Owners, Ads Management, Admin Management, and generic admin sections.
+
+## All admin dashboards second compact pass — 2026-11-14
+
+### Completed frontend behavior
+- [x] Compact Super Admin dashboard again, including shared Admin Management panels/forms.
+- [x] Compact Shop Owner dashboard sidebar, header, profile, welcome hero, KPI cards, chart, tables, quick actions, and section cards.
+- [x] Keep Super Admin and Shop Owner responsive layouts and all existing actions intact.
+- [x] Keep compact density consistent across the three dashboard roles.

@@ -391,3 +391,9 @@ Schedule input was changed from a manually typed datetime field to separate nati
 The Super Admin dashboard received a compact-density pass based on the user's preference for smaller boxes and less unused space. The desktop sidebar and header are shorter/narrower; the Overview hero, KPI cards, analytics chart, distribution panel, Quick Action tiles, panel headers, tables, forms, and shared admin cards use tighter padding, gaps, row heights, icon sizes, and radii. Existing content and actions remain available, including responsive mobile navigation.
 
 Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
+
+## 24. All admin dashboards second compact pass — 2026-11-14
+
+A second density pass was applied across the Super Admin, Shop Owner, and Admin Management dashboards. Shop Owner received a narrower sidebar, shorter header and hero, smaller profile/KPI/chart areas, tighter tables, quick actions, and section cards. Super Admin Admin Management and Shop Owner management forms received smaller controls and tighter table/form spacing. The role dashboards now share a compact visual rhythm while retaining content, actions, responsive layouts, and route protection.
+
+Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
