@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import { SiteInteractionGuard } from './components/common/SiteInteractionGuard';
 import { ThemeProvider } from './lib/theme';
 import { LanguageProvider } from './lib/i18n';
 import { CurrencyProvider } from './lib/currency';
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')!).render(
       <LanguageProvider>
         <CurrencyProvider>
           <FavoritesProvider>
+            <SiteInteractionGuard />
             <App />
           </FavoritesProvider>
         </CurrencyProvider>

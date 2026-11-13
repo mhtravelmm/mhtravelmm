@@ -374,3 +374,14 @@
 - [x] Reduce User Dashboard outer shell, sidebar, profile area, navigation rows, and main content gaps.
 - [x] Reduce welcome banner, stat cards, booking/activity panels, quick actions, discovery card, wallet, messages, settings, and secondary view cards.
 - [x] Preserve dashboard data, navigation actions, favorites, booking actions, responsive layout, and footer.
+
+## Site-wide right-click and zoom guard — 2026-11-14
+
+### Completed frontend behavior
+- [x] Prevent page right-click/context-menu events.
+- [x] Prevent page-level Ctrl/Cmd `+`, `-`, `0`, and Ctrl/Cmd + mouse-wheel zoom gestures.
+- [x] Add best-effort mobile viewport scale restriction.
+- [x] Keep the guard isolated in a reusable application component.
+
+### Browser limitation
+- [ ] Browser menu/settings zoom cannot be forcibly controlled by website JavaScript; this remains browser-level behavior.

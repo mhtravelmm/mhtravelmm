@@ -766,3 +766,8 @@ This section records the dashboard work completed from the supplied visual refer
 ### User Dashboard compact density pass — 2026-11-14
 - Reduced the traveler User Dashboard shell width/padding, sidebar width, profile spacing, navigation rows, welcome banner, stat cards, booking/activity panels, quick actions, discovery banner, wallet/message/settings cards, and secondary view containers.
 - Preserved all dashboard content, navigation actions, favorite flows, booking controls, responsive mobile behavior, and footer content while using less space.
+
+### Site-wide right-click and zoom interaction guard — 2026-11-14
+- Added a global interaction guard that prevents the page context menu, Ctrl/Cmd zoom shortcuts (`+`, `-`, `0`), and Ctrl/Cmd + mouse-wheel zoom gestures while the site is open.
+- Added a mobile viewport scale restriction (`maximum-scale=1`, `user-scalable=no`) as a best-effort prevention for pinch zoom on supported browsers.
+- Browser menus/settings and browser-level zoom remain outside website control; users can still change zoom through browser UI or accessibility tools.

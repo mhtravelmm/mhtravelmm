@@ -403,3 +403,7 @@ Typecheck and production build passed. Lint passed with the repository's existin
 The traveler User Dashboard was compacted to match the admin dashboard density direction. The shell and sidebar are narrower, navigation rows are shorter, the welcome hero is smaller, KPI/stat cards use less padding, and booking/activity, quick-action, discovery, wallet, message, settings, and secondary view panels are tighter. Existing content and actions remain available across desktop and mobile.
 
 Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
+
+## 26. Site-wide right-click and zoom interaction guard — 2026-11-14
+
+Added `SiteInteractionGuard` at the application root to prevent page context menus, page-level Ctrl/Cmd zoom shortcuts, and Ctrl/Cmd + mouse-wheel zoom. The HTML viewport now requests a maximum scale of 1 and disables user-scalable pinch zoom where supported. Browser menu/settings zoom remains intentionally documented as outside website control. Typecheck and production build passed; lint remains at the repository's existing seven non-blocking warnings.
