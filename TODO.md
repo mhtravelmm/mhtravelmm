@@ -393,3 +393,11 @@
 - [x] Tighten Shop Owner dashboard shell, sidebar, header, hero, KPI, chart, quick-action, form, and table density again.
 - [x] Tighten User Dashboard shell, sidebar, hero, stat cards, panels, and quick-action density again.
 - [x] Preserve all role dashboard content, actions, route guards, responsive layouts, and mobile navigation.
+
+## Dashboard footer/copyright compact pass — 2026-11-14
+
+### Completed frontend behavior
+- [x] Reduce Super Admin/Admin footer copyright box height, padding, logo, and social icon spacing.
+- [x] Reduce Shop Owner footer copyright box height, padding, and logo/text spacing.
+- [x] Reduce shared User Dashboard Footer/PageCopyright spacing and copyright row height.
+- [x] Apply another compact spacing pass to all requested dashboards without removing data or actions.

@@ -98,8 +98,8 @@ export function AccountPage() {
   }
 
   return (
-    <div className="account-dashboard mx-auto w-full max-w-[1320px] rounded-lg bg-account-bg p-3 text-text-primary shadow-2xl shadow-black/10 sm:rounded-xl sm:p-2 lg:p-3">
-      <div className="grid gap-2 lg:grid-cols-[180px_minmax(0,1fr)] lg:gap-2">
+    <div className="account-dashboard mx-auto w-full max-w-[1280px] rounded-md bg-account-bg p-3 text-text-primary shadow-2xl shadow-black/10 sm:rounded-xl sm:p-1.5 lg:p-2">
+      <div className="grid gap-1.5 lg:grid-cols-[168px_minmax(0,1fr)] lg:gap-1.5">
         <aside className="account-sidebar self-start rounded-xl border border-account-border bg-account-surface p-2.5 sm:p-2.5 lg:sticky lg:top-20">
           <div className="flex items-center gap-3 lg:flex-col lg:gap-2 lg:py-1 lg:text-center">
             <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-account-accent/80 bg-gradient-to-br from-sky-400 to-blue-700 text-base font-bold text-white shadow-lg shadow-sky-900/30 sm:h-16 sm:w-16">
@@ -225,19 +225,19 @@ function Overview({
         </div>
       </section>
 
-      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1.5 xl:grid-cols-4">
         <StatCard icon={Briefcase} value="3" label={t('account_stat_bookings')} tone="blue" onClick={() => onOpen('bookings')} />
         <StatCard icon={MapPin} value="2" label={t('account_stat_plans')} tone="cyan" onClick={() => onOpen('plans')} />
         <StatCard icon={Heart} value={String(favoriteCount)} label={t('account_stat_saved')} tone="rose" onClick={() => onOpen('favorites')} />
         <StatCard icon={Star} value="5" label={t('account_stat_reviews')} tone="gold" onClick={() => onOpen('reviews')} />
       </div>
 
-      <div className="grid gap-2 2xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid gap-1.5 2xl:grid-cols-[1.2fr_0.8fr]">
         <UpcomingTrip onViewAll={() => onOpen('bookings')} onManage={() => onOpen('bookings')} />
         <QuickActions onNavigate={onNavigate} />
       </div>
 
-      <div className="grid gap-2 xl:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-1.5 xl:grid-cols-[1.05fr_0.95fr]">
         <ActivityFeed />
         <DiscoveryCard onExplore={() => onNavigate('/cities')} />
       </div>
@@ -327,7 +327,7 @@ function QuickActions({ onNavigate }: { onNavigate: (path: string) => void }) {
       <PanelTitle icon={Zap} title={t('account_quick_actions')} />
       <div className="mt-3 grid grid-cols-2 gap-2.5">
         {actions.map(({ icon: Icon, key, path, tone }) => (
-          <button key={key} type="button" onClick={() => onNavigate(path)} className="group flex min-h-[50px] flex-col items-center justify-center gap-2 rounded-xl border border-account-border bg-account-elevated p-2 text-center transition hover:border-account-accent/60 hover:bg-account-accent/10 sm:min-h-[58px]">
+          <button key={key} type="button" onClick={() => onNavigate(path)} className="group flex min-h-[44px] flex-col items-center justify-center gap-2 rounded-xl border border-account-border bg-account-elevated p-2 text-center transition hover:border-account-accent/60 hover:bg-account-accent/10 sm:min-h-[58px]">
             <Icon size={25} className={`${tone} transition group-hover:-translate-y-0.5`} />
             <span className="text-[10px] font-medium text-text-secondary sm:text-xs">{t(key)}</span>
           </button>
@@ -368,7 +368,7 @@ function ActivityFeed() {
 function DiscoveryCard({ onExplore }: { onExplore: () => void }) {
   const { t } = useLanguage();
   return (
-    <section className="relative isolate flex min-h-[135px] flex-col justify-end overflow-hidden rounded-xl border border-account-border p-3 sm:min-h-[155px] sm:p-4">
+    <section className="relative isolate flex min-h-[120px] flex-col justify-end overflow-hidden rounded-xl border border-account-border p-3 sm:min-h-[140px] sm:p-4">
       <img src="/images/blog/inle-stilt-houses.webp" alt={t('account_discovery_alt')} className="absolute inset-0 -z-20 h-full w-full object-cover" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#031326]/95 via-[#031326]/45 to-[#031326]/5" />
       <div className="max-w-md">

@@ -777,3 +777,8 @@ This section records the dashboard work completed from the supplied visual refer
 - Further reduced Shop Owner sidebar/header, welcome hero, KPI cards, booking chart, quick actions, tables, and form/card padding.
 - Further reduced User Dashboard max width, outer/sidebar spacing, welcome/discovery hero heights, stat cards, panels, and quick-action tiles.
 - Kept all dashboard content, actions, route protection, responsive behavior, and mobile navigation intact.
+
+### Dashboard footer/copyright compact pass — 2026-11-14
+- Reduced Super Admin and Shop Owner custom copyright footer boxes to short, low-padding rows with smaller logo/social elements.
+- Reduced the shared public Footer and PageCopyright height/padding used below the User Dashboard so the copyright area no longer consumes a large block.
+- Further tightened Super Admin/Admin, Shop Owner, and User shell/hero/chart/action spacing while preserving all dashboard content, controls, route guards, and responsive layouts.

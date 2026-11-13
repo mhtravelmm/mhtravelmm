@@ -413,3 +413,9 @@ Added `SiteInteractionGuard` at the application root to prevent page context men
 A third, tighter density pass was applied across Super Admin/Admin, Shop Owner, and User dashboards. Shell widths and outer padding, sidebar/header heights, hero banners, KPI/stat cards, charts, quick-action tiles, forms, panels, and tables were reduced again to minimize unused space. No dashboard content or actions were removed, and responsive layouts and route guards remain intact.
 
 Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
+
+## 28. Dashboard footer/copyright compact pass — 2026-11-14
+
+Reduced the oversized copyright/footer boxes beneath the dashboard experiences. Super Admin and Shop Owner custom footers now use short rows, smaller padding, and smaller brand/social elements. The shared Footer/PageCopyright used by the User Dashboard was also tightened. A further compact pass reduced shell, hero, chart, table, and action spacing across Super Admin/Admin, Shop Owner, and User dashboards while preserving content, actions, route guards, and responsiveness.
+
+Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.

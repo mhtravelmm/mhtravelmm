@@ -37,11 +37,11 @@ export function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="mt-4 border-t border-border pt-3.5">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+    <footer className="mt-2 border-t border-border pt-2">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
         <div className="col-span-2 md:col-span-1">
-          <p className="mb-1.5 text-xs text-brand-blue">MH Travel</p>
-          <p className="mb-2 text-[9px] text-text-faint">{t('footer_tagline')}</p>
+          <p className="mb-1 text-xs text-brand-blue">MH Travel</p>
+          <p className="mb-1 text-[9px] text-text-faint">{t('footer_tagline')}</p>
           <div className="flex gap-1.5 text-text-muted">
             <Instagram size={12} />
             <Facebook size={12} />
@@ -52,7 +52,7 @@ export function Footer() {
 
         {FOOTER_COLUMNS.map((col) => (
           <div key={col.headingKey}>
-            <p className="mb-1.5 text-[11px] text-brand-blue">{t(col.headingKey)}</p>
+            <p className="mb-1 text-[11px] text-brand-blue">{t(col.headingKey)}</p>
             {col.linkKeys.map((linkKey) => (
               <p key={linkKey} className="mb-0.5 text-[9px] text-text-faint">
                 {t(linkKey)}
@@ -62,7 +62,7 @@ export function Footer() {
         ))}
 
         <div>
-          <p className="mb-1.5 text-[11px] text-brand-blue">{t('footer_content')}</p>
+          <p className="mb-1 text-[11px] text-brand-blue">{t('footer_content')}</p>
           {CONTENT_COLUMN_VALUES.map((value) => (
             <p key={value} className="mb-0.5 text-[9px] text-text-faint">
               {value}
@@ -71,9 +71,9 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-2.5 border-t border-border pt-3 md:grid-cols-3">
+      <div className="mt-2 grid grid-cols-1 gap-1.5 border-t border-border pt-2 md:grid-cols-3">
         <div>
-          <p className="mb-1.5 text-[10px] text-brand-blue">{t('footer_myanmar_payment')}</p>
+          <p className="mb-1 text-[10px] text-brand-blue">{t('footer_myanmar_payment')}</p>
           <div className="flex flex-wrap gap-1">
             {MYANMAR_PAYMENT.map((p) => (
               <span key={p} className="rounded bg-bg-card px-1.5 py-0.5 text-[8px] text-text-muted">
@@ -83,7 +83,7 @@ export function Footer() {
           </div>
         </div>
         <div className="text-center">
-          <p className="mb-1.5 text-[10px] text-brand-blue">{t('footer_download_app')}</p>
+          <p className="mb-1 text-[10px] text-brand-blue">{t('footer_download_app')}</p>
           <div className="flex justify-center gap-1.5">
             <span className="rounded bg-bg-card px-2 py-1 text-[8px] text-text-secondary">
               {t('footer_app_store')}
@@ -94,7 +94,7 @@ export function Footer() {
           </div>
         </div>
         <div className="text-right">
-          <p className="mb-1.5 text-[10px] text-brand-blue">{t('footer_international_payment')}</p>
+          <p className="mb-1 text-[10px] text-brand-blue">{t('footer_international_payment')}</p>
           <div className="flex flex-wrap justify-end gap-1">
             {INTL_PAYMENT.map((p) => (
               <span key={p} className="rounded bg-bg-card px-1.5 py-0.5 text-[8px] text-text-muted">
@@ -105,7 +105,7 @@ export function Footer() {
         </div>
       </div>
 
-      <p className="mt-3.5 border-t border-border pt-2.5 text-center text-[9px] text-text-faint">
+      <p className="mt-2 border-t border-border pt-1.5 text-center text-[9px] text-text-faint">
         {t('footer_copyright')}
       </p>
     </footer>
@@ -117,7 +117,7 @@ export function PageCopyright({ className = '' }: { className?: string }) {
   const { t } = useLanguage();
 
   return (
-    <footer className={`border-t border-border py-2.5 text-center ${className}`}>
+    <footer className={`border-t border-border py-1.5 text-center ${className}`}>
       <p className="text-[9px] text-text-faint">{t('footer_copyright')}</p>
     </footer>
   );
