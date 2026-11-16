@@ -62,3 +62,8 @@ The application currently provides a substantial frontend and local-preview expe
 - Persist each Shop Owner's MMK/USD main currency on the business profile and apply it to real menu, service, rental, ticket, and booking prices.
 - Snapshot the exchange rate and displayed currency on every order/booking so historical totals do not change when Admin updates the rate.
 - Define server-side rounding, payment/refund currency, rate scheduling, permissions, and validation rules.
+
+
+## Shop Owner application notifications — production work remaining
+
+The current notification is a local preview implementation. Production should create a Supabase notification row or server event after a successful Shop Owner application, scope it to authorized Admin/Super Admin recipients, and deliver it through realtime subscriptions or a notification API. Read state, delivery state, retention, and audit history should be persisted server-side rather than only in browser localStorage.

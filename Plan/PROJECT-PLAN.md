@@ -1455,3 +1455,12 @@ Simplified dashboard social footer content to Facebook and YouTube only, both re
 - Added Shop Owners filters for `All`, city, business category, and application/status (`All`, `Pending`, `Active`).
 - Added filtered-result counts and an explicit Pending applications indicator above the Shop Owner account table.
 - New Shop Owner records continue to enter the Pending state, so submitted applications can be reviewed separately from active owners.
+
+
+---
+
+## Shop Owner application notifications — 2026-11-16
+
+A successful Shop Owner application now creates a local preview notification for the Super Admin. The notification bell displays the unread count, opens a compact notification drawer, supports individual read state and Mark all read, and synchronizes the preview notification list across browser tabs. The notification includes the applicant, business, city, and category so the Admin can identify the application without opening the table.
+
+For production, the workflow must move to server-side notification records with authorization, realtime/API delivery, persistent read state, retention, and audit history.

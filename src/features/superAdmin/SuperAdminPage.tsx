@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
@@ -43,6 +43,19 @@ import { BlogPostsPanel } from './BlogPostsPanel';
 
 type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'ads' | 'currency';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
+type AdminNotification = { id: string; title: string; message: string; createdAt: string; read: boolean };
+
+const ADMIN_NOTIFICATIONS_KEY = 'mh-travel-admin-notifications';
+
+function readAdminNotifications(): AdminNotification[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(ADMIN_NOTIFICATIONS_KEY) || '[]');
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    return [];
+  }
+}
 
 type NavItem = {
   id: AdminView;
@@ -128,6 +141,20 @@ export function SuperAdminPage() {
   const [period, setPeriod] = useState('Last 30 Days');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notice, setNotice] = useState('');
+  const [notifications, setNotifications] = useState<AdminNotification[]>(readAdminNotifications);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  useEffect(() => {
+    window.localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+  }, [notifications]);
+
+  useEffect(() => {
+    function syncNotifications(event: StorageEvent) {
+      if (event.key === ADMIN_NOTIFICATIONS_KEY) setNotifications(readAdminNotifications());
+    }
+    window.addEventListener('storage', syncNotifications);
+    return () => window.removeEventListener('storage', syncNotifications);
+  }, []);
 
   function signOut() {
     logout();
@@ -142,6 +169,21 @@ export function SuperAdminPage() {
   function runAction(label: string) {
     setNotice(`${label} is ready for your next action.`);
     window.setTimeout(() => setNotice(''), 2600);
+  }
+
+  function addOwnerApplicationNotification(shop: { owner: string; business: string; city: string; category: string }) {
+    setNotifications((current) => [{
+      id: `owner-application-${Date.now()}`,
+      title: 'New Shop Owner application',
+      message: `${shop.business} · ${shop.city} · ${shop.category} · submitted by ${shop.owner}`,
+      createdAt: new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }),
+      read: false,
+    }, ...current].slice(0, 30));
+    setNotificationsOpen(true);
+  }
+
+  function markNotificationsRead() {
+    setNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
   }
 
   const displayName = user?.name || 'Super Admin';
@@ -173,7 +215,7 @@ export function SuperAdminPage() {
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex h-[48px] items-center justify-between gap-4 border-b border-[#214263] bg-[#071a32]/95 px-3 backdrop-blur sm:px-4 lg:px-5">
+          <header className="relative flex h-[48px] items-center justify-between gap-4 border-b border-[#214263] bg-[#071a32]/95 px-3 backdrop-blur sm:px-4 lg:px-5">
             <div className="flex min-w-0 items-center gap-3">
               <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} className="rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden" aria-label="Open admin menu">{mobileMenuOpen ? <X size={17} /> : <Menu size={17} />}</button>
               <div className="flex w-full max-w-[360px] items-center gap-3 rounded-full border border-[#2a5383] bg-[#0e2b53] px-3 py-1.5 text-slate-300 shadow-inner"><Search size={17} /><input aria-label="Search dashboard" placeholder="Search anything..." className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-300/80" /></div>
@@ -181,16 +223,17 @@ export function SuperAdminPage() {
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <button type="button" onClick={toggleLanguage} className="hidden items-center gap-2 text-sm font-semibold text-white sm:flex"><Globe2 size={18} />{language === 'mm' ? 'မြန်မာ' : 'English'}<ChevronDown size={14} /></button>
               <button type="button" onClick={toggleTheme} className="hidden rounded-full p-1.5 text-slate-200 hover:bg-white/10 sm:block" aria-label="Toggle theme">{theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}</button>
-              <button type="button" onClick={() => runAction('Notifications')} className="relative rounded-full p-1.5 text-white hover:bg-white/10" aria-label="Notifications"><Bell size={19} fill="currentColor" /><span className="absolute -right-0.5 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">12</span></button>
+              <button type="button" onClick={() => setNotificationsOpen((open) => !open)} className="relative rounded-full p-1.5 text-white hover:bg-white/10" aria-label="Notifications"><Bell size={19} fill="currentColor" />{notifications.some((notification) => !notification.read) && <span className="absolute -right-0.5 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">{notifications.filter((notification) => !notification.read).length}</span>}</button>
               <div className="hidden items-center gap-2 sm:flex"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-700 text-[10px] font-bold text-white">{initials}</div><span className="text-sm font-semibold">Super Admin</span><ChevronDown size={14} className="text-slate-300" /></div>
             </div>
+            {notificationsOpen && <div className="absolute right-3 top-12 z-40 w-[min(360px,calc(100vw-24px))] rounded-lg border border-[#2b527d] bg-[#0b203b] p-2 shadow-2xl sm:right-5"><div className="flex items-center justify-between border-b border-[#244668] px-2 pb-2"><div><p className="text-xs font-bold text-white">Admin Notifications</p><p className="text-[10px] text-slate-400">Shop Owner applications and system updates</p></div><button type="button" onClick={markNotificationsRead} className="text-[10px] font-semibold text-cyan-300 hover:text-white">Mark all read</button></div><div className="max-h-72 overflow-y-auto pt-1">{notifications.length === 0 ? <p className="px-2 py-5 text-center text-xs text-slate-400">No new notifications.</p> : notifications.map((notification) => <button key={notification.id} type="button" onClick={() => setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read: true } : item))} className={`block w-full rounded-md px-2 py-2 text-left ${notification.read ? 'bg-transparent' : 'bg-cyan-400/10'}`}><div className="flex items-start gap-2"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${notification.read ? 'bg-slate-600' : 'bg-cyan-300'}`} /><span className="min-w-0"><strong className="block text-[11px] text-white">{notification.title}</strong><span className="mt-0.5 block text-[10px] leading-4 text-slate-300">{notification.message}</span><span className="mt-1 block text-[9px] text-slate-500">{notification.createdAt}</span></span></div></button>)}</div></div>}
           </header>
 
           {mobileMenuOpen && <div className="border-b border-[#214263] bg-[#08182d] p-3 lg:hidden"><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{navItems.map((item, index) => { const Icon = item.icon; return <button key={`${item.label}-mobile-${index}`} type="button" onClick={() => selectNav(item.id)} className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs ${item.id === view ? 'bg-[#168df4] text-white' : 'bg-white/5 text-slate-300'}`}><Icon size={15} />{formatAdminLabel(item.label, language)}</button>; })}</div><button type="button" onClick={signOut} className="mt-2 flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-400"><LogOut size={15} /> Logout</button></div>}
 
           <main className="p-1.5 sm:p-2 lg:p-3">
             {notice && <div role="status" className="fixed right-4 top-20 z-50 rounded-lg border border-cyan-300/30 bg-[#102e51] px-3 py-2 text-xs text-cyan-100 shadow-2xl">{notice}</div>}
-            {view === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : view === 'admins' ? <AdminManagementPanel runAction={runAction} /> : view === 'owners' ? <ShopOwnersPanel runAction={runAction} /> : view === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : view === 'ads' ? <AdsManagementPanel runAction={runAction} /> : view === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : <AdminSection view={view} runAction={runAction} />}
+            {view === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : view === 'admins' ? <AdminManagementPanel runAction={runAction} /> : view === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : view === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : view === 'ads' ? <AdsManagementPanel runAction={runAction} /> : view === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : <AdminSection view={view} runAction={runAction} />}
           </main>
           <footer className="mt-auto flex flex-col gap-1 border-t border-[#214263] bg-[#071a32] px-3 py-2 text-center text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:text-left"><div><p className="text-base font-bold text-[#27c2ff]">MH Travel</p><p className="mt-1">Explore Myanmar, Travel Better</p></div><p>© 2026, MH Travel. All Rights Reserved.</p><div className="flex justify-center gap-2 text-cyan-300 sm:justify-end"><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">f</span><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">▶</span></div></footer>
         </div>
@@ -290,7 +333,7 @@ function AdminManagementPanel({ runAction }: { runAction: (label: string) => voi
   </div>;
 }
 
-function ShopOwnersPanel({ runAction }: { runAction: (label: string) => void }) {
+function ShopOwnersPanel({ runAction, onOwnerApplication }: { runAction: (label: string) => void; onOwnerApplication: (shop: { owner: string; business: string; city: string; category: string }) => void }) {
   const navigate = useNavigate();
   const { createShopOwner } = useAuth();
   const [showForm, setShowForm] = useState(false);
@@ -325,6 +368,7 @@ function ShopOwnersPanel({ runAction }: { runAction: (label: string) => void }) 
       return;
     }
     setCreatedOwners((current) => [{ owner: form.owner, shop: form.shop, username: form.username, city: form.city, category: form.category, status: 'Pending' }, ...current]);
+    onOwnerApplication({ owner: form.owner, business: form.shop, city: form.city, category: form.category });
     setLastCredentials({ shop: form.shop, username: form.username, password: form.password });
     setForm({ owner: '', shop: '', email: '', phone: '', username: '', password: '', city: 'Yangon', category: 'Restaurant' });
     setShowForm(false);

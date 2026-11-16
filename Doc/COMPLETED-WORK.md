@@ -64,3 +64,8 @@ The Shop Owner Settings workspace now lets each preview shop choose `MMK Main` o
 ## Super Admin navigation and Shop Owner filtering — 16 November 2026
 
 `Currency & Exchange Rate` is now a standalone Super Admin navigation item instead of appearing as a generic Settings destination. The Shop Owners management table now supports `All`, city, business-category, and application/status filtering. Pending applications can be shown separately from Active owners, and the table reports how many records match the selected filters.
+
+
+## Shop Owner application notifications — 16 November 2026
+
+When a new Shop Owner account/application is successfully created, the Super Admin notification bell now receives an unread notification containing the business name, city, category, and applicant name. The header badge shows the unread count, the dropdown supports opening individual notifications or marking all as read, and the preview notification list is persisted locally and synchronized across open browser tabs.
