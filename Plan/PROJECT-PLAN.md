@@ -1464,3 +1464,12 @@ Simplified dashboard social footer content to Facebook and YouTube only, both re
 A successful Shop Owner application now creates a local preview notification for the Super Admin. The notification bell displays the unread count, opens a compact notification drawer, supports individual read state and Mark all read, and synchronizes the preview notification list across browser tabs. The notification includes the applicant, business, city, and category so the Admin can identify the application without opening the table.
 
 For production, the workflow must move to server-side notification records with authorization, realtime/API delivery, persistent read state, retention, and audit history.
+
+
+---
+
+## Page-based Ads Management — 2026-11-16
+
+Ads Management is now organized around the actual website pages rather than a campaign-inventory table. Super Admin can choose a page such as Home, Cities, City Detail, Travel Plans, Blogs, Blog Detail, Nearby, or User Dashboard, then view only that page's placements. Each page supports adding an ad, editing its name/advertiser/placement, previewing the page, and publishing or pausing the placement.
+
+The current implementation is preview/local state. Production integration must persist page routes, placement slots, creative/media, advertiser, schedule, approval status, and page-level permissions in the backend, then render the published placement in the matching page component.

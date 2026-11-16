@@ -69,3 +69,8 @@ The Shop Owner Settings workspace now lets each preview shop choose `MMK Main` o
 ## Shop Owner application notifications — 16 November 2026
 
 When a new Shop Owner account/application is successfully created, the Super Admin notification bell now receives an unread notification containing the business name, city, category, and applicant name. The header badge shows the unread count, the dropdown supports opening individual notifications or marking all as read, and the preview notification list is persisted locally and synchronized across open browser tabs.
+
+
+## Page-based Ads Management — 16 November 2026
+
+The campaign inventory view was replaced with a page-oriented Ads Management workspace. Super Admin now selects a named website page, sees only the ad placements belonging to that page, and can add, edit, preview, publish, or pause each placement. The UI includes page paths, placement slots, advertiser names, and per-page ad counts.

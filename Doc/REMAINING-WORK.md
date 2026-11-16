@@ -67,3 +67,8 @@ The application currently provides a substantial frontend and local-preview expe
 ## Shop Owner application notifications — production work remaining
 
 The current notification is a local preview implementation. Production should create a Supabase notification row or server event after a successful Shop Owner application, scope it to authorized Admin/Super Admin recipients, and deliver it through realtime subscriptions or a notification API. Read state, delivery state, retention, and audit history should be persisted server-side rather than only in browser localStorage.
+
+
+## Page-based Ads Management — production work remaining
+
+Persist page routes, ad slots, creative/media, advertiser, schedule, approval state, and page-level permissions in Supabase/R2. Published ads must be fetched and rendered by the matching public page, while preview, pause, scheduling, analytics, and audit events must be backed by real APIs rather than local component state.
