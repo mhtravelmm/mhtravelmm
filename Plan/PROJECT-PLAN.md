@@ -1445,3 +1445,13 @@ Simplified dashboard social footer content to Facebook and YouTube only, both re
 - Persist Shop Owner base currency per shop/business profile and apply it to real menu, service, rental, ticket, and booking price records.
 - Add server-side conversion snapshots so an order retains the rate and currency that were shown at checkout; do not recalculate historical bookings from a newer rate.
 - Add validation, permissions, rate-effective scheduling, rounding rules, and payment/refund currency rules for production.
+
+
+---
+
+## Super Admin Currency navigation and Shop Owner filters — 2026-11-16
+
+- Moved `Currency & Exchange Rate` from the generic Settings destination to a standalone Super Admin navigation item.
+- Added Shop Owners filters for `All`, city, business category, and application/status (`All`, `Pending`, `Active`).
+- Added filtered-result counts and an explicit Pending applications indicator above the Shop Owner account table.
+- New Shop Owner records continue to enter the Pending state, so submitted applications can be reviewed separately from active owners.
