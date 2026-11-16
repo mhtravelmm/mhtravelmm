@@ -1424,3 +1424,24 @@ Typecheck and production build passed. Lint passed with the repository's existin
 ## 29. Dashboard social footer simplification — 2026-11-14
 
 Simplified dashboard social footer content to Facebook and YouTube only, both rendered at compact sizes. Added reusable `DashboardCopyright` and connected it to the User Dashboard route, replacing the larger public footer there. Super Admin's custom footer now also keeps only the two requested social markers. Typecheck and production build passed; lint remains at the repository's existing seven non-blocking warnings.
+
+
+---
+
+## Currency management and Shop Owner main-currency selection — 2026-11-16
+
+### Completed frontend behavior
+
+- Added a shared currency configuration layer with a persisted Admin exchange rate, defaulting to `1 USD = 4,500 MMK`.
+- Added a Super Admin `Settings` panel for changing the USD-to-MMK rate. Saving the rate immediately updates all shared `formatPrice()` outputs in the current application session.
+- Added persisted Shop Owner currency selection with `MMK Main` or `USD Main` choices inside the Shop Owner Settings workspace.
+- Added a live conversion preview showing the selected shop main price and the automatically converted secondary currency using the current Admin rate.
+- Kept the public display-currency toggle separate from the Shop Owner's pricing base currency. Public listing prices remain USD-base preview data and are converted with the Admin-managed rate.
+- Typecheck, production build, lint, and whitespace validation passed; lint retains the repository's existing non-blocking warnings.
+
+### Production integration still required
+
+- Persist exchange-rate history, effective dates, who changed the rate, and audit events in Supabase/Admin settings.
+- Persist Shop Owner base currency per shop/business profile and apply it to real menu, service, rental, ticket, and booking price records.
+- Add server-side conversion snapshots so an order retains the rate and currency that were shown at checkout; do not recalculate historical bookings from a newer rate.
+- Add validation, permissions, rate-effective scheduling, rounding rules, and payment/refund currency rules for production.

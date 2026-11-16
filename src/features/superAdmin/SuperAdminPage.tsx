@@ -38,6 +38,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../lib/i18n';
 import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
+import { useCurrency } from '../../lib/currency';
 import { BlogPostsPanel } from './BlogPostsPanel';
 
 type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'ads' | 'settings';
@@ -189,7 +190,7 @@ export function SuperAdminPage() {
 
           <main className="p-1.5 sm:p-2 lg:p-3">
             {notice && <div role="status" className="fixed right-4 top-20 z-50 rounded-lg border border-cyan-300/30 bg-[#102e51] px-3 py-2 text-xs text-cyan-100 shadow-2xl">{notice}</div>}
-            {view === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : view === 'admins' ? <AdminManagementPanel runAction={runAction} /> : view === 'owners' ? <ShopOwnersPanel runAction={runAction} /> : view === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : view === 'ads' ? <AdsManagementPanel runAction={runAction} /> : <AdminSection view={view} runAction={runAction} />}
+            {view === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : view === 'admins' ? <AdminManagementPanel runAction={runAction} /> : view === 'owners' ? <ShopOwnersPanel runAction={runAction} /> : view === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : view === 'ads' ? <AdsManagementPanel runAction={runAction} /> : view === 'settings' ? <CurrencySettingsPanel runAction={runAction} /> : <AdminSection view={view} runAction={runAction} />}
           </main>
           <footer className="mt-auto flex flex-col gap-1 border-t border-[#214263] bg-[#071a32] px-3 py-2 text-center text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:text-left"><div><p className="text-base font-bold text-[#27c2ff]">MH Travel</p><p className="mt-1">Explore Myanmar, Travel Better</p></div><p>© 2026, MH Travel. All Rights Reserved.</p><div className="flex justify-center gap-2 text-cyan-300 sm:justify-end"><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">f</span><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">▶</span></div></footer>
         </div>
@@ -232,6 +233,31 @@ function RecentBookings({ runAction }: { runAction: (label: string) => void }) {
 function PopularCities() { return <Panel><PanelTitle icon={MapPin} title="Popular Cities" action="View All" /><div className="space-y-2 p-3">{cities.map(([name, views, change, image], index) => <div key={name} className="flex items-center gap-2 border-b border-[#1d3a5c] pb-2 last:border-0"><span className="w-4 text-center text-sm font-bold">{index + 1}</span><img src={image} alt="" className="h-9 w-12 rounded-md object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">{name}</p><p className="text-[10px] text-slate-400">{views}</p></div><span className="text-xs font-bold text-cyan-300">↑ {change}</span></div>)}</div></Panel>; }
 
 function RecentUsers() { return <Panel><PanelTitle icon={Users} title="Recent Users" action="View All" /><div className="space-y-2 p-3">{recentUsers.map(([name, time, initials]) => <div key={name} className="flex items-center gap-3 border-b border-[#1d3a5c] pb-2 last:border-0"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-700 text-[10px] font-bold">{initials}</div><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">{name}</p><p className="text-[10px] text-slate-400">{time}</p></div><span className="rounded-full bg-green-500/25 px-2 py-1 text-[9px] font-bold text-green-300">Active</span></div>)}</div></Panel>; }
+
+function CurrencySettingsPanel({ runAction }: { runAction: (label: string) => void }) {
+  const { exchangeRate, setExchangeRate, currency, formatCurrencyAmount } = useCurrency();
+  const [draftRate, setDraftRate] = useState(String(exchangeRate));
+
+  function saveRate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextRate = Number(draftRate);
+    if (!Number.isFinite(nextRate) || nextRate <= 0) return;
+    setExchangeRate(nextRate);
+    runAction(`Exchange rate saved: 1 USD = ${Math.round(nextRate).toLocaleString('en-US')} MMK`);
+  }
+
+  return <div className="mx-auto max-w-[1100px] space-y-3">
+    <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">Currency · Super Admin only</p><h1 className="mt-1 text-lg font-extrabold sm:text-3xl">Currency & Exchange Rate</h1><p className="mt-1 text-sm text-slate-400">Set the platform USD to MMK rate. Every converted public price updates immediately when this rate changes.</p></div>
+    <div className="grid gap-2 lg:grid-cols-[1.1fr_0.9fr]">
+      <Panel><PanelTitle icon={CircleDollarSign} title="USD → MMK exchange rate" /><form onSubmit={saveRate} className="space-y-3 p-3">
+        <label className="block text-xs font-semibold text-slate-300">1 USD equals Myanmar Kyat (MMK)<input value={draftRate} onChange={(event) => setDraftRate(event.target.value)} type="number" min="1" step="1" className="mt-1.5 w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300" /></label>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-cyan-300/20 bg-cyan-300/5 p-2 text-xs"><span className="text-slate-300">Current rate</span><strong className="text-cyan-200">1 USD = {Math.round(exchangeRate).toLocaleString('en-US')} MMK</strong></div>
+        <button type="submit" className="rounded-lg bg-[#168df4] px-3 py-2 text-xs font-bold text-white hover:bg-[#2aa6ff]">Save exchange rate</button>
+      </form></Panel>
+      <Panel><PanelTitle icon={Globe2} title="Live conversion preview" /><div className="space-y-2 p-3 text-xs"><p className="text-slate-400">The current site display currency is <strong className="text-white">{currency}</strong>.</p>{[1, 10, 100].map((amount) => <div key={amount} className="flex items-center justify-between rounded-lg border border-[#244668] bg-[#102c51] px-3 py-2"><span>{amount} USD</span><strong className="text-cyan-200">{formatCurrencyAmount(amount, 'MMK')}</strong></div>)}<p className="pt-1 text-[10px] text-slate-500">Shop Owners separately choose whether their shop prices are managed in MMK or USD.</p></div></Panel>
+    </div>
+  </div>;
+}
 
 function AdminManagementPanel({ runAction }: { runAction: (label: string) => void }) {
   const navigate = useNavigate();

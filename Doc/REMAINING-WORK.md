@@ -54,3 +54,11 @@ The application currently provides a substantial frontend and local-preview expe
 - Deploy the R2 media endpoint and select the public/custom-domain or signed-download policy.
 - Finalize ticketing commission percentage, revenue-share formula, payout schedule, minimum payout, refund/chargeback responsibility, withdrawal rules, and direct-versus-consolidated settlement.
 - Confirm production deployment environment variables, Cloudflare Worker configuration, backend migration reproducibility, and monitoring/logging.
+
+
+## Currency management — production work remaining
+
+- Persist exchange-rate history, effective dates, editor identity, and audit events in Supabase/Admin settings.
+- Persist each Shop Owner's MMK/USD main currency on the business profile and apply it to real menu, service, rental, ticket, and booking prices.
+- Snapshot the exchange rate and displayed currency on every order/booking so historical totals do not change when Admin updates the rate.
+- Define server-side rounding, payment/refund currency, rate scheduling, permissions, and validation rules.
