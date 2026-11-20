@@ -154,8 +154,8 @@ function StoryCard({
   const publishedDate = formatDate(post.publishedAt, language);
 
   return (
-    <article className="group flex min-w-0 overflow-hidden rounded-xl border border-border bg-bg-card shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-black/15 sm:flex-col">
-      <div className="relative h-auto min-h-[126px] w-[98px] shrink-0 self-stretch overflow-hidden bg-bg-cardAlt sm:h-[140px] sm:min-h-0 sm:w-full sm:self-auto 2xl:h-[150px]">
+    <article className="group flex min-w-0 overflow-hidden rounded-lg border border-border bg-bg-card shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg hover:shadow-black/15 sm:flex-col">
+      <div className="relative h-auto min-h-[104px] w-[86px] shrink-0 self-stretch overflow-hidden bg-bg-cardAlt sm:h-[110px] sm:min-h-0 sm:w-full sm:self-auto 2xl:h-[118px]">
         <button
           type="button"
           onClick={onOpen}
@@ -170,11 +170,11 @@ function StoryCard({
           />
         </button>
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/15" />
-        {category && <span className="absolute left-2 top-2 hidden items-center gap-1 rounded-full border border-white/15 bg-slate-950/65 px-2 py-1 text-[9px] font-semibold text-white shadow backdrop-blur sm:inline-flex">
-          <CategoryIcon size={11} className={category.tone} />{categoryLabel}
+        {category && <span className="absolute left-1.5 top-1.5 hidden items-center gap-1 rounded-full border border-white/15 bg-slate-950/65 px-1.5 py-0.5 text-[8px] font-semibold text-white shadow backdrop-blur sm:inline-flex">
+          <CategoryIcon size={10} className={category.tone} />{categoryLabel}
         </span>}
-        <time dateTime={post.publishedAt} className="absolute right-2 top-2 hidden items-center gap-1 rounded-full border border-white/15 bg-slate-950/65 px-2 py-1 text-[9px] text-white shadow backdrop-blur sm:inline-flex">
-          <CalendarDays size={10} />{publishedDate}
+        <time dateTime={post.publishedAt} className="absolute right-1.5 top-1.5 hidden items-center gap-1 rounded-full border border-white/15 bg-slate-950/65 px-1.5 py-0.5 text-[8px] text-white shadow backdrop-blur sm:inline-flex">
+          <CalendarDays size={9} />{publishedDate}
         </time>
         <button
           type="button"
@@ -182,9 +182,9 @@ function StoryCard({
           aria-label={t(isFavorited ? 'blog_saved' : 'blog_save')}
           aria-pressed={isFavorited}
           title={t(isFavorited ? 'blog_saved' : 'blog_save')}
-          className={`absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/20 shadow-lg backdrop-blur transition hover:scale-105 sm:h-8 sm:w-8 ${isFavorited ? 'bg-brand-red text-white' : 'bg-slate-950/65 text-white hover:bg-brand-red'}`}
+          className={`absolute bottom-1.5 right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-white/20 shadow-lg backdrop-blur transition hover:scale-105 sm:h-7 sm:w-7 ${isFavorited ? 'bg-brand-red text-white' : 'bg-slate-950/65 text-white hover:bg-brand-red'}`}
         >
-          <Heart size={14} fill={isFavorited ? 'currentColor' : 'none'} />
+          <Heart size={12} fill={isFavorited ? 'currentColor' : 'none'} />
         </button>
         <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[8px] text-white sm:bottom-2 sm:left-2 sm:text-[9px]">
           <MapPin size={8} />
@@ -192,34 +192,34 @@ function StoryCard({
         </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-between p-2 sm:p-2.5">
+      <div className="flex min-w-0 flex-1 flex-col justify-between p-1.5 sm:p-2">
         <div>
-          <div className="mb-1.5 flex items-center justify-between gap-1 sm:hidden">
+          <div className="mb-1 flex items-center justify-between gap-1 sm:hidden">
             <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-bg-cardAlt px-1.5 py-0.5 text-[8px] font-medium text-text-secondary">
               <CategoryIcon size={10} className={category?.tone ?? 'text-brand-blue'} /><span className="truncate">{categoryLabel}</span>
             </span>
             <time dateTime={post.publishedAt} className="inline-flex shrink-0 items-center gap-1 text-[8px] text-text-faint"><CalendarDays size={9} />{publishedDate}</time>
           </div>
           <button type="button" onClick={onOpen} className="text-left">
-            <h2 className="line-clamp-2 text-[11px] font-semibold leading-[1.3] text-text-primary transition group-hover:text-brand-blue sm:text-sm">
+            <h2 className="line-clamp-2 text-[10.5px] font-semibold leading-[1.3] text-text-primary transition group-hover:text-brand-blue sm:text-[13px]">
               {copy.title}
             </h2>
           </button>
-          <p className="mt-1 line-clamp-2 text-[9px] leading-[1.4] text-text-muted sm:text-[11px] sm:leading-4">{copy.excerpt}</p>
-          <div className="mt-1.5">
+          <p className="mt-0.5 line-clamp-2 text-[9px] leading-[1.35] text-text-muted sm:text-[10.5px] sm:leading-[1.4]">{copy.excerpt}</p>
+          <div className="mt-1">
             <StoryMetrics post={post} views={views} language={language} t={t} showDistance={showDistance} compact />
           </div>
         </div>
 
-        <div className="mt-1.5 flex items-center justify-between gap-1 border-t border-border pt-1.5">
-          <div className="flex items-center gap-1">
-            <span className={`inline-flex items-center gap-1 px-1 py-1 text-[9px] ${isFavorited ? 'text-brand-redLight' : 'text-text-muted'}`}>
-              <Heart size={11} fill={isFavorited ? 'currentColor' : 'none'} />{formatCompactCount(favoriteTotal, language)}
+        <div className="mt-1 flex items-center justify-between gap-1 border-t border-border pt-1">
+          <div className="flex items-center gap-0.5">
+            <span className={`inline-flex items-center gap-1 px-1 py-0.5 text-[9px] ${isFavorited ? 'text-brand-redLight' : 'text-text-muted'}`}>
+              <Heart size={10} fill={isFavorited ? 'currentColor' : 'none'} />{formatCompactCount(favoriteTotal, language)}
             </span>
-            <button type="button" onClick={onShare} aria-label={t('blog_share')} className="flex h-6 w-6 items-center justify-center rounded-lg text-text-muted transition hover:bg-bg-cardAlt hover:text-brand-blue"><Share2 size={11} /></button>
+            <button type="button" onClick={onShare} aria-label={t('blog_share')} className="flex h-6 w-6 items-center justify-center rounded-md text-text-muted transition hover:bg-bg-cardAlt hover:text-brand-blue"><Share2 size={10} /></button>
           </div>
-          <button type="button" onClick={onOpen} aria-label={`${t('blog_read_story')}: ${copy.title}`} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-blue px-2 py-1 text-[8px] font-semibold text-white transition hover:bg-brand-blueDark sm:px-2.5 sm:text-[9px]">
-            <span className="hidden sm:inline">{t('blog_read_story')}</span><ArrowRight size={11} />
+          <button type="button" onClick={onOpen} aria-label={`${t('blog_read_story')}: ${copy.title}`} className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-brand-blue px-2 text-[8px] font-semibold text-white transition hover:bg-brand-blueDark sm:text-[9px]">
+            <span className="hidden sm:inline">{t('blog_read_story')}</span><ArrowRight size={10} />
           </button>
         </div>
       </div>
