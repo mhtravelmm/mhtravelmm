@@ -22,15 +22,20 @@ interface CardSizeTokens {
   meta: string;
   icon: number;
   price: string;
+  maxWidth: string;
 }
 
-/** The five allowed card sizes. See Design System Rules in Plan/PROJECT-PLAN.md. */
+/**
+ * The five allowed card sizes. See Design System Rules in Plan/PROJECT-PLAN.md.
+ * `maxWidth` keeps a card from stretching into a long bar when its grid cell
+ * is wider than the size intends; the grid still decides the column count.
+ */
 const CARD_SIZES: Record<CardSize, CardSizeTokens> = {
-  xs: { image: 'h-8', title: 'text-[9px]', subtitle: 'text-[8px]', body: 'p-1', meta: 'mt-0.5 text-[7px]', icon: 7, price: 'mt-0.5 py-0.5 text-[9px]' },
-  sm: { image: 'h-10', title: 'text-[10px]', subtitle: 'text-[9px]', body: 'p-1.5', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]' },
-  md: { image: 'h-[52px] md:h-14', title: 'text-[11px] md:text-xs', subtitle: 'text-[9px]', body: 'p-2', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]' },
-  lg: { image: 'h-[60px] md:h-16', title: 'text-xs md:text-[13px]', subtitle: 'text-[10px]', body: 'p-2', meta: 'mt-1 text-[9px]', icon: 9, price: 'mt-1 py-0.5 text-[11px]' },
-  xl: { image: 'h-[68px] md:h-[72px]', title: 'text-[13px] md:text-sm', subtitle: 'text-[10px]', body: 'p-2.5', meta: 'mt-1 text-[9px]', icon: 10, price: 'mt-1 py-0.5 text-[11px]' },
+  xs: { image: 'h-8', title: 'text-[9px]', subtitle: 'text-[8px]', body: 'p-1', meta: 'mt-0.5 text-[7px]', icon: 7, price: 'mt-0.5 py-0.5 text-[9px]', maxWidth: 'max-w-[150px]' },
+  sm: { image: 'h-10', title: 'text-[10px]', subtitle: 'text-[9px]', body: 'p-1.5', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]', maxWidth: 'max-w-[190px]' },
+  md: { image: 'h-[52px] md:h-14', title: 'text-[11px] md:text-xs', subtitle: 'text-[9px]', body: 'p-2', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]', maxWidth: 'max-w-[240px]' },
+  lg: { image: 'h-[60px] md:h-16', title: 'text-xs md:text-[13px]', subtitle: 'text-[10px]', body: 'p-2', meta: 'mt-1 text-[9px]', icon: 9, price: 'mt-1 py-0.5 text-[11px]', maxWidth: 'max-w-[300px]' },
+  xl: { image: 'h-[68px] md:h-[72px]', title: 'text-[13px] md:text-sm', subtitle: 'text-[10px]', body: 'p-2.5', meta: 'mt-1 text-[9px]', icon: 10, price: 'mt-1 py-0.5 text-[11px]', maxWidth: 'max-w-[340px]' },
 };
 
 /**
@@ -51,7 +56,7 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
   return (
     <a
       href={listing.href ?? '#'}
-      className={`${isGuide ? 'flex items-stretch' : 'block'} overflow-hidden rounded-card border ${isLarge ? 'border-border shadow-sm hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg' : 'border-transparent'} bg-bg-card transition hover:brightness-110`}
+      className={`${isGuide ? 'flex items-stretch' : 'block'} ${s.maxWidth} w-full overflow-hidden rounded-card border ${isLarge ? 'border-border shadow-sm hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg' : 'border-transparent'} bg-bg-card transition hover:brightness-110`}
     >
       <div className={`relative ${isGuide ? 'm-1.5 h-10 w-10 shrink-0 rounded-full' : s.image} bg-gradient-to-br from-bg-cardAlt to-bg`}>
         {listing.imageUrl && (

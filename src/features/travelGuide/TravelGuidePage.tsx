@@ -416,7 +416,7 @@ export function TravelGuidePage() {
 
         {filteredGuides.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 lg:gap-4">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-4">
               {filteredGuides.slice(0, visibleCount).map((guide) => (
                 <GuideCard
                   key={guide.id}

@@ -78,6 +78,7 @@ export function HomePage() {
         viewAllHref="/blogs"
         listings={blogs.listings}
         onToggleFavorite={blogs.toggle}
+        columns={4}
         cardSize="sm"
       />
       <ListingGridSection title={t('section_book_shops')} viewAllHref="/book-shops" listings={bookShops.listings} onToggleFavorite={bookShops.toggle} columns={5} cardSize="md" />

@@ -176,13 +176,13 @@ introduce a sixth size, a page-local card dimension, or an oversized variant.
 The five sizes are defined once in the shared card components and every page
 selects one of them; a page never overrides the internal dimensions itself.
 
-| Size | Use | Image height | Title | Body padding | Price / meta |
-|---|---|---|---|---|---|
-| `xs` | Densest rows: Populars, City "top attractions" strip | 32px | 9px | 4px | 9px |
-| `sm` | Dense rows: Home Blogs row, single-row strips on Blogs, Travel Guide and City pages | 40px | 10px | 6px | 10px |
-| `md` | Default for every grid row: Hotels, Book Shops, Rentals, Transport, Markets, Restaurants, Cafes, Nearby results, City and Search results | 52px phone / 56px web | 11px / 12px | 8px | 10px |
-| `lg` | Emphasised rows: Travel Plans, Home Travel Guide | 60px phone / 64px web | 12px / 13px | 8px | 11px |
-| `xl` | Widest single row: Home Travel Plans, City Travel Guide (3-column rows only) | 68px phone / 72px web | 13px / 14px | 10px | 11px |
+| Size | Use | Max width | Image height | Title | Body padding | Price / meta |
+|---|---|---|---|---|---|---|
+| `xs` | Densest rows: Populars, City "top attractions" strip | 150px | 32px | 9px | 4px | 9px |
+| `sm` | Dense rows: Home Blogs row, single-row strips on Blogs, Travel Guide and City pages | 190px | 40px | 10px | 6px | 10px |
+| `md` | Default for every grid row: Hotels, Book Shops, Rentals, Transport, Markets, Restaurants, Cafes, Nearby results, City and Search results | 240px | 52px phone / 56px web | 11px / 12px | 8px | 10px |
+| `lg` | Emphasised rows: Travel Plans, Home Travel Guide | 300px | 60px phone / 64px web | 12px / 13px | 8px | 11px |
+| `xl` | Widest single row: Home Travel Plans, City Travel Guide (3-column rows only) | 340px | 68px phone / 72px web | 13px / 14px | 10px | 11px |
 
 - `md` is the default. `sm` and `xs` are for dense or secondary rows, `lg` for
   a primary discovery row, and `xl` only for a three-column row where the card
@@ -193,16 +193,27 @@ selects one of them; a page never overrides the internal dimensions itself.
 - A row picks its size from its column count as well as its importance: five
   and six column rows use `xs` or `sm`, four column rows use `lg` at most, and
   only three column rows may use `xl`.
-- Card width comes from the shared grid (`columns` on `ListingGridSection`),
-  not from the card. Cards must never set their own fixed pixel width, so a
-  row of five cards fills the available width without a sixth-column gap.
-  Horizontal single-row strips are the only place a wrapper may fix a width.
+- A card has a hard maximum width, given by its size (`maxWidth` in
+  `CARD_SIZES`). A card must never stretch to fill a wide container: no card
+  may render as a long bar. The maximum for `xs`/`sm`/`md`/`lg`/`xl` is
+  150/190/240/300/340px, and no page may exceed the value for its size.
+- Row width is `columns × the size's max width + gaps`, so a row of `columns`
+  cards fills its width exactly and a card sits at its size's maximum. A row
+  with fewer items than its column count leaves the unused space at the end;
+  pick the column count so the row is filled.
+- Column counts rise on wide screens rather than letting cards grow: five or
+  six column rows stay five or six, and three column rows become four at
+  `xl` (Nearby results, Travel Guide grid). A row must never be widened by
+  stretching its cards.
+- Horizontal single-row strips keep a fixed card width and scroll sideways on
+  phones.
 - The same five sizes apply to the Nearby place card (`variant` accepts
   `xs`, `sm`, `md`, `lg`, `xl`); it keeps a square thumbnail on phones and
   uses the matching image height from `md` upward.
 - The card size table lives in `src/components/ui/ListingCard.tsx`
-  (`CARD_SIZES`) and `src/features/nearby/NearbyPlaceCard.tsx`
-  (`CARD_SIZES`). Change a size there, not in a page.
+  (`CARD_SIZES`, including `maxWidth`) and
+  `src/features/nearby/NearbyPlaceCard.tsx` (`CARD_SIZES`). Change a size
+  there, not in a page.
 
 - Dark theme is the base, with a light theme available. Colors are defined
   as theme tokens (surfaces, text levels, brand blue for links and accents,
