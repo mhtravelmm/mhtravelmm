@@ -176,23 +176,28 @@ introduce a sixth size, a page-local card dimension, or an oversized variant.
 The five sizes are defined once in the shared card components and every page
 selects one of them; a page never overrides the internal dimensions itself.
 
-Every card is a **fixed box**: an explicit width and height, a fixed-width
+Every card is a **fixed box** with one shared 3:2 proportion, a fixed-width
 image on the left, and the text column on the right. A card never stretches
 to fill its grid cell, so no card can render as a long thin bar.
 
-| Size | Box (width × height) | Image width | Title | Body padding | Heart |
-|---|---|---|---|---|---|
-| `xs` | 150 × 80px | 56px | 9px | 6px | 16px |
-| `sm` | 150 × 100px | 64px | 10px | 6px | 20px |
-| `md` | 180 × 80px | 64px | 10px | 6px | 20px |
-| `lg` | 200 × 100px | 72px | 11px | 8px | 20px |
-| `xl` | 200 × 100px | 76px | 11px | 8px | 24px |
+| Size | Box (max width × height) | Image width | Title | Subtitle | Body padding | Heart |
+|---|---|---|---|---|---|---|
+| `xs` | 180 × 120px | 72px | 12px | 10px | 8px | 20px |
+| `sm` | 210 × 140px | 86px | 13px | 10px | 10px | 24px |
+| `md` | 240 × 160px | 100px | 13px | 11px | 10px | 24px |
+| `lg` | 270 × 180px | 112px | 14px | 11px | 12px | 28px |
+| `xl` | 300 × 200px | 126px | 15px | 12px | 12px | 28px |
 
+- All five share the 3:2 ratio, so a page can mix sizes without the cards
+  looking like different components.
+- Width is a **maximum**, not a fixed value: on a phone the card fills half
+  the row (two per row) and the image falls back to a 42% width, so text
+  never gets squeezed. From `sm` up, the image returns to its fixed width.
 - `md` is the default. `xs` is the smallest box, `sm` adds height, `lg` adds
   width and padding, and `xl` adds a wider image. No size may be applied
   outside this table.
-- Because the box is fixed, the grid never decides a card's size. A row is
-  as many boxes as fit at the current viewport, wrapped, with a 10px gap.
+- The text column reserves right padding equal to the heart button plus a
+  6px gap, so a long title can never slide under the heart.
 - A card always shows the required four: rating, distance, favorite, views.
   Price renders as a small red pill when the listing has one.
 - Horizontal single-row strips scroll sideways on phones and use the same

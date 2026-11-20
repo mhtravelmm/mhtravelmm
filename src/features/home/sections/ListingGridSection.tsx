@@ -12,7 +12,7 @@ interface ListingGridSectionProps {
 }
 
 /** Fixed box width of each card size, in pixels. Mirrors CARD_SIZES.box. */
-const CARD_WIDTH: Record<CardSize, number> = { xs: 150, sm: 150, md: 180, lg: 200, xl: 200 };
+const CARD_WIDTH: Record<CardSize, number> = { xs: 180, sm: 210, md: 240, lg: 270, xl: 300 };
 
 /**
  * Cards are fixed-size boxes, so a row is simply as many boxes as fit and
@@ -40,7 +40,7 @@ export function ListingGridSection({
         style={{ '--card-w': `${CARD_WIDTH[cardSize]}px` } as React.CSSProperties}
       >
         {listings.map((listing) => (
-          <div key={listing.id} className="shrink-0">
+          <div key={listing.id} className="w-[calc(50%-0.3125rem)] shrink-0 sm:w-[var(--card-w)]">
             <ListingCard
               listing={listing}
               size={cardSize}

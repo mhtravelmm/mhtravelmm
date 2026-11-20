@@ -17,6 +17,7 @@ interface CardSizeTokens {
   image: string;
   body: string;
   title: string;
+  subtitle: string;
   meta: string;
   icon: number;
   price: string;
@@ -25,15 +26,16 @@ interface CardSizeTokens {
 
 /**
  * The five allowed card sizes. See Design System Rules in Plan/PROJECT-PLAN.md.
- * Every size is a fixed box (width × height); a card never stretches to fill
- * its grid cell, so no card can render as a long thin bar.
+ * Every size is a fixed 3:2 box, so the whole set shares one proportion and
+ * the cards read as a single family. Width is capped rather than fixed so a
+ * phone can fit two cards per row; the height stays constant per size.
  */
 const CARD_SIZES: Record<CardSize, CardSizeTokens> = {
-  xs: { box: 'w-[150px] h-[80px]', image: 'w-14', body: 'p-1.5', title: 'text-[9px]', meta: 'text-[7px]', icon: 8, price: 'text-[8px] px-1 py-0.5', heart: 'h-4 w-4' },
-  sm: { box: 'w-[150px] h-[100px]', image: 'w-16', body: 'p-1.5', title: 'text-[10px]', meta: 'text-[8px]', icon: 9, price: 'text-[9px] px-1 py-0.5', heart: 'h-5 w-5' },
-  md: { box: 'w-[180px] h-[80px]', image: 'w-16', body: 'p-1.5', title: 'text-[10px]', meta: 'text-[8px]', icon: 9, price: 'text-[9px] px-1 py-0.5', heart: 'h-5 w-5' },
-  lg: { box: 'w-[200px] h-[100px]', image: 'w-[72px]', body: 'p-2', title: 'text-[11px]', meta: 'text-[8px]', icon: 10, price: 'text-[10px] px-1.5 py-0.5', heart: 'h-5 w-5' },
-  xl: { box: 'w-[200px] h-[100px]', image: 'w-[76px]', body: 'p-2', title: 'text-[11px]', meta: 'text-[9px]', icon: 10, price: 'text-[10px] px-1.5 py-0.5', heart: 'h-6 w-6' },
+  xs: { box: 'max-w-[180px] h-[120px]', image: 'w-[42%] sm:w-[72px]', body: 'p-2 pr-[30px]', title: 'text-[12px]', subtitle: 'text-[10px]', meta: 'text-[9px]', icon: 10, price: 'text-[10px] px-1.5 py-0.5', heart: 'h-5 w-5' },
+  sm: { box: 'max-w-[210px] h-[140px]', image: 'w-[42%] sm:w-[86px]', body: 'p-2.5 pr-[34px]', title: 'text-[13px]', subtitle: 'text-[10px]', meta: 'text-[10px]', icon: 11, price: 'text-[11px] px-1.5 py-0.5', heart: 'h-6 w-6' },
+  md: { box: 'max-w-[240px] h-[160px]', image: 'w-[42%] sm:w-[100px]', body: 'p-2.5 pr-[34px]', title: 'text-[13px]', subtitle: 'text-[11px]', meta: 'text-[10px]', icon: 11, price: 'text-[11px] px-2 py-0.5', heart: 'h-6 w-6' },
+  lg: { box: 'max-w-[270px] h-[180px]', image: 'w-[42%] sm:w-[112px]', body: 'p-3 pr-[38px]', title: 'text-[14px]', subtitle: 'text-[11px]', meta: 'text-[11px]', icon: 12, price: 'text-[12px] px-2 py-1', heart: 'h-7 w-7' },
+  xl: { box: 'max-w-[300px] h-[200px]', image: 'w-[42%] sm:w-[126px]', body: 'p-3 pr-[38px]', title: 'text-[15px]', subtitle: 'text-[12px]', meta: 'text-[11px]', icon: 12, price: 'text-[12px] px-2 py-1', heart: 'h-7 w-7' },
 };
 
 /**
@@ -52,7 +54,7 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md' }: ListingC
   return (
     <a
       href={listing.href ?? '#'}
-      className={`relative flex ${s.box} overflow-hidden rounded-card border border-border bg-bg-card transition hover:border-brand-blue/40 hover:shadow-md`}
+      className={`relative flex w-full ${s.box} overflow-hidden rounded-card border border-border bg-bg-card transition hover:border-brand-blue/40 hover:shadow-md`}
     >
       <div className={`relative h-full ${s.image} shrink-0 overflow-hidden bg-gradient-to-br from-bg-cardAlt to-bg`}>
         {listing.imageUrl && (
@@ -69,7 +71,7 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md' }: ListingC
         <div className="min-w-0">
           <p className={`${s.title} truncate font-semibold leading-snug text-text-primary`}>{listing.title}</p>
           {listing.subtitle && (
-            <p className="mt-0.5 truncate text-[8px] text-text-faint">{listing.subtitle}</p>
+            <p className={`mt-0.5 truncate ${s.subtitle} text-text-faint`}>{listing.subtitle}</p>
           )}
         </div>
 
@@ -103,7 +105,7 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md' }: ListingC
         aria-label={favoriteState ? 'Remove from favorites' : 'Save to favorites'}
         className={`absolute right-1 top-1 flex ${s.heart} items-center justify-center rounded-full bg-white/95 text-brand-red shadow-sm`}
       >
-        <Heart size={9} className="text-brand-red" fill={favoriteState ? 'currentColor' : 'none'} />
+        <Heart size={s.icon} className="text-brand-red" fill={favoriteState ? 'currentColor' : 'none'} />
       </button>
     </a>
   );
