@@ -232,6 +232,7 @@ export function NearbyPage() {
               removeLabel={t('nearby_remove_place')}
               isFavorited={listing.isFavorited}
               onToggleFavorite={favorites.toggle}
+              variant="md"
             />)}
           </div>
         ) : <EmptyState text={t('nearby_no_results')} />}
@@ -264,9 +265,8 @@ export function NearbyPage() {
           {popular.length > 5 && <button type="button" onClick={() => setShowAllPopular((value) => !value)} className="shrink-0 text-[10px] font-medium text-brand-blue hover:underline">{showAllPopular ? t('nearby_show_less') : t('nearby_view_all')}</button>}
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {visiblePopular.map((listing) => <NearbyPlaceCard
-            key={`popular-${listing.id}`}
-            variant="mini"
+          {visiblePopular.map((listing) => <div key={`popular-${listing.id}`} className="w-36 shrink-0"><NearbyPlaceCard
+            variant="sm"
             listing={listing}
             categoryLabel={t(CATEGORY_KEYS[listing.category])}
             viewDetailsLabel={t('nearby_view_details')}
@@ -276,7 +276,7 @@ export function NearbyPage() {
             removeLabel={t('nearby_remove_place')}
             isFavorited={listing.isFavorited}
             onToggleFavorite={favorites.toggle}
-          />)}
+          /></div>)}
         </div>
       </section>
     </div>

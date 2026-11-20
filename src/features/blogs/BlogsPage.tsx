@@ -648,7 +648,7 @@ export function BlogsPage() {
             listings={topAttractions.listings}
             onToggleFavorite={topAttractions.toggle}
             columns={5}
-            cardSize="md"
+            cardSize="sm"
             singleRow
           />
           <ListingGridSection
@@ -657,7 +657,7 @@ export function BlogsPage() {
             listings={restaurants.listings}
             onToggleFavorite={restaurants.toggle}
             columns={5}
-            cardSize="md"
+            cardSize="sm"
             singleRow
           />
           <ListingGridSection
@@ -666,7 +666,7 @@ export function BlogsPage() {
             listings={cafes.listings}
             onToggleFavorite={cafes.toggle}
             columns={5}
-            cardSize="md"
+            cardSize="sm"
             singleRow
           />
         </>

@@ -205,7 +205,7 @@ export function TravelPlansPage() {
       {visiblePlans.length > 0 ? (
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
           {visiblePlans.map((plan) => (
-            <ListingCard key={plan.id} listing={plan} onToggleFavorite={toggle} />
+            <ListingCard key={plan.id} listing={plan} size="lg" onToggleFavorite={toggle} />
           ))}
         </div>
       ) : (

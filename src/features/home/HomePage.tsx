@@ -59,6 +59,7 @@ export function HomePage() {
         listings={travelPlans.listings}
         onToggleFavorite={travelPlans.toggle}
         columns={3}
+        cardSize="xl"
       />
       <BreakAd placement="home_after_travel_plans" />
 
@@ -92,7 +93,7 @@ export function HomePage() {
         listings={populars.listings}
         onToggleFavorite={populars.toggle}
         columns={6}
-        cardSize="sm"
+        cardSize="xs"
       />
       <Reviews />
       <BreakAd placement="home_after_reviews" />

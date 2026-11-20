@@ -6,16 +6,15 @@ import { useFavorites } from '../../lib/favorites';
 interface ListingCardProps {
   listing: CardListing;
   onToggleFavorite?: (id: string) => void;
-  /** Card size — the design system allows exactly these three. */
-  size?: 'sm' | 'md' | 'lg';
+  /** Card size — the design system allows exactly these five. */
+  size?: CardSize;
   /** Optional horizontal treatment used by compact Travel Guide cards. */
   variant?: 'default' | 'guide';
 }
 
-type CardSize = 'sm' | 'md' | 'lg';
+export type CardSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-/** The three allowed card sizes. See Design System Rules in Plan/PROJECT-PLAN.md. */
-const CARD_SIZES: Record<CardSize, {
+interface CardSizeTokens {
   image: string;
   title: string;
   subtitle: string;
@@ -23,10 +22,15 @@ const CARD_SIZES: Record<CardSize, {
   meta: string;
   icon: number;
   price: string;
-}> = {
+}
+
+/** The five allowed card sizes. See Design System Rules in Plan/PROJECT-PLAN.md. */
+const CARD_SIZES: Record<CardSize, CardSizeTokens> = {
+  xs: { image: 'h-8', title: 'text-[9px]', subtitle: 'text-[8px]', body: 'p-1', meta: 'mt-0.5 text-[7px]', icon: 7, price: 'mt-0.5 py-0.5 text-[9px]' },
   sm: { image: 'h-10', title: 'text-[10px]', subtitle: 'text-[9px]', body: 'p-1.5', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]' },
-  md: { image: 'h-14 md:h-[70px]', title: 'text-[11px] md:text-xs', subtitle: 'text-[9px]', body: 'p-2', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]' },
-  lg: { image: 'h-[76px] md:h-[88px]', title: 'text-xs md:text-sm', subtitle: 'text-[10px]', body: 'p-2.5', meta: 'mt-1.5 text-[9px]', icon: 9, price: 'mt-1.5 py-1 text-[11px]' },
+  md: { image: 'h-[52px] md:h-14', title: 'text-[11px] md:text-xs', subtitle: 'text-[9px]', body: 'p-2', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]' },
+  lg: { image: 'h-[60px] md:h-16', title: 'text-xs md:text-[13px]', subtitle: 'text-[10px]', body: 'p-2', meta: 'mt-1 text-[9px]', icon: 9, price: 'mt-1 py-0.5 text-[11px]' },
+  xl: { image: 'h-[68px] md:h-[72px]', title: 'text-[13px] md:text-sm', subtitle: 'text-[10px]', body: 'p-2.5', meta: 'mt-1 text-[9px]', icon: 10, price: 'mt-1 py-0.5 text-[11px]' },
 };
 
 /**
@@ -42,7 +46,7 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
   const favoriteState = onToggleFavorite ? listing.isFavorited : isFavorite(listing.id, listing.isFavorited);
   const s = CARD_SIZES[size];
   const isGuide = variant === 'guide';
-  const isLarge = size === 'lg' && !isGuide;
+  const isLarge = (size === 'lg' || size === 'xl') && !isGuide;
 
   return (
     <a

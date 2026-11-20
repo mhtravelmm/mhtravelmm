@@ -116,7 +116,7 @@ function GuideCard({
 
   return (
     <article className="group flex overflow-hidden rounded-card border border-border bg-bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg md:flex-col">
-      <div className="relative min-h-[76px] w-[36%] max-w-[112px] shrink-0 overflow-hidden sm:max-w-[124px] md:h-[88px] md:w-full md:max-w-none md:min-h-0">
+      <div className="relative min-h-[60px] w-[36%] max-w-[104px] shrink-0 overflow-hidden sm:max-w-[116px] md:h-16 md:w-full md:max-w-none md:min-h-0">
         <Link to={`/travel-guide/${guide.id}`} className="absolute inset-0" aria-label={title}>
           <img
             src={guide.imageUrl}
@@ -144,14 +144,14 @@ function GuideCard({
         </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col p-2 md:p-2.5">
+      <div className="flex min-w-0 flex-1 flex-col p-2">
         <Link to={`/travel-guide/${guide.id}`} className="line-clamp-2 text-[11px] font-bold leading-snug text-text-primary transition hover:text-brand-blue sm:text-xs md:text-[13px]">
           {title}
         </Link>
-        <p className="mt-0.5 line-clamp-2 text-[9px] leading-[1.35] text-text-secondary sm:text-[10px]">
+        <p className="mt-0.5 line-clamp-1 text-[9px] leading-[1.35] text-text-secondary sm:text-[10px]">
           {summary}
         </p>
-        <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
           <GuideMetrics guide={guide} language={language} t={t} compact />
           <Link
             to={`/travel-guide/${guide.id}`}
@@ -454,7 +454,7 @@ export function TravelGuidePage() {
         listings={topAttractions.listings}
         onToggleFavorite={topAttractions.toggle}
         columns={5}
-        cardSize="md"
+        cardSize="sm"
         singleRow
       />
       <ListingGridSection
@@ -463,7 +463,7 @@ export function TravelGuidePage() {
         listings={restaurants.listings}
         onToggleFavorite={restaurants.toggle}
         columns={5}
-        cardSize="md"
+        cardSize="sm"
         singleRow
       />
       <ListingGridSection
@@ -472,7 +472,7 @@ export function TravelGuidePage() {
         listings={cafes.listings}
         onToggleFavorite={cafes.toggle}
         columns={5}
-        cardSize="md"
+        cardSize="sm"
         singleRow
       />
     </div>

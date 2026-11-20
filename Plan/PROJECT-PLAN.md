@@ -169,30 +169,37 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   rating, distance, favorite state, views. No exceptions. This is enforced
   by making them required fields on the shared `CardListing` type.
 
-### Card sizes — exactly three, no others
+### Card sizes — exactly five, no others
 
-There are only **three** Box Card sizes in the whole application. No page may
-introduce a fourth size, a page-local card dimension, or an oversized variant.
-The three sizes are defined once in the shared card components and every page
+There are only **five** Box Card sizes in the whole application. No page may
+introduce a sixth size, a page-local card dimension, or an oversized variant.
+The five sizes are defined once in the shared card components and every page
 selects one of them; a page never overrides the internal dimensions itself.
 
 | Size | Use | Image height | Title | Body padding | Price / meta |
 |---|---|---|---|---|---|
-| `sm` | Dense rows: Populars, Home Blogs row, inline "more like this" rows | 40px | 10px | 6px | 10px |
-| `md` | Default for every grid row: Hotels, Book Shops, Rentals, Transport, Markets, Attractions, Restaurants, Cafes, City and Search results | 56px phone / 70px web | 11px / 12px | 8px | 10px |
-| `lg` | Emphasised discovery rows only: Travel Plans, Travel Guide | 76px phone / 88px web | 12px / 14px | 10px | 11px |
+| `xs` | Densest rows: Populars, City "top attractions" strip | 32px | 9px | 4px | 9px |
+| `sm` | Dense rows: Home Blogs row, single-row strips on Blogs, Travel Guide and City pages | 40px | 10px | 6px | 10px |
+| `md` | Default for every grid row: Hotels, Book Shops, Rentals, Transport, Markets, Restaurants, Cafes, Nearby results, City and Search results | 52px phone / 56px web | 11px / 12px | 8px | 10px |
+| `lg` | Emphasised rows: Travel Plans, Home Travel Guide | 60px phone / 64px web | 12px / 13px | 8px | 11px |
+| `xl` | Widest single row: Home Travel Plans, City Travel Guide (3-column rows only) | 68px phone / 72px web | 13px / 14px | 10px | 11px |
 
-- `md` is the default. A row uses `lg` only when the section is a primary
-  discovery row, and `sm` only when the row is a secondary or dense listing.
-- Even `lg` stays compact: it is a slightly larger card, not a large hero
-  panel. Card content never exceeds the sizes above.
+- `md` is the default. `sm` and `xs` are for dense or secondary rows, `lg` for
+  a primary discovery row, and `xl` only for a three-column row where the card
+  is wide enough to carry a slightly larger image.
+- Even `xl` stays compact: it is a slightly larger card, not a hero panel.
+  No card may exceed the `xl` values above, and no size may be applied outside
+  this table.
+- A row picks its size from its column count as well as its importance: five
+  and six column rows use `xs` or `sm`, four column rows use `lg` at most, and
+  only three column rows may use `xl`.
 - Card width comes from the shared grid (`columns` on `ListingGridSection`),
   not from the card. Cards must never set their own fixed pixel width, so a
   row of five cards fills the available width without a sixth-column gap.
-- The same three sizes apply to the Nearby place card (`standard` maps to
-  `md`, `mini` maps to `sm`) and to any future card that shows a listing.
-  Nearby rows keep a square thumbnail on phones (96px for `standard`,
-  64px for `mini`) and use the normal image height from `md` upward.
+  Horizontal single-row strips are the only place a wrapper may fix a width.
+- The same five sizes apply to the Nearby place card (`variant` accepts
+  `xs`, `sm`, `md`, `lg`, `xl`); it keeps a square thumbnail on phones and
+  uses the matching image height from `md` upward.
 - The card size table lives in `src/components/ui/ListingCard.tsx`
   (`CARD_SIZES`) and `src/features/nearby/NearbyPlaceCard.tsx`
   (`CARD_SIZES`). Change a size there, not in a page.

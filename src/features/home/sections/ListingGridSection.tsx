@@ -1,5 +1,5 @@
 import type { CardListing } from '../../../types';
-import { ListingCard } from '../../../components/ui/ListingCard';
+import { ListingCard, type CardSize } from '../../../components/ui/ListingCard';
 import { SectionHeader } from './SectionHeader';
 
 interface ListingGridSectionProps {
@@ -7,7 +7,7 @@ interface ListingGridSectionProps {
   viewAllHref?: string;
   listings: CardListing[];
   columns?: 3 | 4 | 5 | 6;
-  cardSize?: 'sm' | 'md' | 'lg';
+  cardSize?: CardSize;
   cardVariant?: 'default' | 'guide';
   onToggleFavorite?: (id: string) => void;
   singleRow?: boolean;

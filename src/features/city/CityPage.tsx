@@ -88,7 +88,7 @@ export function CityPage() {
         viewAllHref="/travel-guide"
         listings={CITY_TRAVEL_GUIDES}
         columns={3}
-        cardSize="lg"
+        cardSize="xl"
       />
 
       <ListingGridSection
@@ -96,7 +96,7 @@ export function CityPage() {
         viewAllHref="/attractions"
         listings={TOP_ATTRACTIONS}
         columns={5}
-        cardSize="sm"
+        cardSize="xs"
       />
 
       <BreakAd placement="city_after_attractions" />
