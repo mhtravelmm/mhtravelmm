@@ -191,6 +191,8 @@ selects one of them; a page never overrides the internal dimensions itself.
   row of five cards fills the available width without a sixth-column gap.
 - The same three sizes apply to the Nearby place card (`standard` maps to
   `md`, `mini` maps to `sm`) and to any future card that shows a listing.
+  Nearby rows keep a square thumbnail on phones (96px for `standard`,
+  64px for `mini`) and use the normal image height from `md` upward.
 - The card size table lives in `src/components/ui/ListingCard.tsx`
   (`CARD_SIZES`) and `src/features/nearby/NearbyPlaceCard.tsx`
   (`CARD_SIZES`). Change a size there, not in a page.
