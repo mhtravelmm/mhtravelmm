@@ -115,8 +115,8 @@ function GuideCard({
   const summary = guide.summary[language];
 
   return (
-    <article className="group flex overflow-hidden rounded-xl border border-border bg-bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg md:flex-col">
-      <div className="relative min-h-[154px] w-[36%] max-w-[142px] shrink-0 overflow-hidden sm:max-w-[160px] md:h-44 md:w-full md:max-w-none md:min-h-0">
+    <article className="group flex overflow-hidden rounded-card border border-border bg-bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg md:flex-col">
+      <div className="relative min-h-[76px] w-[36%] max-w-[112px] shrink-0 overflow-hidden sm:max-w-[124px] md:h-[88px] md:w-full md:max-w-none md:min-h-0">
         <Link to={`/travel-guide/${guide.id}`} className="absolute inset-0" aria-label={title}>
           <img
             src={guide.imageUrl}
@@ -126,7 +126,7 @@ function GuideCard({
           />
           <span className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-slate-950/10" />
         </Link>
-        <span className="pointer-events-none absolute left-2 top-2 max-w-[calc(100%-3rem)] truncate rounded-full bg-[#061b2a]/85 px-2 py-1 text-[9px] font-semibold text-white backdrop-blur sm:left-3 sm:top-3 sm:text-[10px]">
+        <span className="pointer-events-none absolute left-1.5 top-1.5 max-w-[calc(100%-2.5rem)] truncate rounded-full bg-[#061b2a]/85 px-1.5 py-0.5 text-[8px] font-semibold text-white backdrop-blur sm:left-2 sm:top-2 sm:text-[9px]">
           {categoryLabel(guide, t)}
         </span>
         <button
@@ -134,31 +134,31 @@ function GuideCard({
           onClick={onToggleFavorite}
           aria-label={guide.isFavorited ? t('guide_remove_favorite') : t('guide_save_favorite')}
           aria-pressed={guide.isFavorited}
-          className={`absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/30 shadow-sm backdrop-blur transition sm:right-3 sm:top-3 ${guide.isFavorited ? 'bg-rose-500 text-white' : 'bg-slate-950/45 text-white hover:bg-rose-500'}`}
+          className={`absolute right-1.5 top-1.5 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/30 shadow-sm backdrop-blur transition sm:right-2 sm:top-2 sm:h-7 sm:w-7 ${guide.isFavorited ? 'bg-rose-500 text-white' : 'bg-slate-950/45 text-white hover:bg-rose-500'}`}
         >
-          <Heart size={15} fill={guide.isFavorited ? 'currentColor' : 'none'} />
+          <Heart size={12} fill={guide.isFavorited ? 'currentColor' : 'none'} />
         </button>
-        <span className="pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-slate-950/70 px-2 py-1 text-[9px] text-white backdrop-blur sm:bottom-3 sm:left-3 sm:text-[10px]">
-          <CalendarDays size={11} />
+        <span className="pointer-events-none absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-full bg-slate-950/70 px-1.5 py-0.5 text-[8px] text-white backdrop-blur sm:bottom-2 sm:left-2 sm:text-[9px]">
+          <CalendarDays size={9} />
           {formatDate(guide.publishedAt, language)}
         </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-3.5 md:p-4">
-        <Link to={`/travel-guide/${guide.id}`} className="line-clamp-2 text-[13px] font-bold leading-snug text-text-primary transition hover:text-brand-blue sm:text-sm md:text-base">
+      <div className="flex min-w-0 flex-1 flex-col p-2 md:p-2.5">
+        <Link to={`/travel-guide/${guide.id}`} className="line-clamp-2 text-[11px] font-bold leading-snug text-text-primary transition hover:text-brand-blue sm:text-xs md:text-[13px]">
           {title}
         </Link>
-        <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-text-secondary sm:text-[11px] md:text-xs">
+        <p className="mt-0.5 line-clamp-2 text-[9px] leading-[1.35] text-text-secondary sm:text-[10px]">
           {summary}
         </p>
-        <div className="mt-auto pt-2.5">
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
           <GuideMetrics guide={guide} language={language} t={t} compact />
           <Link
             to={`/travel-guide/${guide.id}`}
-            className="mt-2.5 inline-flex items-center gap-1.5 text-[10px] font-semibold text-brand-blue transition hover:gap-2.5 sm:text-[11px]"
+            className="inline-flex shrink-0 items-center gap-1 text-[9px] font-semibold text-brand-blue transition hover:gap-2 sm:text-[10px]"
           >
             {t('guide_view_guide')}
-            <ArrowRight size={13} />
+            <ArrowRight size={11} />
           </Link>
         </div>
       </div>

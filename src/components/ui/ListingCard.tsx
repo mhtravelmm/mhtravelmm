@@ -6,11 +6,28 @@ import { useFavorites } from '../../lib/favorites';
 interface ListingCardProps {
   listing: CardListing;
   onToggleFavorite?: (id: string) => void;
-  /** Visual size — 'lg' for detail-page rows, 'md' for Home rows, 'sm' for dense rows. */
+  /** Card size — the design system allows exactly these three. */
   size?: 'sm' | 'md' | 'lg';
   /** Optional horizontal treatment used by compact Travel Guide cards. */
   variant?: 'default' | 'guide';
 }
+
+type CardSize = 'sm' | 'md' | 'lg';
+
+/** The three allowed card sizes. See Design System Rules in Plan/PROJECT-PLAN.md. */
+const CARD_SIZES: Record<CardSize, {
+  image: string;
+  title: string;
+  subtitle: string;
+  body: string;
+  meta: string;
+  icon: number;
+  price: string;
+}> = {
+  sm: { image: 'h-10', title: 'text-[10px]', subtitle: 'text-[9px]', body: 'p-1.5', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]' },
+  md: { image: 'h-14 md:h-[70px]', title: 'text-[11px] md:text-xs', subtitle: 'text-[9px]', body: 'p-2', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]' },
+  lg: { image: 'h-[76px] md:h-[88px]', title: 'text-xs md:text-sm', subtitle: 'text-[10px]', body: 'p-2.5', meta: 'mt-1.5 text-[9px]', icon: 9, price: 'mt-1.5 py-1 text-[11px]' },
+};
 
 /**
  * The single card component used everywhere a listing/content item is
@@ -23,8 +40,7 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
   const { formatPrice } = useCurrency();
   const { isFavorite, toggleFavorite } = useFavorites();
   const favoriteState = onToggleFavorite ? listing.isFavorited : isFavorite(listing.id, listing.isFavorited);
-  const imageHeight = size === 'sm' ? 'h-11' : size === 'lg' ? 'h-28 md:h-32' : 'h-[70px] md:h-[90px]';
-  const titleSize = size === 'sm' ? 'text-[10px]' : size === 'lg' ? 'text-sm md:text-base' : 'text-xs md:text-sm';
+  const s = CARD_SIZES[size];
   const isGuide = variant === 'guide';
   const isLarge = size === 'lg' && !isGuide;
 
@@ -33,7 +49,7 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
       href={listing.href ?? '#'}
       className={`${isGuide ? 'flex items-stretch' : 'block'} overflow-hidden rounded-card border ${isLarge ? 'border-border shadow-sm hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg' : 'border-transparent'} bg-bg-card transition hover:brightness-110`}
     >
-      <div className={`relative ${isGuide ? 'm-1.5 h-11 w-11 shrink-0 rounded-full' : imageHeight} bg-gradient-to-br from-bg-cardAlt to-bg`}>
+      <div className={`relative ${isGuide ? 'm-1.5 h-10 w-10 shrink-0 rounded-full' : s.image} bg-gradient-to-br from-bg-cardAlt to-bg`}>
         {listing.imageUrl && (
           <img
             src={listing.imageUrl}
@@ -55,10 +71,10 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
             else toggleFavorite(listing.id, listing.isFavorited);
           }}
           aria-label={favoriteState ? 'Remove from favorites' : 'Save to favorites'}
-          className={`absolute ${isGuide ? 'right-0.5 top-0.5' : 'right-1.5 top-1.5'} flex h-4 w-4 items-center justify-center rounded-full bg-white`}
+          className={`absolute ${isGuide ? 'right-0.5 top-0.5 h-5 w-5' : 'right-1 top-1 h-6 w-6'} flex items-center justify-center rounded-full bg-white`}
         >
           <Heart
-            size={9}
+            size={isGuide ? 9 : 10}
             className={favoriteState ? 'text-brand-red' : 'text-brand-red/70'}
             fill={favoriteState ? 'currentColor' : 'none'}
           />
@@ -71,25 +87,25 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
         )}
       </div>
 
-      <div className={`${isGuide ? 'min-w-0 flex-1 py-1.5 pr-1.5' : isLarge ? 'p-3' : 'p-2'}`}>
-        <p className={`${titleSize} text-text-primary leading-snug line-clamp-1`}>{listing.title}</p>
+      <div className={`${isGuide ? 'min-w-0 flex-1 py-1.5 pr-1.5' : s.body}`}>
+        <p className={`${s.title} text-text-primary leading-snug line-clamp-1`}>{listing.title}</p>
         {listing.subtitle && (
-          <p className={`${isLarge ? 'text-[11px]' : 'text-[9px]'} mt-0.5 text-text-faint line-clamp-1`}>{listing.subtitle}</p>
+          <p className={`${s.subtitle} mt-0.5 text-text-faint line-clamp-1`}>{listing.subtitle}</p>
         )}
 
-        <div className={`${isLarge ? 'mt-2 text-[10px]' : 'mt-1 text-[8px]'} flex items-center justify-between text-text-faint`}>
+        <div className={`${s.meta} flex items-center justify-between text-text-faint`}>
           <span className="flex items-center gap-0.5">
-            <MapPin size={isLarge ? 10 : 8} />
+            <MapPin size={s.icon} />
             {listing.distanceKm} km
           </span>
           <span className="flex items-center gap-0.5">
-            <Eye size={isLarge ? 10 : 8} />
+            <Eye size={s.icon} />
             {formatCount(listing.views)}
           </span>
         </div>
 
         {listing.priceUsd !== undefined && (
-          <div className={`${isLarge ? 'mt-2 py-1.5 text-xs' : 'mt-1.5 py-1 text-[11px]'} rounded-md bg-brand-red text-center text-white`}>
+          <div className={`${s.price} rounded-md bg-brand-red text-center text-white`}>
             {formatPrice(listing.priceUsd)}
           </div>
         )}
