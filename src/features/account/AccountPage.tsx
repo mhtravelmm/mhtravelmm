@@ -417,7 +417,7 @@ function Guides({ listings, toggle }: { listings: typeof allListings; toggle: (i
   const guideIds = new Set(TRAVEL_GUIDE_STORIES.map((guide) => guide.id));
   const guides = listings.filter((listing) => guideIds.has(listing.id));
   return <PagePanel title={t('account_guides')} intro={t('account_guides_intro')}>
-    {guides.length > 0 ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{guides.map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggle} size="md" />)}</div> : <EmptyState text={t('account_guides_empty')} />}
+    {guides.length > 0 ? <div className="grid max-w-[998px] grid-cols-2 justify-items-center gap-3 sm:grid-cols-3 lg:grid-cols-5">{guides.map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggle} size="md" />)}</div> : <EmptyState text={t('account_guides_empty')} />}
   </PagePanel>;
 }
 
@@ -425,7 +425,7 @@ function Favorites({ listings, toggle }: { listings: typeof allListings; toggle:
   const { t } = useLanguage();
   const saved = listings.filter((listing) => listing.isFavorited);
   return <PagePanel title={t('account_favorites')} intro={t('account_favorites_intro')}>
-    {saved.length > 0 ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{saved.map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggle} size="md" />)}</div> : <EmptyState text={t('account_no_favorites')} />}
+    {saved.length > 0 ? <div className="grid max-w-[998px] grid-cols-2 justify-items-center gap-3 sm:grid-cols-3 lg:grid-cols-5">{saved.map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggle} size="md" />)}</div> : <EmptyState text={t('account_no_favorites')} />}
   </PagePanel>;
 }
 

@@ -66,7 +66,7 @@ export function CityPage() {
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-5">
+        <div className="grid max-w-[1240px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 md:grid-cols-5">
           {CITIES.map((city) => (
             <ListingCard key={city.id} listing={city} />
           ))}
@@ -225,7 +225,7 @@ export function CityDetailPage() {
       <div className="rounded-2xl border border-border bg-bg-card p-3 sm:p-4">
         <div className="flex flex-col gap-2 sm:flex-row"><label className="relative min-w-0 flex-1"><span className="sr-only">Search businesses</span><SearchIcon size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" /><input value={businessQuery} onChange={(event) => { setBusinessQuery(event.target.value); setShowAllBusinesses(false); }} placeholder={language === 'mm' ? `${title} အတွင်း ရှာဖွေပါ...` : `Search hotels, restaurants, places in ${title}...`} className="w-full rounded-md border border-border bg-bg py-2.5 pl-9 pr-3 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60" /></label><span className="flex items-center justify-center rounded-md bg-brand-blue/10 px-3 py-2 text-[11px] font-semibold text-brand-blue">{filteredBusinesses.length} {language === 'mm' ? 'ခုတွေ့ရှိ' : 'results'}</span></div>
         <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">{categoryGroups.map((category) => <button key={category.id} type="button" onClick={() => { setActiveCategory(category.id); setShowAllBusinesses(false); }} className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[10px] font-semibold transition ${activeCategory === category.id ? 'bg-brand-blue text-white' : 'bg-bg text-text-secondary hover:bg-brand-blue/10 hover:text-brand-blue'}`}>{category.label}<span className="ml-1 opacity-70">{category.items.length}</span></button>)}</div>
-        {visibleBusinesses.length > 0 ? <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">{visibleBusinesses.map((item, index) => <ListingCard key={`${activeCategory}-${item.id}-${index}`} listing={item} />)}</div> : <div className="mt-4 rounded-lg border border-dashed border-border px-4 py-10 text-center text-xs text-text-muted">{language === 'mm' ? 'ကိုက်ညီသော လုပ်ငန်းမတွေ့ပါ။' : 'No matching businesses found.'}</div>}
+        {visibleBusinesses.length > 0 ? <div className="mt-4 grid max-w-[1240px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">{visibleBusinesses.map((item, index) => <ListingCard key={`${activeCategory}-${item.id}-${index}`} listing={item} />)}</div> : <div className="mt-4 rounded-lg border border-dashed border-border px-4 py-10 text-center text-xs text-text-muted">{language === 'mm' ? 'ကိုက်ညီသော လုပ်ငန်းမတွေ့ပါ။' : 'No matching businesses found.'}</div>}
         {filteredBusinesses.length > 12 && <button type="button" onClick={() => setShowAllBusinesses((current) => !current)} className="mt-4 w-full rounded-md border border-brand-blue/30 px-4 py-2.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue/10">{showAllBusinesses ? (language === 'mm' ? 'လျှော့ပြမည်' : 'Show less') : (language === 'mm' ? `နောက်ထပ် ${filteredBusinesses.length - 12} ခုကြည့်မည်` : `Show ${filteredBusinesses.length - 12} more`)}</button>}
       </div>
     </section>

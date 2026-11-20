@@ -184,7 +184,7 @@ export function SearchPage() {
         <>
           {(combined || selectedCategoryCity) && <p className="mb-3 text-[11px] text-text-muted">{filterLabel(category!, t)} · {filterLabel(combined ? city! : selectedCategoryCity!, t)}</p>}
           {resultEntries.length ? (
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid max-w-[1240px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
               {resultEntries.map(({ listing }) => <ListingCard key={listing.id} listing={listing} size="md" />)}
             </div>
           ) : (

@@ -207,6 +207,10 @@ selects one of them; a page never overrides the internal dimensions itself.
   stretching its cards.
 - Horizontal single-row strips keep a fixed card width and scroll sideways on
   phones.
+- A grid that hosts cards directly (Search, City, Favorites, Account,
+  Blogs-related, Travel Plans) repeats the same cap: `justify-items-center`
+  plus `max-w-[columns × the size's max width + gaps]`, so no page can
+  reintroduce a stretching card. Phones always show two cards per row.
 - The same five sizes apply to the Nearby place card (`variant` accepts
   `xs`, `sm`, `md`, `lg`, `xl`); it keeps a square thumbnail on phones and
   uses the matching image height from `md` upward.

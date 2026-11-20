@@ -63,6 +63,6 @@ export function FavoritesPage() {
     </div>
 
     <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-medium text-text-primary">{t(activeGroup.label)}</h2><span className="text-[10px] text-text-faint">{saved.length} {t('favorites_saved_items')}</span></div>
-    {saved.length > 0 ? <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">{saved.map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggleFromFavorites} size="md" />)}</div> : <div className="rounded-card border border-dashed border-border bg-bg-card p-10 text-center text-xs text-text-muted">{t('account_no_favorites')}</div>}
+    {saved.length > 0 ? <div className="grid max-w-[990px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 lg:grid-cols-5">{saved.map((listing) => <ListingCard key={listing.id} listing={listing} onToggleFavorite={toggleFromFavorites} size="md" />)}</div> : <div className="rounded-card border border-dashed border-border bg-bg-card p-10 text-center text-xs text-text-muted">{t('account_no_favorites')}</div>}
   </div>;
 }

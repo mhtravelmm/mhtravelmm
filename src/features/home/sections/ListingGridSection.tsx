@@ -56,7 +56,7 @@ export function ListingGridSection({
 
           if (singleRow) {
             return (
-              <div key={listing.id} className="w-[68%] min-w-[145px] max-w-[230px] shrink-0 sm:w-[29%] sm:max-w-none lg:w-[calc((100%_-_2.5rem)/5)]">
+              <div key={listing.id} className="w-[68%] min-w-[145px] shrink-0 sm:w-[29%] lg:w-[var(--card-w)]">
                 {card}
               </div>
             );

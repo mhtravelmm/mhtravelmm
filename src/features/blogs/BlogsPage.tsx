@@ -717,7 +717,7 @@ export function BlogsPage() {
               <h2 id="related-hotels-title" className="text-base font-medium text-text-primary">{t('blog_related_hotels')}</h2>
               <a href="/hotels" className="text-[10px] text-brand-blue hover:text-text-primary">{t('blog_view_all_hotels')}</a>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid max-w-[982px] grid-cols-2 justify-items-center gap-2 sm:grid-cols-3 lg:grid-cols-5">
               {relatedHotels.listings.map((hotel) => <ListingCard key={hotel.id} listing={hotel} size="md" onToggleFavorite={relatedHotels.toggle} />)}
             </div>
           </section>
