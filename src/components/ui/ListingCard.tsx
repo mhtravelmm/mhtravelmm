@@ -8,34 +8,32 @@ interface ListingCardProps {
   onToggleFavorite?: (id: string) => void;
   /** Card size — the design system allows exactly these five. */
   size?: CardSize;
-  /** Optional horizontal treatment used by compact Travel Guide cards. */
-  variant?: 'default' | 'guide';
 }
 
 export type CardSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface CardSizeTokens {
+  box: string;
   image: string;
-  title: string;
-  subtitle: string;
   body: string;
+  title: string;
   meta: string;
   icon: number;
   price: string;
-  maxWidth: string;
+  heart: string;
 }
 
 /**
  * The five allowed card sizes. See Design System Rules in Plan/PROJECT-PLAN.md.
- * `maxWidth` keeps a card from stretching into a long bar when its grid cell
- * is wider than the size intends; the grid still decides the column count.
+ * Every size is a fixed box (width × height); a card never stretches to fill
+ * its grid cell, so no card can render as a long thin bar.
  */
 const CARD_SIZES: Record<CardSize, CardSizeTokens> = {
-  xs: { image: 'h-8', title: 'text-[9px]', subtitle: 'text-[8px]', body: 'p-1', meta: 'mt-0.5 text-[7px]', icon: 7, price: 'mt-0.5 py-0.5 text-[9px]', maxWidth: 'max-w-[150px]' },
-  sm: { image: 'h-10', title: 'text-[10px]', subtitle: 'text-[9px]', body: 'p-1.5', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]', maxWidth: 'max-w-[190px]' },
-  md: { image: 'h-[52px] md:h-14', title: 'text-[11px] md:text-xs', subtitle: 'text-[9px]', body: 'p-2', meta: 'mt-1 text-[8px]', icon: 8, price: 'mt-1 py-0.5 text-[10px]', maxWidth: 'max-w-[240px]' },
-  lg: { image: 'h-[60px] md:h-16', title: 'text-xs md:text-[13px]', subtitle: 'text-[10px]', body: 'p-2', meta: 'mt-1 text-[9px]', icon: 9, price: 'mt-1 py-0.5 text-[11px]', maxWidth: 'max-w-[300px]' },
-  xl: { image: 'h-[68px] md:h-[72px]', title: 'text-[13px] md:text-sm', subtitle: 'text-[10px]', body: 'p-2.5', meta: 'mt-1 text-[9px]', icon: 10, price: 'mt-1 py-0.5 text-[11px]', maxWidth: 'max-w-[340px]' },
+  xs: { box: 'w-[150px] h-[80px]', image: 'w-14', body: 'p-1.5', title: 'text-[9px]', meta: 'text-[7px]', icon: 8, price: 'text-[8px] px-1 py-0.5', heart: 'h-4 w-4' },
+  sm: { box: 'w-[150px] h-[100px]', image: 'w-16', body: 'p-1.5', title: 'text-[10px]', meta: 'text-[8px]', icon: 9, price: 'text-[9px] px-1 py-0.5', heart: 'h-5 w-5' },
+  md: { box: 'w-[180px] h-[80px]', image: 'w-16', body: 'p-1.5', title: 'text-[10px]', meta: 'text-[8px]', icon: 9, price: 'text-[9px] px-1 py-0.5', heart: 'h-5 w-5' },
+  lg: { box: 'w-[200px] h-[100px]', image: 'w-[72px]', body: 'p-2', title: 'text-[11px]', meta: 'text-[8px]', icon: 10, price: 'text-[10px] px-1.5 py-0.5', heart: 'h-5 w-5' },
+  xl: { box: 'w-[200px] h-[100px]', image: 'w-[76px]', body: 'p-2', title: 'text-[11px]', meta: 'text-[9px]', icon: 10, price: 'text-[10px] px-1.5 py-0.5', heart: 'h-6 w-6' },
 };
 
 /**
@@ -45,80 +43,68 @@ const CARD_SIZES: Record<CardSize, CardSizeTokens> = {
  * rendered — this is a confirmed, non-negotiable design rule, so it is
  * enforced here in one place rather than left to each call site.
  */
-export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 'default' }: ListingCardProps) {
+export function ListingCard({ listing, onToggleFavorite, size = 'md' }: ListingCardProps) {
   const { formatPrice } = useCurrency();
   const { isFavorite, toggleFavorite } = useFavorites();
   const favoriteState = onToggleFavorite ? listing.isFavorited : isFavorite(listing.id, listing.isFavorited);
   const s = CARD_SIZES[size];
-  const isGuide = variant === 'guide';
-  const isLarge = (size === 'lg' || size === 'xl') && !isGuide;
 
   return (
     <a
       href={listing.href ?? '#'}
-      className={`${isGuide ? 'flex items-stretch' : 'block'} ${s.maxWidth} w-full overflow-hidden rounded-card border ${isLarge ? 'border-border shadow-sm hover:-translate-y-0.5 hover:border-brand-blue/40 hover:shadow-lg' : 'border-transparent'} bg-bg-card transition hover:brightness-110`}
+      className={`relative flex ${s.box} overflow-hidden rounded-card border border-border bg-bg-card transition hover:border-brand-blue/40 hover:shadow-md`}
     >
-      <div className={`relative ${isGuide ? 'm-1.5 h-10 w-10 shrink-0 rounded-full' : s.image} bg-gradient-to-br from-bg-cardAlt to-bg`}>
+      <div className={`relative h-full ${s.image} shrink-0 overflow-hidden bg-gradient-to-br from-bg-cardAlt to-bg`}>
         {listing.imageUrl && (
-          <img
-            src={listing.imageUrl}
-            alt={listing.title}
-            className={`absolute inset-0 h-full w-full object-cover ${isGuide ? 'rounded-full' : ''}`}
-          />
+          <img src={listing.imageUrl} alt={listing.title} className="absolute inset-0 h-full w-full object-cover" />
         )}
 
-        <span className={`absolute ${isGuide ? 'left-0.5 top-0.5' : 'left-1.5 top-1.5'} flex items-center gap-0.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] text-status-rating`}>
-          <Star size={9} fill="currentColor" />
+        <span className="absolute left-1 top-1 flex items-center gap-0.5 rounded bg-black/70 px-1 py-0.5 text-[8px] text-status-rating">
+          <Star size={8} fill="currentColor" />
           {listing.rating.toFixed(1)}
         </span>
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            if (onToggleFavorite) onToggleFavorite(listing.id);
-            else toggleFavorite(listing.id, listing.isFavorited);
-          }}
-          aria-label={favoriteState ? 'Remove from favorites' : 'Save to favorites'}
-          className={`absolute ${isGuide ? 'right-0.5 top-0.5 h-5 w-5' : 'right-1 top-1 h-6 w-6'} flex items-center justify-center rounded-full bg-white`}
-        >
-          <Heart
-            size={isGuide ? 9 : 10}
-            className={favoriteState ? 'text-brand-red' : 'text-brand-red/70'}
-            fill={favoriteState ? 'currentColor' : 'none'}
-          />
-        </button>
-
-        {listing.badgeLabel && (
-          <span className="absolute bottom-1.5 left-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] text-text-secondary">
-            {listing.badgeLabel}
-          </span>
-        )}
       </div>
 
-      <div className={`${isGuide ? 'min-w-0 flex-1 py-1.5 pr-1.5' : s.body}`}>
-        <p className={`${s.title} text-text-primary leading-snug line-clamp-1`}>{listing.title}</p>
-        {listing.subtitle && (
-          <p className={`${s.subtitle} mt-0.5 text-text-faint line-clamp-1`}>{listing.subtitle}</p>
-        )}
-
-        <div className={`${s.meta} flex items-center justify-between text-text-faint`}>
-          <span className="flex items-center gap-0.5">
-            <MapPin size={s.icon} />
-            {listing.distanceKm} km
-          </span>
-          <span className="flex items-center gap-0.5">
-            <Eye size={s.icon} />
-            {formatCount(listing.views)}
-          </span>
+      <div className={`flex min-w-0 flex-1 flex-col justify-between ${s.body}`}>
+        <div className="min-w-0">
+          <p className={`${s.title} truncate font-semibold leading-snug text-text-primary`}>{listing.title}</p>
+          {listing.subtitle && (
+            <p className="mt-0.5 truncate text-[8px] text-text-faint">{listing.subtitle}</p>
+          )}
         </div>
 
-        {listing.priceUsd !== undefined && (
-          <div className={`${s.price} rounded-md bg-brand-red text-center text-white`}>
-            {formatPrice(listing.priceUsd)}
+        <div>
+          <div className={`flex items-center justify-between ${s.meta} text-text-faint`}>
+            <span className="flex items-center gap-0.5">
+              <MapPin size={s.icon} />
+              {listing.distanceKm} km
+            </span>
+            <span className="flex items-center gap-0.5">
+              <Eye size={s.icon} />
+              {formatCount(listing.views)}
+            </span>
           </div>
-        )}
+
+          {listing.priceUsd !== undefined && (
+            <div className={`${s.price} mt-1 rounded bg-brand-red text-center text-white`}>
+              {formatPrice(listing.priceUsd)}
+            </div>
+          )}
+        </div>
       </div>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          if (onToggleFavorite) onToggleFavorite(listing.id);
+          else toggleFavorite(listing.id, listing.isFavorited);
+        }}
+        aria-label={favoriteState ? 'Remove from favorites' : 'Save to favorites'}
+        className={`absolute right-1 top-1 flex ${s.heart} items-center justify-center rounded-full bg-white/95 text-brand-red shadow-sm`}
+      >
+        <Heart size={9} className="text-brand-red" fill={favoriteState ? 'currentColor' : 'none'} />
+      </button>
     </a>
   );
 }

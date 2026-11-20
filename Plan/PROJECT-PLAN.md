@@ -176,48 +176,43 @@ introduce a sixth size, a page-local card dimension, or an oversized variant.
 The five sizes are defined once in the shared card components and every page
 selects one of them; a page never overrides the internal dimensions itself.
 
-| Size | Use | Max width | Image height | Title | Body padding | Price / meta |
-|---|---|---|---|---|---|---|
-| `xs` | Densest rows: Populars, City "top attractions" strip | 150px | 32px | 9px | 4px | 9px |
-| `sm` | Dense rows: Home Blogs row, single-row strips on Blogs, Travel Guide and City pages | 190px | 40px | 10px | 6px | 10px |
-| `md` | Default for every grid row: Hotels, Book Shops, Rentals, Transport, Markets, Restaurants, Cafes, Nearby results, City and Search results | 240px | 52px phone / 56px web | 11px / 12px | 8px | 10px |
-| `lg` | Emphasised rows: Travel Plans, Home Travel Guide | 300px | 60px phone / 64px web | 12px / 13px | 8px | 11px |
-| `xl` | Widest single row: Home Travel Plans, City Travel Guide (3-column rows only) | 340px | 68px phone / 72px web | 13px / 14px | 10px | 11px |
+Every card is a **fixed box**: an explicit width and height, a fixed-width
+image on the left, and the text column on the right. A card never stretches
+to fill its grid cell, so no card can render as a long thin bar.
 
-- `md` is the default. `sm` and `xs` are for dense or secondary rows, `lg` for
-  a primary discovery row, and `xl` only for a three-column row where the card
-  is wide enough to carry a slightly larger image.
-- Even `xl` stays compact: it is a slightly larger card, not a hero panel.
-  No card may exceed the `xl` values above, and no size may be applied outside
-  this table.
-- A row picks its size from its column count as well as its importance: five
-  and six column rows use `xs` or `sm`, four column rows use `lg` at most, and
-  only three column rows may use `xl`.
-- A card has a hard maximum width, given by its size (`maxWidth` in
-  `CARD_SIZES`). A card must never stretch to fill a wide container: no card
-  may render as a long bar. The maximum for `xs`/`sm`/`md`/`lg`/`xl` is
-  150/190/240/300/340px, and no page may exceed the value for its size.
-- Row width is `columns × the size's max width + gaps`, so a row of `columns`
-  cards fills its width exactly and a card sits at its size's maximum. A row
-  with fewer items than its column count leaves the unused space at the end;
-  pick the column count so the row is filled.
-- Column counts rise on wide screens rather than letting cards grow: five or
-  six column rows stay five or six, and three column rows become four at
-  `xl` (Nearby results, Travel Guide grid). A row must never be widened by
-  stretching its cards.
-- Horizontal single-row strips keep a fixed card width and scroll sideways on
-  phones.
-- A grid that hosts cards directly (Search, City, Favorites, Account,
-  Blogs-related, Travel Plans) repeats the same cap: `justify-items-center`
-  plus `max-w-[columns × the size's max width + gaps]`, so no page can
-  reintroduce a stretching card. Phones always show two cards per row.
-- The same five sizes apply to the Nearby place card (`variant` accepts
-  `xs`, `sm`, `md`, `lg`, `xl`); it keeps a square thumbnail on phones and
-  uses the matching image height from `md` upward.
-- The card size table lives in `src/components/ui/ListingCard.tsx`
-  (`CARD_SIZES`, including `maxWidth`) and
-  `src/features/nearby/NearbyPlaceCard.tsx` (`CARD_SIZES`). Change a size
-  there, not in a page.
+| Size | Box (width × height) | Image width | Title | Body padding | Heart |
+|---|---|---|---|---|---|
+| `xs` | 150 × 80px | 56px | 9px | 6px | 16px |
+| `sm` | 150 × 100px | 64px | 10px | 6px | 20px |
+| `md` | 180 × 80px | 64px | 10px | 6px | 20px |
+| `lg` | 200 × 100px | 72px | 11px | 8px | 20px |
+| `xl` | 200 × 100px | 76px | 11px | 8px | 24px |
+
+- `md` is the default. `xs` is the smallest box, `sm` adds height, `lg` adds
+  width and padding, and `xl` adds a wider image. No size may be applied
+  outside this table.
+- Because the box is fixed, the grid never decides a card's size. A row is
+  as many boxes as fit at the current viewport, wrapped, with a 10px gap.
+- A card always shows the required four: rating, distance, favorite, views.
+  Price renders as a small red pill when the listing has one.
+- Horizontal single-row strips scroll sideways on phones and use the same
+  fixed boxes.
+- The five sizes live in `src/components/ui/ListingCard.tsx` (`CARD_SIZES`,
+  as `box` + `image` tokens) and `src/features/nearby/NearbyPlaceCard.tsx`
+  (`CARD_SIZES`). Change a size there, not in a page.
+
+### Load More — only when another row exists
+
+A "Load More" control appears only when it is actually needed:
+
+- The list pages by whole rows: the visible count is `rows × live column
+  count`, read from the grid's computed `grid-template-columns`
+  (`src/hooks/useGridColumns.ts`).
+- The button is hidden when every matching item is already shown, and also
+  hidden while the last visible row is not full, so the control can never sit
+  under a half-empty row.
+- The button is small: a compact pill (10–11px label, ~30px tall), not a
+  large primary button.
 
 - Dark theme is the base, with a light theme available. Colors are defined
   as theme tokens (surfaces, text levels, brand blue for links and accents,

@@ -87,7 +87,6 @@ export function CityPage() {
         title={t('section_travel_guide')}
         viewAllHref="/travel-guide"
         listings={CITY_TRAVEL_GUIDES}
-        columns={3}
         cardSize="xl"
       />
 
@@ -95,7 +94,6 @@ export function CityPage() {
         title={t('section_top_attractions')}
         viewAllHref="/attractions"
         listings={TOP_ATTRACTIONS}
-        columns={5}
         cardSize="xs"
       />
 
@@ -105,21 +103,18 @@ export function CityPage() {
         title={t('section_popular_hotels')}
         viewAllHref="/hotels"
         listings={POPULAR_HOTELS}
-        columns={5}
         cardSize="md"
       />
       <ListingGridSection
         title={t('section_restaurants')}
         viewAllHref="/restaurants"
         listings={POPULAR_RESTAURANTS}
-        columns={5}
         cardSize="md"
       />
       <ListingGridSection
         title={t('section_book_shops')}
         viewAllHref="/book-shops"
         listings={POPULAR_BOOK_SHOPS}
-        columns={5}
         cardSize="md"
       />
 
@@ -129,28 +124,24 @@ export function CityPage() {
         title={t('section_rentals')}
         viewAllHref="/rentals"
         listings={POPULAR_RENTALS}
-        columns={5}
         cardSize="md"
       />
       <ListingGridSection
         title={t('section_transport_operators')}
         viewAllHref="/ticketing"
         listings={POPULAR_TRANSPORT}
-        columns={5}
         cardSize="md"
       />
       <ListingGridSection
         title={t('section_cafes')}
         viewAllHref="/cafes"
         listings={POPULAR_CAFES}
-        columns={5}
         cardSize="md"
       />
       <ListingGridSection
         title={t('section_markets')}
         viewAllHref="/markets"
         listings={POPULAR_MARKETS}
-        columns={5}
         cardSize="md"
       />
 
