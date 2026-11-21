@@ -10,6 +10,9 @@ not against earlier notes. Two companion files hold the detail:
 - [`COMPLETED-WORK.md`](./COMPLETED-WORK.md) — what is built and verified.
 - [`REMAINING-WORK.md`](./REMAINING-WORK.md) — what is not built yet, grouped by
   the layer it belongs to.
+- [`PLAN-VS-CODE.md`](./PLAN-VS-CODE.md) — every Plan claim tested against the
+  source tree: what is confirmed, what has gone stale, and where the Plan
+  contradicts itself.
 
 The authoritative product plan stays in
 [`../Plan/PROJECT-PLAN.md`](../Plan/PROJECT-PLAN.md).

@@ -10,6 +10,8 @@ This folder stores project documentation and implementation records.
 - [`COMPLETED-WORK.md`](./COMPLETED-WORK.md) — detail behind the finished work.
 - [`REMAINING-WORK.md`](./REMAINING-WORK.md) — detail behind the open work,
   grouped by layer (links, auth, data, media, dashboards, UI/UX).
+- [`PLAN-VS-CODE.md`](./PLAN-VS-CODE.md) — the Plan checked against the code:
+  confirmed claims, stale claims, and internal contradictions.
 
 The consolidated product plan is maintained in
 [`../Plan/PROJECT-PLAN.md`](../Plan/PROJECT-PLAN.md).
