@@ -58,6 +58,7 @@ export function HomePage() {
         viewAllHref="/travel-plans"
         listings={travelPlans.listings}
         onToggleFavorite={travelPlans.toggle}
+        columns={3}
         cardSize="xl"
       />
       <BreakAd placement="home_after_travel_plans" />
@@ -67,21 +68,23 @@ export function HomePage() {
         viewAllHref="/travel-guide"
         listings={travelGuides.listings}
         onToggleFavorite={travelGuides.toggle}
+        columns={4}
         cardSize="lg"
       />
-      <ListingGridSection title={t('section_popular_hotels')} viewAllHref="/hotels" listings={hotels.listings} onToggleFavorite={hotels.toggle} cardSize="md" />
+      <ListingGridSection title={t('section_popular_hotels')} viewAllHref="/hotels" listings={hotels.listings} onToggleFavorite={hotels.toggle} columns={5} cardSize="md" />
       <BreakAd placement="home_after_hotels" />
       <ListingGridSection
         title={t('section_blogs')}
         viewAllHref="/blogs"
         listings={blogs.listings}
         onToggleFavorite={blogs.toggle}
+        columns={4}
         cardSize="sm"
       />
-      <ListingGridSection title={t('section_book_shops')} viewAllHref="/book-shops" listings={bookShops.listings} onToggleFavorite={bookShops.toggle} cardSize="md" />
-      <ListingGridSection title={t('section_rentals')} viewAllHref="/rentals" listings={rentals.listings} onToggleFavorite={rentals.toggle} cardSize="md" />
-      <ListingGridSection title={t('section_transport_operators')} viewAllHref="/ticketing" listings={transport.listings} onToggleFavorite={transport.toggle} cardSize="md" />
-      <ListingGridSection title={t('section_markets')} viewAllHref="/markets" listings={markets.listings} onToggleFavorite={markets.toggle} cardSize="md" />
+      <ListingGridSection title={t('section_book_shops')} viewAllHref="/book-shops" listings={bookShops.listings} onToggleFavorite={bookShops.toggle} columns={5} cardSize="md" />
+      <ListingGridSection title={t('section_rentals')} viewAllHref="/rentals" listings={rentals.listings} onToggleFavorite={rentals.toggle} columns={5} cardSize="md" />
+      <ListingGridSection title={t('section_transport_operators')} viewAllHref="/ticketing" listings={transport.listings} onToggleFavorite={transport.toggle} columns={5} cardSize="md" />
+      <ListingGridSection title={t('section_markets')} viewAllHref="/markets" listings={markets.listings} onToggleFavorite={markets.toggle} columns={5} cardSize="md" />
       <section className="mb-5"><h2 className="mb-2.5 text-sm font-medium text-text-primary">{t('section_popular_searches')}</h2><div className="flex flex-wrap gap-2">{POPULAR_SEARCHES.map((query) => <span key={query} className="rounded-full bg-bg-card px-3 py-1.5 text-[10px] text-text-secondary">{query}</span>)}</div></section>
       <BreakAd placement="home_after_blogs" />
 
@@ -90,6 +93,7 @@ export function HomePage() {
         viewAllHref="/populars"
         listings={populars.listings}
         onToggleFavorite={populars.toggle}
+        columns={6}
         cardSize="xs"
       />
       <Reviews />
@@ -103,6 +107,7 @@ export function HomePage() {
         viewAllHref="/attractions"
         listings={attractions.listings}
         onToggleFavorite={attractions.toggle}
+        columns={5}
         cardSize="md"
         singleRow
       />
@@ -111,6 +116,7 @@ export function HomePage() {
         viewAllHref="/restaurants"
         listings={restaurants.listings}
         onToggleFavorite={restaurants.toggle}
+        columns={5}
         cardSize="md"
         singleRow
       />
@@ -119,6 +125,7 @@ export function HomePage() {
         viewAllHref="/cafes"
         listings={cafes.listings}
         onToggleFavorite={cafes.toggle}
+        columns={5}
         cardSize="md"
         singleRow
       />

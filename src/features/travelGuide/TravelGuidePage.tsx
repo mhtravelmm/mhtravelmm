@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -24,10 +24,11 @@ import type { TranslationKey } from '../../lib/i18n';
 import { useLanguage } from '../../lib/i18n';
 import type { Language } from '../../types';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
-import { useGridColumns } from '../../hooks/useGridColumns';
 import { TRAVEL_GUIDE_STORIES, type GuideCategory, type TravelGuideStory } from '../../data/travelGuideData';
 import { POPULAR_CAFES, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } from '../../data/cityPageData';
 import { ListingGridSection } from '../home/sections/ListingGridSection';
+
+const INITIAL_VISIBLE_GUIDES = 6;
 
 type GuideFilter = 'all' | GuideCategory;
 type Translate = (key: TranslationKey) => string;
@@ -290,10 +291,7 @@ export function TravelGuidePage() {
   const { language, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<GuideFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [visibleRows, setVisibleRows] = useState(2);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const gridColumns = useGridColumns(gridRef, 1);
-  const visibleCount = visibleRows * gridColumns;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_GUIDES);
   const favoriteState = useToggleFavorite(TRAVEL_GUIDE_STORIES);
   const topAttractions = useToggleFavorite(TOP_ATTRACTIONS);
   const restaurants = useToggleFavorite(POPULAR_RESTAURANTS);
@@ -306,7 +304,7 @@ export function TravelGuidePage() {
   });
 
   useEffect(() => {
-    setVisibleRows(2);
+    setVisibleCount(INITIAL_VISIBLE_GUIDES);
   }, [activeCategory, searchQuery]);
 
   const filteredGuides = useMemo(() => {
@@ -326,8 +324,6 @@ export function TravelGuidePage() {
       return matchesCategory && matchesQuery;
     });
   }, [activeCategory, searchQuery]);
-
-  const shownGuides = filteredGuides.slice(0, visibleCount);
 
   const selectedGuide = guideId ? TRAVEL_GUIDE_STORIES.find((guide) => guide.id === guideId) : undefined;
 
@@ -410,7 +406,7 @@ export function TravelGuidePage() {
           </div>
           <button
             type="button"
-            onClick={() => { setActiveCategory('all'); setSearchQuery(''); setVisibleRows(TRAVEL_GUIDE_STORIES.length); }}
+            onClick={() => { setActiveCategory('all'); setSearchQuery(''); setVisibleCount(TRAVEL_GUIDE_STORIES.length); }}
             className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-brand-blue hover:underline sm:text-xs"
           >
             {t('view_all')}
@@ -420,8 +416,8 @@ export function TravelGuidePage() {
 
         {filteredGuides.length > 0 ? (
           <>
-            <div ref={gridRef} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-4">
-              {shownGuides.map((guide) => (
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-4">
+              {filteredGuides.slice(0, visibleCount).map((guide) => (
                 <GuideCard
                   key={guide.id}
                   guide={guideWithFavorite(guide)}
@@ -431,15 +427,15 @@ export function TravelGuidePage() {
                 />
               ))}
             </div>
-            {visibleCount < filteredGuides.length && shownGuides.length % gridColumns === 0 && (
-              <div className="mt-4 flex justify-center">
+            {visibleCount < filteredGuides.length && (
+              <div className="mt-5 flex justify-center sm:mt-7">
                 <button
                   type="button"
-                  onClick={() => setVisibleRows((rows) => rows + 1)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg-card px-3 py-1.5 text-[10px] font-semibold text-brand-blue transition hover:border-brand-blue/60 hover:bg-bg-cardAlt sm:text-[11px]"
+                  onClick={() => setVisibleCount((count) => count + INITIAL_VISIBLE_GUIDES)}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-bg-card px-4 py-2.5 text-xs font-semibold text-text-primary transition hover:border-cyan-400 hover:text-brand-blue sm:px-5 sm:text-sm"
                 >
                   {t('guide_load_more')}
-                  <ArrowRight size={12} />
+                  <ArrowRight size={15} />
                 </button>
               </div>
             )}
@@ -457,7 +453,8 @@ export function TravelGuidePage() {
         viewAllHref="/attractions"
         listings={topAttractions.listings}
         onToggleFavorite={topAttractions.toggle}
-        cardSize="lg"
+        columns={5}
+        cardSize="sm"
         singleRow
       />
       <ListingGridSection
@@ -465,7 +462,8 @@ export function TravelGuidePage() {
         viewAllHref="/restaurants"
         listings={restaurants.listings}
         onToggleFavorite={restaurants.toggle}
-        cardSize="lg"
+        columns={5}
+        cardSize="sm"
         singleRow
       />
       <ListingGridSection
@@ -473,7 +471,8 @@ export function TravelGuidePage() {
         viewAllHref="/cafes"
         listings={cafes.listings}
         onToggleFavorite={cafes.toggle}
-        cardSize="lg"
+        columns={5}
+        cardSize="sm"
         singleRow
       />
     </div>

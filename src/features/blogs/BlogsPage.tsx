@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { useGridColumns } from '../../hooks/useGridColumns';
 import { AdSlot } from '../../components/ui/AdSlot';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { fetchMockAd } from '../../data/ads';
@@ -385,10 +384,7 @@ export function BlogsPage() {
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('latest');
-  const [visibleRows, setVisibleRows] = useState(2);
-  const gridRef = useRef<HTMLDivElement>(null);
-  const gridColumns = useGridColumns(gridRef, 1);
-  const visibleCount = visibleRows * gridColumns;
+  const [visibleCount, setVisibleCount] = useState(6);
   const [viewIncrements, setViewIncrements] = useState<Record<string, number>>(() => readStoredValue(VIEWS_STORAGE_KEY, {}));
   const [toast, setToast] = useState('');
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -515,7 +511,6 @@ export function BlogsPage() {
         : b.publishedAt.localeCompare(a.publishedAt));
   }, [activeCategory, language, query, sortMode, viewIncrements]);
   const displayedPosts = visiblePosts.slice(0, visibleCount);
-  const lastRowFilled = displayedPosts.length % gridColumns === 0;
 
   return (
     <div className="w-full pb-8 pt-3 sm:pt-5">
@@ -541,7 +536,7 @@ export function BlogsPage() {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => { setActiveCategory(id); setVisibleRows(2); }}
+                    onClick={() => { setActiveCategory(id); setVisibleCount(6); }}
                     aria-pressed={active}
                     className={`inline-flex h-7 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-2 text-[9px] font-medium transition sm:h-11 sm:gap-2 sm:px-3.5 sm:text-xs ${active ? `${activeTone} border-transparent text-white shadow-sm sm:shadow-lg sm:shadow-black/10` : 'border-border bg-bg-card text-text-secondary hover:border-brand-blue/50 hover:bg-bg-cardAlt'}`}
                   >
@@ -556,7 +551,7 @@ export function BlogsPage() {
                     <button
                       key={id}
                       type="button"
-                      onClick={() => { setActiveCategory(id); setVisibleRows(2); }}
+                      onClick={() => { setActiveCategory(id); setVisibleCount(6); }}
                       aria-pressed={active}
                       className={`inline-flex h-7 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full border px-2 text-[9px] font-medium transition sm:h-11 sm:gap-2 sm:px-3.5 sm:text-xs ${active ? `${activeTone} border-transparent text-white shadow-sm sm:shadow-lg sm:shadow-black/10` : 'border-border bg-bg-card text-text-secondary hover:border-brand-blue/50 hover:bg-bg-cardAlt'}`}
                     >
@@ -580,7 +575,7 @@ export function BlogsPage() {
                 <input
                   type="search"
                   value={query}
-                  onChange={(event) => { setQuery(event.target.value); setVisibleRows(2); }}
+                  onChange={(event) => { setQuery(event.target.value); setVisibleCount(6); }}
                   placeholder={t('blog_search_placeholder')}
                   aria-label={t('blog_search_label')}
                   className="w-full rounded-full border border-border bg-bg-card py-2.5 pl-9 pr-10 text-xs text-text-primary outline-none transition placeholder:text-text-faint focus:border-brand-blue/70"
@@ -588,7 +583,7 @@ export function BlogsPage() {
                 {query && (
                   <button
                     type="button"
-                    onClick={() => { setQuery(''); setVisibleRows(2); }}
+                    onClick={() => { setQuery(''); setVisibleCount(6); }}
                     aria-label={t('blog_clear_search')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-text-faint hover:text-text-primary"
                   >
@@ -600,7 +595,7 @@ export function BlogsPage() {
                 <span className="sr-only">{t('blog_sort_label')}</span>
                 <select
                   value={sortMode}
-                  onChange={(event) => { setSortMode(event.target.value as SortMode); setVisibleRows(2); }}
+                  onChange={(event) => { setSortMode(event.target.value as SortMode); setVisibleCount(6); }}
                   aria-label={t('blog_sort_label')}
                   className="w-[112px] rounded-full border border-border bg-bg-card px-3 py-2.5 text-xs text-text-secondary outline-none transition focus:border-brand-blue/70 sm:w-auto sm:px-4"
                 >
@@ -611,7 +606,7 @@ export function BlogsPage() {
             </div>
 
             {displayedPosts.length > 0 ? (
-              <div ref={gridRef} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-3">
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-3">
                 {displayedPosts.map((post) => (
                   <StoryCard
                     key={post.id}
@@ -632,21 +627,17 @@ export function BlogsPage() {
                 <Search size={22} className="mb-3 text-text-faint" />
                 <p className="text-sm text-text-secondary">{t('blog_no_results')}</p>
                 {query && (
-                  <button type="button" onClick={() => { setQuery(''); setVisibleRows(2); }} className="mt-3 text-xs text-brand-blue hover:underline">
+                  <button type="button" onClick={() => { setQuery(''); setVisibleCount(6); }} className="mt-3 text-xs text-brand-blue hover:underline">
                     {t('blog_clear_search')}
                   </button>
                 )}
               </div>
             )}
 
-            {visiblePosts.length > displayedPosts.length && lastRowFilled && (
-              <div className="mt-4 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setVisibleRows((rows) => rows + 1)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-bg-card px-3 py-1.5 text-[10px] font-semibold text-brand-blue transition hover:border-brand-blue/60 hover:bg-bg-cardAlt sm:text-[11px]"
-                >
-                  {t('blog_load_more')}<ArrowRight size={12} className="rotate-90" />
+            {visiblePosts.length > displayedPosts.length && (
+              <div className="mt-6 flex justify-center">
+                <button type="button" onClick={() => setVisibleCount((count) => count + 6)} className="inline-flex items-center gap-2 rounded-full bg-brand-blue px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-brand-blue/20 transition hover:-translate-y-0.5 hover:bg-brand-blueDark">
+                  {t('blog_load_more')}<ArrowRight size={14} className="rotate-90" />
                 </button>
               </div>
             )}
@@ -656,7 +647,8 @@ export function BlogsPage() {
             viewAllHref="/attractions"
             listings={topAttractions.listings}
             onToggleFavorite={topAttractions.toggle}
-            cardSize="lg"
+            columns={5}
+            cardSize="sm"
             singleRow
           />
           <ListingGridSection
@@ -664,7 +656,8 @@ export function BlogsPage() {
             viewAllHref="/restaurants"
             listings={restaurants.listings}
             onToggleFavorite={restaurants.toggle}
-            cardSize="lg"
+            columns={5}
+            cardSize="sm"
             singleRow
           />
           <ListingGridSection
@@ -672,7 +665,8 @@ export function BlogsPage() {
             viewAllHref="/cafes"
             listings={cafes.listings}
             onToggleFavorite={cafes.toggle}
-            cardSize="lg"
+            columns={5}
+            cardSize="sm"
             singleRow
           />
         </>
