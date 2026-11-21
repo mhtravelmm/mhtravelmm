@@ -1,8 +1,13 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 16 November 2026
+**Last updated:** 20 November 2026
+**Verified against:** `main` @ `5f3924b`
 
 This document records the frontend features, preview workflows, backend preparation, and documentation work completed so far. Production/backend boundaries remain explicitly listed in [`REMAINING-WORK.md`](./REMAINING-WORK.md).
+
+For the one-page view of what is finished versus open, read
+[`STATUS.md`](./STATUS.md) first. This file is the detail behind its
+**DONE** and **PREVIEW** marks.
 
 ## Product foundation and shared UI
 
@@ -74,3 +79,43 @@ When a new Shop Owner account/application is successfully created, the Super Adm
 ## Page-based Ads Management — 16 November 2026
 
 The campaign inventory view was replaced with a page-oriented Ads Management workspace. Super Admin now selects a named website page, sees only the ad placements belonging to that page, and can add, edit, preview, publish, or pause each placement. The UI includes page paths, placement slots, advertiser names, and per-page ad counts.
+
+
+## Card system and grid caps — verified 20 November 2026
+
+The shared card system is the one place card dimensions are decided. Every
+page selects a size; no page sets its own card width, image height, or type
+scale.
+
+- Five sizes exist and no others: `xs`, `sm`, `md`, `lg`, `xl`.
+- Each size carries a hard `maxWidth` so a card can never stretch into a long
+  bar when its grid cell is wider than the size intends.
+- All direct card grids are capped to `columns × card width + gaps` with
+  `justify-items-center`, covering Blogs, Favorites, Account, City, Search,
+  Travel Plans, Travel Guide, and Nearby.
+- `ListingGridSection` builds its rows from the same width map, so Home and
+  City rows share the cap with the page-level grids.
+- The Plan's card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` in
+  `src/components/ui/ListingCard.tsx` exactly.
+
+An earlier rewrite that replaced the card structure with a fixed box and then
+with a 3:2 scale was reverted in `5f3924b`; the tree is byte-identical to
+`eef11a5`. That work is preserved on branch `backup/cards-3to2-35fcc5e` if it
+is ever wanted back.
+
+## Route integrity — verified 20 November 2026
+
+All 26 routes declared in `public/manus-routes.json` resolve in `src/App.tsx`,
+and every declared route is reachable. The `*` fallback renders a placeholder
+rather than crashing.
+
+This does not mean every link works. Links inside seed data point at routes
+that are not declared; those are recorded in
+[`STATUS.md` §5](./STATUS.md#5-broken-internal-links--not-done-48-links).
+
+## Code hygiene — verified 20 November 2026
+
+- No `TODO`, `FIXME`, `XXX`, or `HACK` markers in source.
+- No `console.log` left in source.
+- ESLint has zero errors and seven pre-existing non-blocking warnings.
+- Typecheck and production build pass on the audited commit.

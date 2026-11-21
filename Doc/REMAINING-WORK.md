@@ -1,8 +1,31 @@
 # MH Travel — Remaining Work Record
 
-**Last updated:** 16 November 2026
+**Last updated:** 20 November 2026
+**Verified against:** `main` @ `5f3924b`
 
 The application currently provides a substantial frontend and local-preview experience. The following work remains before production launch.
+
+For the one-page view of what is finished versus open, read
+[`STATUS.md`](./STATUS.md) first. This file expands its **NOT DONE** and
+**PARTIAL** items.
+
+## Broken internal links — 48 confirmed
+
+The largest concrete defect. Links in seed data and `viewAllHref` props point
+at routes that do not exist, so they all land on the `*` fallback and render
+"Not found — coming soon." Full breakdown in
+[`STATUS.md` §5](./STATUS.md#5-broken-internal-links--not-done-48-links).
+
+- `/book_shop` is a typo for `/book-shops`. Fix first, it is one character.
+- Ten category pages are missing: `/hotels`, `/cafes`, `/attractions`,
+  `/markets`, `/populars`, `/reviews`, `/categories`, `/partners`, `/awards`,
+  `/guides`. Each is the target of a visible "View all" button.
+- Thirty-eight detail links are missing: `/hotels/:id` (8), `/markets/:id` (7),
+  `/cafes/:id` (5), `/attractions/:id` (5), `/ticketing/:id` (5),
+  `/rentals/:id` (5), plus `/emergency`, `/exchange`, `/sim_card`.
+
+For each, either add the route or stop rendering the card as a link. Leaving a
+card clickable when it leads to "coming soon" is worse than a static card.
 
 ## Authentication and authorization
 
@@ -72,3 +95,51 @@ The current notification is a local preview implementation. Production should cr
 ## Page-based Ads Management — production work remaining
 
 Persist page routes, ad slots, creative/media, advertiser, schedule, approval state, and page-level permissions in Supabase/R2. Published ads must be fetched and rendered by the matching public page, while preview, pause, scheduling, analytics, and audit events must be backed by real APIs rather than local component state.
+
+
+## UI/UX and accessibility backlog — audited 20 November 2026
+
+These are measured findings, not guesses. Each has a number attached so the
+work can be sized.
+
+### Layout and density
+
+- **Card type is small on phones.** `xs` renders at roughly 145×67px with a
+  9px title and 7px meta line. Readable on a desktop, tight on a phone. The
+  five-size system itself is correct; the question is whether `xs` should be
+  used for any phone-facing row at all.
+- **Section spacing is uneven on Home.** Measured gaps between adjacent
+  sections are mostly 20px but one is 64px, so the page rhythm breaks in one
+  place.
+- **One section gap of 0px on `/blogs`.** Two sections sit flush against each
+  other with no breathing room.
+- **Horizontal overflow at tablet width.** At 820px the document scrolls
+  sideways by 21–37px. Traced to the header's `flex items-center gap-3`
+  container, not to the cards. Predates the card work.
+
+### Accessibility
+
+- **5 images have no `alt` attribute.** Small number, quick fix.
+- **139 buttons have no `aria-label`.** Most are text buttons where a label is
+  not required. This needs a real pass to separate icon-only buttons from text
+  buttons rather than a blanket edit.
+- **No automated accessibility test exists.** No axe, no lighthouse check in
+  delivery.
+
+### Interaction
+
+- **Load More does not check whether the last row is full.** Blogs pages by 6
+  and Travel Guide pages by 6, so on a four-column layout the button can appear
+  under a row with two empty slots, and can appear when nothing further
+  matches. Two independent implementations, no shared helper.
+- **No empty-state audit.** Empty states exist on some pages (Blogs search,
+  Favorites, Travel Guide) but there is no check that every list has one.
+
+### Localization
+
+- **Shop Owner dashboard has no `useLanguage` integration at all.** English
+  only, by construction.
+- **Main Owner dashboard has no `useLanguage` integration.** Same.
+- **Super Admin translates navigation only.** The dashboard body is hard-coded
+  English.
+- **8 hard-coded English sentences remain in traveler-facing components.**
