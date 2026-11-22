@@ -1,8 +1,8 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 20 November 2026
-**Verified against:** `main` @ `5f3924b` plus the route, accessibility,
-layout, and paging work of 20 November 2026.
+**Last updated:** 22 November 2026
+**Verified against:** `main` @ `8cdcf4e` plus the route, accessibility,
+layout, paging, role, and rental-category work of 20–22 November 2026.
 
 This document records the frontend features, preview workflows, backend preparation, and documentation work completed so far. Production/backend boundaries remain explicitly listed in [`REMAINING-WORK.md`](./REMAINING-WORK.md).
 
@@ -130,14 +130,15 @@ one place and forgotten in another.
 
 ## Link and route tests — 20 November 2026
 
-`npm test` runs Vitest over four files, 23 tests:
+`npm test` runs Vitest over five files, 29 tests:
 
 | File | What it proves |
 |---|---|
 | `src/data/links.test.ts` | Every seed `href` resolves to a declared route; no duplicate route paths; every catalog id is unique within its catalog; a place href resolves to the record that owns it |
 | `src/routes.manifest.test.ts` | `public/manus-routes.json` lists exactly the declared routes, each once, each with a title |
 | `src/lib/categoryFilter.test.ts` | Category options and filtering, plus the map-search and phone-dial href builders |
-| `src/lib/useGridColumnCount.test.ts` | Whole-row paging maths, including clamping the last page so no record is hidden |
+| `src/lib/usePagedList.test.ts` | Paging maths: the page size divides evenly into every column count, batches are whole, the last batch is clamped, and Load More hides when exhausted |
+| `src/lib/adminRoles.test.ts` | The eight product roles, their permission groups, ad management staying exclusive, and content split by type |
 
 The suite runs in under a second and needs no browser, so it can gate every
 delivery check alongside typecheck, build, and lint.
@@ -148,8 +149,8 @@ delivery check alongside typecheck, build, and lint.
 - No `console.log` left in source.
 - ESLint has zero errors and seven pre-existing non-blocking warnings.
 - Typecheck and production build pass on the audited commit.
-- `npm test` passes: 23 tests over the route table, seed links, filters, and
-  paging.
+- `npm test` passes: 29 tests over the route table, seed links, filters,
+  paging, and admin roles.
 
 ## Accessibility — measured 20 November 2026
 
@@ -191,13 +192,37 @@ unconstrained grid column and is fixed too.
 Verified at 360, 390, 414, 600, 768, 820, 900, 1024, 1180, and 1280px across 15
 routes: no horizontal overflow anywhere.
 
-## Paging — fixed 20 November 2026
+## Paging — 20 November 2026, revised 22 November 2026
 
 Blogs and Travel Guide each paged by a hard-coded six, which leaves a ragged
-last row on a four-column grid. Both now share `src/lib/useGridColumnCount.ts`:
-it reads the grid's real column count from the computed style, so no breakpoint
-is duplicated in JavaScript, and `alignToRow` rounds each page up to a whole
-row. The last page is clamped to what exists, so nothing is hidden.
+last row on a four-column grid. The first fix read the grid's rendered column
+count and rounded each page to a whole row.
 
-Confirmed in the browser: Blogs renders 8 cards at 1440px and 6 at 390px;
-Travel Guide renders 8 and 6 the same way.
+The Plan then fixed the page size at 12 (§4), which divides evenly into two,
+three, four and six columns, so the measurement is no longer needed. Both pages
+now share `src/lib/usePagedList.ts`: `usePagedList(items, resetKey)` returns
+the visible slice, a `hasMore` flag and `loadMore`. The last batch is clamped
+to what exists, so nothing is hidden, and the button disappears once everything
+is shown. `useGridColumnCount` and `alignToRow` were removed.
+
+## Admin roles — 22 November 2026
+
+The Admin Management form offered five names that did not match the product
+roles (Content Manager, Support Manager, Operations Admin, Finance Admin, Ads
+Manager). `src/lib/adminRoles.ts` now holds the eight roles from Plan §3 and
+the permission group each one starts with. The form lists the seven roles a
+Super Admin can create (Super Admin itself is excluded because only it creates
+accounts), and choosing a role sets its permission group; the group stays
+editable, since it is what scopes the role.
+
+## Rental categories — 22 November 2026
+
+Plan §8 decided to add E-bike and Tricycle. E-bike was already present;
+Tricycle is new: `RentalCategory` gained `tricycle`, the catalog gained a
+`pre11` listing so Favorites and Account resolve it, the selector order places
+it beside Scooter, and Yangon and Mandalay offer it. Boat stays one category,
+with motorboat as its current type.
+
+Yangon's motorbike and camping-tent restriction from the Plan is not applied
+yet: the Plan lists it under "Still needing the founder's input", so the seed
+data keeps Yangon's current list until that is confirmed.

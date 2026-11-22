@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,14 +22,12 @@ import type { LucideIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import type { TranslationKey } from '../../lib/i18n';
 import { useLanguage } from '../../lib/i18n';
-import { alignToRow, useGridColumnCount } from '../../lib/useGridColumnCount';
+import { usePagedList } from '../../lib/usePagedList';
 import type { Language } from '../../types';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { TRAVEL_GUIDE_STORIES, type GuideCategory, type TravelGuideStory } from '../../data/travelGuideData';
 import { POPULAR_CAFES, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } from '../../data/cityPageData';
 import { ListingGridSection } from '../home/sections/ListingGridSection';
-
-const INITIAL_VISIBLE_GUIDES = 6;
 
 type GuideFilter = 'all' | GuideCategory;
 type Translate = (key: TranslationKey) => string;
@@ -292,9 +290,6 @@ export function TravelGuidePage() {
   const { language, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<GuideFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_GUIDES);
-  const guidesGridRef = useRef<HTMLDivElement>(null);
-  const guideColumns = useGridColumnCount(guidesGridRef);
   const favoriteState = useToggleFavorite(TRAVEL_GUIDE_STORIES);
   const topAttractions = useToggleFavorite(TOP_ATTRACTIONS);
   const restaurants = useToggleFavorite(POPULAR_RESTAURANTS);
@@ -305,10 +300,6 @@ export function TravelGuidePage() {
     ...guide,
     isFavorited: favoriteById.get(guide.id) ?? guide.isFavorited,
   });
-
-  useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE_GUIDES);
-  }, [activeCategory, searchQuery]);
 
   const filteredGuides = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
@@ -328,7 +319,12 @@ export function TravelGuidePage() {
     });
   }, [activeCategory, searchQuery]);
 
-  const guideLimit = alignToRow(filteredGuides.length, visibleCount, guideColumns);
+  const {
+    visibleItems: visibleGuides,
+    hasMore: hasMoreGuides,
+    loadMore: loadMoreGuides,
+    showAll: showAllGuides,
+  } = usePagedList(filteredGuides, `${activeCategory}|${searchQuery.trim()}`);
 
   const selectedGuide = guideId ? TRAVEL_GUIDE_STORIES.find((guide) => guide.id === guideId) : undefined;
 
@@ -411,7 +407,7 @@ export function TravelGuidePage() {
           </div>
           <button
             type="button"
-            onClick={() => { setActiveCategory('all'); setSearchQuery(''); setVisibleCount(TRAVEL_GUIDE_STORIES.length); }}
+            onClick={() => { setActiveCategory('all'); setSearchQuery(''); showAllGuides(); }}
             className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-brand-blue hover:underline sm:text-xs"
           >
             {t('view_all')}
@@ -421,8 +417,8 @@ export function TravelGuidePage() {
 
         {filteredGuides.length > 0 ? (
           <>
-            <div ref={guidesGridRef} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-4">
-              {filteredGuides.slice(0, guideLimit).map((guide) => (
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-4">
+              {visibleGuides.map((guide) => (
                 <GuideCard
                   key={guide.id}
                   guide={guideWithFavorite(guide)}
@@ -432,11 +428,11 @@ export function TravelGuidePage() {
                 />
               ))}
             </div>
-            {filteredGuides.length > guideLimit && (
+            {hasMoreGuides && (
               <div className="mt-5 flex justify-center sm:mt-7">
                 <button
                   type="button"
-                  onClick={() => setVisibleCount((count) => count + INITIAL_VISIBLE_GUIDES)}
+                  onClick={loadMoreGuides}
                   className="inline-flex items-center gap-2 rounded-lg border border-border bg-bg-card px-4 py-2.5 text-xs font-semibold text-text-primary transition hover:border-cyan-400 hover:text-brand-blue sm:px-5 sm:text-sm"
                 >
                   {t('guide_load_more')}

@@ -45,7 +45,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (23 tests, 4 files) |
+| `npm test` (vitest) | **PASS** (29 tests, 5 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (42 declared routes, all render) |
 
@@ -90,7 +90,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/cities` | **PREVIEW** | City grid + category explorer |
 | `/cities/:cityId` | **PREVIEW** | Hero, facts, recommendations, category explorer |
 | `/nearby` | **PREVIEW** | Geolocation with Yangon fallback, 13 categories |
-| `/rentals` | **PREVIEW** | 10 rental records, booking form is local state |
+| `/rentals` | **PREVIEW** | 11 rental records (E-Bike, Scooter, Tricycle included), booking form is local state |
 | `/restaurants` | **PREVIEW** | Menu, category filter, reviews, photos, CTA links |
 | `/restaurants/:id` | **PREVIEW** | Resolves the record from `:id` |
 | `/book-shops` | **PREVIEW** | Books, stationery, gifts, reviews, CTA links |
@@ -171,7 +171,7 @@ are referenced by the Plan as future utility pages. No seed data links to them.
 | Super Admin metrics/users/content | **PARTIAL** | Seeded metrics, English body |
 | Super Admin Ads Management | **PREVIEW** | Page-oriented placements, local state |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |
-| Admin Management | **PREVIEW** | Local state |
+| Admin Management | **PREVIEW** | Local state; form offers the eight Plan §3 roles with their default permission group |
 | Blog Post Management | **PARTIAL** | Editor complete, upload falls back locally |
 | Shop Owner dashboard | **PARTIAL** | English-only, no `useLanguage` |
 | Main Owner dashboard | **PARTIAL** | English-only, no `useLanguage` |
@@ -236,22 +236,22 @@ Two places where the doc and the tree disagreed, now reconciled:
 1. **Card sizes.** The Plan table and `CARD_SIZES` match after the revert.
    Earlier rewrites (fixed-box, 3:2 scale) were reverted in `5f3924b` and
    preserved on branch `backup/cards-3to2-35fcc5e`.
-2. **Load More.** The Plan still does not describe Load More behaviour, so the
-   code defined it twice. Both pages now share one helper
-   (`src/lib/useGridColumnCount.ts`), which reads the grid's real column count
-   from the computed style and rounds each page up to a whole row:
+2. **Load More.** The Plan now states the rule (§4) and the code follows it.
+   Both pages share `src/lib/usePagedList.ts`:
 
-   | Page | Page size | Columns | Row-full check |
+   | Page | Page size | Columns | Helper |
    |---|---|---|---|
-   | Blogs | 6, rounded to the row | 1 / 2 / 3 / 4 | `alignToRow` |
-   | Travel Guide | 6, rounded to the row | 1 / 2 / 3 / 4 | `alignToRow` |
+   | Blogs | 12 | 1 / 2 / 3 / 4 | `usePagedList` |
+   | Travel Guide | 12 | 1 / 2 / 3 / 4 | `usePagedList` |
 
-   Six items in a four-column grid now render as eight, so no row is left half
-   empty, and the final page is clamped to what exists so nothing is hidden.
-   Unit-tested in `useGridColumnCount.test.ts`.
+   Twelve divides evenly into two, three, four and six columns, so a revealed
+   batch always fills its rows; the last batch is clamped to what exists so
+   nothing is hidden, and the button disappears once everything is shown.
+   Unit-tested in `usePagedList.test.ts`.
 
-   **Still open on the Plan side.** `PROJECT-PLAN.md` §4 does not state the
-   rule, so a third list could still be written without it.
+   The earlier row-reading version (`useGridColumnCount` + `alignToRow`) is
+   gone: it needed a live measurement to page correctly, which the fixed page
+   size removes.
 
 ---
 

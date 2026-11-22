@@ -60,9 +60,10 @@ the suite instead of reaching a user as "coming soon."
 
 ## Routes, content, and UX backlog
 
-- Write the Load More rule into `PROJECT-PLAN.md` §4. Blogs and Travel Guide
-  already share `src/lib/useGridColumnCount.ts` and page by whole rows; the
-  Plan text is what is missing.
+- ~~Write the Load More rule into `PROJECT-PLAN.md` §4.~~ **Done 22 November
+  2026.** §4 states the page size of 12, the whole-batch rule, and the
+  hide-when-exhausted rule; Blogs and Travel Guide share
+  `src/lib/usePagedList.ts`.
 - Connect the Directions, Call, and View-all CTAs on Restaurant, Book Shop, and
   the place detail page to real handoff flows once business contact records
   exist in Supabase. They currently build a Google Maps search URL and a
@@ -144,11 +145,11 @@ routes. Every check except contrast is now clean.
 
 ### Interaction
 
-- ~~**Load More does not check whether the last row is full.**~~ **Fixed 20
-  November 2026.** Both lists read their real column count through
-  `useGridColumnCount` and page by whole rows via `alignToRow`, so a request for
-  six in a four-column grid shows eight. The final page is clamped to what
-  exists. Unit-tested.
+- ~~**Load More does not check whether the last row is full.**~~ **Fixed 22
+  November 2026.** Both lists page in fixed batches of 12 through
+  `src/lib/usePagedList.ts`. Twelve divides evenly into two, three, four and
+  six columns, so no batch ends on a ragged row; the last batch is clamped to
+  what exists and the button hides once everything is shown. Unit-tested.
 - **No empty-state audit.** Empty states exist on some pages (Blogs search,
   Favorites, Travel Guide) but there is no check that every list has one.
 

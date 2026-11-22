@@ -48,6 +48,7 @@ export type RentalCategory =
   | 'motorbike'
   | 'ebike'
   | 'scooter'
+  | 'tricycle'
   | 'motorboat'
   | 'horse_carriage'
   | 'bicycle'

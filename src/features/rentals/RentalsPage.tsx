@@ -47,9 +47,9 @@ type City = {
 };
 
 const cities: City[] = [
-  { id: 'yangon', name: { mm: 'ရန်ကုန်', en: 'Yangon' }, branches: [{ mm: 'ရန်ကုန် MH Travel ရုံးခွဲ — Downtown', en: 'Yangon MH Travel Branch — Downtown' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'car', 'self_drive_car', 'travel_guide'] },
+  { id: 'yangon', name: { mm: 'ရန်ကုန်', en: 'Yangon' }, branches: [{ mm: 'ရန်ကုန် MH Travel ရုံးခွဲ — Downtown', en: 'Yangon MH Travel Branch — Downtown' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car', 'self_drive_car', 'travel_guide'] },
   { id: 'bagan', name: { mm: 'ပုဂံ', en: 'Bagan' }, branches: [{ mm: 'ပုဂံ MH Travel ရုံးခွဲ — Nyaung-U', en: 'Bagan MH Travel Branch — Nyaung-U' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'car', 'self_drive_car', 'horse_carriage', 'camping_tent', 'travel_guide'] },
-  { id: 'mandalay', name: { mm: 'မန္တလေး', en: 'Mandalay' }, branches: [{ mm: 'မန္တလေး MH Travel ရုံးခွဲ — 78th Street', en: 'Mandalay MH Travel Branch — 78th Street' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'car', 'self_drive_car', 'travel_guide'] },
+  { id: 'mandalay', name: { mm: 'မန္တလေး', en: 'Mandalay' }, branches: [{ mm: 'မန္တလေး MH Travel ရုံးခွဲ — 78th Street', en: 'Mandalay MH Travel Branch — 78th Street' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car', 'self_drive_car', 'travel_guide'] },
   { id: 'inle', name: { mm: 'အင်းလေး', en: 'Inle Lake' }, branches: [{ mm: 'ညောင်ရွှေ MH Travel ရုံးခွဲ', en: 'Nyaung Shwe MH Travel Branch' }], categories: ['bicycle', 'ebike', 'motorbike', 'motorboat', 'camping_tent', 'travel_guide'] },
   { id: 'ngapali', name: { mm: 'ငပလီ', en: 'Ngapali' }, branches: [{ mm: 'ငပလီ MH Travel ရုံးခွဲ', en: 'Ngapali MH Travel Branch' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'motorboat', 'camping_tent'] },
 ];
@@ -59,6 +59,7 @@ const categoryInfo: Record<RentalCategory, CategoryInfo> = {
   ebike: { icon: Zap, image: '/images/blog/shwedagon-evening.webp', title: 'rental_cat_ebike', detail: 'rentals_detail_ebike', rate: 12, foreignRate: 15 },
   motorbike: { icon: Bike, image: '/images/blog/bagan-sunrise.webp', title: 'rental_cat_motorbike', detail: 'rentals_detail_motorbike', rate: 18, foreignRate: 22 },
   scooter: { icon: Bike, image: '/images/blog/inle-stilt-houses.webp', title: 'rental_cat_scooter', detail: 'rentals_detail_scooter', rate: 10, foreignRate: 13 },
+  tricycle: { icon: Bike, image: '/images/blog/ubein-evening.webp', title: 'rental_cat_tricycle', detail: 'rentals_detail_tricycle', rate: 14, foreignRate: 18 },
   car: { icon: Car, image: '/images/blog/shwedagon-evening.webp', title: 'rental_cat_car_driver', detail: 'rentals_detail_car_driver', rate: 42, foreignRate: 55 },
   self_drive_car: { icon: Car, image: '/images/blog/ubein-evening.webp', title: 'rental_cat_self_drive_car', detail: 'rentals_detail_self_drive_car', rate: 32, foreignRate: 42 },
   horse_carriage: { icon: Compass, image: '/images/blog/bagan-sunrise.webp', title: 'rental_cat_horse_carriage', detail: 'rentals_detail_horse_carriage', rate: 28, foreignRate: 34 },
@@ -67,15 +68,16 @@ const categoryInfo: Record<RentalCategory, CategoryInfo> = {
   travel_guide: { icon: UserRound, image: '/images/blog/bagan-sunrise.webp', title: 'rental_cat_travel_guide', detail: 'rentals_detail_travel_guide', rate: 35, foreignRate: 45 },
 };
 
-const primaryCategories: RentalCategory[] = ['bicycle', 'ebike', 'motorbike', 'scooter', 'car', 'self_drive_car'];
+const primaryCategories: RentalCategory[] = ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car', 'self_drive_car'];
 const additionalCategories: RentalCategory[] = ['horse_carriage', 'camping_tent', 'motorboat', 'travel_guide'];
-const categorySelectorOrder: RentalCategory[] = ['bicycle', 'motorbike', 'car', 'camping_tent', 'motorboat', 'horse_carriage', 'ebike', 'scooter', 'self_drive_car', 'travel_guide'];
+const categorySelectorOrder: RentalCategory[] = ['bicycle', 'motorbike', 'car', 'camping_tent', 'motorboat', 'horse_carriage', 'ebike', 'scooter', 'tricycle', 'self_drive_car', 'travel_guide'];
 const allRentalCategories: RentalCategory[] = [...primaryCategories, ...additionalCategories];
 const favoriteIdByCategory: Record<RentalCategory, string> = {
   bicycle: 'pre3',
   ebike: 'pre6',
   motorbike: 'pre2',
   scooter: 'pre7',
+  tricycle: 'pre11',
   car: 'pre1',
   self_drive_car: 'pre8',
   horse_carriage: 'pre9',

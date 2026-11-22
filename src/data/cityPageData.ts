@@ -67,6 +67,7 @@ export const RENTAL_PAGE_LISTINGS: CardListing[] = [
   { id: 'pre8', title: 'Self-drive SUV', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.8, distanceKm: 2.1, isFavorited: false, views: 1120, href: '/rentals' },
   { id: 'pre9', title: 'Bagan horse carriage', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.5, distanceKm: 2.2, isFavorited: false, views: 760, href: '/rentals' },
   { id: 'pre10', title: 'Inle camping tent', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.4, distanceKm: 3.2, isFavorited: false, views: 690, href: '/rentals' },
+  { id: 'pre11', title: 'Mandalay tricycle', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.3, distanceKm: 1.6, isFavorited: false, views: 720, href: '/rentals' },
 ];
 
 export const POPULAR_TRANSPORT: CardListing[] = [

@@ -39,6 +39,7 @@ import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
 import { BlogPostsPanel } from './BlogPostsPanel';
+import { CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS } from '../../lib/adminRoles';
 
 type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'ads' | 'currency';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
@@ -301,24 +302,44 @@ function CurrencySettingsPanel({ runAction }: { runAction: (label: string) => vo
   </div>;
 }
 
+type AdminForm = {
+  name: string;
+  email: string;
+  phone: string;
+  role: (typeof CREATABLE_ADMIN_ROLES)[number];
+  permissions: string;
+};
+
+const EMPTY_ADMIN_FORM: AdminForm = {
+  name: '',
+  email: '',
+  phone: '',
+  role: CREATABLE_ADMIN_ROLES[0],
+  permissions: DEFAULT_PERMISSION_GROUP[CREATABLE_ADMIN_ROLES[0]],
+};
+
 function AdminManagementPanel({ runAction }: { runAction: (label: string) => void }) {
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [admins, setAdmins] = useState([
     { name: 'MH Travel Super Admin', email: 'superadmin@mhtravel.com', role: 'Super Admin', permissions: 'All permissions', status: 'Active' },
-    { name: 'Thazin Win', email: 'thazin@mhtravel.com', role: 'Content Manager', permissions: 'Content, Blogs', status: 'Active' },
-    { name: 'Aung Ko', email: 'aung.ko@mhtravel.com', role: 'Support Manager', permissions: 'Users, Support', status: 'Active' },
+    { name: 'Thazin Win', email: 'thazin@mhtravel.com', role: 'Blog Post Admin', permissions: 'Content, Blogs', status: 'Active' },
+    { name: 'Aung Ko', email: 'aung.ko@mhtravel.com', role: 'Admin', permissions: 'Users, Support', status: 'Active' },
   ]);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', role: 'Content Manager', permissions: 'Content, Blogs' });
+  const [form, setForm] = useState<AdminForm>(EMPTY_ADMIN_FORM);
 
   function updateForm(field: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function selectRole(role: AdminForm['role']) {
+    setForm((current) => ({ ...current, role, permissions: DEFAULT_PERMISSION_GROUP[role] }));
+  }
+
   function createAdmin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setAdmins((current) => [{ name: form.name, email: form.email, role: form.role, permissions: form.permissions, status: 'Pending invite' }, ...current]);
-    setForm({ name: '', email: '', phone: '', role: 'Content Manager', permissions: 'Content, Blogs' });
+    setForm(EMPTY_ADMIN_FORM);
     setShowForm(false);
     runAction(`${form.name} admin invitation created`);
   }
@@ -326,7 +347,7 @@ function AdminManagementPanel({ runAction }: { runAction: (label: string) => voi
   return <div className="mx-auto max-w-[1200px] space-y-3">
     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">Security · Super Admin only</p><h1 className="mt-1 text-lg font-extrabold sm:text-3xl">Admin Management</h1><p className="mt-1 text-sm text-slate-400">Create trusted admin accounts, assign permissions, and control access to the MH Travel platform.</p></div><button type="button" onClick={() => setShowForm((open) => !open)} className="inline-flex w-fit items-center gap-2 rounded-lg bg-[#168df4] px-3 py-2 text-[10px] font-bold hover:bg-[#2aa6ff]"><UserPlus size={16} /> Create Admin</button></div>
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><AdSummary icon={ShieldCheck} label="Total admins" value="8" detail="1 super admin" tone="cyan" /><AdSummary icon={Users} label="Active admins" value="7" detail="No security alerts" tone="green" /><AdSummary icon={UserPlus} label="Pending invites" value="2" detail="Awaiting acceptance" tone="purple" /><AdSummary icon={Settings} label="Permission groups" value="5" detail="Least privilege enabled" tone="blue" /></div>
-    {showForm && <Panel><PanelTitle icon={UserPlus} title="Create admin account" /><form onSubmit={createAdmin} className="grid gap-1.5 p-2 sm:grid-cols-2 lg:grid-cols-3"><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Admin full name</span><input required value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder="e.g. May Myat" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Work email</span><input required type="email" value={form.email} onChange={(event) => updateForm('email', event.target.value)} placeholder="admin@mhtravel.com" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Phone number</span><input value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} placeholder="+95 9 ..." className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Admin role</span><select value={form.role} onChange={(event) => updateForm('role', event.target.value)} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300"><option>Content Manager</option><option>Support Manager</option><option>Operations Admin</option><option>Finance Admin</option><option>Ads Manager</option></select></label><label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Permission group</span><select value={form.permissions} onChange={(event) => updateForm('permissions', event.target.value)} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300"><option>Content, Blogs</option><option>Users, Support</option><option>Bookings, Orders</option><option>Payments, Reports</option><option>Ads Management</option></select></label><div className="flex items-center gap-2 sm:col-span-2 lg:col-span-3"><button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-[10px] font-bold text-[#061426] hover:bg-cyan-300">Send invite</button><button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-[#2b527d] px-3 py-2 text-[10px] font-semibold text-slate-300 hover:bg-white/10">Cancel</button><span className="text-[10px] text-slate-500">The invited admin will start with limited permissions until accepted and reviewed.</span></div></form></Panel>}
+    {showForm && <Panel><PanelTitle icon={UserPlus} title="Create admin account" /><form onSubmit={createAdmin} className="grid gap-1.5 p-2 sm:grid-cols-2 lg:grid-cols-3"><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Admin full name</span><input required value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder="e.g. May Myat" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Work email</span><input required type="email" value={form.email} onChange={(event) => updateForm('email', event.target.value)} placeholder="admin@mhtravel.com" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Phone number</span><input value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} placeholder="+95 9 ..." className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Admin role</span><select value={form.role} onChange={(event) => selectRole(event.target.value as AdminForm['role'])} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{CREATABLE_ADMIN_ROLES.map((role) => <option key={role}>{role}</option>)}</select></label><label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Permission group</span><select value={form.permissions} onChange={(event) => updateForm('permissions', event.target.value)} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{PERMISSION_GROUPS.map((group) => <option key={group}>{group}</option>)}</select></label><div className="flex items-center gap-2 sm:col-span-2 lg:col-span-3"><button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-[10px] font-bold text-[#061426] hover:bg-cyan-300">Send invite</button><button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-[#2b527d] px-3 py-2 text-[10px] font-semibold text-slate-300 hover:bg-white/10">Cancel</button><span className="text-[10px] text-slate-500">The invited admin will start with limited permissions until accepted and reviewed.</span></div></form></Panel>}
     <Panel><PanelTitle icon={ShieldCheck} title="Admin accounts" action="View audit logs" onAction={() => runAction('View admin audit logs')} /><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-[11px]"><thead className="bg-[#091a31] text-slate-300"><tr><th className="px-4 py-3">Admin</th><th className="px-2 py-3">Email</th><th className="px-2 py-3">Role</th><th className="px-2 py-3">Permissions</th><th className="px-2 py-3">Status</th><th className="px-4 py-3">Action</th></tr></thead><tbody>{admins.map((admin) => <tr key={admin.email} className="border-t border-[#1d3a5c] text-slate-200"><td className="px-2 py-1.5 font-semibold">{admin.name}</td><td className="px-2 py-3 text-slate-400">{admin.email}</td><td className="px-2 py-3">{admin.role}</td><td className="px-2 py-3 text-slate-400">{admin.permissions}</td><td className="px-2 py-3"><span className={`rounded-full px-2 py-1 text-[9px] font-bold ${admin.status === 'Active' ? 'bg-green-500/25 text-green-300' : 'bg-amber-400/20 text-amber-300'}`}>{admin.status}</span></td><td className="px-2 py-1.5"><button type="button" onClick={() => runAction(`Review ${admin.name}`)} className="rounded-md border border-[#2f6192] px-2.5 py-1.5 text-[10px] font-semibold text-cyan-300 hover:bg-white/10">Review</button></td></tr>)}</tbody></table></div></Panel>
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-400/20 bg-[#0d2f57] p-3 text-xs text-blue-100"><p><strong className="text-white">Need to manage shop staff?</strong> Shop Owner accounts are managed separately from platform admin roles.</p><button type="button" onClick={() => navigate('/super-admin')} className="font-bold text-cyan-300 hover:text-white">Back to dashboard <ChevronRight size={14} className="inline" /></button></div>
   </div>;

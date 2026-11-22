@@ -100,7 +100,7 @@ that the code does not use.
 **Plan says** (§2A audit): `package.json` has no `test` script and no
 Vitest/Jest dependency, so nothing guards the tree.
 
-**Code says**: `npm test` runs Vitest over four files (23 tests).
+**Code says**: `npm test` runs Vitest over five files (29 tests).
 `src/routes.ts` is now the single route table; `App.tsx`, the tests, and
 `public/manus-routes.json` all read from it. A seed link to an undeclared route,
 a duplicated catalog id, or a manifest that drifts from the router fails the
@@ -206,9 +206,9 @@ Gaps in the Plan's coverage, found while checking it:
 1. ~~**48 broken internal links.**~~ **Fixed 20 Nov** and now enforced by
    `npm test`. See [`STATUS.md` §5](./STATUS.md#5-internal-links--done-0-broken).
 2. ~~**`/book_shop` typo.**~~ **Fixed.** It maps to `/book-shops`.
-3. ~~**Load More behaviour.**~~ **Fixed 20 Nov.** Both lists share
-   `src/lib/useGridColumnCount.ts`, which rounds each page to a whole row. The
-   Plan still has no rule, so it is listed in §7 below.
+3. ~~**Load More behaviour.**~~ **Fixed 20 Nov; rule added to the Plan 22 Nov.**
+   Both lists share `src/lib/usePagedList.ts` with a fixed page size of 12,
+   which divides evenly into every column count the app uses.
 4. ~~**Tablet horizontal overflow at 820px.**~~ **Fixed 20 Nov.** The header
    switched to its desktop nav at `md` before it had room; it now switches at
    `lg`, and `/account` got a constrained grid column. Verified clean at ten
@@ -234,9 +234,8 @@ Ordered by how much confusion each removes. None of these are code changes.
 4. **Add `/blogs/:storyId` to the route manifest** (§3.3).
 5. **Rewrite the "five desktop columns" sentences** to describe the width cap
    (§3.4).
-6. **Add a Load More rule** to §4. The code now implements it consistently,
-   but the Plan still does not state it, so the next list written by hand can
-   still get it wrong.
+6. ~~**Add a Load More rule** to §4.~~ **Done 22 Nov.** §4 now states the page
+   size, the whole-batch rule, and the hide-when-exhausted rule.
 7. **Point the Plan at `Doc/STATUS.md`** as the status view, so there is one
    answer to "what is left".
 
