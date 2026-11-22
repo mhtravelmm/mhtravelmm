@@ -9,6 +9,8 @@ export type GuideStopDraft = {
   titleMm: string;
   descriptionEn: string;
   descriptionMm: string;
+  /** Optional stop photo, uploaded through the shared WebP/R2 pipeline. */
+  imageUrl: string;
 };
 
 export type GuideDraft = {
@@ -26,7 +28,7 @@ export type GuideDraft = {
 };
 
 export function createStop(): GuideStopDraft {
-  return { id: `stop-${Date.now()}-${Math.random()}`, time: '', listingId: '', titleEn: '', titleMm: '', descriptionEn: '', descriptionMm: '' };
+  return { id: `stop-${Date.now()}-${Math.random()}`, time: '', listingId: '', titleEn: '', titleMm: '', descriptionEn: '', descriptionMm: '', imageUrl: '' };
 }
 
 /** `09:30` becomes minutes after midnight, so stop times can be compared. */

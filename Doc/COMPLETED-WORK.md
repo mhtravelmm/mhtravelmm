@@ -254,6 +254,9 @@ catalogue, and bilingual title and description. `src/data/listingIndex.ts`
 builds the catalogue the picker offers, so a stop cannot point at an outside
 place.
 
+Each stop also carries an optional photo, uploaded through the same WebP/R2
+pipeline and rendered above the stop description in the public reader.
+
 `src/lib/guideItinerary.ts` holds the itinerary rules: 24-hour time parsing,
 sorting by time, moving a stop, and `guidePublishCheck`, which requires both
 languages, a cover, an author, at least one stop, an existing listing on every

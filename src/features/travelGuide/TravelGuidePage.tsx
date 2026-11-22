@@ -226,6 +226,9 @@ function GuideDetail({
                 </div>
                 <div className={`pb-5 ${index === guide.stops.length - 1 ? 'pb-0' : ''}`}>
                   <h3 className="text-sm font-semibold leading-snug text-text-primary sm:text-base">{stop.title[language]}</h3>
+                  {stop.imageUrl && (
+                    <img src={stop.imageUrl} alt={stop.title[language]} loading="lazy" className="mt-2 h-32 w-full rounded-lg object-cover sm:h-40" />
+                  )}
                   <p className="mt-1 text-xs leading-relaxed text-text-secondary sm:text-sm">{stop.description[language]}</p>
                   <a
                     href={mapSearchUrl(stop.place)}

@@ -12,6 +12,8 @@ export interface GuideStop {
   place: string;
   /** Listing the stop points at, when the guide was built in the Admin editor. */
   listingId?: string;
+  /** Stop photo, set from the Admin editor. */
+  imageUrl?: string;
   title: LocalizedGuideCopy;
   description: LocalizedGuideCopy;
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, Plus, Search, Send, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, ImagePlus, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { LISTING_IDS, LISTING_INDEX, listingTitle } from '../../data/listingIndex';
 import { TRAVEL_GUIDE_STORIES, type GuideCategory } from '../../data/travelGuideData';
 import { uploadBlogCoverImage } from '../../lib/blogMediaApi';
@@ -54,6 +54,13 @@ const emptyDraft: GuideDraft = {
   scheduledTime: '',
 };
 
+/** Seed stops predate the editor, so a stop is linked only when its place names a real listing. */
+function matchListing(place: string, title: string): string {
+  const needle = (place || title).trim().toLowerCase();
+  if (!needle) return '';
+  return LISTING_INDEX.find((listing) => listing.title.trim().toLowerCase() === needle)?.id ?? '';
+}
+
 const seedGuides: AdminGuide[] = TRAVEL_GUIDE_STORIES.map((guide) => ({
   id: guide.id,
   titleEn: guide.localizedTitle.en,
@@ -66,11 +73,12 @@ const seedGuides: AdminGuide[] = TRAVEL_GUIDE_STORIES.map((guide) => ({
   stops: guide.stops.map((stop) => ({
     ...createStop(),
     time: stop.time,
-    listingId: '',
+    listingId: stop.listingId ?? matchListing(stop.place, stop.title.en),
     titleEn: stop.title.en,
     titleMm: stop.title.mm,
     descriptionEn: stop.description.en,
     descriptionMm: stop.description.mm,
+    imageUrl: stop.imageUrl ?? '',
   })),
   status: 'Published',
   scheduledDate: '',
@@ -336,14 +344,15 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
   const [uploadMessage, setUploadMessage] = useState('');
   const check = guidePublishCheck(draft, LISTING_IDS);
 
-  async function upload(file: File | undefined) {
+  async function upload(file: File | undefined, stopId?: string) {
     if (!file) return;
     setUploading(true);
     setUploadMessage('Compressing photo…');
     const result = await uploadBlogCoverImage(file);
     setUploading(false);
     if (!result.ok) return setUploadMessage(result.message);
-    onChange('coverUrl', result.url);
+    if (stopId) onStops(draft.stops.map((stop) => (stop.id === stopId ? { ...stop, imageUrl: result.url } : stop)));
+    else onChange('coverUrl', result.url);
     setUploadMessage(`${Math.max(1, Math.round(result.bytes / 1024))} KB · ${result.source === 'r2' ? 'R2/blog-posts' : 'preview fallback'}`);
   }
 
@@ -401,6 +410,17 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
                       <input value={stop.titleMm} onChange={(event) => replaceStop({ ...stop, titleMm: event.target.value })} placeholder="Stop title · မြန်မာ *" className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
                       <textarea value={stop.descriptionEn} onChange={(event) => replaceStop({ ...stop, descriptionEn: event.target.value })} rows={2} placeholder="Description · English *" className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
                       <textarea value={stop.descriptionMm} onChange={(event) => replaceStop({ ...stop, descriptionMm: event.target.value })} rows={2} placeholder="Description · မြန်မာ *" className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
+                    </div>
+
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      {stop.imageUrl && <img src={stop.imageUrl} alt="" className="h-9 w-14 rounded object-cover" />}
+                      <label className="inline-flex cursor-pointer items-center gap-1 rounded bg-cyan-400/15 px-2 py-1 text-[9px] font-bold text-cyan-200">
+                        <ImagePlus size={11} /> {stop.imageUrl ? 'Replace photo' : 'Stop photo'}
+                        <input type="file" accept="image/jpeg,image/png,image/webp" hidden disabled={uploading} onChange={(event) => { void upload(event.target.files?.[0], stop.id); event.currentTarget.value = ''; }} />
+                      </label>
+                      {stop.imageUrl && (
+                        <button type="button" onClick={() => replaceStop({ ...stop, imageUrl: '' })} className="rounded p-1 text-slate-500 hover:bg-white/10 hover:text-red-300" aria-label={`Remove stop ${index + 1} photo`}><Trash2 size={11} /></button>
+                      )}
                     </div>
                   </li>
                 ))}
