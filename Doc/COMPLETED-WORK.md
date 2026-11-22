@@ -81,7 +81,7 @@ For the one-page view of what is finished versus open, read
   follows the active language.
 - Admin roles, permission groups, owner credentials, currency rate labels,
   placeholder text and validation messages are all keys under the `sa_*`
-  group. `i18n.tsx` now holds 1,215 keys.
+  group. `i18n.tsx` now holds 1,224 keys.
 
 ## Authentication and administrative interfaces
 

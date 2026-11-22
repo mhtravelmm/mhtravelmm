@@ -65,7 +65,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **PARTIAL** | 1,215 keys; every dashboard body is localized. Blog and Travel Guide editor panels remain English-only (see §6) |
+| Bilingual MM/EN provider | **PARTIAL** | 1,224 keys; every dashboard body is localized. Blog and Travel Guide editor panels remain English-only (see §6) |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
