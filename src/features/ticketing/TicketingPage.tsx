@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useCurrency } from '../../lib/currency';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { useTravelRequests } from '../../lib/travelRequests';
 import {
   POPULAR_FLIGHT_ROUTES,
   TICKETING_CINEMA_VENUES,
@@ -80,6 +81,7 @@ function formatDate(value: string, language: 'mm' | 'en'): string {
 export function TicketingPage() {
   const { language, t } = useLanguage();
   const { formatPrice } = useCurrency();
+  const { addRequest } = useTravelRequests();
   const [type, setType] = useState<TicketType>('flight');
   const [fromCity, setFromCity] = useState('yangon');
   const [toCity, setToCity] = useState('bangkok');
@@ -96,6 +98,7 @@ export function TicketingPage() {
   const [dropoffPoint, setDropoffPoint] = useState('Nyaung-U Bus Station');
   const [departureTime, setDepartureTime] = useState('20:00');
   const [ordered, setOrdered] = useState(false);
+  const [orderReference, setOrderReference] = useState<string | null>(null);
   const [movieId, setMovieId] = useState('movie-1');
   const [hall, setHall] = useState('hall-1');
   const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
@@ -125,6 +128,7 @@ export function TicketingPage() {
     setSelectedServiceId(null);
     setSelectedSeats([]);
     setOrdered(false);
+    setOrderReference(null);
     if (nextType === 'bus' || nextType === 'train') {
       setFromCity('yangon');
       setToCity(nextType === 'bus' ? 'bagan' : 'mandalay');
@@ -150,6 +154,7 @@ export function TicketingPage() {
     setSelectedSeats([]);
     setDepartureTime(service?.depart ?? '20:00');
     setOrdered(false);
+    setOrderReference(null);
     if (service?.type === 'bus') {
       const from = getPlace(service.from ?? 'yangon');
       const to = getPlace(service.to ?? 'bagan');
@@ -179,8 +184,21 @@ export function TicketingPage() {
   const orderQuantity = passengers;
   const orderQuantityLabel = String(passengers);
 
+  function placeOrder() {
+    if (!canOrder || !selectedService) return;
+    const trip = `${getPlace(fromCity).name.en} → ${getPlace(toCity).name.en}`;
+    const request = addRequest({
+      kind: 'ticket',
+      title: `${selectedService.operator[language]} · ${selectedService.route[language]}`,
+      detail: `${type} · ${trip} · ${date}${selectedService.type === 'flight' ? ` → ${returnDate}` : ''} · ${orderQuantityLabel} × ${formatPrice(selectedService.price)}`,
+      amountUsd: selectedService.price * orderQuantity,
+    });
+    setOrderReference(request.id);
+    setOrdered(true);
+  }
+
   if (ordered && selectedService) {
-    const orderNumber = `MH-${selectedService.id.toUpperCase()}-${date.replace(/-/g, '')}`;
+    const orderNumber = orderReference ?? `MH-${selectedService.id.toUpperCase()}-${date.replace(/-/g, '')}`;
     return (
       <div className="mx-auto max-w-2xl pb-10 pt-5">
         <section className="rounded-2xl border border-status-success/30 bg-bg-card p-5 text-center sm:p-8">
@@ -318,7 +336,7 @@ export function TicketingPage() {
               </>}
               {selectedService.type === 'events' && <NumberField label={t('ticketing_ticket_quantity')} value={passengers} onChange={setPassengers} max={9} />}
               {selectedService.type !== 'bus' && selectedService.type !== 'cinema' && selectedService.type !== 'events' && <NumberField label={t('ticketing_passengers')} value={passengers} onChange={setPassengers} max={9} />}
-              <button type="button" disabled={!canOrder} onClick={() => setOrdered(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-red px-3 py-2.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">{t('ticketing_book_now')}<ArrowRight size={13} /></button>
+              <button type="button" disabled={!canOrder} onClick={placeOrder} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-red px-3 py-2.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">{t('ticketing_book_now')}<ArrowRight size={13} /></button>
               <p className="mt-2 text-center text-[9px] leading-4 text-text-faint">{selectedService.type === 'bus' || selectedService.type === 'cinema' ? `${selectedSeats.length}/${passengers} · ${t('ticketing_select_seats')}` : t('ticketing_confirmation_contact')}</p>
             </aside>
           )}

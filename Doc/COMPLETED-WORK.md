@@ -46,6 +46,30 @@ For the one-page view of what is finished versus open, read
 - `userScope.test.ts` covers scope isolation, guest separation, corrupt values,
   and legacy-key adoption (8 tests).
 
+## Request records for Custom Plan, Rental, and Ticketing (22 November 2026)
+
+- `src/lib/travelRequests.ts` gives every submission a record and a readable
+  reference — `MHR-` for rentals, `MHT-` for tickets, `MHC-` for custom plans,
+  then the date and a three-digit sequence (`MHR-20261122-001`). Records are
+  written to the account-scoped storage from `userScope.ts`, so one account's
+  requests never appear under another, and a guest keeps its own set.
+- `useTravelRequests` returns the sorted list plus `addRequest`. When Supabase
+  is configured it also inserts into `public.bookings` with
+  `status: 'received'`. That insert is best-effort: a rejection is swallowed
+  because losing a request the traveler just made is worse than a late
+  back-office copy.
+- All three forms now record on submit and show the reference. Rentals prints
+  it under the submitted banner, Ticketing uses it as the order number, and the
+  Custom Plan form shows it under the "request received" copy.
+- The Account dashboard reads those records instead of seeded rows. The
+  overview counts bookings and plans from real requests, the upcoming-trip card
+  shows the newest one, and Bookings and Travel Plans list them with their
+  reference, kind, date, and amount. Both panels show an empty state until the
+  first request exists.
+- `travelRequests.test.ts` covers reference formatting (including the
+  sequence floor), newest-first ordering with a stable tie-break, and
+  kind filtering (8 tests).
+
 ## Travel Guide route follower
 
 - `/travel-guide/:guideId` has a "Follow this route" control. It walks the

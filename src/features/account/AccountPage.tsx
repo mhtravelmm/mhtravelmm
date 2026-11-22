@@ -31,7 +31,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { useCurrency } from '../../lib/currency';
 import { useAuth } from '../../lib/auth';
+import { requestsOfKind, useTravelRequests, type TravelRequest } from '../../lib/travelRequests';
 import { NOTIFICATIONS } from '../../data/notifications';
 import { TRAVEL_PLANS, BLOGS, POPULARS } from '../../data/homeData';
 import { TRAVEL_GUIDE_STORIES } from '../../data/travelGuideData';
@@ -83,6 +85,9 @@ export function AccountPage() {
   const navigate = useNavigate();
   const [view, setView] = useState<DashboardView>('overview');
   const favorites = useToggleFavorite(allListings);
+  const { requests } = useTravelRequests();
+  const bookingCount = requestsOfKind(requests, ['rental', 'ticket']).length;
+  const planCount = requestsOfKind(requests, ['custom_plan']).length;
   const displayName = user?.name?.trim() || 'Min Htet';
   const displayEmail = user?.email || 'minhtet@gmail.com';
   const initials = displayName
@@ -164,12 +169,15 @@ export function AccountPage() {
             <Overview
               name={displayName}
               favoriteCount={favorites.listings.filter((listing) => listing.isFavorited).length}
+              bookingCount={bookingCount}
+              planCount={planCount}
+              requests={requests}
               onOpen={setView}
               onNavigate={navigate}
             />
           )}
-          {view === 'bookings' && <Bookings />}
-          {view === 'plans' && <Plans />}
+          {view === 'bookings' && <Bookings requests={requestsOfKind(requests, ['rental', 'ticket'])} />}
+          {view === 'plans' && <Plans requests={requestsOfKind(requests, ['custom_plan'])} />}
           {view === 'guides' && <Guides listings={favorites.listings} toggle={favorites.toggle} />}
           {view === 'favorites' && <Favorites listings={favorites.listings} toggle={favorites.toggle} />}
           {view === 'reviews' && <Reviews />}
@@ -186,11 +194,17 @@ export function AccountPage() {
 function Overview({
   name,
   favoriteCount,
+  bookingCount,
+  planCount,
+  requests,
   onOpen,
   onNavigate,
 }: {
   name: string;
   favoriteCount: number;
+  bookingCount: number;
+  planCount: number;
+  requests: TravelRequest[];
   onOpen: (view: DashboardView) => void;
   onNavigate: NavigateFunction;
 }) {
@@ -226,14 +240,14 @@ function Overview({
       </section>
 
       <div className="grid grid-cols-2 gap-1.5 xl:grid-cols-4">
-        <StatCard icon={Briefcase} value="3" label={t('account_stat_bookings')} tone="blue" onClick={() => onOpen('bookings')} />
-        <StatCard icon={MapPin} value="2" label={t('account_stat_plans')} tone="cyan" onClick={() => onOpen('plans')} />
+        <StatCard icon={Briefcase} value={String(bookingCount)} label={t('account_stat_bookings')} tone="blue" onClick={() => onOpen('bookings')} />
+        <StatCard icon={MapPin} value={String(planCount)} label={t('account_stat_plans')} tone="cyan" onClick={() => onOpen('plans')} />
         <StatCard icon={Heart} value={String(favoriteCount)} label={t('account_stat_saved')} tone="rose" onClick={() => onOpen('favorites')} />
         <StatCard icon={Star} value="5" label={t('account_stat_reviews')} tone="gold" onClick={() => onOpen('reviews')} />
       </div>
 
       <div className="grid gap-1.5 2xl:grid-cols-[1.2fr_0.8fr]">
-        <UpcomingTrip onViewAll={() => onOpen('bookings')} onManage={() => onOpen('bookings')} />
+        <UpcomingTrip latest={requests[0]} onViewAll={() => onOpen('bookings')} onManage={() => onOpen('bookings')} />
         <QuickActions onNavigate={onNavigate} />
       </div>
 
@@ -282,27 +296,46 @@ function StatCard({
   );
 }
 
-function UpcomingTrip({ onViewAll, onManage }: { onViewAll: () => void; onManage: () => void }) {
-  const { t } = useLanguage();
+function formatRequestDate(iso: string, language: 'mm' | 'en'): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString(language === 'mm' ? 'my-MM' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+const REQUEST_KIND_KEY = {
+  rental: 'account_request_kind_rental',
+  ticket: 'account_request_kind_ticket',
+  custom_plan: 'account_request_kind_custom_plan',
+} as const;
+
+function UpcomingTrip({ latest, onViewAll, onManage }: { latest?: TravelRequest; onViewAll: () => void; onManage: () => void }) {
+  const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
   return (
     <section className="min-w-0 rounded-lg border border-account-border bg-account-surface p-2.5">
       <PanelTitle icon={Plane} title={t('account_upcoming_trip')} action={t('account_view_all')} onClick={onViewAll} />
+      {!latest ? (
+        <div className="mt-2">
+          <EmptyState text={t('account_no_bookings')} />
+        </div>
+      ) : (
       <div className="mt-1.5 grid gap-1.5 rounded-lg border border-account-border/70 bg-account-elevated p-2.5 sm:grid-cols-[148px_minmax(0,1fr)] sm:p-2.5">
         <div className="relative h-32 overflow-hidden rounded-lg sm:h-full sm:min-h-[120px]">
           <img src="/images/blog/shwedagon-evening.webp" alt={t('account_banner_alt')} className="h-full w-full object-cover" />
-          <span className="absolute left-2 top-2 rounded-full bg-emerald-500 px-2 py-1 text-[9px] font-semibold text-white shadow">{t('account_confirmed')}</span>
+          <span className="absolute left-2 top-2 rounded-full bg-emerald-500 px-2 py-1 text-[9px] font-semibold text-white shadow">{t('account_request_received')}</span>
         </div>
         <div className="flex min-w-0 flex-col justify-center py-1 sm:py-2">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h3 className="text-sm font-semibold text-text-primary sm:text-base">{t('account_trip_title')}</h3>
-              <p className="mt-1 flex items-center gap-1.5 text-[10px] text-text-muted sm:text-xs"><MapPin size={12} className="text-account-accent" />{t('account_trip_location')}</p>
+              <h3 className="text-sm font-semibold text-text-primary sm:text-base">{latest.title}</h3>
+              <p className="mt-1 flex items-center gap-1.5 text-[10px] text-text-muted sm:text-xs"><MapPin size={12} className="text-account-accent" />{latest.detail}</p>
             </div>
-            <span className="rounded-full border border-account-accent/20 bg-account-accent/10 px-2 py-1 text-[9px] font-medium text-sky-200">{t('account_confirmed')}</span>
+            <span className="rounded-full border border-account-accent/20 bg-account-accent/10 px-2 py-1 text-[9px] font-medium text-sky-200">{t(REQUEST_KIND_KEY[latest.kind])}</span>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-text-secondary sm:text-xs">
-            <span className="inline-flex items-center gap-1.5"><CalendarDays size={13} className="text-account-accent" />{t('account_trip_dates')}</span>
-            <span className="inline-flex items-center gap-1.5"><UserRound size={13} className="text-account-accent" />{t('account_travelers_two')}</span>
+            <span className="inline-flex items-center gap-1.5"><CalendarDays size={13} className="text-account-accent" />{formatRequestDate(latest.createdAt, language)}</span>
+            <span className="inline-flex items-center gap-1.5 font-mono"><UserRound size={13} className="text-account-accent" />{latest.id}</span>
+            {latest.amountUsd !== null && <span className="inline-flex items-center gap-1.5"><WalletCards size={13} className="text-account-accent" />{formatPrice(latest.amountUsd)}</span>}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <button type="button" onClick={onManage} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-account-accent px-3 py-2 text-[10px] font-semibold text-white transition hover:bg-sky-500 sm:text-xs">{t('account_view_details')}<ArrowRight size={13} /></button>
@@ -310,6 +343,7 @@ function UpcomingTrip({ onViewAll, onManage }: { onViewAll: () => void; onManage
           </div>
         </div>
       </div>
+      )}
     </section>
   );
 }
@@ -381,34 +415,59 @@ function DiscoveryCard({ onExplore }: { onExplore: () => void }) {
   );
 }
 
-function Bookings() {
-  const { t } = useLanguage();
-  return <PagePanel title={t('account_bookings')} intro={t('account_bookings_intro')}>
-    <div className="space-y-3">
-      <BookingRow title={t('account_trip_title')} date={t('account_trip_dates')} status={t('account_confirmed')} image="/images/blog/shwedagon-evening.webp" />
-      <BookingRow title="The Rangoon House" date="18 Nov 2026 · 2 guests" status={t('account_completed')} image="/images/blog/ubein-evening.webp" />
-    </div>
-  </PagePanel>;
-}
-
-function BookingRow({ title, date, status, image }: { title: string; date: string; status: string; image: string }) {
+function RequestRow({ request }: { request: TravelRequest }) {
+  const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-account-border bg-account-elevated p-3 sm:flex-row sm:items-center">
-      <img src={image} alt="" className="h-28 w-full rounded-lg object-cover sm:h-16 sm:w-24" />
-      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-text-primary">{title}</p><p className="mt-1 flex items-center gap-1.5 text-[11px] text-text-muted"><CalendarDays size={13} />{date}</p></div>
-      <span className="self-start rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-medium text-emerald-300 sm:self-auto">{status}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full bg-account-accent/10 px-2 py-0.5 text-[10px] font-medium text-sky-200">{t(REQUEST_KIND_KEY[request.kind])}</span>
+          <span className="font-mono text-[10px] text-text-faint">{request.id}</span>
+        </div>
+        <p className="mt-1 text-sm font-semibold text-text-primary">{request.title}</p>
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-muted"><CalendarDays size={13} />{formatRequestDate(request.createdAt, language)}<span>{request.detail}</span></p>
+      </div>
+      {request.amountUsd !== null && <span className="self-start text-sm font-semibold text-text-primary sm:self-auto">{formatPrice(request.amountUsd)}</span>}
+      <span className="self-start rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-medium text-emerald-300 sm:self-auto">{t('account_request_received')}</span>
     </div>
   );
 }
 
-function Plans() {
+function Bookings({ requests }: { requests: TravelRequest[] }) {
   const { t } = useLanguage();
+  return <PagePanel title={t('account_bookings')} intro={t('account_bookings_intro')}>
+    {requests.length > 0 ? (
+      <div className="space-y-3">{requests.map((request) => <RequestRow key={request.id} request={request} />)}</div>
+    ) : (
+      <EmptyState text={t('account_no_bookings')} />
+    )}
+  </PagePanel>;
+}
+
+function Plans({ requests }: { requests: TravelRequest[] }) {
+  const { t, language } = useLanguage();
   return <PagePanel title={t('account_plans')} intro={t('account_plans_intro')}>
-    <div className="rounded-lg border border-account-accent/20 bg-account-accent/5 p-3 sm:p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold text-text-primary">Yangon → Bagan → Inle Lake</p><span className="rounded-full bg-amber-400/10 px-2.5 py-1 text-[10px] font-medium text-amber-300">{t('account_quotation_pending')}</span></div>
-      <p className="mt-2 text-xs leading-5 text-text-muted">{t('account_plan_review_message')}</p>
-      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-text-secondary"><span className="rounded-full bg-account-elevated px-2.5 py-1">7 days</span><span className="rounded-full bg-account-elevated px-2.5 py-1">2 travelers</span><span className="rounded-full bg-account-elevated px-2.5 py-1">Myanmar</span></div>
-    </div>
+    {requests.length > 0 ? (
+      <div className="space-y-2">
+        {requests.map((request) => (
+          <div key={request.id} className="rounded-lg border border-account-accent/20 bg-account-accent/5 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-text-primary">{request.title}</p>
+              <span className="rounded-full bg-amber-400/10 px-2.5 py-1 text-[10px] font-medium text-amber-300">{t('account_quotation_pending')}</span>
+            </div>
+            <p className="mt-1 font-mono text-[10px] text-text-faint">{request.id}</p>
+            <p className="mt-2 text-xs leading-5 text-text-muted">{t('account_plan_review_message')}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-text-secondary">
+              <span className="rounded-full bg-account-elevated px-2.5 py-1">{request.detail}</span>
+              <span className="rounded-full bg-account-elevated px-2.5 py-1">{formatRequestDate(request.createdAt, language)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <EmptyState text={t('account_no_plans')} />
+    )}
   </PagePanel>;
 }
 

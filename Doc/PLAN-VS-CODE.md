@@ -184,10 +184,15 @@ five columns. The Plan's rule and these four grids disagree in the same way as
 | Plan item | Status in code |
 |---|---|
 | Catalog, bookings, plans, notifications are compiled data, not API | **Confirmed.** No query layer outside auth, main-owner, and blog media. |
-| Custom Plan, Rental, Ticketing submissions are local state only | **Confirmed.** No insert, no request ID, no notification. |
 | Blog distances are seeded, not computed | **Confirmed.** Geolocation gates display only. |
 
-The Plan's honesty here is a strength. These three items should stay.
+The Plan's honesty here is a strength. These two items should stay.
+
+A third gap row is also closed: Custom Plan, Rental, and Ticketing submissions
+used to be local state only. Each one now writes a request record with a
+readable reference, shows it on the confirmation screen, and lists it under the
+account's Bookings or Travel Plans (see `COMPLETED-WORK.md`). Reading those
+records back from `public.bookings` is still open.
 
 The three gap rows this section used to carry are closed:
 

@@ -24,6 +24,7 @@ import {
 import { useCurrency } from '../../lib/currency';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
+import { useTravelRequests } from '../../lib/travelRequests';
 import { RENTAL_PAGE_LISTINGS } from '../../data/cityPageData';
 import type { RentalCategory } from '../../types';
 
@@ -113,6 +114,7 @@ function inclusiveDays(startDate: string, endDate: string) {
 export function RentalsPage() {
   const { language, t } = useLanguage();
   const { formatPrice } = useCurrency();
+  const { addRequest } = useTravelRequests();
   const favorites = useToggleFavorite(RENTAL_PAGE_LISTINGS);
   const favoriteListings = new Map(favorites.listings.map((listing) => [listing.id, listing]));
   const [cityId, setCityId] = useState('yangon');
@@ -131,7 +133,7 @@ export function RentalsPage() {
   const [branch, setBranch] = useState('');
   const [phone, setPhone] = useState('');
   const [carTypeId, setCarTypeId] = useState<CarTypeId>('family_car');
-  const [submitted, setSubmitted] = useState(false);
+  const [submittedReference, setSubmittedReference] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const city = cities.find((item) => item.id === cityId) ?? cities[0];
@@ -166,7 +168,7 @@ export function RentalsPage() {
     const nextCity = cities.find((item) => item.id === value) ?? cities[0];
     if (category && !nextCity.categories.includes(category)) setCategory(null);
     setBranch('');
-    setSubmitted(false);
+    setSubmittedReference(null);
   }
 
   function beginRental(nextCategory: RentalCategory) {
@@ -176,10 +178,22 @@ export function RentalsPage() {
       if (firstAvailableCity) setCityId(firstAvailableCity.id);
     }
     setCategory(nextCategory);
-    setSubmitted(false);
+    setSubmittedReference(null);
     setTermsAccepted(false);
     setBookingOpen(true);
     window.setTimeout(() => document.getElementById('rentals-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  }
+
+  function submitOrder() {
+    if (!canSubmit || !selected) return;
+    const handover = fulfillment === 'branch' ? branch : address.trim();
+    const request = addRequest({
+      kind: 'rental',
+      title: t(selected.title),
+      detail: `${city.name[language]} · ${date} → ${validEndDate} · ${rentalDays} ${t('rentals_day_count')} · ${handover}`,
+      amountUsd: total,
+    });
+    setSubmittedReference(request.id);
   }
 
   return (
@@ -298,7 +312,7 @@ export function RentalsPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {availableCategories.map((item) => {
                     const Icon = item.icon;
-                    return <button key={item.id} type="button" onClick={() => { setCategory(item.id); setSubmitted(false); }} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[9px] transition ${category === item.id ? 'border-brand-blue bg-brand-blue/10 text-brand-blue' : 'border-border text-text-secondary hover:border-brand-blue/40'}`}><Icon size={13} />{t(item.title)}</button>;
+                    return <button key={item.id} type="button" onClick={() => { setCategory(item.id); setSubmittedReference(null); }} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[9px] transition ${category === item.id ? 'border-brand-blue bg-brand-blue/10 text-brand-blue' : 'border-border text-text-secondary hover:border-brand-blue/40'}`}><Icon size={13} />{t(item.title)}</button>;
                   })}
                 </div>
               </section>
@@ -347,12 +361,12 @@ export function RentalsPage() {
                   )}
                   <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_phone')}</span><span className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2.5"><Phone size={14} className="text-brand-blue" /><input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder={t('rentals_phone_placeholder')} className="w-full bg-transparent text-xs text-text-primary outline-none placeholder:text-text-faint" /></span></label>
                   <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-bg-cardAlt px-3 py-2.5 text-[10px] leading-4 text-text-secondary">
-                    <input type="checkbox" checked={termsAccepted} onChange={(event) => { setTermsAccepted(event.target.checked); setSubmitted(false); }} className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-brand-blue" />
+                    <input type="checkbox" checked={termsAccepted} onChange={(event) => { setTermsAccepted(event.target.checked); setSubmittedReference(null); }} className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-brand-blue" />
                     <span>{t('rentals_accept_terms')}</span>
                   </label>
-                  <button type="button" onClick={() => canSubmit && setSubmitted(true)} disabled={!canSubmit} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-blue px-3 py-3 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">{t('rentals_submit_order')} <ChevronRight size={14} /></button>
+                  <button type="button" onClick={submitOrder} disabled={!canSubmit} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-blue px-3 py-3 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">{t('rentals_submit_order')} <ChevronRight size={14} /></button>
                   <p className="text-center text-[9px] leading-4 text-text-faint">{t('rentals_contact_note')}</p>
-                  {submitted && <div role="status" className="flex items-start gap-2 rounded-lg border border-status-success/30 bg-status-success/10 px-3 py-2 text-[10px] leading-4 text-status-success"><Check size={14} className="mt-0.5 shrink-0" />{t('rentals_submitted')}</div>}
+                  {submittedReference && <div role="status" className="flex items-start gap-2 rounded-lg border border-status-success/30 bg-status-success/10 px-3 py-2 text-[10px] leading-4 text-status-success"><Check size={14} className="mt-0.5 shrink-0" /><span>{t('rentals_submitted')}<span className="mt-1 block font-mono">{t('account_request_reference')}: {submittedReference}</span></span></div>}
                 </>
               )}
             </div>

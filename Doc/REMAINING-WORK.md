@@ -35,7 +35,12 @@ the suite instead of reaching a user as "coming soon."
 ## Data persistence and APIs
 
 - Replace seeded/local state for bookings, custom plan requests, views, dashboard metrics, owners, admins, menu items, campaigns, and revenue with authenticated Supabase/API queries. Favorites, notification read-state, and the platform review list are wired (see below); what remains is anonymous-access policy and Admin authoring.
-- Connect Rental submissions and Ticketing orders to request IDs, notifications, booking records, contact handoff, payment, and confirmation persistence.
+- Rental, Ticketing, and Custom Plan submissions now create an account-scoped
+  request record with a reference, show it on confirmation, and list it under
+  Account → Bookings / Travel Plans, with a best-effort `public.bookings`
+  insert. What remains: read requests back from the table, send the traveler
+  notification, persist contact handoff, and connect payment and voucher or
+  ticket issuance.
 - Add live ticket operator inventory, availability, seat maps, seat locking, payment, and provider/API integration.
 - Replace seeded city/category/business recommendations with city-scoped content tables, real pagination, map distance, open/closed state, availability, and review counts.
 - Add Admin-managed content tables and public API/cache invalidation for blogs, guides, listings, and search indexing.

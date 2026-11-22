@@ -280,9 +280,14 @@ Steps 1 and 2 are now done, so the list starts where the frontend stops:
    `public.notifications`; the platform reviews section reads
    `public.reviews`. Feed rows and the seeded review copy still come from
    local data, so the remaining work there is Admin authoring, not plumbing.
-5. Connect the Custom Plan, Rental, and Ticketing submissions to request
-   records with an ID and a confirmation.
+5. ~~Connect the Custom Plan, Rental, and Ticketing submissions to request
+   records with an ID and a confirmation.~~ **Done 22 November 2026.** Each
+   submission now writes a request record with a reference such as
+   `MHR-20261122-001`, shows it on the confirmation screen, and lists it under
+   the account's Bookings or Travel Plans. The record is account-scoped browser
+   storage with a best-effort `public.bookings` insert; reading requests back
+   from the table is still open.
 6. Replace seeded catalog data with city-scoped Supabase queries.
 
-Steps 1, 3, and 4 are frontend work with no new infrastructure. Steps 5 and 6
-need the backend push.
+Steps 1, 3, and 4 are frontend work with no new infrastructure. Step 6 needs
+the backend push.

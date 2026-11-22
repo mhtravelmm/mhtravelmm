@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { POPULARS, TRAVEL_PLANS } from '../../data/homeData';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useLanguage } from '../../lib/i18n';
+import { useTravelRequests } from '../../lib/travelRequests';
 import type { CardListing } from '../../types';
 
 type DurationFilter = 'all' | 'short' | 'long';
@@ -105,6 +106,8 @@ export function TravelPlansPage() {
   const [customNotes, setCustomNotes] = useState('');
   const [customPlanSaved, setCustomPlanSaved] = useState(false);
   const [customRequestSent, setCustomRequestSent] = useState(false);
+  const [customReference, setCustomReference] = useState<string | null>(null);
+  const { addRequest } = useTravelRequests();
 
   const visiblePlans = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
@@ -242,10 +245,17 @@ export function TravelPlansPage() {
           className="grid gap-2 sm:grid-cols-[1.4fr_0.7fr_1.5fr_auto] sm:items-end"
           onSubmit={(event) => {
             event.preventDefault();
-            if (customStart.trim() && (customDestination.trim() || customPlaces.length > 0)) {
-              setCustomPlanSaved(true);
-              setCustomRequestSent(true);
-            }
+            if (!customStart.trim() || !(customDestination.trim() || customPlaces.length > 0)) return;
+            const stops = customDestination.trim() || customPlaces.map((place) => localizedPlanTitle(place, language)).join(', ');
+            const request = addRequest({
+              kind: 'custom_plan',
+              title: `${customStart.trim()} → ${stops}`,
+              detail: `${customDays} ${t('travel_plans_custom_day_suffix')} · ${customTravelers} ${t('travel_plans_custom_travelers_suffix')} · ${t(`travel_plans_custom_budget_${customBudget}` as 'travel_plans_custom_budget_low' | 'travel_plans_custom_budget_mid' | 'travel_plans_custom_budget_high')} · ${t(`travel_plans_custom_transport_${customTransport}` as 'travel_plans_custom_transport_car' | 'travel_plans_custom_transport_bus' | 'travel_plans_custom_transport_mixed')}`,
+              amountUsd: null,
+            });
+            setCustomReference(request.id);
+            setCustomPlanSaved(true);
+            setCustomRequestSent(true);
           }}
         >
           <label className="block">
@@ -379,6 +389,7 @@ export function TravelPlansPage() {
             <div>
               <p className="font-medium">{t('travel_plans_custom_request_received')}</p>
               <p className="mt-0.5 leading-5 text-brand-blue/80">{t('travel_plans_custom_request_next')}</p>
+              {customReference && <p className="mt-1 font-mono text-[10px] text-brand-blue/80">{t('account_request_reference')}: {customReference}</p>}
             </div>
           </div>
         )}
