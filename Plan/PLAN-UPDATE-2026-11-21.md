@@ -55,6 +55,15 @@ Relationship to existing plan sections (to reconcile in discussion):
 - `PROJECT-PLAN.md` §7 says Ticketing is MH Travel's own separate product integrated via API. 2.3 extends this: the same system is also used by outside operators, with data isolation as above.
 - `PROJECT-PLAN.md` §9 (Main Owner / Branch Owner, 10,000 MMK/branch/month, wallets, revenue share) assumes MH Travel holds transaction attribution and wallet ledgers. If operator data is not sent to MH Travel, that section needs review for what MH Travel can actually see and settle.
 
+### 2.4 Rentals (notes recorded as stated; details to be filled in later)
+
+- Rental items: **cars, motorbikes, bicycles, e-bikes, canvas tents (ရွက်ဖျင်တဲ), boats, horse carts, tricycles (သုံးဘီး)**.
+- Each type works differently and has its own rules:
+  - Bicycle: the traveler picks a bicycle type and rents it.
+  - Car: a **driver must be booked** with the car, and there are more choices (vehicle type/model, express vehicle, 35-seater, etc.), each with its own rules.
+- **Availability differs by city.** Example: in Yangon, motorbikes and canvas tents cannot be rented.
+- Status: recorded only; the founder moved on to Blog posts first. Detailed rental flows are not defined yet.
+
 ---
 
 ## 3. Open questions for the detailed planning session
@@ -75,4 +84,4 @@ General
 9. Order for fixing the 48 broken links relative to the priority modules (Rentals, Blog posts, Travel Guide posts).
 10. Which backend wiring comes first (Favorites, Notifications, Bookings, Auth)?
 11. *(Answered 2026-11-21: Home Page design is complete; see section 2.1, item 4.)*
-12. Rentals scope: what is rented (vehicle types, other items), who lists and who operates them, booking/payment flow, and what the admin side must control. To be detailed next.
+12. Rentals: initial notes are in section 2.4. Still to define: whether MH Travel owns the rental items or lists outside rental shops, booking/payment flow, per-type rules, per-city availability setup, and what the admin side must control.
