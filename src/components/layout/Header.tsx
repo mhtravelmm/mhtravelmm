@@ -6,6 +6,7 @@ import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
 import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
+import { useNotificationFeed } from '../../lib/notifications';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { MobileMenu } from './MobileMenu';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -36,7 +37,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed(NOTIFICATIONS);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(56);
@@ -52,15 +53,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
     setMobileMenuOpen((open) => !open);
   }
 
-  const unreadCount = unreadNotifications ?? notifications.filter((n) => !n.isRead).length;
-
-  function markAllRead() {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-  }
-
-  function markOneRead(id: string) {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-  }
+  const unreadBadge = unreadNotifications ?? unreadCount;
 
   useEffect(() => {
     if (searchOpen) inputRef.current?.focus();
@@ -194,9 +187,9 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
               aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
             >
               <Bell size={16} className="text-text-secondary hover:text-text-primary transition" />
-              {unreadCount > 0 && (
+              {unreadBadge > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-red text-[8px] text-white">
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                  {unreadBadge > 9 ? '9+' : unreadBadge}
                 </span>
               )}
             </button>
@@ -205,7 +198,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
                 notifications={notifications}
                 onClose={() => setNotificationsOpen(false)}
                 onMarkAllRead={markAllRead}
-                onOpenItem={markOneRead}
+                onOpenItem={markRead}
               />
             )}
           </div>

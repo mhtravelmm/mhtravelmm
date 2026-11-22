@@ -34,12 +34,42 @@ the suite instead of reaching a user as "coming soon."
 
 ## Data persistence and APIs
 
-- Replace seeded/local state for Favorites, bookings, custom plan requests, notifications, reviews, views, dashboard metrics, owners, admins, menu items, campaigns, and revenue with authenticated Supabase/API queries.
+- Replace seeded/local state for bookings, custom plan requests, views, dashboard metrics, owners, admins, menu items, campaigns, and revenue with authenticated Supabase/API queries. Favorites, notification read-state, and the platform review list are wired (see below); what remains is anonymous-access policy and Admin authoring.
 - Connect Rental submissions and Ticketing orders to request IDs, notifications, booking records, contact handoff, payment, and confirmation persistence.
 - Add live ticket operator inventory, availability, seat maps, seat locking, payment, and provider/API integration.
 - Replace seeded city/category/business recommendations with city-scoped content tables, real pagination, map distance, open/closed state, availability, and review counts.
 - Add Admin-managed content tables and public API/cache invalidation for blogs, guides, listings, and search indexing.
 - Move exchange-rate data from the hard-coded preview value to an Admin/Supabase-managed rate service.
+
+## Favorites, notifications, and reviews — wired 22 November 2026
+
+These three were the last Plan §10 step-4 items on local state:
+
+- `src/lib/userScope.ts` scopes every browser-stored row to the account id, so a
+  saved favorite no longer follows the next person who signs in on the same
+  browser. Guests get their own scope instead of sharing a signed-in user's, and
+  the old global key is adopted once and then deleted.
+- `FavoritesProvider` (`src/lib/favorites.tsx`) now reads and writes
+  `public.favorites` (`user_id`, `listing_id`) when Supabase is configured, rolls
+  the optimistic toggle back if the write fails, and falls back to the scoped
+  local map otherwise. `AuthProvider` moved above it in `main.tsx` so the
+  provider can see the current account.
+- `useNotificationFeed` (`src/lib/notifications.ts`) keeps the shared feed rows
+  but stores each account's read flags, syncing them to
+  `public.notifications` (`user_id`, `id`, `is_read`).
+- `usePlatformReviews` (`src/lib/reviews.ts`) reads `public.reviews` where
+  `listing_id is null` and falls back to the seeded copy.
+
+Still open on this track:
+
+- Anonymous visitors get the local scope, not a server row, so a guest's
+  favorites do not survive a device change. That needs a decision on whether
+  guests may hold server rows before a policy is written.
+- Notification feed rows are still seeded; nothing creates them yet. Admin
+  publish, owner publish, and booking-status events are the triggers described
+  in Plan §12.
+- Reviews are read-only in the UI. The "verified booking or visit" rule from
+  Plan §11 and the Owner-rating adjustment still need an authoring path.
 
 ## Blog, media, and Cloudflare R2
 

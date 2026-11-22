@@ -24,7 +24,7 @@ import { SearchPage } from './features/search/SearchPage';
 import { CategoryIndexPage, CategoryPage } from './features/category/CategoryPage';
 import { PlaceDetailPage } from './features/place/PlaceDetailPage';
 import { CATEGORY_SLUGS, PLACE_SLUGS } from './routes';
-import { AuthProvider, useAuth } from './lib/auth';
+import { useAuth } from './lib/auth';
 
 function Shell({ children, showFooter = false, fullWidth = false, dashboardFooter = false }: { children: React.ReactNode; showFooter?: boolean; fullWidth?: boolean; dashboardFooter?: boolean }) {
   const headerSpacing = fullWidth ? 'px-2 sm:px-3 md:px-4' : 'px-4 md:px-8';
@@ -134,7 +134,7 @@ function AppRoutes() {
 }
 
 function App() {
-  return <AuthProvider><BrowserRouter><AppRoutes /></BrowserRouter></AuthProvider>;
+  return <BrowserRouter><AppRoutes /></BrowserRouter>;
 }
 
 export default App;

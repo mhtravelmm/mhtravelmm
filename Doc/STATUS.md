@@ -46,7 +46,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (85 tests, 12 files) |
+| `npm test` (vitest) | **PASS** (96 tests, 14 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (43 declared routes, all render) |
 
@@ -192,14 +192,16 @@ places rather than advice.
 | RLS policies | **DONE** | Owner/admin policies with helper + indexes |
 | Auth session hydration | **PARTIAL** | Works when env is configured |
 | Email/password + OAuth calls | **PARTIAL** | Provider secrets and redirect URLs still needed |
-| Favorites persistence | **PREVIEW** | localStorage; table exists, form not wired |
+| Favorites persistence | **PARTIAL** | Per-account scope + `public.favorites` write-through; anon access still local |
 | Bookings / plan requests | **PREVIEW** | UI only, no insert |
-| Notifications | **PREVIEW** | localStorage, tab-synced |
+| Notifications | **PARTIAL** | Read state per account, synced to `public.notifications`; feed rows still seeded |
 | Exchange rate | **PREVIEW** | `1 USD = 4,500 MMK` hard-coded default |
 | Blog media (Cloudflare R2) | **PARTIAL** | Adapter exists, no deployed Worker |
 
-`localStorage` is used across 8 files with 14 distinct keys. Every one of them
-is a production replacement target, listed in `REMAINING-WORK.md`.
+`localStorage` is used across 9 files with 15 distinct keys. Every one of them
+is a production replacement target, listed in `REMAINING-WORK.md`. The Favorites
+and notification-read keys are now account-scoped (`mh-travel:<base>:<userId>`),
+so they no longer leak between accounts on a shared browser.
 
 ---
 
@@ -272,7 +274,12 @@ Steps 1 and 2 are now done, so the list starts where the frontend stops:
 3. ~~Localize the remaining Super Admin body copy.~~ **Done 22 November 2026.**
    ~~Localize the Blog and Travel Guide editor panels.~~ **Done.** Frontend
    localization is complete; the remaining gap is the backend.
-4. Wire Favorites, Notifications, and Reviews to the tables that already exist.
+4. ~~Wire Favorites, Notifications, and Reviews to the tables that already
+   exist.~~ **Done 22 November 2026.** Favorites and notification read-state
+   are per-account and write through to `public.favorites` and
+   `public.notifications`; the platform reviews section reads
+   `public.reviews`. Feed rows and the seeded review copy still come from
+   local data, so the remaining work there is Admin authoring, not plumbing.
 5. Connect the Custom Plan, Rental, and Ticketing submissions to request
    records with an ID and a confirmation.
 6. Replace seeded catalog data with city-scoped Supabase queries.

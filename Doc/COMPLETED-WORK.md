@@ -1,7 +1,8 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 22 November 2026
-**Verified against:** `main` @ `ecb231f` plus the Blog and Travel Guide admin
+**Verified against:** `main` plus the per-account Favorites, notification, and
+review wiring; earlier baseline `ecb231f` covers the Blog and Travel Guide admin
 editors, admin-role accounts, the rental-category work of 20–22 November 2026,
 and the same-day work on the guide route follower, the two owner dashboards,
 and the Foreign Tourist section.
@@ -27,7 +28,23 @@ For the one-page view of what is finished versus open, read
 - Travel Guide listing/detail routes and aggregated Search are no longer placeholders.
 - Ticketing preview supports Bus, Train, Events, and Cinema flows with route/venue matching, seat selection where applicable, validation, and order-confirmation states.
 - Rentals preview supports city-specific availability, rental type selection, dates, customer type, delivery/branch pickup, pricing estimates, and submission handoff.
-- Shared Favorites persist locally, update immediately after save/unsave, and synchronize across same-tab and browser storage events.
+- Shared Favorites update immediately after save/unsave, synchronize across same-tab and browser storage events, and are scoped to the signed-in account.
+
+## Per-account Favorites, notifications, and reviews (22 November 2026)
+
+- `src/lib/userScope.ts` gives every browser-stored row an account-scoped key.
+  `adoptLegacyKey` claims the old global favorite key once and deletes it, so
+  existing local favorites are kept but stop leaking to the next account.
+- `FavoritesProvider` reads and writes `public.favorites` when Supabase is
+  configured, keeps an optimistic toggle, rolls it back on a failed write, and
+  falls back to the scoped local map. `AuthProvider` now wraps it in
+  `main.tsx`.
+- `useNotificationFeed` keeps the seeded feed rows but stores read flags per
+  account and syncs them to `public.notifications`.
+- `usePlatformReviews` reads `public.reviews` for platform-level rows
+  (`listing_id is null`) and falls back to seed data.
+- `userScope.test.ts` covers scope isolation, guest separation, corrupt values,
+  and legacy-key adoption (8 tests).
 
 ## Travel Guide route follower
 

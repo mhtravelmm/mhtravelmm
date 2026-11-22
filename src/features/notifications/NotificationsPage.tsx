@@ -3,26 +3,18 @@ import { ArrowLeft, Bell, CheckCheck, CircleDot, Inbox, ShieldCheck } from 'luci
 import { Link } from 'react-router-dom';
 import { NOTIFICATIONS, type NotificationItem } from '../../data/notifications';
 import { useLanguage } from '../../lib/i18n';
+import { useNotificationFeed } from '../../lib/notifications';
 
 type Filter = 'all' | 'unread' | 'read';
 
 export function NotificationsPage() {
   const { t } = useLanguage();
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed(NOTIFICATIONS);
   const [filter, setFilter] = useState<Filter>('all');
 
   const visible = useMemo(() => notifications.filter((item) => filter === 'all' || (filter === 'unread' ? !item.isRead : item.isRead)), [filter, notifications]);
-  const unreadCount = notifications.filter((item) => !item.isRead).length;
   const today = visible.filter((item) => item.timeAgo.includes('hour'));
   const earlier = visible.filter((item) => !item.timeAgo.includes('hour'));
-
-  function markAllRead() {
-    setNotifications((items) => items.map((item) => ({ ...item, isRead: true })));
-  }
-
-  function markRead(id: string) {
-    setNotifications((items) => items.map((item) => item.id === id ? { ...item, isRead: true } : item));
-  }
 
   return (
     <div className="mx-auto max-w-4xl pb-8 pt-2 sm:pt-5">

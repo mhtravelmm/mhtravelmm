@@ -6,6 +6,7 @@ import { ThemeProvider } from './lib/theme';
 import { LanguageProvider } from './lib/i18n';
 import { CurrencyProvider } from './lib/currency';
 import { FavoritesProvider } from './lib/favorites';
+import { AuthProvider } from './lib/auth';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -13,10 +14,12 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <LanguageProvider>
         <CurrencyProvider>
-          <FavoritesProvider>
-            <SiteInteractionGuard />
-            <App />
-          </FavoritesProvider>
+          <AuthProvider>
+            <FavoritesProvider>
+              <SiteInteractionGuard />
+              <App />
+            </FavoritesProvider>
+          </AuthProvider>
         </CurrencyProvider>
       </LanguageProvider>
     </ThemeProvider>
