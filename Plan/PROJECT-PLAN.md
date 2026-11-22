@@ -178,6 +178,13 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   Manager → Admin; Operations Admin → Admin, or Rental Admin for rentals;
   Finance Admin → Payment Admin; Ads Manager → Ads Admin. Permission groups
   stay as the way to scope each role.
+- Admin workspace (decided 2026-11-22): the Blog Post Admin, Rental Admin and
+  Travel Guide Content Admin roles have no route today (role guards exist only
+  for Super Admin, Shop Owner and Main Owner). Add one role-guarded `/admin`
+  workspace that shows only the sections a role may use (Rental Admin:
+  Rentals; Blog Post Admin: Blog; Travel Guide Content Admin: Guides) and
+  reuses the same panels Super Admin has in `/super-admin`. Super Admin keeps
+  all sections.
 
 ---
 
@@ -455,52 +462,50 @@ Common rules:
   and travel costs on top of the daily rate. Exact mechanics to be
   finalized later.
 
-### Rental: priority module, types and rules (2026-11-21)
+### Rental: priority module, precise specification (2026-11-22)
 
-Rental is the first priority module (section 1). It is owned and operated by
-MH Travel, so both the system side and the Rental Admin side must be fully
-controllable.
+Checked against `src/features/rentals/RentalsPage.tsx`, `src/types/index.ts` and `Doc/STATUS.md`. Rental is owned and operated by MH Travel and is handled as a manual, phone-confirmed order (`BookingFlowMode` = `full_manual`) in this phase. No stock or per-date inventory is tracked.
 
-Founder's notes on types and rules:
+**Types and flows.** Ten categories exist in code: bicycle, e-bike, motorbike, scooter, car (with driver), self-drive car, horse carriage, camping tent (ရွက်ဖျင်တဲ), motorboat, travel guide. The founder also named **tricycle** (သုံးဘီး), the only one not in code yet; add it as an eleventh category. Boats stay one **Boat** category with motorboat as its current type.
 
-- Types named: cars, motorbikes, bicycles, e-bikes, camping tents
-  (ရွက်ဖျင်တဲ), boats, horse carriages, tricycles (သုံးဘီး). Compared with the
-  category list above, **e-bike** and **tricycle** are new to the list
-  (e-bike and scooter already appear in the Rentals UI reference). Boats appear
-  above as "motorboat". Travel guide (hire-a-person) is on the list above but
-  was not in the 2026-11-21 notes; it stays unless the founder removes it.
-- Each type has its own flow and rules; they are not one shared form.
-  Bicycle: pick a bicycle type and rent. Car: a driver is booked with the car,
-  and there are further choices (vehicle type such as an express vehicle, a
-  35-seater, and so on), each with its own rules. One vehicle-type word in the
-  notes (written "အာတာဖတ်") is not yet matched to a known vehicle type.
-- Availability differs by city. Example: Yangon has no motorbike or camping
-  tent rental.
+Each category follows one of three flows:
 
-Already built as preview (details in `Doc/COMPLETED-WORK.md` and the Rentals
-record below): a city-first order flow for Yangon, Bagan, Mandalay, Inle Lake
-and Ngapali with city-specific categories and branch pickup; motorbike and
-bicycle share a self-drive flow; cars have their own flow with family car
-(4–5 seats), 35-seat minibus and 45-seat bus, each with local and foreigner
-rates; start and end dates; delivery or branch pickup; an estimated total; and
-a submission that hands off to MH Travel by phone.
+1. **Simple flow** (bicycle, e-bike, motorbike, scooter, horse carriage, camping tent, motorboat, tricycle, travel guide): choose a variant if the category has variants, then dates, customer type, pickup and phone.
+2. **Driver-vehicle flow** (car): a driver is booked with the car; the traveler chooses a vehicle type. Today: family car (4–5 seats), 35-seat minibus, 45-seat bus. Minimum 2 days (the end date cannot be earlier than start + 1).
+3. **Self-drive flow** (self-drive car): same minimum 2 days, no driver. See the confirmation below.
 
-Decided additions (2026-11-22, Claude under the founder's delegation; revisit if wrong):
+**Variants (new).** A category can have variants managed in Rental Admin: bicycle types, vehicle types for cars (the founder mentions an express vehicle and a 35-seater), and so on. Today only car has variants, hard-coded. Variants are data, not code, so adding one needs no new page.
 
-1. Rental Admin controls: categories and types, per-type rules (driver
-   required, minimum days, vehicle options), a city × category availability
-   matrix, branches, local/foreigner rates, and terms text.
-2. Persist rental requests with a request ID, a notification, and a status
-   (for example new, called, confirmed, cancelled), as listed in
-   `Doc/REMAINING-WORK.md`.
-3. Hold each type's flow and rules as data, so adding e-bikes or tricycles
-   does not need new page code.
-4. Category list: add **E-bike** and **Tricycle**. Boats stay one **Boat**
-   category with motorboat as its current type. Travel guide hire stays.
+**City availability (current code, one MH Travel branch per city):**
 
-Still to confirm: tricycle and e-bike details, whether boats go beyond motorboat, the
-"အာတာဖတ်" vehicle type, and that Yangon's rental data matches the Yangon
-restriction above.
+| City | Categories offered |
+|---|---|
+| Yangon | bicycle, e-bike, motorbike, scooter, car, self-drive car, travel guide |
+| Bagan | bicycle, e-bike, motorbike, scooter, car, self-drive car, horse carriage, camping tent, travel guide |
+| Mandalay | bicycle, e-bike, motorbike, scooter, car, self-drive car, travel guide |
+| Inle Lake | bicycle, e-bike, motorbike, motorboat, camping tent, travel guide |
+| Ngapali | bicycle, e-bike, motorbike, scooter, motorboat, camping tent |
+
+In current code Inle Lake and Ngapali have no car rental, and Ngapali has no travel guide hire.
+
+**Defects found against the founder's rules:**
+
+- The founder says Yangon has no motorbike rental, but code lists motorbike (and scooter) for Yangon. Remove motorbike; whether scooter also goes is to confirm. Tents are already absent from Yangon.
+- The founder says cars are booked with a driver, but code has a separate self-drive car category.
+- Prices are one global rate per category (USD per day, local and foreigner) with sample values; they are not per city and not confirmed prices. Decided: price is keyed by city × category × variant, with the category rate as the fallback.
+- A submitted order only sets a local `submitted` flag; no order is recorded, no request ID exists, and nobody is notified.
+
+**Pricing.** Total = rate × inclusive rental days, in USD base, shown in MMK or USD by the display currency toggle. The rate is the local or the foreigner rate by customer type. Travel guide hire adds the guide's own costs on top of the daily rate (section 8, above).
+
+**Order record (decided).** Request ID (`RNT-YYMMDD-####`), city, category, variant, start date, end date, days, participants, customer type (citizen / foreigner), fulfillment (delivery / branch), delivery address or branch, phone, terms accepted (with the terms version), daily rate used, total (USD base), display currency, status, created and updated times, handled-by admin.
+
+**Validation (current rules, kept):** phone at least 7 characters; delivery address at least 3 characters when delivery, branch chosen when branch pickup; terms accepted; end date not before start (car categories: at least start + 1). The page asks for booking at least 1 day ahead; make the start date enforce it.
+
+**Status flow (decided):** New → Contacted → Confirmed → Completed, and Cancelled from any state before Completed. Only Rental Admin and Super Admin change a status. The traveler sees the request ID after submitting.
+
+**Rental Admin controls (decided):** categories (including adding Tricycle), variants with seat count, per-type rules text and driver-required flag, the city × category availability matrix, branches, local and foreigner rates per city × category × variant, minimum days, terms text (MM/EN) with a version number, and the order list with filters and status changes. Every change is written to the admin audit log.
+
+**Still to confirm:** whether scooter is also excluded from Yangon; whether the self-drive car category stays; what the founder's word "အာတာဖတ်" and the "express" vehicle are; tricycle and e-bike details; whether boats go beyond motorboat.
 
 ---
 
@@ -652,42 +657,46 @@ Blog:
   of a centered max-width column; keep only small responsive gutters and avoid
   horizontal overflow on phones.
 
-### Blog editor: current state and additions (2026-11-21)
+### Blog editor: precise specification (2026-11-22)
 
-Current (see `Doc/COMPLETED-WORK.md`): Super Admin Blog Post Management has a
-bilingual editor, add-a-category, search and status filters, draft / publish /
-schedule with native date and time, a cover photo plus additional photos, and
-inline bilingual text and image story blocks. All images go through the
-resize / WebP / 450 KB pipeline to the R2 endpoint, with a local preview
-fallback. The public reader renders sponsored slots above, within existing ad
-blocks, and below the article.
+Checked against `src/features/superAdmin/BlogPostsPanel.tsx`, `src/data/blogsData.ts`, `src/data/ads.ts` and `Doc/STATUS.md`. The editor lives only in Super Admin and keeps posts in component state, so nothing it saves reaches the public reader yet. The admin model and the reader model also differ:
 
-Gaps: the composer has no ad block; blocks can be inserted and removed but
-there is no explicit reorder; images carry no alt text, caption or credit; the
-editor is reachable only by Super Admin although section 3 defines a Blog Post
-Admin role; the backend is not built (see "Blog, media, and Cloudflare R2" in
-`Doc/REMAINING-WORK.md`).
+| Field | Reader `BlogPost` | Admin `AdminPost` |
+|---|---|---|
+| Body blocks | paragraph (MM/EN), image (url, alt MM/EN, optional caption), ad | text (separate MM and EN fields), image (url only) |
+| Excerpt | MM/EN | required in the form, **dropped on save** |
+| Slug, read time, SEO tags | present | absent |
+| Author, location | MM/EN | one plain string each |
+| Extra photos | none | `galleryUrls`, with no reader field |
+| Status, schedule | none | Draft / Published / Scheduled |
 
-Decided additions (2026-11-22, Claude under the founder's delegation; revisit if wrong):
+**One model (decided).** The reader's `BlogPost` is the canonical model; the editor produces it, plus status fields:
 
-1. An **ad slot block** in the composer. The writer places the slot; the ad
-   itself comes from the Ads system, which only Super Admin and Ads Admin
-   manage (section 3). An empty slot collapses, and a filled one is labelled
-   "Sponsored".
-2. Explicit block reordering (move up / down).
-3. Per-image alt text (MM/EN), optional caption and credit.
-4. Store the post as ordered structured blocks rather than HTML, so web and
-   mobile render the same post and an ad slot cannot be broken by pasted
-   markup.
-5. Publish checks: cover photo present, alt text on every image, both
-   languages complete, category chosen.
-6. Give the Blog Post Admin role access to this editor, without ad
-   management.
-7. Limits on ad slots per post: a maximum count, no two adjacent, none before
-   the first paragraph.
+- **Blocks:** `paragraph` (MM and EN), `image` (url, alt MM and EN required, caption MM/EN optional, credit optional), `ad` (no content; it asks the Ads service for the `blog_inline` placement and collapses when there is no ad).
+- `blog_post_top` and `blog_post_bottom` stay automatic reader slots. Only inline ads are blocks.
+- Extra photos become image blocks. `galleryUrls` is dropped, so there is one place for images.
+- `slug`: generated from the English title, lowercase and hyphenated, unique, and fixed after first publish (links use `/blogs?story=<slug>`).
+- `excerpt` (MM/EN): saved, which fixes the current drop.
+- `author` and `location`: MM/EN. Default author "MH Travel Editorial".
+- `readMinutes`: computed at publish from the word count, not typed.
+- `seoTags`: an internal field in the editor, never shown in the app.
+- `views` and `favoriteCount` are counters set by the system.
+- Categories: a managed list with MM and EN labels (today seven fixed values, and "add category" only takes an English name). The reader filter reads this list.
 
-Decided 2026-11-22: ad slots are placed manually by the writer as blocks. An
-automatic insertion rule may be added later.
+**Ad block rules (decided):** at most 2 inline ad blocks per post, never adjacent, never first or last in the body. The writer places them manually; an automatic rule may come later. Writers cannot create, edit or choose ad content (section 3).
+
+**Status and schedule (decided):** Draft, Scheduled, Published. A scheduled time is entered in Myanmar Time (UTC+6:30) and stored in UTC; the post goes live automatically at that time. The public reader receives only Published posts whose time has passed; drafts and scheduled posts never leave Admin.
+
+**Validation (decided).** Draft: an English title is enough. Scheduled or Published: title and excerpt in both languages, cover photo, at least one paragraph, every paragraph in both languages, every image with alt text in both languages, a category, and a schedule date and time when scheduled.
+
+**Images.** Cover and inline images use the existing resize / WebP / 450 KB pipeline to the R2 endpoint. `blogMediaApi.ts` is cover-named today and should become a general blog image upload. The R2 Worker is not deployed (`Doc/REMAINING-WORK.md`).
+
+**Editing.** Blocks can be inserted anywhere, moved up or down, and removed. The editor autosaves a draft, and each save keeps a revision. Preview uses the real reader component at phone and desktop widths.
+
+**Roles (decided).** Blog Post Admin and Super Admin use this editor; ad management stays with Super Admin and Ads Admin. Each create, edit, schedule, publish and delete is written to the admin audit log.
+
+**Still to define:** the reader's card shows rating and distance for every post (`CardListing`); how a new post gets those values is not decided.
+
 
 Travel Guide:
 
@@ -716,36 +725,25 @@ Travel Guide:
   discovery row each for Top attractions, Restaurants, and Cafes, in that order,
   before the global copyright strip. Keep the full footer exclusive to Home.
 
-### Travel Guide: current state and Admin additions (2026-11-22)
+### Travel Guide: precise specification (2026-11-22)
 
-Current (`Doc/STATUS.md`): `/travel-guide` is PREVIEW with category and search
-filters; `/travel-guide/:guideId` is DONE with the full reader and itinerary
-timeline. Guide content is compiled data. There is no Admin editor for guides,
-and the Travel Guide Content Admin role has no route or dashboard (role guards
-exist only for Super Admin, Shop Owner and Main Owner).
+Checked against `src/data/travelGuideData.ts`, `src/features/travelGuide/TravelGuidePage.tsx` and `Doc/STATUS.md`. `/travel-guide` is PREVIEW (category and search filters) and `/travel-guide/:guideId` is DONE (reader with itinerary timeline). Guides are compiled data. There is no Admin editor, and the Travel Guide Content Admin role has no route.
 
-Decided additions (Claude under the founder's delegation; revisit if wrong):
+**Current model:** `TravelGuideStory` = card fields (rating, distance, views, favorite) + `category` (six values: myanmar, nature, adventure, culture, food, city_tour) + MM/EN title, summary, author and duration + `publishedAt` + `stops`. A stop is `{ time, place, title, description }`, where **`place` is a free text string** such as "Shwedagon Pagoda, Yangon". It is not linked to a listing, so the rule that a guide uses only places in MH Travel's database cannot be enforced today.
 
-1. A **Travel Guide editor** for Super Admin and Travel Guide Content Admin,
-   in the same shell as the Blog editor: bilingual title and excerpt, a
-   category from the existing filters (Myanmar, Nature, Adventure, Culture,
-   Food, City Tour), a cover photo, and Draft / Publish / Schedule.
-2. An **itinerary builder** in place of free text. A guide is ordered stops;
-   each stop has a time, a listing chosen from MH Travel's own database (no
-   outside places, as above), a bilingual description, and photos through the
-   existing WebP/R2 pipeline. Stops can be reordered. Each stop's Directions
-   button reuses the How-to-Get-There module.
-3. **Shared content infrastructure** with Blog: status, scheduling, revisions,
-   audit log and media handling are built once; only the block schemas differ
-   (Blog: text, image, ad slot; Guide: stop).
-4. **Publish checks:** cover present, both languages complete, at least one
-   stop, every stop linked to an existing listing, stop times in ascending
-   order.
-5. **Per-post earning record:** each published guide creates an earning row for
-   its author, with the amount set by Admin, so payout can be calculated
-   later.
+**Stop model (decided):** `time` (HH:MM), `listingId` (required, chosen from MH Travel's own listings), `title` (MM/EN; defaults to the listing name and can be overridden), `description` (MM/EN), and 0–3 optional photos through the WebP/R2 pipeline. The `place` text is derived from the listing, not typed.
 
-Still to define: the per-post rate and when it becomes payable.
+**Editor (decided):** Super Admin and Travel Guide Content Admin, in the same shell as the Blog editor. Fields: MM/EN title and summary, one of the six categories, cover photo, author, duration (MM/EN text), the ordered stops, and Draft / Scheduled / Published exactly as for Blog (Myanmar Time, same validation style). Stops can be added, moved and removed; each stop's Directions button reuses the How-to-Get-There module.
+
+**Publish checks (decided):** cover, title and summary in both languages, a category, at least one stop, every stop linked to an existing listing, stop times in ascending order, every stop description in both languages.
+
+**Shared infrastructure with Blog (decided):** status and scheduling, revisions, audit log, image handling and role checks are built once. Only the block schemas differ (Blog: paragraph, image, ad; Guide: stop). `guideId` for new guides is the slug (same rule as Blog).
+
+**Dependency to plan around:** listings for hotels, restaurants, pagodas and the rest are compiled data today, not in Supabase (`Doc/STATUS.md`). Until they are, the stop picker can use the compiled catalog ids and the backend move must keep those ids stable.
+
+**Earnings (decided):** each published guide creates an earning row for its author: guide, author account, amount set by Admin, status (pending / approved / paid). The per-post rate and when it becomes payable are not defined yet.
+
+**Still to define:** whether a guide can span more than one day (the stops model has times of one day and a free-text duration).
 
 ---
 
@@ -947,16 +945,17 @@ Made by Claude under the founder's delegation; the founder can change any of the
 
 1. **Card-size rule:** `md` stays the default for five column primary rows; the column-count rule is reduced to the `lg` / `xl` limits (section 4). No code change.
 2. **Load More:** page size 12, one shared helper, shown only while more items remain (section 4). Needs a code change in Blogs and Travel Guide.
-3. **Role names:** the section 3 roles win; the Admin Management form is renamed to match (section 3). Needs a code change.
-4. **Blog ads:** placed manually as blocks (section 10).
-5. **Rental categories:** add E-bike and Tricycle (section 8).
-6. **Travel Guide Admin:** editor, itinerary builder and shared content infrastructure (section 10).
+3. **Role names:** the section 3 roles win; the Admin Management form is renamed to match, and one `/admin` workspace serves the three content roles (section 3). Needs code changes.
+4. **Rentals:** one more category (Tricycle), variants as data, price by city × category × variant, a recorded order with status flow, and Rental Admin controls (section 8).
+5. **Blog:** one model shared by editor and reader, manual inline ad blocks (max 2, none adjacent, none first or last), required alt text, fixed slugs, Myanmar Time scheduling, revisions (section 10).
+6. **Travel Guide:** stops linked to listings, shared infrastructure with Blog, earning rows (section 10).
 
 ### Still needing the founder's input
 
-1. Rental facts: what "အာတာဖတ်" is, tricycle and e-bike details, whether boats go beyond motorboat, and that Yangon's rental data matches the Yangon restriction (section 8).
-2. Travel Guide per-post rate and when it becomes payable (section 10).
-3. Operator system questions (section 9), and template questions when template work starts (section 4).
+1. Rentals (section 8): is scooter also excluded from Yangon; does the self-drive car category stay when the founder says cars are booked with a driver; what is "အာတာဖတ်" and the "express" vehicle; tricycle and e-bike details; do boats go beyond motorboat.
+2. Blog (section 10): how a new post gets the rating and distance that every card shows.
+3. Travel Guide (section 10): can a guide span more than one day; the per-post rate and when it becomes payable.
+4. Operator system questions (section 9), and template questions when template work starts (section 4).
 
 ## Rentals UI reference provided by the user (2026-11-08)
 
