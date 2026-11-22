@@ -60,6 +60,12 @@ GIT_ASKPASS=/tmp/askpass.sh GIT_TERMINAL_PROMPT=0 \
 rm -f /tmp/askpass.sh
 ```
 
+`GH_PUSH_TOKEN` is not always injected. Check `[ -n "$GH_PUSH_TOKEN" ]` first: when
+it is empty, `GITHUB_TOKEN`, `OH_GIT_CREDENTIAL_ACCESS_TOKEN_GITHUB`, and the
+credential-helper token all report `push: true` on the repo but still 403 on
+`git push` and on `POST /git/refs`. In that case commit locally and tell the user
+the push needs a push-capable token; do not retry the same credential in a loop.
+
 ## Verification habit
 
 Before calling a UI change done: typecheck, test, build, then load the route in headless
