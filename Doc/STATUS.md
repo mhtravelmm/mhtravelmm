@@ -1,8 +1,8 @@
 # MH Travel — Work Status Record
 
 **Last audited:** 22 November 2026
-**Audited against:** `main` @ `8b9f1d2` plus the 22 November work on the guide
-route follower and the two owner dashboards.
+**Audited against:** `main` @ `ecb231f` plus the 22 November work on the guide
+route follower, the two owner dashboards, and the Foreign Tourist section.
 
 This file is the single status view for the project. It replaces guesswork about
 what is finished: every item below was checked against the actual source tree,
@@ -45,9 +45,9 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (79 tests, 11 files) |
+| `npm test` (vitest) | **PASS** (85 tests, 12 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
-| Route audit | **PASS** (42 declared routes, all render) |
+| Route audit | **PASS** (43 declared routes, all render) |
 
 The test runner is the change that keeps this list honest: `npm test` fails if
 a seed link, a catalog id, or the route manifest drifts from the routes the
@@ -64,7 +64,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **PARTIAL** | 928 keys; Super Admin body copy still lags (see §6) |
+| Bilingual MM/EN provider | **PARTIAL** | 954 keys; Super Admin body copy still lags (see §6) |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -105,6 +105,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/travel-guide/:guideId` | **DONE** | Guide reader with itinerary timeline and a stop-by-stop "Follow this route" stepper |
 | `/blogs` | **PREVIEW** | Listing + in-page reader via `?story=` |
 | `/blogs/:storyId` | **DONE** | Legacy path redirects to `/blogs?story=:id` |
+| `/foreign-tourist` | **DONE** | Post-arrival help: emergency numbers, SIM, etiquette, money (Plan §13) |
 | `/search` | **PREVIEW** | City/category/combined query modes |
 | `/favorites` | **PREVIEW** | localStorage-backed |
 | `/account` | **PREVIEW** | Dashboard shell, sample state |
@@ -159,8 +160,10 @@ if one does not resolve against `src/routes.ts`. `src/routes.manifest.test.ts`
 fails if `public/manus-routes.json` drifts from the declared routes. Adding a
 link without a route is now a test failure, not a silent 404.
 
-Still open, and not a link problem: `/emergency`, `/exchange`, and `/sim_card`
-are referenced by the Plan as future utility pages. No seed data links to them.
+`/emergency` and `/sim_card` are not separate routes: the Home tiles that used
+to imply them open the matching anchor on `/foreign-tourist` (Plan §13). The
+Exchange tile keeps pointing at the Nearby exchange listings, which are real
+places rather than advice.
 
 ---
 
@@ -210,13 +213,16 @@ is a production replacement target, listed in `REMAINING-WORK.md`.
 | Duplicate `<h1>` per page | 0 |
 | Duplicate or missing `<main>` landmark | 0 |
 | axe-core violations, all rules except contrast | **0** across 23 routes |
-| axe-core `color-contrast` | **64 nodes** on 17 routes |
+| axe-core `color-contrast` | **64 nodes** on 17 routes; `/foreign-tourist` adds 0 in either theme |
 
 Measured with axe-core in headless Chromium on 20 November 2026, at 1440px,
-against 23 routes (every declared page plus the three dashboards). The earlier
-"139 buttons without `aria-label`" figure counted the attribute, not the
-accessible name — a button with visible text needs no `aria-label`, so that
-number overstated the problem. Counting accessible names instead, six sponsored
+against 23 routes (every declared page plus the three dashboards). The
+`/foreign-tourist` page added on 22 November was re-checked the same way in
+dark and light, in both languages, and reports no violations; it uses the new
+`text-link` token rather than `brand-blue` for small accent text, which is what
+the light theme needed. The earlier "139 buttons without `aria-label`" figure
+counted the attribute, not the accessible name — a button with visible text
+needs no `aria-label`, so that number overstated the problem. Counting accessible names instead, six sponsored
 ad links and the notification bell were the only real gaps; all are fixed.
 
 The 64 contrast failures are a palette decision, not 64 bugs. Two pairs account

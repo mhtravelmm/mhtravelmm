@@ -1,9 +1,9 @@
 # MH Travel — Remaining Work Record
 
 **Last updated:** 22 November 2026
-**Verified against:** `main` @ `8b9f1d2` plus the 22 November work on the guide
-route follower and the two owner dashboards; detail in
-[`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
+**Verified against:** `main` @ `ecb231f` plus the 22 November work on the guide
+route follower, the two owner dashboards, and the Foreign Tourist section;
+detail in [`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
 
 The application currently provides a substantial frontend and local-preview experience. The following work remains before production launch.
 
@@ -74,7 +74,7 @@ the suite instead of reaching a user as "coming soon."
   dashboard that still renders mostly English. Shop Owner and Main Owner were
   localized on 22 November 2026.
 - Add component-level behavioral tests. Route, link, manifest, filter, and
-  domain-rule tests exist and run under `npm test` (79 tests in 11 files);
+  domain-rule tests exist and run under `npm test` (85 tests in 12 files);
   nothing yet renders a page and asserts on it, so interaction regressions
   (filters, tabs, forms) are still caught by hand.
 

@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, DollarSign, Moon, Sun } from 'lucide-react';
+import { Building, MapPin, Car, Ticket, Route, BookOpen, PenSquare, Heart, Globe, Globe2, DollarSign, Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useTheme } from '../../lib/theme';
@@ -14,6 +14,7 @@ const NAV_LINKS: { key: TranslationKey; href: string; Icon: typeof Building }[] 
   { key: 'nav_travel_plans', href: '/travel-plans', Icon: Route },
   { key: 'nav_travel_guide', href: '/travel-guide', Icon: BookOpen },
   { key: 'nav_blogs', href: '/blogs', Icon: PenSquare },
+  { key: 'nav_tourist_help', href: '/foreign-tourist', Icon: Globe2 },
 ];
 
 const LEGAL_LINKS: TranslationKey[] = [

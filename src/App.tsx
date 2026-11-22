@@ -19,6 +19,7 @@ import { ShopOwnerPage } from './features/shopOwner/ShopOwnerPage';
 import { MainOwnerPage } from './features/mainOwner/MainOwnerPage';
 import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { TravelGuidePage } from './features/travelGuide/TravelGuidePage';
+import { ForeignTouristPage } from './features/foreignTourist/ForeignTouristPage';
 import { SearchPage } from './features/search/SearchPage';
 import { CategoryIndexPage, CategoryPage } from './features/category/CategoryPage';
 import { PlaceDetailPage } from './features/place/PlaceDetailPage';
@@ -108,6 +109,7 @@ function AppRoutes() {
     <Route path="/travel-guide" element={<Shell fullWidth><TravelGuidePage /></Shell>} />
     <Route path="/travel-guide/:guideId" element={<Shell fullWidth><TravelGuidePage /></Shell>} />
     <Route path="/blogs" element={<Shell fullWidth><BlogsPage /></Shell>} />
+    <Route path="/foreign-tourist" element={<Shell><ForeignTouristPage /></Shell>} />
     <Route path="/blogs/:storyId" element={<LegacyBlogRedirect />} />
     <Route path="/search" element={<Shell><SearchPage /></Shell>} />
     <Route path="/account" element={<Shell showFooter dashboardFooter fullWidth><AccountPage /></Shell>} />

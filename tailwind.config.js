@@ -22,6 +22,8 @@ export default {
           muted: 'rgb(var(--color-text-muted) / <alpha-value>)',
           faint: 'rgb(var(--color-text-faint) / <alpha-value>)',
         },
+        // Readable link/accent text: brand-blue in dark, a darker blue in light.
+        link: 'rgb(var(--color-link) / <alpha-value>)',
         review: {
           bg: 'rgb(var(--color-review-bg) / <alpha-value>)',
           text: 'rgb(var(--color-review-text) / <alpha-value>)',

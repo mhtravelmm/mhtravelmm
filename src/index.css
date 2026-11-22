@@ -19,6 +19,7 @@
   --color-account-elevated: 18 42 71;
   --color-account-border: 31 64 95;
   --color-account-accent: 0 183 239;
+  --color-link: 77 141 255;
 }
 
 .light {
@@ -38,6 +39,8 @@
   --color-account-elevated: 231 241 247;
   --color-account-border: 202 218 230;
   --color-account-accent: 0 137 191;
+  /* brand-blue is too light to read as text on a white surface. */
+  --color-link: 42 95 214;
 }
 
 body {

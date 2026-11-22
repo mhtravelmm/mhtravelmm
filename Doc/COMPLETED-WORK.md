@@ -1,9 +1,10 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 22 November 2026
-**Verified against:** `main` @ `8b9f1d2` plus the Blog and Travel Guide admin
+**Verified against:** `main` @ `ecb231f` plus the Blog and Travel Guide admin
 editors, admin-role accounts, the rental-category work of 20–22 November 2026,
-and the same-day work on the guide route follower and the two owner dashboards.
+and the same-day work on the guide route follower, the two owner dashboards,
+and the Foreign Tourist section.
 
 This document records the frontend features, preview workflows, backend preparation, and documentation work completed so far. Production/backend boundaries remain explicitly listed in [`REMAINING-WORK.md`](./REMAINING-WORK.md).
 
@@ -38,6 +39,20 @@ For the one-page view of what is finished versus open, read
   the position is one-based, and stepping stops at both ends instead of
   wrapping. Unit-tested in `guideFollow.test.ts`.
 - Bilingual copy for the follower is in `i18n.tsx` under `guide_follow_*`.
+
+## Foreign Tourist section (Plan §13)
+
+- `/foreign-tourist` covers post-arrival help only: emergency contacts, SIM
+  cards, cultural etiquette, and currency/tipping. Visa content stays out
+  because it is a pre-arrival matter.
+- Emergency numbers are real `tel:` links — police 199, ambulance 192, fire
+  191, plus the MH Travel support line. SIM operator cards name the four
+  networks and their coverage instead of quoting package prices, because those
+  change; the page says so.
+- The Home Emergency and Sim card tiles now land on the matching anchor; the
+  Exchange tile still opens the Nearby exchange listings. The mobile drawer and
+  footer Navigate lists link the page. Every string is bilingual, and
+  `foreignTourist.test.ts` enforces that.
 
 ## Shop Owner and Main Owner localization
 

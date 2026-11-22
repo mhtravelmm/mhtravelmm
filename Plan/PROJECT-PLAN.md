@@ -779,6 +779,25 @@ Post-arrival help only: Emergency/SOS contacts, SIM card info, cultural
 etiquette, currency and tipping guide. Visa information is excluded because
 it is a pre-arrival matter.
 
+**Implemented 2026-11-22** as one page at `/foreign-tourist`, in the shared
+shell and bilingual throughout:
+
+- Four anchored sections — Emergency contacts, SIM card and internet, Cultural
+  etiquette, Currency and tipping — reachable from a jump row at the top, so
+  the page stays one screen deep on a phone.
+- Emergency numbers are `tel:` links (police 199, ambulance 192, fire 191, plus
+  the MH Travel support line). Ambulance/fire/police codes are national and
+  stable; the page does not quote SIM package prices because those change, and
+  says so in a note.
+- The page carries no visa content, per the rule above.
+- The Home Emergency and Sim card tiles open the matching anchor instead of
+  pointing at an unrelated catalog. The Exchange tile keeps going to the Nearby
+  exchange listings, which are real places rather than advice. The mobile
+  drawer Navigate list and the footer Navigate column link the page directly.
+- Content lives in `src/data/foreignTourist.ts`; `foreignTourist.test.ts` fails
+  if any string is missing one of the two languages, if the three national
+  emergency lines disappear, or if an anchor id is duplicated.
+
 ---
 
 ## 14. Accounts, Language and Currency

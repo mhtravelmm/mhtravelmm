@@ -32,7 +32,7 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 // Where each category tile goes. Most open a catalog page that lists that
-// catalog; the four with no catalog of their own point at the page that
+// catalog; the tiles with no catalog of their own point at the page that
 // actually serves them instead of a path that does not exist.
 const CATEGORY_HREFS: Record<string, string> = {
   book_shop: '/book-shops',
@@ -43,8 +43,8 @@ const CATEGORY_HREFS: Record<string, string> = {
   attractions: '/attractions',
   guides: '/travel-guide',
   exchange: '/nearby?category=exchange',
-  emergency: '/nearby?category=hospital',
-  sim_card: '/search?q=sim',
+  emergency: '/foreign-tourist#emergency',
+  sim_card: '/foreign-tourist#sim-card',
   nearby: '/nearby',
 };
 

@@ -31,6 +31,7 @@ export const STATIC_PATHS = [
   '/travel-plans',
   '/travel-guide',
   '/blogs',
+  '/foreign-tourist',
   '/search',
   '/account',
   '/login',

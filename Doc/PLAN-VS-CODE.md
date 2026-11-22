@@ -214,8 +214,9 @@ Gaps in the Plan's coverage, found while checking it:
    `lg`, and `/account` got a constrained grid column. Verified clean at ten
    widths from 360px to 1280px.
 5. **`xs` card readability on phones** (145×67px, 9px/7px type). Not mentioned.
-6. **Shop Owner and Main Owner have no `useLanguage`.** The Plan mentions Super
-   Admin body copy as English-only but not the other two dashboards.
+6. ~~**Shop Owner and Main Owner have no `useLanguage`.**~~ **Fixed 22 Nov.**
+   Both dashboards are bilingual now; Super Admin body copy is the only one
+   still mostly English.
 7. **`Doc/` and `Plan/` overlap.** Two files now describe status. `STATUS.md`
    was added on 20 Nov; `COMPLETED-WORK.md` and `REMAINING-WORK.md` predate it
    and partly duplicate it. The Plan should state which one wins.

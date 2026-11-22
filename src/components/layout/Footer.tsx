@@ -1,31 +1,48 @@
 import { Instagram, Facebook, Youtube, Linkedin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 
 const MYANMAR_PAYMENT = ['KBZPay', 'AYA Pay', 'CB Pay', 'OK$', 'UAB Pay', 'MPU', 'mytelpay'];
 const INTL_PAYMENT = ['Visa', 'Mastercard', 'JCB', 'UnionPay', 'Amex', 'Discover', 'Apple Pay'];
 
+type FooterLink = { key: TranslationKey; href?: string };
+
 // Brand names (payment providers, "MH Travel") are never translated.
 // Everything else routes through t().
-const FOOTER_COLUMNS: { headingKey: TranslationKey; linkKeys: TranslationKey[] }[] = [
+const FOOTER_COLUMNS: { headingKey: TranslationKey; links: FooterLink[] }[] = [
   {
     headingKey: 'footer_legal',
-    linkKeys: [
-      'footer_privacy_policy',
-      'footer_terms_of_use',
-      'footer_terms_conditions',
-      'footer_dmca',
-      'footer_disclaimer',
-      'footer_cookie_policy',
-      'footer_sitemap',
+    links: [
+      { key: 'footer_privacy_policy' },
+      { key: 'footer_terms_of_use' },
+      { key: 'footer_terms_conditions' },
+      { key: 'footer_dmca' },
+      { key: 'footer_disclaimer' },
+      { key: 'footer_cookie_policy' },
+      { key: 'footer_sitemap' },
     ],
   },
   {
     headingKey: 'footer_help_support',
-    linkKeys: ['footer_faq', 'footer_contact_form', 'footer_feedback', 'footer_report_content', 'footer_support'],
+    links: [
+      { key: 'footer_faq' },
+      { key: 'footer_contact_form' },
+      { key: 'footer_feedback' },
+      { key: 'footer_report_content' },
+      { key: 'footer_support' },
+    ],
   },
   {
     headingKey: 'footer_navigate',
-    linkKeys: ['nav_cities', 'nav_nearby', 'nav_rentals', 'nav_ticketing', 'nav_travel_plans', 'nav_travel_guide'],
+    links: [
+      { key: 'nav_cities', href: '/cities' },
+      { key: 'nav_nearby', href: '/nearby' },
+      { key: 'nav_rentals', href: '/rentals' },
+      { key: 'nav_ticketing', href: '/ticketing' },
+      { key: 'nav_travel_plans', href: '/travel-plans' },
+      { key: 'nav_travel_guide', href: '/travel-guide' },
+      { key: 'nav_tourist_help', href: '/foreign-tourist' },
+    ],
   },
 ];
 
@@ -53,9 +70,9 @@ export function Footer() {
         {FOOTER_COLUMNS.map((col) => (
           <div key={col.headingKey}>
             <p className="mb-1 text-[11px] text-brand-blue">{t(col.headingKey)}</p>
-            {col.linkKeys.map((linkKey) => (
-              <p key={linkKey} className="mb-0.5 text-[9px] text-text-faint">
-                {t(linkKey)}
+            {col.links.map((link) => (
+              <p key={link.key} className="mb-0.5 text-[9px] text-text-faint">
+                {link.href ? <Link to={link.href} className="hover:text-brand-blue">{t(link.key)}</Link> : t(link.key)}
               </p>
             ))}
           </div>
