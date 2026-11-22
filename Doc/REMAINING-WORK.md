@@ -168,9 +168,10 @@ routes. Every check except contrast is now clean.
 - ~~**Super Admin translates navigation only.**~~ Fixed 22 November 2026: nav,
   overview, currency, admin management, shop owners and ads management all read
   through `t()`, including city and category option lists and ad slot names.
-- **Blog Post Management and Travel Guide Management panels are still
-  English-only.** `BlogPostsPanel.tsx` and `TravelGuidesPanel.tsx` predate the
-  localization pass and hold roughly 300 labels between them.
+- ~~**Blog Post Management and Travel Guide Management panels are still
+  English-only.**~~ Fixed: both editors now read through `useLanguage`, and the
+  publish checks and media errors return codes the editor translates. Frontend
+  localization has no known gap left; what remains is the backend listed above.
 - ~~**8 hard-coded English sentences remain in traveler-facing components.**~~
   Fixed 22 November 2026. A text-node scan of every traveler page and shared
   component now finds no untranslated English sentence. The last ones were the

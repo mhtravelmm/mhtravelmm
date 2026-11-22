@@ -65,7 +65,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **PARTIAL** | 1,224 keys; every dashboard body is localized. Blog and Travel Guide editor panels remain English-only (see §6) |
+| Bilingual MM/EN provider | **DONE** | 1,388 keys; every traveler page, dashboard shell and both content editors are localized |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -176,8 +176,8 @@ places rather than advice.
 | Super Admin Ads Management | **PREVIEW** | Page-oriented placements, local state |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |
 | Admin Management | **PARTIAL** | Local state; form offers the eight Plan §3 roles and creates a real local admin account with the chosen role |
-| Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally. Panel labels are still English-only |
-| Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows; content is still local state. Panel labels are still English-only |
+| Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally. Localized through `useLanguage` |
+| Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows; content is still local state. Localized through `useLanguage` |
 | Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
 | Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
 | Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected; Blog Post Admin and Travel Guide Content Admin reach only their own editor |
@@ -270,7 +270,8 @@ Steps 1 and 2 are now done, so the list starts where the frontend stops:
 1. Decide the two brand-palette contrast values, then re-run axe to zero.
 2. ~~Localize Shop Owner and Main Owner.~~ **Done 22 November 2026.**
 3. ~~Localize the remaining Super Admin body copy.~~ **Done 22 November 2026.**
-   Next: the Blog and Travel Guide editor panels.
+   ~~Localize the Blog and Travel Guide editor panels.~~ **Done.** Frontend
+   localization is complete; the remaining gap is the backend.
 4. Wire Favorites, Notifications, and Reviews to the tables that already exist.
 5. Connect the Custom Plan, Rental, and Ticketing submissions to request
    records with an ID and a confirmation.

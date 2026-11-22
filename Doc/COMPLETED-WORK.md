@@ -81,7 +81,25 @@ For the one-page view of what is finished versus open, read
   follows the active language.
 - Admin roles, permission groups, owner credentials, currency rate labels,
   placeholder text and validation messages are all keys under the `sa_*`
-  group. `i18n.tsx` now holds 1,224 keys.
+  group. `i18n.tsx` now holds 1,388 keys.
+
+## Content editor localization (Plan §10, §14)
+
+- `BlogPostsPanel.tsx` and `TravelGuidesPanel.tsx` were the last English-only
+  screens; both now render through `useLanguage`. Every label, table header,
+  placeholder, `aria-label`, status chip, notice and button reads from the
+  `bp_*` and `tg_*` key groups, with the shared editor chrome under `cw_*`.
+- The publish checks no longer return English sentences. `blogPublishCheck`,
+  `guidePublishCheck` and `adSlotProblem` return a `PublishProblem`
+  (`{ code, count? }`) defined in `src/lib/publishProblems.ts`, and the editor
+  resolves it through `PUBLISH_PROBLEM_KEYS`. A code is stable for tests and
+  for the server-side check that will mirror these rules.
+- `blogMediaApi.ts` failures carry a `MediaErrorCode` instead of a message, so
+  an upload error reads in the active language.
+- `describeAction` became `actionLabelKey`, returning a `TranslationKey` for
+  the audit line instead of English text.
+- `fill()` in `src/lib/fill.ts` replaces `{count}`/`{title}`-style
+  placeholders, so one key serves every count and title. It is unit-tested.
 
 ## Authentication and administrative interfaces
 
