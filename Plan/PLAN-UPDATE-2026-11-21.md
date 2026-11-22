@@ -31,7 +31,7 @@ Source of truth for status: `Doc/STATUS.md`. Summary:
 1. **Priority modules (MH Travel's own):** **Rentals** first, then **Blog posts** and **Travel Guide posts**. Each is built so that MH Travel fully controls it from both the system side and the admin side before any other module is worked on.
 2. **All other modules** (hotels, restaurants, cafes, book shops, ticketing, etc.) are filled in **one by one, gradually**, after the priority modules.
 3. The **Shop Page template system** (section 2.2) and the **Operator system** (section 2.3) are recorded as planned capabilities. Neither is scheduled as the next build step.
-4. Earlier decision: the Home Page is built to full completion first. Whether the Home Page still comes before the priority modules is to be confirmed (section 3, question 11).
+4. **Home Page:** its design work is already complete (confirmed 2026-11-21), so it no longer has to come before the priority modules. This replaces the earlier "Home Page first" order. The Home Page fills out as the priority modules come in.
 
 ### 2.2 Shop Page template system (planned capability; design and build deferred)
 
@@ -72,7 +72,7 @@ Operator system
 8. Operator onboarding and billing: does an outside operator pay a subscription, and does the Branch Owner model still apply?
 
 General
-9. Order for fixing the 48 broken links versus Home Page and template work.
+9. Order for fixing the 48 broken links relative to the priority modules (Rentals, Blog posts, Travel Guide posts).
 10. Which backend wiring comes first (Favorites, Notifications, Bookings, Auth)?
-11. Where does the Home Page sit relative to the priority order Rentals → Blog posts → Travel Guide posts?
+11. *(Answered 2026-11-21: Home Page design is complete; see section 2.1, item 4.)*
 12. Rentals scope: what is rented (vehicle types, other items), who lists and who operates them, booking/payment flow, and what the admin side must control. To be detailed next.
