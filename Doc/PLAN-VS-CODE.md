@@ -100,7 +100,7 @@ that the code does not use.
 **Plan says** (§2A audit): `package.json` has no `test` script and no
 Vitest/Jest dependency, so nothing guards the tree.
 
-**Code says**: `npm test` runs Vitest over five files (29 tests).
+**Code says**: `npm test` runs Vitest over ten files (74 tests).
 `src/routes.ts` is now the single route table; `App.tsx`, the tests, and
 `public/manus-routes.json` all read from it. A seed link to an undeclared route,
 a duplicated catalog id, or a manifest that drifts from the router fails the

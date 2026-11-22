@@ -22,6 +22,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import type { TranslationKey } from '../../lib/i18n';
 import { useLanguage } from '../../lib/i18n';
+import { mapSearchUrl } from '../../lib/placeActions';
 import { usePagedList } from '../../lib/usePagedList';
 import type { Language } from '../../types';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
@@ -227,7 +228,7 @@ function GuideDetail({
                   <h3 className="text-sm font-semibold leading-snug text-text-primary sm:text-base">{stop.title[language]}</h3>
                   <p className="mt-1 text-xs leading-relaxed text-text-secondary sm:text-sm">{stop.description[language]}</p>
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.place)}`}
+                    href={mapSearchUrl(stop.place)}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-semibold text-brand-blue hover:underline sm:text-xs"

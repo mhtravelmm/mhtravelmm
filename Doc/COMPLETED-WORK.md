@@ -1,8 +1,8 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 22 November 2026
-**Verified against:** `main` @ `8cdcf4e` plus the route, accessibility,
-layout, paging, role, and rental-category work of 20–22 November 2026.
+**Verified against:** `main` @ `b39aa0a` plus the Blog and Travel Guide admin
+editors, admin-role accounts, and rental-category work of 20–22 November 2026.
 
 This document records the frontend features, preview workflows, backend preparation, and documentation work completed so far. Production/backend boundaries remain explicitly listed in [`REMAINING-WORK.md`](./REMAINING-WORK.md).
 
@@ -44,6 +44,10 @@ For the one-page view of what is finished versus open, read
 - Custom category creation normalizes slugs and rejects duplicates.
 - Cover and gallery image uploads support JPEG/PNG/WebP input, resize/compress to WebP, and a maximum 450 KB output target.
 - Inline bilingual text/image story blocks support interleaved photos, block removal, story preview, and separate schedule date/time controls.
+- The editor now stores an ordered block list (text, photo, ad slot) rather than free-form HTML, so web and mobile render the same post and pasted markup cannot break an ad slot. Blocks move up and down, photos carry bilingual alt text plus an optional caption and credit, and the public reader labels a filled slot "Sponsored" and collapses an empty one.
+- Ad slots are limited to three per post, never open the post, and never sit side by side; deleting a neighbouring block re-normalises the list.
+- Publish checks cover both languages, the cover photo, a category, at least one paragraph, alt text on every photo, and a schedule date and time when scheduling. The editor shows what is still missing as you type.
+- Every save records a revision and an audit entry, shown as a History panel with one-click restore of an earlier revision.
 - The upload adapter supports a configured Cloudflare R2 endpoint and local preview fallback when no endpoint is configured.
 
 ## Backend preparation
@@ -226,3 +230,56 @@ with motorboat as its current type.
 Yangon's motorbike and camping-tent restriction from the Plan is not applied
 yet: the Plan lists it under "Still needing the founder's input", so the seed
 data keeps Yangon's current list until that is confirmed.
+
+## Blog editor — Plan §10 additions, 22 November 2026
+
+`src/lib/blogBlocks.ts` holds the block schema and its rules: `moveBlock` for
+reordering, `adSlotProblem` and `normalizeAdSlots` for placement, and
+`blogPublishCheck` for the six publish conditions. The composer was rebuilt on
+top of it, so the story is an ordered list rather than a text blob. A photo
+block carries bilingual alt text, a caption and a credit; an ad slot renders as
+a labelled placeholder that the Ads system fills, and it collapses when empty.
+
+`src/lib/contentWorkflow.ts` adds the parts Blog and Travel Guide share:
+revisions capped at twenty per item, an audit log, and the action names both
+editors write when they save. Both editors show a History panel with the last
+few audit entries and a Restore button for an earlier revision.
+
+## Travel Guide editor — 22 November 2026
+
+`TravelGuidesPanel` replaces the read-only Travel Guides nav entry with a real
+editor for Super Admin and Travel Guide Content Admin. A guide is an ordered
+list of stops; each stop has a time, a listing picked from MH Travel's own
+catalogue, and bilingual title and description. `src/data/listingIndex.ts`
+builds the catalogue the picker offers, so a stop cannot point at an outside
+place.
+
+`src/lib/guideItinerary.ts` holds the itinerary rules: 24-hour time parsing,
+sorting by time, moving a stop, and `guidePublishCheck`, which requires both
+languages, a cover, an author, at least one stop, an existing listing on every
+stop, ascending stop times, and a date and time when scheduling. Saving sorts
+the stops by time so the published order always matches the clock.
+
+Each published guide creates one earning row through
+`src/lib/guideEarnings.ts`. The row starts without an amount because the
+per-post rate is still undecided; an Admin types the amount and can then mark
+it paid. A totals line sums what is payable per author and how many rows still
+wait for an amount.
+
+The public reader's per-stop Directions link now goes through the shared
+`mapSearchUrl` helper, the same one the restaurant and book shop pages use.
+
+## Admin accounts and content roles — 22 November 2026
+
+Admin Management now creates a real local admin account instead of a table row:
+the form gained an initial password, `createAdminAccount` in `src/lib/auth.tsx`
+stores the account with `role: 'content_admin'` and the chosen Plan §3 role, and
+the new admin signs in at the existing admin login.
+
+`src/lib/contentAdminAccess.ts` states the rule from Plan §10 item 6: a Blog
+Post Admin reaches the Blog editor and nothing else, a Travel Guide Content
+Admin reaches the Guide editor and nothing else, and ad management stays with
+Super Admin and Ads Admin. The admin shell reads the signed-in role, shows only
+that editor in the sidebar, and opens it by default. Verified in the browser:
+creating a Blog Post Admin, signing in as them, and seeing a single "Blogs" nav
+item with no Ads entry.

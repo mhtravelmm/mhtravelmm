@@ -171,11 +171,12 @@ are referenced by the Plan as future utility pages. No seed data links to them.
 | Super Admin metrics/users/content | **PARTIAL** | Seeded metrics, English body |
 | Super Admin Ads Management | **PREVIEW** | Page-oriented placements, local state |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |
-| Admin Management | **PREVIEW** | Local state; form offers the eight Plan §3 roles with their default permission group |
-| Blog Post Management | **PARTIAL** | Editor complete, upload falls back locally |
+| Admin Management | **PARTIAL** | Local state; form offers the eight Plan §3 roles and creates a real local admin account with the chosen role |
+| Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally |
+| Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows; content is still local state |
 | Shop Owner dashboard | **PARTIAL** | English-only, no `useLanguage` |
 | Main Owner dashboard | **PARTIAL** | English-only, no `useLanguage` |
-| Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected |
+| Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected; Blog Post Admin and Travel Guide Content Admin reach only their own editor |
 
 ---
 

@@ -1,0 +1,63 @@
+/**
+ * Shared content infrastructure for Blog and Travel Guide (Plan §10 item 3).
+ * Status and scheduling already live in each editor; this adds the revision
+ * trail and the audit log both content types record on every save.
+ */
+
+export type ContentKind = 'blog' | 'guide';
+
+export type ContentAction = 'created' | 'saved' | 'published' | 'scheduled' | 'restored';
+
+export interface Revision<T> {
+  id: string;
+  contentId: string;
+  savedAt: string;
+  status: string;
+  snapshot: T;
+}
+
+export interface AuditEntry {
+  id: string;
+  contentId: string;
+  action: ContentAction;
+  at: string;
+  actor: string;
+}
+
+/** Older revisions drop off once this many are kept for one item. */
+export const MAX_REVISIONS_PER_ITEM = 20;
+
+export function actionForSave(status: string, isNew: boolean): ContentAction {
+  if (isNew) return 'created';
+  if (status === 'Published') return 'published';
+  if (status === 'Scheduled') return 'scheduled';
+  return 'saved';
+}
+
+export function recordRevision<T>(revisions: Revision<T>[], revision: Revision<T>): Revision<T>[] {
+  const forItem = [revision, ...revisions.filter((item) => item.contentId === revision.contentId)];
+  const others = revisions.filter((item) => item.contentId !== revision.contentId);
+  return [...forItem.slice(0, MAX_REVISIONS_PER_ITEM), ...others];
+}
+
+export function revisionsFor<T>(revisions: Revision<T>[], contentId: string): Revision<T>[] {
+  return revisions.filter((item) => item.contentId === contentId);
+}
+
+export function appendAudit(log: AuditEntry[], entry: AuditEntry): AuditEntry[] {
+  return [entry, ...log];
+}
+
+export function auditFor(log: AuditEntry[], contentId: string): AuditEntry[] {
+  return log.filter((entry) => entry.contentId === contentId);
+}
+
+export function describeAction(action: ContentAction): string {
+  switch (action) {
+    case 'created': return 'Created';
+    case 'published': return 'Published';
+    case 'scheduled': return 'Scheduled';
+    case 'restored': return 'Restored an earlier revision';
+    default: return 'Saved a draft';
+  }
+}

@@ -44,15 +44,16 @@ the suite instead of reaching a user as "coming soon."
 
 - Deploy an authenticated Cloudflare Worker/Pages Function with an R2 binding for the blog media endpoint.
 - Enforce `blog-posts/` object keys, WebP content validation, 450 KB size limits, authorization, CORS, rate limits, and durable URL/key responses.
-- Add Blog Post, localized block, category, revision, SEO metadata, status, schedule, and audit tables.
-- Persist cover, gallery, and inline story media transactionally with ordered blocks, alt text, captions, and R2 keys.
-- Render ordered text/image blocks in the public Blog reader and remove replaced/orphaned R2 objects safely.
-- Add scheduled publishing, timezone handling, moderation, draft autosave, optimistic concurrency, and public cache invalidation.
+- Add Blog Post, localized block, category, revision, SEO metadata, status, schedule, and audit tables. The block schema, revision cap, and audit actions already exist in `src/lib/blogBlocks.ts` and `src/lib/contentWorkflow.ts`, so the tables mirror that shape.
+- Persist cover, gallery, and inline story media transactionally with ordered blocks, alt text, captions, and R2 keys. The reader already renders ordered text, photo, and ad blocks with alt text and captions from local data.
+- Remove replaced/orphaned R2 objects safely.
+- Add scheduled publishing execution, timezone handling, moderation, draft autosave, optimistic concurrency, and public cache invalidation. Revisions and the audit log are recorded in the editor's local state today and need the tables above to survive a reload.
+- Add Travel Guide and Guide Stop tables with the listing reference, then persist the itinerary, revisions, audit entries, and earning rows that `src/lib/guideEarnings.ts` defines. The per-post earning rate is still undecided, so the amount stays an Admin-entered value.
 
 ## Dashboard and business operations
 
 - Replace seeded dashboard metrics and local preview records with scoped Supabase/API data.
-- Add permission groups, feature-level access checks, admin status transitions, audit logs, and protected routes for each admin role.
+- Add permission groups, feature-level access checks, admin status transitions, and audit logs. Route-level scoping for the two content roles is done in `src/lib/contentAdminAccess.ts` and the admin shell; the remaining gap is server-side enforcement and account status changes.
 - Connect Ads Management to campaign persistence, creative storage, scheduling, budgets, reporting, approval, and AdSlot delivery.
 - Build the Shop Owner template catalog and entitlement system: one Free template, paid templates at 2,000 MMK/month/shop, preview/apply switching, compatibility, billing, renewal, grace period, fallback, retirement, rollback, and analytics.
 - Implement the ticket operator hierarchy with parent-child operator/branch records, 10,000 MMK/month Branch Owner billing, scoped RLS, lifecycle states, ticket attribution, revenue-share snapshots, and audit events.

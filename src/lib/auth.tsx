@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { isSupabaseConfigured, supabase } from './supabase';
+import type { AdminRole } from './adminRoles';
 
-export type AuthRole = 'traveler' | 'super_admin' | 'owner_admin';
+export type AuthRole = 'traveler' | 'super_admin' | 'owner_admin' | 'content_admin';
 export type OAuthProvider = 'google' | 'facebook';
 
 export interface AuthUser {
@@ -11,6 +12,8 @@ export interface AuthUser {
   username: string;
   email: string;
   role: AuthRole;
+  /** Plan §3 product role, set for admin accounts so editors can be scoped. */
+  adminRole?: AdminRole;
   createdAt: string;
 }
 
@@ -22,6 +25,9 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isSuperAdmin: boolean;
   isShopOwner: boolean;
+  isContentAdmin: boolean;
+  adminRole: AdminRole | undefined;
+  createAdminAccount: (input: { name: string; email: string; role: AdminRole; password: string }) => Promise<AuthResult>;
   login: (identifier: string, password: string) => Promise<AuthResult>;
   loginAdmin: (identifier: string, password: string) => Promise<AuthResult>;
   createShopOwner: (input: { owner: string; shop: string; email: string; phone: string; username: string; password: string; city: string; category: string }) => Promise<AuthResult>;
@@ -40,6 +46,7 @@ const DEMO_ADMIN: StoredUser = {
   email: 'superadmin@mhtravel.com',
   password: 'MHTravel@2026',
   role: 'super_admin',
+  adminRole: 'Super Admin',
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
@@ -60,7 +67,9 @@ function publicUser(user: StoredUser): AuthUser { const safeUser = { ...user }; 
 function readSession(): AuthUser | null { if (typeof window === 'undefined') return null; try { const stored = window.localStorage.getItem(SESSION_KEY); return stored ? (JSON.parse(stored) as AuthUser) : null; } catch { return null; } }
 function emitAuthChange() { window.dispatchEvent(new Event(AUTH_EVENT)); }
 function clearLocalSession() { window.localStorage.removeItem(SESSION_KEY); window.localStorage.removeItem('mh-travel-authenticated'); }
-function mapRole(value: unknown): AuthRole { return value === 'super_admin' || value === 'owner_admin' ? value : 'traveler'; }
+function mapRole(value: unknown): AuthRole {
+  return value === 'super_admin' || value === 'owner_admin' || value === 'content_admin' ? value : 'traveler';
+}
 function setLocalSession(user: StoredUser, setUser: (user: AuthUser) => void) { const safeUser = publicUser(user); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -106,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: Boolean(user),
     isSuperAdmin: user?.role === 'super_admin',
     isShopOwner: user?.role === 'owner_admin',
+    isContentAdmin: user?.role === 'content_admin',
+    adminRole: user?.adminRole,
     async login(identifier, password) {
       const normalizedIdentifier = identifier.trim().toLowerCase();
       if (isSupabaseConfigured && supabase && normalizedIdentifier.includes('@')) {
@@ -116,19 +127,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!match) return { ok: false, message: 'auth_invalid_credentials' };
       const safeUser = publicUser(match); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); return { ok: true };
     },
+    async createAdminAccount(input) {
+      const email = input.email.trim().toLowerCase();
+      if (!email.includes('@')) return { ok: false, message: 'auth_email_invalid' };
+      if (input.password.length < 8) return { ok: false, message: 'auth_password_short' };
+      const users = readUsers();
+      if (users.some((candidate) => candidate.email === email)) return { ok: false, message: 'auth_email_exists' };
+      const created: StoredUser = {
+        id: `content-admin-${Date.now()}`,
+        name: input.name.trim() || 'MH Travel Content Admin',
+        username: email.split('@')[0],
+        email,
+        password: input.password,
+        role: 'content_admin',
+        adminRole: input.role,
+        createdAt: new Date().toISOString(),
+      };
+      users.push(created);
+      saveUsers(users);
+      return { ok: true, role: 'content_admin' };
+    },
     async loginAdmin(identifier, password) {
       const normalizedIdentifier = identifier.trim().toLowerCase();
       if (isSupabaseConfigured && supabase && normalizedIdentifier.includes('@')) {
         const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedIdentifier, password });
         if (!error && data.user) {
           const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
-          if (profile?.role === 'super_admin' || profile?.role === 'owner_admin') return { ok: true, role: profile.role };
+          if (profile?.role === 'super_admin' || profile?.role === 'owner_admin' || profile?.role === 'content_admin') return { ok: true, role: profile.role };
           await supabase.auth.signOut();
           return { ok: false, message: 'auth_admin_required' };
         }
         return { ok: false, message: 'auth_admin_invalid_credentials' };
       }
-      const match = readUsers().find((candidate) => (candidate.email === normalizedIdentifier || candidate.username === normalizedIdentifier) && candidate.password === password && (candidate.role === 'super_admin' || candidate.role === 'owner_admin'));
+      const match = readUsers().find((candidate) => (candidate.email === normalizedIdentifier || candidate.username === normalizedIdentifier) && candidate.password === password && candidate.role !== 'traveler');
       if (!match) return { ok: false, message: 'auth_admin_invalid_credentials' };
       setLocalSession(match, setUser); return { ok: true, role: match.role };
     },

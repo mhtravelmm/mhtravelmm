@@ -10,6 +10,8 @@ export interface LocalizedGuideCopy {
 export interface GuideStop {
   time: string;
   place: string;
+  /** Listing the stop points at, when the guide was built in the Admin editor. */
+  listingId?: string;
   title: LocalizedGuideCopy;
   description: LocalizedGuideCopy;
 }

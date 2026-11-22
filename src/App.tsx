@@ -66,9 +66,9 @@ function LegacyBlogRedirect() {
 }
 
 function RequireSuperAdmin() {
-  const { isAuthenticated, isSuperAdmin } = useAuth();
+  const { isAuthenticated, isSuperAdmin, isContentAdmin } = useAuth();
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
-  if (!isSuperAdmin) return <Navigate to="/account" replace />;
+  if (!isSuperAdmin && !isContentAdmin) return <Navigate to="/account" replace />;
   return <SuperAdminPage />;
 }
 

@@ -39,9 +39,10 @@ import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
 import { BlogPostsPanel } from './BlogPostsPanel';
+import { TravelGuidesPanel } from './TravelGuidesPanel';
 import { CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS } from '../../lib/adminRoles';
 
-type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'ads' | 'currency';
+type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'ads' | 'currency';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
 type AdminNotification = { id: string; title: string; message: string; createdAt: string; read: boolean };
 
@@ -72,7 +73,7 @@ const navItems: NavItem[] = [
   { id: 'content', label: 'Travel Plans', icon: Map },
   { id: 'content', label: 'Rentals', icon: Building2 },
   { id: 'bookings', label: 'Tickets', icon: Plane },
-  { id: 'content', label: 'Travel Guides', icon: BookOpen },
+  { id: 'guides', label: 'Travel Guides', icon: BookOpen },
   { id: 'content', label: 'Cities', icon: MapPin },
   { id: 'blogs', label: 'Blogs', icon: FileText },
   { id: 'ads', label: 'Ads Management', icon: Megaphone },
@@ -135,7 +136,7 @@ function formatAdminLabel(label: string, language: 'mm' | 'en') {
 export function SuperAdminPage() {
   const { language, toggleLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, adminRole } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<AdminView>('overview');
   const [period, setPeriod] = useState('Last 30 Days');
@@ -160,6 +161,13 @@ export function SuperAdminPage() {
     logout();
     navigate('/admin/login', { replace: true });
   }
+
+  // A content admin only reaches the editor for their own content type (Plan §10 item 6).
+  const isContentOnly = Boolean(adminRole) && !['Super Admin', 'Ads Admin', 'Admin', 'Rental Admin', 'Payment Admin', 'Owner Admin'].includes(adminRole ?? '');
+  const visibleNav = isContentOnly
+    ? navItems.filter((item) => (adminRole === 'Blog Post Admin' && item.id === 'blogs') || (adminRole === 'Travel Guide Content Admin' && item.id === 'guides'))
+    : navItems;
+  const activeView: AdminView = visibleNav.some((item) => item.id === view) ? view : (visibleNav[0]?.id ?? view);
 
   function selectNav(nextView: AdminView) {
     setView(nextView);
@@ -187,6 +195,7 @@ export function SuperAdminPage() {
   }
 
   const displayName = user?.name || 'Super Admin';
+  const roleBadge = adminRole ?? 'Super Administrator';
   const initials = displayName.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
 
   return (
@@ -202,12 +211,12 @@ export function SuperAdminPage() {
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-cyan-300 bg-gradient-to-br from-cyan-400 to-blue-700 text-sm font-bold text-white shadow-lg shadow-cyan-500/20">{initials}</div>
               <div className="min-w-0"><p className="truncate text-sm font-bold">{displayName}</p><p className="mt-1 truncate text-[11px] text-slate-400">{user?.email || 'admin@mhtravelmm.com'}</p></div>
             </div>
-            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-yellow-300/70 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-bold text-yellow-300"><ShieldCheck size={12} /> Super Administrator</div>
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-yellow-300/70 bg-yellow-400/10 px-2 py-0.5 text-[9px] font-bold text-yellow-300"><ShieldCheck size={12} /> {roleBadge}</div>
           </div>
           <nav className="flex-1 space-y-0.5 px-2 pb-3">
-            {navItems.map((item, index) => {
+            {visibleNav.map((item, index) => {
               const Icon = item.icon;
-              const active = item.id === view && (view === 'overview' ? index === 0 : true);
+              const active = item.id === activeView && (activeView === 'overview' ? index === 0 : true);
               return <button key={`${item.label}-${index}`} type="button" onClick={() => selectNav(item.id)} className={`group flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm transition ${active ? 'bg-gradient-to-r from-[#159eff] to-[#1478ed] font-semibold text-white shadow-lg shadow-blue-900/30' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}><Icon size={18} className={active ? 'text-white' : 'text-slate-200'} /><span>{formatAdminLabel(item.label, language)}</span>{item.label === 'Users' && <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[9px]">3</span>}</button>;
             })}
           </nav>
@@ -229,11 +238,11 @@ export function SuperAdminPage() {
             {notificationsOpen && <div className="absolute right-3 top-12 z-40 w-[min(360px,calc(100vw-24px))] rounded-lg border border-[#2b527d] bg-[#0b203b] p-2 shadow-2xl sm:right-5"><div className="flex items-center justify-between border-b border-[#244668] px-2 pb-2"><div><p className="text-xs font-bold text-white">Admin Notifications</p><p className="text-[10px] text-slate-400">Shop Owner applications and system updates</p></div><button type="button" onClick={markNotificationsRead} className="text-[10px] font-semibold text-cyan-300 hover:text-white">Mark all read</button></div><div className="max-h-72 overflow-y-auto pt-1">{notifications.length === 0 ? <p className="px-2 py-5 text-center text-xs text-slate-400">No new notifications.</p> : notifications.map((notification) => <button key={notification.id} type="button" onClick={() => setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read: true } : item))} className={`block w-full rounded-md px-2 py-2 text-left ${notification.read ? 'bg-transparent' : 'bg-cyan-400/10'}`}><div className="flex items-start gap-2"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${notification.read ? 'bg-slate-600' : 'bg-cyan-300'}`} /><span className="min-w-0"><strong className="block text-[11px] text-white">{notification.title}</strong><span className="mt-0.5 block text-[10px] leading-4 text-slate-300">{notification.message}</span><span className="mt-1 block text-[9px] text-slate-500">{notification.createdAt}</span></span></div></button>)}</div></div>}
           </header>
 
-          {mobileMenuOpen && <div className="border-b border-[#214263] bg-[#08182d] p-3 lg:hidden"><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{navItems.map((item, index) => { const Icon = item.icon; return <button key={`${item.label}-mobile-${index}`} type="button" onClick={() => selectNav(item.id)} className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs ${item.id === view ? 'bg-[#168df4] text-white' : 'bg-white/5 text-slate-300'}`}><Icon size={15} />{formatAdminLabel(item.label, language)}</button>; })}</div><button type="button" onClick={signOut} className="mt-2 flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-400"><LogOut size={15} /> Logout</button></div>}
+          {mobileMenuOpen && <div className="border-b border-[#214263] bg-[#08182d] p-3 lg:hidden"><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{visibleNav.map((item, index) => { const Icon = item.icon; return <button key={`${item.label}-mobile-${index}`} type="button" onClick={() => selectNav(item.id)} className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs ${item.id === activeView ? 'bg-[#168df4] text-white' : 'bg-white/5 text-slate-300'}`}><Icon size={15} />{formatAdminLabel(item.label, language)}</button>; })}</div><button type="button" onClick={signOut} className="mt-2 flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-400"><LogOut size={15} /> Logout</button></div>}
 
           <main className="p-1.5 sm:p-2 lg:p-3">
             {notice && <div role="status" className="fixed right-4 top-20 z-50 rounded-lg border border-cyan-300/30 bg-[#102e51] px-3 py-2 text-xs text-cyan-100 shadow-2xl">{notice}</div>}
-            {view === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : view === 'admins' ? <AdminManagementPanel runAction={runAction} /> : view === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : view === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : view === 'ads' ? <AdsManagementPanel runAction={runAction} /> : view === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : <AdminSection view={view} runAction={runAction} />}
+            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'ads' ? <AdsManagementPanel runAction={runAction} /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : <AdminSection view={activeView} runAction={runAction} />}
           </main>
           <footer className="mt-auto flex flex-col gap-1 border-t border-[#214263] bg-[#071a32] px-3 py-2 text-center text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:text-left"><div><p className="text-base font-bold text-[#27c2ff]">MH Travel</p><p className="mt-1">Explore Myanmar, Travel Better</p></div><p>© 2026, MH Travel. All Rights Reserved.</p><div className="flex justify-center gap-2 text-cyan-300 sm:justify-end"><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">f</span><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">▶</span></div></footer>
         </div>
@@ -308,6 +317,7 @@ type AdminForm = {
   phone: string;
   role: (typeof CREATABLE_ADMIN_ROLES)[number];
   permissions: string;
+  password: string;
 };
 
 const EMPTY_ADMIN_FORM: AdminForm = {
@@ -316,10 +326,12 @@ const EMPTY_ADMIN_FORM: AdminForm = {
   phone: '',
   role: CREATABLE_ADMIN_ROLES[0],
   permissions: DEFAULT_PERMISSION_GROUP[CREATABLE_ADMIN_ROLES[0]],
+  password: '',
 };
 
 function AdminManagementPanel({ runAction }: { runAction: (label: string) => void }) {
   const navigate = useNavigate();
+  const { createAdminAccount } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [admins, setAdmins] = useState([
     { name: 'MH Travel Super Admin', email: 'superadmin@mhtravel.com', role: 'Super Admin', permissions: 'All permissions', status: 'Active' },
@@ -327,6 +339,7 @@ function AdminManagementPanel({ runAction }: { runAction: (label: string) => voi
     { name: 'Aung Ko', email: 'aung.ko@mhtravel.com', role: 'Admin', permissions: 'Users, Support', status: 'Active' },
   ]);
   const [form, setForm] = useState<AdminForm>(EMPTY_ADMIN_FORM);
+  const [formError, setFormError] = useState('');
 
   function updateForm(field: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -336,18 +349,24 @@ function AdminManagementPanel({ runAction }: { runAction: (label: string) => voi
     setForm((current) => ({ ...current, role, permissions: DEFAULT_PERMISSION_GROUP[role] }));
   }
 
-  function createAdmin(event: FormEvent<HTMLFormElement>) {
+  async function createAdmin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const result = await createAdminAccount({ name: form.name, email: form.email, role: form.role, password: form.password });
+    if (!result.ok) {
+      setFormError(result.message === 'auth_email_exists' ? 'That email already has an account.' : 'Use a valid email and a password of at least 8 characters.');
+      return;
+    }
     setAdmins((current) => [{ name: form.name, email: form.email, role: form.role, permissions: form.permissions, status: 'Pending invite' }, ...current]);
     setForm(EMPTY_ADMIN_FORM);
+    setFormError('');
     setShowForm(false);
-    runAction(`${form.name} admin invitation created`);
+    runAction(`${form.name} admin account created`);
   }
 
   return <div className="mx-auto max-w-[1200px] space-y-3">
     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">Security · Super Admin only</p><h1 className="mt-1 text-lg font-extrabold sm:text-3xl">Admin Management</h1><p className="mt-1 text-sm text-slate-400">Create trusted admin accounts, assign permissions, and control access to the MH Travel platform.</p></div><button type="button" onClick={() => setShowForm((open) => !open)} className="inline-flex w-fit items-center gap-2 rounded-lg bg-[#168df4] px-3 py-2 text-[10px] font-bold hover:bg-[#2aa6ff]"><UserPlus size={16} /> Create Admin</button></div>
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><AdSummary icon={ShieldCheck} label="Total admins" value="8" detail="1 super admin" tone="cyan" /><AdSummary icon={Users} label="Active admins" value="7" detail="No security alerts" tone="green" /><AdSummary icon={UserPlus} label="Pending invites" value="2" detail="Awaiting acceptance" tone="purple" /><AdSummary icon={Settings} label="Permission groups" value="5" detail="Least privilege enabled" tone="blue" /></div>
-    {showForm && <Panel><PanelTitle icon={UserPlus} title="Create admin account" /><form onSubmit={createAdmin} className="grid gap-1.5 p-2 sm:grid-cols-2 lg:grid-cols-3"><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Admin full name</span><input required value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder="e.g. May Myat" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Work email</span><input required type="email" value={form.email} onChange={(event) => updateForm('email', event.target.value)} placeholder="admin@mhtravel.com" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Phone number</span><input value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} placeholder="+95 9 ..." className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Admin role</span><select value={form.role} onChange={(event) => selectRole(event.target.value as AdminForm['role'])} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{CREATABLE_ADMIN_ROLES.map((role) => <option key={role}>{role}</option>)}</select></label><label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Permission group</span><select value={form.permissions} onChange={(event) => updateForm('permissions', event.target.value)} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{PERMISSION_GROUPS.map((group) => <option key={group}>{group}</option>)}</select></label><div className="flex items-center gap-2 sm:col-span-2 lg:col-span-3"><button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-[10px] font-bold text-[#061426] hover:bg-cyan-300">Send invite</button><button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-[#2b527d] px-3 py-2 text-[10px] font-semibold text-slate-300 hover:bg-white/10">Cancel</button><span className="text-[10px] text-slate-500">The invited admin will start with limited permissions until accepted and reviewed.</span></div></form></Panel>}
+    {showForm && <Panel><PanelTitle icon={UserPlus} title="Create admin account" /><form onSubmit={createAdmin} className="grid gap-1.5 p-2 sm:grid-cols-2 lg:grid-cols-3"><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Admin full name</span><input required value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder="e.g. May Myat" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Work email</span><input required type="email" value={form.email} onChange={(event) => updateForm('email', event.target.value)} placeholder="admin@mhtravel.com" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Phone number</span><input value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} placeholder="+95 9 ..." className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Initial password</span><input required minLength={8} type="password" value={form.password} onChange={(event) => updateForm('password', event.target.value)} placeholder="At least 8 characters" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Admin role</span><select value={form.role} onChange={(event) => selectRole(event.target.value as AdminForm['role'])} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{CREATABLE_ADMIN_ROLES.map((role) => <option key={role}>{role}</option>)}</select></label><label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-semibold text-slate-300">Permission group</span><select value={form.permissions} onChange={(event) => updateForm('permissions', event.target.value)} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{PERMISSION_GROUPS.map((group) => <option key={group}>{group}</option>)}</select></label>{formError && <p role="alert" className="sm:col-span-2 lg:col-span-3 rounded-lg border border-red-400/40 bg-red-500/10 px-2 py-1.5 text-[10px] text-red-200">{formError}</p>}<div className="flex items-center gap-2 sm:col-span-2 lg:col-span-3"><button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-[10px] font-bold text-[#061426] hover:bg-cyan-300">Create admin</button><button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-[#2b527d] px-3 py-2 text-[10px] font-semibold text-slate-300 hover:bg-white/10">Cancel</button><span className="text-[10px] text-slate-500">The new admin signs in at the admin login with this email and password, and sees only their own content editor.</span></div></form></Panel>}
     <Panel><PanelTitle icon={ShieldCheck} title="Admin accounts" action="View audit logs" onAction={() => runAction('View admin audit logs')} /><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-[11px]"><thead className="bg-[#091a31] text-slate-300"><tr><th className="px-4 py-3">Admin</th><th className="px-2 py-3">Email</th><th className="px-2 py-3">Role</th><th className="px-2 py-3">Permissions</th><th className="px-2 py-3">Status</th><th className="px-4 py-3">Action</th></tr></thead><tbody>{admins.map((admin) => <tr key={admin.email} className="border-t border-[#1d3a5c] text-slate-200"><td className="px-2 py-1.5 font-semibold">{admin.name}</td><td className="px-2 py-3 text-slate-400">{admin.email}</td><td className="px-2 py-3">{admin.role}</td><td className="px-2 py-3 text-slate-400">{admin.permissions}</td><td className="px-2 py-3"><span className={`rounded-full px-2 py-1 text-[9px] font-bold ${admin.status === 'Active' ? 'bg-green-500/25 text-green-300' : 'bg-amber-400/20 text-amber-300'}`}>{admin.status}</span></td><td className="px-2 py-1.5"><button type="button" onClick={() => runAction(`Review ${admin.name}`)} className="rounded-md border border-[#2f6192] px-2.5 py-1.5 text-[10px] font-semibold text-cyan-300 hover:bg-white/10">Review</button></td></tr>)}</tbody></table></div></Panel>
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-400/20 bg-[#0d2f57] p-3 text-xs text-blue-100"><p><strong className="text-white">Need to manage shop staff?</strong> Shop Owner accounts are managed separately from platform admin roles.</p><button type="button" onClick={() => navigate('/super-admin')} className="font-bold text-cyan-300 hover:text-white">Back to dashboard <ChevronRight size={14} className="inline" /></button></div>
   </div>;
@@ -475,4 +494,4 @@ function AdsManagementPanel({ runAction }: { runAction: (label: string) => void 
 }
 
 function AdSummary({ icon: Icon, label, value, detail, tone }: { icon: LucideIcon; label: string; value: string; detail: string; tone: 'cyan' | 'blue' | 'purple' | 'green' }) { const tones = { cyan: 'text-cyan-300 bg-cyan-400/10', blue: 'text-blue-300 bg-blue-400/10', purple: 'text-purple-300 bg-purple-400/10', green: 'text-green-300 bg-green-400/10' }; return <div className="rounded-xl border border-[#294d76] bg-[#0b203b] p-3 shadow-xl"><span className={`inline-flex rounded-lg p-2.5 ${tones[tone]}`}><Icon size={17} /></span><p className="mt-3 text-xl font-extrabold">{value}</p><p className="mt-1 text-xs font-semibold text-slate-200">{label}</p><p className="mt-1 text-[10px] text-slate-400">{detail}</p></div>; }
-function AdminSection({ view, runAction }: { view: Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'ads' | 'currency'>; runAction: (label: string) => void }) { const meta: Record<Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'ads' | 'currency'>, { title: string; intro: string; icon: LucideIcon }> = { users: { title: 'Users', intro: 'Manage traveler accounts and admin access.', icon: Users }, bookings: { title: 'Bookings', intro: 'Review bookings, quotations, payments, and ticket orders.', icon: CalendarDays }, content: { title: 'Travel content and plans', intro: 'Manage travel plans, guides, cities, blogs, rentals, and reviews.', icon: BookOpen } }; const copy = meta[view]; const Icon = copy.icon; const rows = view === 'users' ? [['Aung Aung', 'aung.aung@example.com', 'Traveler'], ['The Rangoon House', 'owner@rangoonhouse.com', 'Owner Admin'], ['MH Travel Content', 'content@mhtravel.com', 'Blog Admin']] : view === 'bookings' ? [['MH-2026-01842', 'The Rangoon House · 18 Nov 2026', 'Confirmed'], ['MH-2026-01843', 'Custom Plan · Yangon / Bagan / Inle', 'Pending'], ['MH-2026-01844', 'Sedona Hotel Yangon · 02 Dec 2026', 'Paid']] : [['Role and permissions', 'Manage access for admin accounts.', 'Protected'], ['Security settings', 'Monitor session and login security.', 'Enabled'], ['Audit logs', 'Admin actions are recorded for review.', 'Enabled']]; return <div className="mx-auto max-w-[1100px]"><Panel><PanelTitle icon={Icon} title={copy.title} /><div className="p-5"><p className="mb-5 text-sm text-slate-400">{copy.intro}</p><div className="mb-5 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-[#2b527d] bg-[#102c51] p-3"><p className="text-xl font-extrabold">{view === 'users' ? '48,750' : view === 'bookings' ? '32,680' : '13'}</p><p className="mt-1 text-xs text-slate-400">{view === 'users' ? 'Total records' : view === 'bookings' ? 'Total bookings' : 'Active controls'}</p></div><div className="rounded-lg border border-[#2b527d] bg-[#102c51] p-3"><p className="text-xl font-extrabold text-green-300">+18.7%</p><p className="mt-1 text-xs text-slate-400">Growth this month</p></div><button type="button" onClick={() => runAction(`Create ${copy.title}`)} className="flex items-center justify-center gap-2 rounded-lg bg-[#168df4] p-3 text-xs font-bold hover:bg-[#2aa6ff]"><Plus size={18} /> Add new</button></div><div className="divide-y divide-[#1d3a5c] rounded-lg border border-[#244668] bg-[#091b32]">{rows.map(([title, detail, status]) => <div key={title} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-xs text-slate-400">{detail}</p></div><button type="button" onClick={() => runAction(`Review ${title}`)} className="flex items-center gap-1 self-start rounded-md border border-[#2f6192] px-3 py-2 text-xs font-semibold text-cyan-300 hover:bg-white/10 sm:self-auto">{status}<ChevronRight size={14} /></button></div>)}</div></div></Panel></div>; }
+function AdminSection({ view, runAction }: { view: Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'guides' | 'ads' | 'currency'>; runAction: (label: string) => void }) { const meta: Record<Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'guides' | 'ads' | 'currency'>, { title: string; intro: string; icon: LucideIcon }> = { users: { title: 'Users', intro: 'Manage traveler accounts and admin access.', icon: Users }, bookings: { title: 'Bookings', intro: 'Review bookings, quotations, payments, and ticket orders.', icon: CalendarDays }, content: { title: 'Travel content and plans', intro: 'Manage travel plans, guides, cities, blogs, rentals, and reviews.', icon: BookOpen } }; const copy = meta[view]; const Icon = copy.icon; const rows = view === 'users' ? [['Aung Aung', 'aung.aung@example.com', 'Traveler'], ['The Rangoon House', 'owner@rangoonhouse.com', 'Owner Admin'], ['MH Travel Content', 'content@mhtravel.com', 'Blog Admin']] : view === 'bookings' ? [['MH-2026-01842', 'The Rangoon House · 18 Nov 2026', 'Confirmed'], ['MH-2026-01843', 'Custom Plan · Yangon / Bagan / Inle', 'Pending'], ['MH-2026-01844', 'Sedona Hotel Yangon · 02 Dec 2026', 'Paid']] : [['Role and permissions', 'Manage access for admin accounts.', 'Protected'], ['Security settings', 'Monitor session and login security.', 'Enabled'], ['Audit logs', 'Admin actions are recorded for review.', 'Enabled']]; return <div className="mx-auto max-w-[1100px]"><Panel><PanelTitle icon={Icon} title={copy.title} /><div className="p-5"><p className="mb-5 text-sm text-slate-400">{copy.intro}</p><div className="mb-5 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-[#2b527d] bg-[#102c51] p-3"><p className="text-xl font-extrabold">{view === 'users' ? '48,750' : view === 'bookings' ? '32,680' : '13'}</p><p className="mt-1 text-xs text-slate-400">{view === 'users' ? 'Total records' : view === 'bookings' ? 'Total bookings' : 'Active controls'}</p></div><div className="rounded-lg border border-[#2b527d] bg-[#102c51] p-3"><p className="text-xl font-extrabold text-green-300">+18.7%</p><p className="mt-1 text-xs text-slate-400">Growth this month</p></div><button type="button" onClick={() => runAction(`Create ${copy.title}`)} className="flex items-center justify-center gap-2 rounded-lg bg-[#168df4] p-3 text-xs font-bold hover:bg-[#2aa6ff]"><Plus size={18} /> Add new</button></div><div className="divide-y divide-[#1d3a5c] rounded-lg border border-[#244668] bg-[#091b32]">{rows.map(([title, detail, status]) => <div key={title} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">{title}</p><p className="mt-1 text-xs text-slate-400">{detail}</p></div><button type="button" onClick={() => runAction(`Review ${title}`)} className="flex items-center gap-1 self-start rounded-md border border-[#2f6192] px-3 py-2 text-xs font-semibold text-cyan-300 hover:bg-white/10 sm:self-auto">{status}<ChevronRight size={14} /></button></div>)}</div></div></Panel></div>; }
