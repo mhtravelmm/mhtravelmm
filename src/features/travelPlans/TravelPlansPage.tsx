@@ -389,13 +389,13 @@ export function TravelPlansPage() {
 
 
 export function TravelPlanDetailPage() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const { planId } = useParams<{ planId: string }>();
   const plan = PLAN_LISTINGS.find((item) => item.id === planId);
 
   if (!plan) {
-    return <div className="mx-auto max-w-3xl px-4 py-16 text-center"><p className="text-sm text-text-muted">Travel plan not found.</p><button type="button" onClick={() => navigate('/travel-plans')} className="mt-4 inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-xs font-semibold text-white"><ArrowLeft size={14} /> Back to Travel Plans</button></div>;
+    return <div className="mx-auto max-w-3xl px-4 py-16 text-center"><p className="text-sm text-text-muted">{t('plan_not_found')}</p><button type="button" onClick={() => navigate('/travel-plans')} className="mt-4 inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-xs font-semibold text-white"><ArrowLeft size={14} /> {t('plan_back_to_plans')}</button></div>;
   }
 
   const destinations = plan.title.split(' - ');

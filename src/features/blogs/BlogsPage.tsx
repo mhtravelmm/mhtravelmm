@@ -522,7 +522,7 @@ export function BlogsPage() {
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#04172c]/95 via-[#04172c]/75 to-[#04172c]/15" />
             <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#06172c]/45 to-transparent" />
             <div className="flex max-w-3xl flex-col justify-center p-5 sm:p-7 lg:p-8">
-              <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.19em] text-sky-200 sm:text-xs"><BookOpen size={16} />MH TRAVEL JOURNAL</span>
+              <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.19em] text-sky-200 sm:text-xs"><BookOpen size={16} />{t('blog_hero_kicker')}</span>
               <h1 id="blog-hero-title" className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">{t('blog_page_hero_title')}</h1>
               <p className="mt-1 text-base font-semibold text-sky-100 sm:text-xl">{t('blog_page_hero_subtitle')}</p>
               <p className="mt-1 max-w-xl text-[11px] leading-5 text-slate-100/90 sm:text-sm">{t('blog_page_hero_intro')}</p>

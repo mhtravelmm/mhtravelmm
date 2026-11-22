@@ -179,7 +179,7 @@ const CITY_DETAIL_CONTENT: Record<string, { image: string; mmTitle: string; intr
 };
 
 export function CityDetailPage() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const { cityId } = useParams<{ cityId: string }>();
   const city = CITIES.find((item) => item.id === cityId || item.href?.endsWith(`/${cityId}`));
@@ -188,7 +188,7 @@ export function CityDetailPage() {
   const [businessQuery, setBusinessQuery] = useState('');
   const [showAllBusinesses, setShowAllBusinesses] = useState(false);
 
-  if (!city || !content) return <div className="mx-auto max-w-3xl px-4 py-16 text-center"><p className="text-sm text-text-muted">City not found.</p><button type="button" onClick={() => navigate('/cities')} className="mt-4 inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-xs font-semibold text-white"><ArrowLeft size={14} /> Back to Cities</button></div>;
+  if (!city || !content) return <div className="mx-auto max-w-3xl px-4 py-16 text-center"><p className="text-sm text-text-muted">{t('city_not_found')}</p><button type="button" onClick={() => navigate('/cities')} className="mt-4 inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-xs font-semibold text-white"><ArrowLeft size={14} /> {t('city_back_to_cities')}</button></div>;
 
   const title = language === 'mm' ? content.mmTitle : city.title;
   const intro = language === 'mm' ? content.mmIntro : content.intro;

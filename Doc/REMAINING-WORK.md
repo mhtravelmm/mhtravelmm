@@ -171,4 +171,8 @@ routes. Every check except contrast is now clean.
 - **Blog Post Management and Travel Guide Management panels are still
   English-only.** `BlogPostsPanel.tsx` and `TravelGuidesPanel.tsx` predate the
   localization pass and hold roughly 300 labels between them.
-- **8 hard-coded English sentences remain in traveler-facing components.**
+- ~~**8 hard-coded English sentences remain in traveler-facing components.**~~
+  Fixed 22 November 2026. A text-node scan of every traveler page and shared
+  component now finds no untranslated English sentence. The last ones were the
+  City and Travel Plan not-found states, the Blogs hero kicker, the Account
+  support card title and the Auth brand kicker.

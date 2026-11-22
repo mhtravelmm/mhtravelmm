@@ -1259,6 +1259,13 @@ const translations = {
   sa_content_title: { mm: "ခရီးသွား content နှင့် ခရီးစဉ်များ", en: "Travel content and plans" },
   sa_plans_sold_label: { mm: "စိတ်ကြိုက် ခရီးစဉ်", en: "Custom Plan" },
   sa_branch_booking_label: { mm: "ဆိုင် · ရက်စွဲ", en: "Shop · date" },
+  city_not_found: { mm: "ဤမြို့ကို ရှာမတွေ့ပါ။", en: "City not found." },
+  city_back_to_cities: { mm: "မြို့များသို့ ပြန်သွားရန်", en: "Back to Cities" },
+  plan_not_found: { mm: "ဤခရီးစဉ်ကို ရှာမတွေ့ပါ။", en: "Travel plan not found." },
+  plan_back_to_plans: { mm: "ခရီးစဉ်များသို့ ပြန်သွားရန်", en: "Back to Travel Plans" },
+  blog_hero_kicker: { mm: "MH TRAVEL ဂျာနယ်", en: "MH TRAVEL JOURNAL" },
+  account_support_label: { mm: "MH Travel အကူအညီ", en: "MH Travel Support" },
+  auth_brand_kicker: { mm: "MH Travel အကောင့်", en: "MH Travel account" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

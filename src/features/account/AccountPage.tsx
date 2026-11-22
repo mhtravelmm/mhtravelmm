@@ -453,7 +453,7 @@ function WalletView({ onOpenSettings }: { onOpenSettings: () => void }) {
 function Messages() {
   const { t } = useLanguage();
   return <PagePanel title={t('account_messages')} intro={t('account_messages_intro')}>
-    <div className="flex gap-3 rounded-lg border border-account-border bg-account-elevated p-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-account-accent/10 text-account-accent"><MessageCircle size={18} /></span><div><p className="text-sm font-semibold text-text-primary">MH Travel Support</p><p className="mt-1 text-xs leading-5 text-text-muted">{t('account_message_sample')}</p></div></div>
+    <div className="flex gap-3 rounded-lg border border-account-border bg-account-elevated p-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-account-accent/10 text-account-accent"><MessageCircle size={18} /></span><div><p className="text-sm font-semibold text-text-primary">{t('account_support_label')}</p><p className="mt-1 text-xs leading-5 text-text-muted">{t('account_message_sample')}</p></div></div>
   </PagePanel>;
 }
 
