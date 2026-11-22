@@ -178,7 +178,14 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   Manager → Admin; Operations Admin → Admin, or Rental Admin for rentals;
   Finance Admin → Payment Admin; Ads Manager → Ads Admin. Permission groups
   stay as the way to scope each role.
-- Admin workspace (decided 2026-11-22): the Blog Post Admin, Rental Admin and
+- Admin workspace (decided 2026-11-22): Blog Post Admin and Travel Guide
+  Content Admin already reach only their own editor
+  (`src/lib/contentAdminAccess.ts`). Still to build, in one role-guarded
+  workspace that reuses the Super Admin panels: Rentals for Rental Admin, Ads
+  for Ads Admin, earnings and payouts for Payment Admin, users and support for
+  Admin, and bookings for Owner Admin. Super Admin keeps all sections. Route
+  guards only hide menus; the server must check the role on every write
+  (sections 8, 10 and 17).
   Travel Guide Content Admin roles have no route today (role guards exist only
   for Super Admin, Shop Owner and Main Owner). Add one role-guarded `/admin`
   workspace that shows only the sections a role may use (Rental Admin:
@@ -462,50 +469,122 @@ Common rules:
   and travel costs on top of the daily rate. Exact mechanics to be
   finalized later.
 
-### Rental: priority module, precise specification (2026-11-22)
+### Rental: system specification (2026-11-22)
 
-Checked against `src/features/rentals/RentalsPage.tsx`, `src/types/index.ts` and `Doc/STATUS.md`. Rental is owned and operated by MH Travel and is handled as a manual, phone-confirmed order (`BookingFlowMode` = `full_manual`) in this phase. No stock or per-date inventory is tracked.
+Verified against `src/features/rentals/RentalsPage.tsx`, `src/types/index.ts` and `Doc/STATUS.md` (main @ `0e34141`). Rental is owned and operated by MH Travel. In this phase it is a manual, phone-confirmed order (`BookingFlowMode` = `full_manual`): the traveler submits a request, MH Travel calls, and payment is taken offline at pickup.
 
-**Types and flows.** Ten categories exist in code: bicycle, e-bike, motorbike, scooter, car (with driver), self-drive car, horse carriage, camping tent (ရွက်ဖျင်တဲ), motorboat, travel guide. The founder also named **tricycle** (သုံးဘီး), the only one not in code yet; add it as an eleventh category. Boats stay one **Boat** category with motorboat as its current type.
+#### 1. As built (PREVIEW, local state)
 
-Each category follows one of three flows:
-
-1. **Simple flow** (bicycle, e-bike, motorbike, scooter, horse carriage, camping tent, motorboat, tricycle, travel guide): choose a variant if the category has variants, then dates, customer type, pickup and phone.
-2. **Driver-vehicle flow** (car): a driver is booked with the car; the traveler chooses a vehicle type. Today: family car (4–5 seats), 35-seat minibus, 45-seat bus. Minimum 2 days (the end date cannot be earlier than start + 1).
-3. **Self-drive flow** (self-drive car): same minimum 2 days, no driver. See the confirmation below.
-
-**Variants (new).** A category can have variants managed in Rental Admin: bicycle types, vehicle types for cars (the founder mentions an express vehicle and a 35-seater), and so on. Today only car has variants, hard-coded. Variants are data, not code, so adding one needs no new page.
-
-**City availability (current code, one MH Travel branch per city):**
+- **11 categories:** bicycle, e-bike, motorbike, scooter, tricycle (သုံးဘီး), car (with driver), self-drive car, horse carriage, camping tent (ရွက်ဖျင်တဲ), motorboat, travel guide. The catalog shows one card per category (records `pre1` to `pre11`), not one per vehicle.
+- **City availability (one MH Travel branch per city):**
 
 | City | Categories offered |
 |---|---|
-| Yangon | bicycle, e-bike, motorbike, scooter, car, self-drive car, travel guide |
+| Yangon | bicycle, e-bike, motorbike, scooter, tricycle, car, self-drive car, travel guide |
 | Bagan | bicycle, e-bike, motorbike, scooter, car, self-drive car, horse carriage, camping tent, travel guide |
-| Mandalay | bicycle, e-bike, motorbike, scooter, car, self-drive car, travel guide |
+| Mandalay | bicycle, e-bike, motorbike, scooter, tricycle, car, self-drive car, travel guide |
 | Inle Lake | bicycle, e-bike, motorbike, motorboat, camping tent, travel guide |
 | Ngapali | bicycle, e-bike, motorbike, scooter, motorboat, camping tent |
 
-In current code Inle Lake and Ngapali have no car rental, and Ngapali has no travel guide hire.
+- **Sample rates in code** (USD per day, local / foreigner; sample values, not confirmed prices): bicycle 8 / 10, e-bike 12 / 15, motorbike 18 / 22, scooter 10 / 13, tricycle 14 / 18, car with driver 42 / 55, self-drive car 32 / 42, horse carriage 28 / 34, camping tent 12 / 15, motorboat 55 / 68, travel guide 35 / 45. Car types: family car (4–5 seats) 42 / 55, 35-seat minibus 180 / 225, 45-seat bus 240 / 295.
+- **Order form:** city, category, car type (car only), start and end date, participants, customer type (citizen / foreigner), delivery or branch pickup, delivery address or branch, phone, terms checkbox. Car and self-drive car need an end date at least start + 1. Total = rate × inclusive days, in USD base, shown in MMK or USD by the display currency toggle. The page asks for booking at least 1 day ahead.
+- **Submission:** sets a local `submitted` flag and shows "Order received. MH Travel will contact you on the phone number provided." Nothing is recorded: no order row, no request ID, no notification.
 
-**Defects found against the founder's rules:**
+#### 2. Conflicts with the founder's rules (open)
 
-- The founder says Yangon has no motorbike rental, but code lists motorbike (and scooter) for Yangon. Remove motorbike; whether scooter also goes is to confirm. Tents are already absent from Yangon.
-- The founder says cars are booked with a driver, but code has a separate self-drive car category.
-- Prices are one global rate per category (USD per day, local and foreigner) with sample values; they are not per city and not confirmed prices. Decided: price is keyed by city × category × variant, with the category rate as the fallback.
-- A submitted order only sets a local `submitted` flag; no order is recorded, no request ID exists, and nobody is notified.
+- Yangon lists motorbike and scooter; the founder says Yangon has no motorbike rental.
+- A self-drive car category exists; the founder says a car is booked with a driver.
+- The founder's "express" vehicle and "အာတာဖတ်" are not in the car types.
+- Bicycles have no types, although the founder says the traveler picks a bicycle type.
+- One global rate per category, not per city. Inle Lake and Ngapali have no car; Ngapali has no travel guide hire.
 
-**Pricing.** Total = rate × inclusive rental days, in USD base, shown in MMK or USD by the display currency toggle. The rate is the local or the foreigner rate by customer type. Travel guide hire adds the guide's own costs on top of the daily rate (section 8, above).
+#### 3. Data model (Supabase)
 
-**Order record (decided).** Request ID (`RNT-YYMMDD-####`), city, category, variant, start date, end date, days, participants, customer type (citizen / foreigner), fulfillment (delivery / branch), delivery address or branch, phone, terms accepted (with the terms version), daily rate used, total (USD base), display currency, status, created and updated times, handled-by admin.
+| Table | Key columns | Notes |
+|---|---|---|
+| `rental_categories` | `id` (slug), `name_mm`, `name_en`, `detail_mm`, `detail_en`, `flow` (`simple` / `driver_vehicle` / `self_drive`), `driver_required`, `min_days`, `image_key`, `active`, `sort_order` | 11 rows seeded from `RentalCategory` |
+| `rental_variants` | `id`, `category_id`, `name_mm`, `name_en`, `seats` (nullable), `rules_mm`, `rules_en`, `active`, `sort_order` | Seed the three car types; Rental Admin adds bicycle types and others |
+| `rental_cities` | `id`, `name_mm`, `name_en`, `active` | Five cities today |
+| `rental_branches` | `id`, `city_id`, `name_mm`, `name_en`, `address`, `phone`, `active` | One per city today |
+| `rental_availability` | primary key (`city_id`, `category_id`), `active` | The city × category matrix |
+| `rental_rates` | `id`, `category_id`, `variant_id` (nullable), `city_id` (nullable = default), `rate_local_usd`, `rate_foreign_usd`, `effective_from`, `effective_to` | `numeric(10,2)`; ranges for one key must not overlap |
+| `rental_terms` | `version` (primary key), `body_mm`, `body_en`, `published_at`, `published_by` | Each order stores the version accepted |
+| `rental_orders` | `id`, `request_code` (unique), `user_id`, `city_id`, `category_id`, `variant_id`, `start_date`, `end_date`, `days`, `participants`, `customer_type`, `fulfillment`, `branch_id`, `delivery_address`, `phone`, `terms_version`, `rate_usd`, `total_usd`, `display_currency`, `fx_mmk_per_usd`, `status`, `handled_by`, `admin_note`, `created_at`, `updated_at` | Rate and total are computed on the server |
+| `rental_order_events` | `id`, `order_id`, `from_status`, `to_status`, `actor_id`, `note`, `at` | Append-only timeline |
 
-**Validation (current rules, kept):** phone at least 7 characters; delivery address at least 3 characters when delivery, branch chosen when branch pickup; terms accepted; end date not before start (car categories: at least start + 1). The page asks for booking at least 1 day ahead; make the start date enforce it.
+**Access (RLS).** Catalog tables: everyone reads active rows; Rental Admin and Super Admin write. Orders: a traveler reads their own and creates one only through `submit_rental_order`; Rental Admin, Admin and Super Admin read all; Payment Admin reads totals; status changes only through `set_rental_order_status`. Roles come from `public.profiles` and are checked on the server; the client role helpers only hide menus.
 
-**Status flow (decided):** New → Contacted → Confirmed → Completed, and Cancelled from any state before Completed. Only Rental Admin and Super Admin change a status. The traveler sees the request ID after submitting.
+**Sign-in (decided).** A traveler must be signed in to submit, so the request appears in their Account and the `bookings` ownership model applies. Guests can browse prices and are asked to sign in at submit. Revisit if the founder wants guest orders.
 
-**Rental Admin controls (decided):** categories (including adding Tricycle), variants with seat count, per-type rules text and driver-required flag, the city × category availability matrix, branches, local and foreigner rates per city × category × variant, minimum days, terms text (MM/EN) with a version number, and the order list with filters and status changes. Every change is written to the admin audit log.
+#### 4. Pricing
 
-**Still to confirm:** whether scooter is also excluded from Yangon; whether the self-drive car category stays; what the founder's word "အာတာဖတ်" and the "express" vehicle are; tricycle and e-bike details; whether boats go beyond motorboat.
+1. Find the rate row, most specific first: city + category + variant, then city + category, then default (no city) + category + variant, then default + category.
+2. Pick the local or foreigner column by customer type.
+3. Total = rate × inclusive days (end − start + 1). Keep USD to 2 decimals.
+4. Snapshot `rate_usd`, `total_usd`, `display_currency` and the exchange rate (`fx_mmk_per_usd`) on the order, so later rate changes never alter an old order. MMK rounding and the exchange-rate service are defined with the currency work in `Doc/REMAINING-WORK.md`.
+
+#### 5. Order lifecycle
+
+| Status | Set by | Next |
+|---|---|---|
+| New | the traveler's submit | Contacted, Cancelled |
+| Contacted | Rental Admin, Admin, Super Admin | Confirmed, Cancelled |
+| Confirmed | same | Completed, Cancelled |
+| Completed | same | none |
+| Cancelled | admin (a reason is required) or the traveler while New or Contacted | none |
+
+Every change writes a `rental_order_events` row and an admin audit-log row. A new order notifies the Rental Admin accounts (bell). Confirmed and Cancelled notify the traveler. An order still New after a threshold in settings (default 2 hours) is highlighted in the Rental Admin list.
+
+#### 6. Server rules (the server is the authority; the client rules mirror them)
+
+- The category must be active in the chosen city (`rental_availability`); the variant must belong to the category; a branch must belong to the city.
+- Start date is at least tomorrow in Myanmar Time; end date is not before start; for `driver_vehicle` and `self_drive` flows the end date is at least start + 1.
+- Participants at least 1; phone at least 7 characters (current rule), tightened to digits with an optional leading `+`; delivery address at least 3 characters when delivering; a branch when picking up.
+- `terms_version` must be the current published version.
+- The client's total is ignored; the server recomputes it. Rate-limit submissions per account.
+- Errors return stable codes that the page translates through `t()` (MM/EN), as the content editors do.
+
+#### 7. Rental Admin dashboard
+
+| Section | What it does |
+|---|---|
+| Orders | List with filters (status, city, category, date range) and search by request code or phone. Detail with timeline, a Call button (`tel:`), status actions, and an internal note. |
+| Catalog | Categories and variants: names (MM/EN), images, flow, driver required, minimum days, active. |
+| Availability | The city × category matrix with on/off toggles. Turning a cell off hides it from the page and keeps old orders. |
+| Rates | Rate table by city × category × variant, local and foreigner, with effective dates and history. |
+| Branches | Per-city branch name, address, phone. |
+| Terms | Publish a new MM/EN terms version. |
+| Settings | New-order highlight threshold; minimum notice days (default 1). |
+
+Every write goes to the audit log. Roles: Rental Admin and Super Admin edit; Admin reads and handles orders; Payment Admin reads totals only.
+
+#### 8. Reports
+
+Orders by status, city, category and day (Myanmar Time); share of New orders reaching Confirmed; median time from New to Contacted; estimated value of Confirmed and Completed orders (USD and MMK at the order's snapshot); CSV export.
+
+#### 9. Not in this phase
+
+Online payment and deposits, ID or licence checks, per-date stock, driver assignment, delivery tracking, multi-item orders, rental reviews.
+
+#### 10. Build steps (for Cursor)
+
+1. Migrations for the catalog tables and orders, with RLS. 2. Seed them from the values in `RentalsPage.tsx`. 3. Make the page read catalog, availability and rates from Supabase instead of constants. 4. `submit_rental_order` and the confirmation with the request code. 5. "My rental requests" in Account. 6. Rental Admin Orders. 7. Rental Admin Catalog, Availability, Rates, Branches and Terms. 8. Notifications. 9. Reports.
+
+#### 11. Acceptance criteria
+
+1. Submitting creates exactly one order with a `RNT-YYMMDD-####` code and shows the code.
+2. A tampered client total is ignored.
+3. A category not offered in the chosen city is rejected.
+4. A car order with end date before start + 1 is rejected; a start date before tomorrow (Myanmar Time) is rejected.
+5. A traveler sees only their own orders; Rental Admin sees all.
+6. Each status change writes a timeline event, an audit row and the right notification.
+7. Changing a rate does not change existing orders' totals.
+8. Turning a category off in a city hides it from the page without deleting history.
+9. Every message, including server errors, shows in Myanmar and English.
+
+#### 12. Still to confirm
+
+Whether scooter is also excluded from Yangon; whether the self-drive car category stays; what "အာတာဖတ်" and the "express" vehicle are and their rules; bicycle types and e-bike and tricycle details; whether boats go beyond motorboat; whether guests may submit without signing in.
 
 ---
 
@@ -657,45 +736,76 @@ Blog:
   of a centered max-width column; keep only small responsive gutters and avoid
   horizontal overflow on phones.
 
-### Blog editor: precise specification (2026-11-22)
+### Blog: system specification (2026-11-22)
 
-Checked against `src/features/superAdmin/BlogPostsPanel.tsx`, `src/data/blogsData.ts`, `src/data/ads.ts` and `Doc/STATUS.md`. The editor lives only in Super Admin and keeps posts in component state, so nothing it saves reaches the public reader yet. The admin model and the reader model also differ:
+Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib/publishProblems.ts`, `src/lib/blogMediaApi.ts`, `src/lib/contentAdminAccess.ts` and `src/features/superAdmin/BlogPostsPanel.tsx` (main @ `0e34141`).
 
-| Field | Reader `BlogPost` | Admin `AdminPost` |
+#### 1. As built (PARTIAL: editor works on local state)
+
+- **Access:** Super Admin and Blog Post Admin (`canManageBlogs`). Posts, revisions and the audit log are component state, so nothing survives a reload and nothing reaches the public reader.
+- **Blocks, in reading order:** `text` (`textEn`, `textMm`), `image` (`imageUrl`, `altEn`, `altMm`, `caption`, `credit`), `ad` (no content). Blocks can be inserted, moved up or down (`moveBlock`) and removed.
+- **Ad rules in code:** at most 3 ad blocks per post (`MAX_AD_SLOTS_PER_POST`), not first, not next to another ad. `normalizeAdSlots` removes slots that break the rules after an edit.
+- **Statuses:** Draft, Scheduled, Published, with a schedule date and time.
+- **Publish check** (`blogPublishCheck`, stable codes): `title_languages`, `excerpt_languages`, `category`, `cover`, `story_text` (at least one text block with text in either language), `alt_missing` (every image needs alt text in both languages), `schedule`; ad codes `ad_first`, `ad_adjacent`, `ad_max`.
+- **Revisions and audit** (`contentWorkflow.ts`): a revision on every save, at most 20 per post, with a Restore button; audit actions `created`, `saved`, `published`, `scheduled`, `restored`, each with the actor and time.
+- **Media:** the source image may be up to 12 MB; the browser resizes it to at most 1600 px, converts to WebP trying quality 0.82, 0.68, 0.54, 0.4 until it is at most 450 KB. With `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT` set it posts to the endpoint; without it, it keeps a preview data URL. Failures return codes that the editor translates.
+- **Not built:** slug, read time, MM/EN author and location (both are plain strings), autosave, bilingual captions. `galleryUrls` still exists with no reader field. `seoTags` is one text field.
+
+Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code wins); a caption is one string, not MM/EN; the story check needs one non-empty text block in either language, not every paragraph in both.
+
+#### 2. Decisions for the system
+
+- Keep the limit of 3 ad blocks per post, never first, never adjacent. The top and bottom reader slots stay automatic (`blog_post_top`, `blog_post_bottom`).
+- Captions become bilingual (`captionEn`, `captionMm`) to match the reader's `LocalizedText`; `credit` stays one string (photographer or source).
+- A text block with only one language filled is allowed; the editor warns, and the reader shows the filled language.
+- `galleryUrls` is removed. Extra photos are image blocks.
+- A post's reader fields are the canonical model: slug, MM/EN title, excerpt, author and location, blocks, category, read time, counters.
+
+#### 3. Data model (Supabase)
+
+| Table | Key columns | Notes |
 |---|---|---|
-| Body blocks | paragraph (MM/EN), image (url, alt MM/EN, optional caption), ad | text (separate MM and EN fields), image (url only) |
-| Excerpt | MM/EN | required in the form, **dropped on save** |
-| Slug, read time, SEO tags | present | absent |
-| Author, location | MM/EN | one plain string each |
-| Extra photos | none | `galleryUrls`, with no reader field |
-| Status, schedule | none | Draft / Published / Scheduled |
+| `blog_posts` | `id`, `slug` (unique), `status`, `category_slug`, `cover_key`, `cover_url`, `title_mm`, `title_en`, `excerpt_mm`, `excerpt_en`, `author_mm`, `author_en`, `location_mm`, `location_en`, `blocks` (jsonb), `seo_tags` (text[]), `read_minutes`, `scheduled_for` (timestamptz), `published_at`, `views`, `version`, `created_by`, `updated_by`, `created_at`, `updated_at`, `deleted_at` | `blocks` mirrors `BlogBlock`; `version` is for optimistic concurrency |
+| `blog_categories` | `slug`, `label_mm`, `label_en`, `sort_order`, `active` | Seed the seven current categories; adding one needs both labels |
+| `blog_revisions` | `id`, `post_id`, `saved_at`, `status`, `snapshot` (jsonb), `saved_by` | Keep 20 per post (trigger) |
+| audit | `kind` (`blog` / `guide`), `content_id`, `action`, `actor_id`, `at` | Reuse `admin_audit_logs` after checking its columns; actions as in `ContentAction` |
+| `blog_media` | `key`, `post_id`, `bytes`, `content_type`, `created_by`, `created_at`, `last_referenced_at` | For orphan cleanup |
 
-**One model (decided).** The reader's `BlogPost` is the canonical model; the editor produces it, plus status fields:
+**Access (RLS).** The public reads only posts where `status = 'Published'`, `published_at <= now()` and `deleted_at is null`, through a view that exposes reader fields only (no `created_by`, no `seo_tags` for display). Super Admin and Blog Post Admin write through `save_blog_post(post, expected_version)`; no other role touches the table. Roles are checked on the server.
 
-- **Blocks:** `paragraph` (MM and EN), `image` (url, alt MM and EN required, caption MM/EN optional, credit optional), `ad` (no content; it asks the Ads service for the `blog_inline` placement and collapses when there is no ad).
-- `blog_post_top` and `blog_post_bottom` stay automatic reader slots. Only inline ads are blocks.
-- Extra photos become image blocks. `galleryUrls` is dropped, so there is one place for images.
-- `slug`: generated from the English title, lowercase and hyphenated, unique, and fixed after first publish (links use `/blogs?story=<slug>`).
-- `excerpt` (MM/EN): saved, which fixes the current drop.
-- `author` and `location`: MM/EN. Default author "MH Travel Editorial".
-- `readMinutes`: computed at publish from the word count, not typed.
-- `seoTags`: an internal field in the editor, never shown in the app.
-- `views` and `favoriteCount` are counters set by the system.
-- Categories: a managed list with MM and EN labels (today seven fixed values, and "add category" only takes an English name). The reader filter reads this list.
+#### 4. Flows
 
-**Ad block rules (decided):** at most 2 inline ad blocks per post, never adjacent, never first or last in the body. The writer places them manually; an automatic rule may come later. Writers cannot create, edit or choose ad content (section 3).
+- **Draft save.** Autosave every 30 seconds writes the draft row only: no revision and no audit row. An explicit Save adds a revision and an audit row.
+- **Concurrency.** Saves carry the `version` they loaded. A stale save fails with `version_conflict` and the editor offers Reload.
+- **Publish.** The server runs the same checks as `blogPublishCheck` and `adSlotProblem` and returns the problem codes. On success it sets `published_at`, creates the slug if empty (lowercase, hyphenated English title; a number suffix if taken; fixed after first publish), computes `read_minutes` (English words ÷ 200, rounded up, at least 1), writes a revision and an audit row, adds one notification feed row (title, cover thumbnail, link `/blogs?story=<slug>`), and purges the public cache.
+- **Schedule.** The editor takes Myanmar Time (UTC+6:30) and stores `scheduled_for` in UTC. A job runs every minute (Supabase `pg_cron` or a Cloudflare Cron Trigger), publishes due posts through the same publish function with the actor `system`, and is safe to run twice.
+- **Unpublish.** Returns a post to Draft, clears `published_at`, writes an audit row, purges the cache.
+- **Restore.** Loads a revision into the editor as unsaved changes; saving writes a revision and a `restored` audit row.
+- **Delete.** Soft delete (`deleted_at`), audited; the post leaves the reader at once.
+- **Views.** `increment_blog_views(slug)`, at most once per session per post. Favorite count comes from the favorites table.
 
-**Status and schedule (decided):** Draft, Scheduled, Published. A scheduled time is entered in Myanmar Time (UTC+6:30) and stored in UTC; the post goes live automatically at that time. The public reader receives only Published posts whose time has passed; drafts and scheduled posts never leave Admin.
+#### 5. Media endpoint (Cloudflare Worker with an R2 binding)
 
-**Validation (decided).** Draft: an English title is enough. Scheduled or Published: title and excerpt in both languages, cover photo, at least one paragraph, every paragraph in both languages, every image with alt text in both languages, a category, and a schedule date and time when scheduled.
+POST multipart with the user's Supabase token. Allow only Super Admin and Blog Post Admin (and Travel Guide Content Admin for guide images). Check the WebP magic bytes and a size of at most 450 KB. Store at `blog-posts/<yyyy>/<mm>/<uuid>.webp`. Return `{ url, key }`. Enforce a CORS allowlist and a per-account rate limit. A nightly job deletes R2 objects not referenced by any post or revision in the last 30 days (`blog_media.last_referenced_at`).
 
-**Images.** Cover and inline images use the existing resize / WebP / 450 KB pipeline to the R2 endpoint. `blogMediaApi.ts` is cover-named today and should become a general blog image upload. The R2 Worker is not deployed (`Doc/REMAINING-WORK.md`).
+#### 6. Reader contract
 
-**Editing.** Blocks can be inserted anywhere, moved up or down, and removed. The editor autosaves a draft, and each save keeps a revision. Preview uses the real reader component at phone and desktop widths.
+The public API returns the reader's `BlogPost`: a `text` block becomes `paragraph` with `{ en, mm }`; an `image` block becomes `image` with `alt` and `caption` as `{ en, mm }`; an `ad` block stays `ad` and renders the `blog_inline` placement (section 17). Where a post has two or more ad blocks, the ad service avoids showing the same creative twice in one post.
 
-**Roles (decided).** Blog Post Admin and Super Admin use this editor; ad management stays with Super Admin and Ads Admin. Each create, edit, schedule, publish and delete is written to the admin audit log.
+#### 7. Acceptance criteria
 
-**Still to define:** the reader's card shows rating and distance for every post (`CardListing`); how a new post gets those values is not decided.
+1. A saved post survives a reload and a second browser sees the same revisions.
+2. A draft or scheduled post is invisible to the public; a published one appears within a minute.
+3. The server rejects a publish that fails any check, with the same problem codes the editor shows.
+4. A scheduled post publishes at the Myanmar Time entered, once, with the audit actor `system`.
+5. Two editors saving the same post: the second gets `version_conflict`.
+6. Restoring a revision never loses the current version; it becomes a new revision.
+7. Replacing an image leaves the old object for the nightly cleanup, never deleting one still referenced.
+8. A Blog Post Admin cannot read or write guides, rentals or ads.
+
+#### 8. Still to define
+
+How a new post gets the rating and distance the reader's card shows for every post.
 
 
 Travel Guide:
@@ -725,25 +835,64 @@ Travel Guide:
   discovery row each for Top attractions, Restaurants, and Cafes, in that order,
   before the global copyright strip. Keep the full footer exclusive to Home.
 
-### Travel Guide: precise specification (2026-11-22)
+### Travel Guide: system specification (2026-11-22)
 
-Checked against `src/data/travelGuideData.ts`, `src/features/travelGuide/TravelGuidePage.tsx` and `Doc/STATUS.md`. `/travel-guide` is PREVIEW (category and search filters) and `/travel-guide/:guideId` is DONE (reader with itinerary timeline). Guides are compiled data. There is no Admin editor, and the Travel Guide Content Admin role has no route.
+Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/lib/contentWorkflow.ts`, `src/data/listingIndex` (imported by `TravelGuidesPanel.tsx`), `src/data/travelGuideData.ts` and `Doc/STATUS.md` (main @ `0e34141`).
 
-**Current model:** `TravelGuideStory` = card fields (rating, distance, views, favorite) + `category` (six values: myanmar, nature, adventure, culture, food, city_tour) + MM/EN title, summary, author and duration + `publishedAt` + `stops`. A stop is `{ time, place, title, description }`, where **`place` is a free text string** such as "Shwedagon Pagoda, Yangon". It is not linked to a listing, so the rule that a guide uses only places in MH Travel's database cannot be enforced today.
+#### 1. As built (PARTIAL: editor works on local state)
 
-**Stop model (decided):** `time` (HH:MM), `listingId` (required, chosen from MH Travel's own listings), `title` (MM/EN; defaults to the listing name and can be overridden), `description` (MM/EN), and 0–3 optional photos through the WebP/R2 pipeline. The `place` text is derived from the listing, not typed.
+- **Reader:** `/travel-guide` is PREVIEW; `/travel-guide/:guideId` is DONE with the itinerary timeline and the stop-by-stop "Follow this route" stepper.
+- **Editor access:** Super Admin and Travel Guide Content Admin (`canManageGuides`).
+- **Draft fields:** MM/EN title and excerpt, category (`myanmar`, `nature`, `adventure`, `culture`, `food`, `city_tour`), cover, author (one string), ordered stops, status, schedule date and time.
+- **Stop fields:** `time` (HH:MM), `listingId` (a listing that exists in MH Travel, from `LISTING_IDS`), MM/EN title and description, optional photo through the shared WebP pipeline. Stops can be sorted by time and moved up or down.
+- **Publish check** (`guidePublishCheck`): `title_languages`, `excerpt_languages`, `cover`, `author`, `stop_required`, `stop_listing` (a stop whose listing no longer exists), `stop_languages` (every stop needs title and description in both languages), `stop_time_format`, `stop_time_order` (a time earlier than the one before it), `schedule`.
+- **Revisions and audit:** shared with Blog (`contentWorkflow.ts`): 20 revisions per item, audit actions as for Blog.
+- **Earnings** (`guideEarnings.ts`): one row per guide (`guideId`, `author`, `publishedAt`, `amountUsd` null until set, `paid`). `setEarningAmount` ignores negative or non-finite values; `markEarningPaid` works only when an amount exists; `authorTotals` gives each author's payable USD and pending rows.
+- **Not built:** persistence, slug or `guideId`, duration, localized author, autosave, handling of a removed listing.
 
-**Editor (decided):** Super Admin and Travel Guide Content Admin, in the same shell as the Blog editor. Fields: MM/EN title and summary, one of the six categories, cover photo, author, duration (MM/EN text), the ordered stops, and Draft / Scheduled / Published exactly as for Blog (Myanmar Time, same validation style). Stops can be added, moved and removed; each stop's Directions button reuses the How-to-Get-There module.
+#### 2. Decisions for the system
 
-**Publish checks (decided):** cover, title and summary in both languages, a category, at least one stop, every stop linked to an existing listing, stop times in ascending order, every stop description in both languages.
+- `guideId` for a new guide is its slug (lowercase, hyphenated English title, unique, fixed after first publish).
+- The reader needs a duration; the editor has none. Duration is derived from the first and last stop times, in hours rounded to the nearest half hour. Guides are single-day for now.
+- The reader's MM/EN author is the one author string for both languages unless Admin sets a Myanmar name.
+- The excerpt is the reader's `summary`.
+- Stop title defaults to the listing name; the reader's `place` text is derived from the listing, never typed.
 
-**Shared infrastructure with Blog (decided):** status and scheduling, revisions, audit log, image handling and role checks are built once. Only the block schemas differ (Blog: paragraph, image, ad; Guide: stop). `guideId` for new guides is the slug (same rule as Blog).
+#### 3. Data model (Supabase)
 
-**Dependency to plan around:** listings for hotels, restaurants, pagodas and the rest are compiled data today, not in Supabase (`Doc/STATUS.md`). Until they are, the stop picker can use the compiled catalog ids and the backend move must keep those ids stable.
+| Table | Key columns | Notes |
+|---|---|---|
+| `travel_guides` | `id`, `slug` (unique), `status`, `category`, `cover_key`, `cover_url`, `title_mm`, `title_en`, `summary_mm`, `summary_en`, `author_name`, `author_id` (nullable), `duration_minutes`, `scheduled_for`, `published_at`, `views`, `version`, `needs_review`, `created_by`, `updated_by`, `created_at`, `updated_at`, `deleted_at` | Six fixed categories |
+| `guide_stops` | `id`, `guide_id`, `position`, `time_text` (HH:MM), `time_minutes`, `listing_id`, `title_mm`, `title_en`, `description_mm`, `description_en`, `image_key` | Stops are saved and replaced together with the guide, in one transaction |
+| `guide_revisions` | as `blog_revisions`, snapshot includes stops | 20 per guide |
+| audit | shared with Blog | `kind = 'guide'` |
+| `guide_earnings` | `id`, `guide_id` (unique), `author_id` / `author_name`, `published_at`, `amount_usd` (nullable, `>= 0`), `paid`, `paid_at`, `paid_by`, `created_at` | `check (paid = false or amount_usd is not null)` |
 
-**Earnings (decided):** each published guide creates an earning row for its author: guide, author account, amount set by Admin, status (pending / approved / paid). The per-post rate and when it becomes payable are not defined yet.
+**Listing dependency.** Listings are compiled data today (`src/data/listingIndex.ts`), not in Supabase. Until they move, the server validates `listing_id` against a seeded `listings_index` table with the same ids, and the later move to the real catalog must keep those ids stable.
 
-**Still to define:** whether a guide can span more than one day (the stops model has times of one day and a free-text duration).
+**Access (RLS).** The public reads published guides and their stops through a view. Super Admin and Travel Guide Content Admin write through `save_travel_guide(guide, stops, expected_version)`. Earnings: the author reads their own rows; Payment Admin and Super Admin read all and set amount and paid.
+
+#### 4. Flows
+
+- **Save, concurrency, publish, schedule, unpublish, restore, delete:** exactly as for Blog (section 10, Blog flows), with the guide checks and `slug`.
+- **Server publish check:** the same codes as `guidePublishCheck`, with `stop_listing` checked against the listings table at publish time.
+- **Listing removed or deactivated:** guides using it get `needs_review = true` and appear in an Admin list. A published guide stays up, keeps the stop's stored title, and disables that stop's Directions button until it is fixed.
+- **Earnings:** a row is created automatically the first time a guide becomes Published, once per guide (the unique `guide_id` stops duplicates on republish). Amount is entered by Admin or Payment Admin (per-post rate undecided). Marking paid needs an amount, a payer and a date. Payment itself is outside the app in this phase.
+
+#### 5. Acceptance criteria
+
+1. A saved guide and its stops survive a reload and keep their order.
+2. A publish with a stop pointing at a missing listing is rejected with `stop_listing`.
+3. Stop times must be in order; equal times are allowed.
+4. Republishing a guide does not create a second earning row.
+5. A row cannot be marked paid without an amount.
+6. A Travel Guide Content Admin sees only their own earnings, read-only.
+7. Removing a listing flags the guides that use it without hiding them.
+8. The reader's stepper follows the saved stop order, and duration matches the first and last stop times.
+
+#### 6. Still to define
+
+Whether a guide can span more than one day; the per-post rate and when it becomes payable.
 
 ---
 
@@ -943,19 +1092,133 @@ shell and bilingual throughout:
 
 Made by Claude under the founder's delegation; the founder can change any of them.
 
-1. **Card-size rule:** `md` stays the default for five column primary rows; the column-count rule is reduced to the `lg` / `xl` limits (section 4). No code change.
-2. **Load More:** page size 12, one shared helper, shown only while more items remain (section 4). Needs a code change in Blogs and Travel Guide.
-3. **Role names:** the section 3 roles win; the Admin Management form is renamed to match, and one `/admin` workspace serves the three content roles (section 3). Needs code changes.
-4. **Rentals:** one more category (Tricycle), variants as data, price by city × category × variant, a recorded order with status flow, and Rental Admin controls (section 8).
-5. **Blog:** one model shared by editor and reader, manual inline ad blocks (max 2, none adjacent, none first or last), required alt text, fixed slugs, Myanmar Time scheduling, revisions (section 10).
-6. **Travel Guide:** stops linked to listings, shared infrastructure with Blog, earning rows (section 10).
+**Built already from earlier decisions** (see `Doc/STATUS.md`): the card-size rule and Load More (page size 12, `src/lib/usePagedList.ts`); the eight Plan §3 roles in the Admin Management form; Blog ad blocks, reorder, image alt text, caption and credit, publish checks, revisions and audit; the Travel Guide editor with listing-linked stops and earning rows; the Tricycle category; route guards for Blog Post Admin and Travel Guide Content Admin.
+
+**Decided in this pass** (all four are specifications for the backend; none is built):
+
+1. **Rentals (section 8):** tables for catalog, availability, rates, terms and orders; price by city × category × variant; sign-in required to submit; order status flow; Rental Admin dashboard.
+2. **Blog (section 10):** the ad limit stays at 3 as in code; captions become bilingual; `galleryUrls` is removed; slug, read time, autosave, scheduled publishing by a job, optimistic concurrency and the R2 media endpoint are specified.
+3. **Travel Guide (section 10):** guide and stop tables, duration derived from stop times, one earning row per guide created on first publish, listing-removal handling.
+4. **Ads and the Adsboard (section 17):** placement catalog, tables, serving rules, campaign lifecycle with Super Admin approval, dashboard sections, creative limits.
 
 ### Still needing the founder's input
 
-1. Rentals (section 8): is scooter also excluded from Yangon; does the self-drive car category stay when the founder says cars are booked with a driver; what is "အာတာဖတ်" and the "express" vehicle; tricycle and e-bike details; do boats go beyond motorboat.
-2. Blog (section 10): how a new post gets the rating and distance that every card shows.
-3. Travel Guide (section 10): can a guide span more than one day; the per-post rate and when it becomes payable.
-4. Operator system questions (section 9), and template questions when template work starts (section 4).
+1. **Rentals (section 8):** is scooter also excluded from Yangon; does the self-drive car category stay when cars are booked with a driver; what are "အာတာဖတ်" and the "express" vehicle; bicycle types; e-bike and tricycle details; do boats go beyond motorboat; may guests submit without signing in.
+2. **Blog (section 10):** how a new post gets the rating and distance that every card shows.
+3. **Travel Guide (section 10):** can a guide span more than one day; the per-post rate and when it becomes payable.
+4. **Ads (section 17):** how advertisers are charged and invoiced; the AdSense / AdMob accounts; whether the mobile app uses the same ad service; who besides Super Admin approves campaigns.
+5. **Operator system (section 9)** questions, and template questions when template work starts (section 4).
+
+## 17. Ads system and Adsboard (2026-11-22)
+
+The Adsboard is the Ads Management dashboard. It controls every ad shown in the web app and, later, the mobile app. Written against `src/components/ui/AdSlot.tsx`, `src/data/ads.ts`, the Ads Management panel in `SuperAdminPage.tsx` and `Doc/STATUS.md` (PREVIEW, local state).
+
+### 17.1 Rules (already decided)
+
+- Order of delivery: **Admin Ads → Google AdSense / AdMob → collapse**. When nothing is available the slot renders nothing and the layout reflows; no empty box, ever.
+- Only Super Admin and Ads Admin manage ads (`canManageAds`). Blog, Guide and other roles never do.
+- Every ad shows a **Sponsored** label and opens with `rel="noopener noreferrer sponsored"`.
+- Each placement has an on/off toggle, and the page can show no ad at all.
+
+### 17.2 As built
+
+- `AdSlot({ placement, fetchAd })` calls `fetchAd(placement)` and renders an `AdCreative` (`id`, `type` image or video, `mediaUrl`, `clickThroughUrl`, `advertiser`). Video plays muted and looped. It collapses on `null`.
+- Placement keys in code: `home_hero`, `home_after_travel_plans`, `home_after_hotels`, `home_after_blogs`, `home_after_reviews`, `home_after_partners`, `blog_post_top`, `blog_post_bottom`, `blog_inline`. Any `blog_*` key falls back to `blog_inline`. The Rentals top banner is a fixed compact banner, not a placement yet.
+- `fetchMockAd` serves local SVG banners (800 × 220). The Supabase `ads` table exists with RLS and is not used by the page. Its columns must be checked before the schema below is applied.
+- The console has nine pages (Home, Cities, City Detail, Travel Plans, Travel Plan Detail, Blogs, Blog Detail, Nearby, User Dashboard), each with ads `{ page, slot, name, advertiser, active }`, add, edit, preview and publish or pause. All local state.
+
+### 17.3 Placements
+
+One key per position, named `<page>_<position>`. Existing keys keep their names. Each placement has a page, a label (MM/EN), a format, an `active` toggle, and whether AdSense / AdMob fallback is allowed.
+
+| Page | Placement keys | Format |
+|---|---|---|
+| Home | `home_hero`, `home_after_travel_plans`, `home_after_hotels`, `home_after_blogs`, `home_after_reviews`, `home_after_partners` | wide banner |
+| Blog list and detail | `blog_post_top`, `blog_inline` (each `ad` block), `blog_post_bottom` | wide banner |
+| Rentals | `rentals_top` (replaces the fixed banner) | compact banner |
+| Other pages in the console | `cities_top`, `city_detail_after_restaurants`, `travel_plans_top`, `travel_plan_detail_inline`, `nearby_top`, `account_top` | wide banner |
+
+Keys for pages other than Home, Blog and Rentals are proposed and are created when a page first gets an `AdSlot`.
+
+### 17.4 Data model (Supabase)
+
+| Table | Key columns | Notes |
+|---|---|---|
+| `ad_advertisers` | `id`, `name`, `contact_name`, `contact_phone`, `contact_email`, `notes` | Not public |
+| `ad_campaigns` | `id`, `advertiser_id`, `name`, `status`, `start_at`, `end_at`, `priority`, `weight`, `created_by`, `approved_by`, `approved_at` | Status in 17.6 |
+| `ad_creatives` | `id`, `campaign_id`, `type`, `media_key`, `click_url`, `alt_mm`, `alt_en`, `approval` (`draft` / `pending` / `approved` / `rejected`), `rejected_reason`, `bytes` | Media in R2 |
+| `ad_placements` | `key`, `page`, `label_mm`, `label_en`, `format`, `active`, `fallback_allowed`, `sort_order` | The 17.3 catalog |
+| `ad_assignments` | `campaign_id`, `placement_key`, `starts_at`, `ends_at` | Which campaign runs where |
+| `ad_events` | `placement_key`, `creative_id`, `kind` (`impression` / `click`), `at`, `session_hash`, `user_id` (nullable) | Raw events, kept 90 days |
+| `ad_stats_daily` | `day`, `placement_key`, `campaign_id`, `impressions`, `clicks` | Rolled up nightly, Myanmar Time days |
+
+If the existing `ads` table can hold these, extend it; otherwise migrate its rows into this shape and retire it.
+
+### 17.5 Serving (what the page calls)
+
+`serve_ad(placement_key, language)` returns one creative or nothing:
+
+1. If the placement is inactive, return nothing.
+2. Candidates: campaigns that are Live, inside `start_at` and `end_at`, assigned to the placement, with an Approved creative of an allowed type.
+3. Take the highest `priority`. Among equals rotate by `weight`.
+4. If there is none and `fallback_allowed`, the page asks AdSense / AdMob; if that is empty or off, the slot collapses.
+
+The response may be cached at the edge for 60 seconds. Click-through goes through `/ad/click/<creative_id>`, which records the click and redirects. An impression is counted when at least half the ad has been visible for 1 second (IntersectionObserver), once per creative per session per page view. Basic bot user agents are ignored.
+
+### 17.6 Campaign and creative lifecycle
+
+| Campaign status | Meaning | Moves to |
+|---|---|---|
+| Draft | Being built | Pending |
+| Pending | Waiting for approval | Approved, Rejected |
+| Approved | Approved, before its start | Live |
+| Live | Serving | Paused, Ended |
+| Paused | Stopped by an admin | Live |
+| Ended | Past `end_at`, set automatically (the console's auto-pause expired ads) | none |
+| Rejected | Not approved; reason recorded | Draft |
+
+Ads Admin builds and submits; **Super Admin approves** (the console's creative approval). Every change writes an audit row. Pausing is immediate.
+
+### 17.7 Adsboard sections
+
+| Section | Contents |
+|---|---|
+| Overview | Active campaigns, live placements, impressions, clicks, CTR for a chosen range; campaigns ending in 7 days; items waiting for approval. |
+| Pages and placements | Pick a page, see its placements with an on/off toggle, the current ad, and a health state: *Filled by Admin ad*, *Fallback*, or *Empty (collapsed)*, with the fill rate for 24 hours. Preview shows the real page with the ad in place. |
+| Campaigns | List with filters (status, advertiser, placement, date). Create or edit in one form: advertiser, dates, placements, priority and weight, creatives. |
+| Creatives and approvals | Queue of Pending creatives with preview, approve or reject with a reason. |
+| Advertisers | Contact details and campaign history. |
+| Reports | Impressions, clicks, CTR and fill rate by placement, campaign and day; CSV export. |
+| Settings | AdSense / AdMob ids and per-placement fallback, creative limits, collapse behavior. |
+
+### 17.8 Creative requirements
+
+- **Image:** JPEG, PNG or WebP, converted to WebP, at most 300 KB, banner shaped like the current 800 × 220 mocks.
+- **Video:** MP4, muted, looped, at most 3 MB and 15 seconds.
+- **Alt text** in Myanmar and English is required; it replaces today's generic "Ad by …".
+- **Click URL:** `https` or an internal path only; a block-list of domains is kept in Settings.
+
+### 17.9 Access and audit
+
+Direct reads of the ad tables are denied to the public; they use `serve_ad` and the click endpoint only. Super Admin and Ads Admin read and write; Payment Admin reads reports. The role is checked on the server. Every campaign, creative, placement and settings change writes an admin audit row.
+
+### 17.10 Build steps (for Cursor)
+
+1. Check the live `ads` table, then migrate the tables above with RLS. 2. Seed `ad_placements` from 17.3. 3. `serve_ad`, the click endpoint and the event beacon. 4. Replace `fetchMockAd` with `serve_ad` in `AdSlot`, keeping the collapse. 5. Rentals top becomes `rentals_top`. 6. Adsboard Pages and placements, then Campaigns and Creatives. 7. Approval flow. 8. Reports and the nightly roll-up. 9. AdSense / AdMob fallback.
+
+### 17.11 Acceptance criteria
+
+1. A Live, approved campaign shows in its placement; pausing it removes the ad on the next request.
+2. A placement turned off, or with nothing to show, renders no box.
+3. A campaign never serves before `start_at` or after `end_at`, and an unapproved creative never serves.
+4. One view of an ad counts one impression; a click counts once and redirects.
+5. A Blog Post Admin or any other non-ads role cannot read or change ads.
+6. Every ad carries a Sponsored label and alt text in both languages.
+7. The Adsboard totals equal the sum of the daily roll-up.
+
+### 17.12 Still to define
+
+How advertisers are charged (flat fee, CPM or CPC) and invoiced; the AdSense / AdMob accounts and ids; whether the mobile app uses the same `serve_ad`; who besides Super Admin may approve.
 
 ## Rentals UI reference provided by the user (2026-11-08)
 
