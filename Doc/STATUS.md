@@ -64,7 +64,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **PARTIAL** | 956 keys; Super Admin body copy still lags (see §6) |
+| Bilingual MM/EN provider | **PARTIAL** | 1,215 keys; every dashboard body is localized. Blog and Travel Guide editor panels remain English-only (see §6) |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -171,7 +171,7 @@ places rather than advice.
 
 | Area | Status | Notes |
 |---|---|---|
-| Super Admin metrics/users/content | **PARTIAL** | Seeded metrics, English body |
+| Super Admin metrics/users/content | **PARTIAL** | Seeded metrics; body localized through `useLanguage` |
 | Super Admin Ads Management | **PREVIEW** | Page-oriented placements, local state |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |
 | Admin Management | **PARTIAL** | Local state; form offers the eight Plan §3 roles and creates a real local admin account with the chosen role |
@@ -268,7 +268,8 @@ Steps 1 and 2 are now done, so the list starts where the frontend stops:
 
 1. Decide the two brand-palette contrast values, then re-run axe to zero.
 2. ~~Localize Shop Owner and Main Owner.~~ **Done 22 November 2026.**
-3. Localize the remaining Super Admin body copy.
+3. ~~Localize the remaining Super Admin body copy.~~ **Done 22 November 2026.**
+   Next: the Blog and Travel Guide editor panels.
 4. Wire Favorites, Notifications, and Reviews to the tables that already exist.
 5. Connect the Custom Plan, Rental, and Ticketing submissions to request
    records with an ID and a confirmation.

@@ -70,9 +70,10 @@ the suite instead of reaching a user as "coming soon."
   the place detail page to real handoff flows once business contact records
   exist in Supabase. They currently build a Google Maps search URL and a
   `tel:` link from seed data.
-- Complete remaining bilingual localization: Super Admin body copy is the last
-  dashboard that still renders mostly English. Shop Owner and Main Owner were
-  localized on 22 November 2026.
+- Complete remaining bilingual localization: every dashboard shell and body is
+  localized as of 22 November 2026 (Shop Owner, Main Owner, Super Admin). What
+  is left is the two content editors inside Super Admin: `BlogPostsPanel.tsx`
+  and `TravelGuidesPanel.tsx` still render English labels.
 - Add component-level behavioral tests. Route, link, manifest, filter, and
   domain-rule tests exist and run under `npm test` (85 tests in 12 files);
   nothing yet renders a page and asserts on it, so interaction regressions
@@ -160,9 +161,14 @@ routes. Every check except contrast is now clean.
 
 ### Localization
 
-- **Shop Owner dashboard has no `useLanguage` integration at all.** English
-  only, by construction.
-- **Main Owner dashboard has no `useLanguage` integration.** Same.
-- **Super Admin translates navigation only.** The dashboard body is hard-coded
-  English.
+- ~~**Shop Owner dashboard has no `useLanguage` integration at all.**~~ Fixed
+  22 November 2026.
+- ~~**Main Owner dashboard has no `useLanguage` integration.**~~ Fixed
+  22 November 2026.
+- ~~**Super Admin translates navigation only.**~~ Fixed 22 November 2026: nav,
+  overview, currency, admin management, shop owners and ads management all read
+  through `t()`, including city and category option lists and ad slot names.
+- **Blog Post Management and Travel Guide Management panels are still
+  English-only.** `BlogPostsPanel.tsx` and `TravelGuidesPanel.tsx` predate the
+  localization pass and hold roughly 300 labels between them.
 - **8 hard-coded English sentences remain in traveler-facing components.**

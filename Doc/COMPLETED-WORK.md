@@ -67,6 +67,22 @@ For the one-page view of what is finished versus open, read
   in the active language. `validateBranchAccount` keeps the same rules.
 - Copy for the two dashboards lives under the `owner_*` key group.
 
+## Super Admin dashboard localization (Plan §14)
+
+- The Super Admin shell, Overview, Quick Actions, Currency, Admin Management,
+  Shop Owner Management and Ads Management all render through `useLanguage`.
+  Nav items now carry a `labelKey` instead of an English `label`, so the
+  sidebar, page titles and breadcrumbs cannot drift out of translation.
+- Data values that the UI filters on stay in their original English form and
+  are translated only at render time: `cityLabels` and `categoryLabels` map
+  `Yangon`/`Restaurant`/`Book Shop` and friends to `sa_city_*` and `sa_cat_*`
+  keys, and `slotLabels` does the same for ad placements. This keeps the
+  filters, seed records and saved drafts consistent while the visible label
+  follows the active language.
+- Admin roles, permission groups, owner credentials, currency rate labels,
+  placeholder text and validation messages are all keys under the `sa_*`
+  group. `i18n.tsx` now holds 1,215 keys.
+
 ## Authentication and administrative interfaces
 
 - Traveler Login and Signup are separate routes with username/display name/email/password fields and bilingual UI.
