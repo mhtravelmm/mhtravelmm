@@ -43,12 +43,21 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
 `~/.gitconfig` pins `credential.helper = !/usr/bin/gh auth git-credential`, and the
 `gh` token has no `Contents: write` scope, so a plain `git push` fails with 403
 "Permission to mhtravelmm/mhtravelmm.git denied to mhtravelmm". Push with a
-one-off `GIT_ASKPASS` script and both credential helpers cleared, then delete the
-script. Never write the token into the remote URL or `~/.gitconfig`:
+one-off `GIT_ASKPASS` script that answers with `$GH_PUSH_TOKEN` (the push-capable
+token in the environment; `$GITHUB_TOKEN` still 403s) and both credential helpers
+cleared, then delete the script. Never write the token into the remote URL or
+`~/.gitconfig`:
 
 ```
-git -c credential.helper= -c 'credential.https://github.com.helper=' \
+cat > /tmp/askpass.sh <<'EOF'
+#!/bin/sh
+case "$1" in Username*) printf '%s\n' x-access-token ;; *) printf '%s\n' "$GH_PUSH_TOKEN" ;; esac
+EOF
+chmod 700 /tmp/askpass.sh
+GIT_ASKPASS=/tmp/askpass.sh GIT_TERMINAL_PROMPT=0 \
+  git -c credential.helper= -c 'credential.https://github.com.helper=' \
   push origin main
+rm -f /tmp/askpass.sh
 ```
 
 ## Verification habit
