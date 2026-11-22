@@ -29,16 +29,18 @@ Source of truth for status: `Doc/STATUS.md`. Summary:
 ### 2.1 Build order
 
 1. Home Page is built to full completion first; other pages stay paused until it is done.
-2. Next: the **Shop Page template system** (section 2.2).
-3. After that: the **Operator system** for ticket sellers (section 2.3).
+2. What comes after the Home Page is **not yet scheduled**; it is decided in the detailed planning session (section 3).
+3. The **Shop Page template system** (section 2.2) and the **Operator system** (section 2.3) are recorded as planned capabilities. Neither is scheduled as the next build step.
 
-### 2.2 Shop Page template system
+### 2.2 Shop Page template system (planned capability; design and build deferred)
+
+- **Decision (2026-11-21, later in the day):** template design and implementation happen at a later stage. For now the plan only records that this system will exist.
 
 - The web app is meant to be reusable later as a system other businesses use.
 - Shop owners get many page-design choices. For a hotel page: about **10 designs**.
 - MH Travel provides **one standard default design**. Switching to a preferred design **costs money** (the current plan fixes 2,000 MMK/month per shop in `PROJECT-PLAN.md` §4, "Shop Owner Web UI/UX template marketplace"; confirm in discussion whether that figure still applies to every category).
 - Templates must have **genuinely different UI/UX**, not recolors of one layout.
-- Templates are presentation layers only; shop data (profile, menu/products, photos, prices, reviews, bookings) stays reusable when switching.
+- Working assumption, to confirm when templates are designed: templates are presentation layers only, so shop data (profile, menu/products, photos, prices, reviews, bookings) stays reusable when switching.
 
 ### 2.3 Operator system (white-label use by other businesses)
 
@@ -56,7 +58,7 @@ Relationship to existing plan sections (to reconcile in discussion):
 
 ## 3. Open questions for the detailed planning session
 
-Template system
+Template system (deferred until template design starts)
 1. Which business categories get templates first (hotel only, or restaurant / book shop too)? How many designs per category?
 2. Is the paid-switch price one flat figure for all categories, or per category? Does it stay at 2,000 MMK/month?
 3. How do templates cope with differing data (a hotel has rooms and check-in times, a restaurant has menus)? Shared content model vs per-category.
