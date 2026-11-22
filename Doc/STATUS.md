@@ -64,7 +64,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **PARTIAL** | 954 keys; Super Admin body copy still lags (see §6) |
+| Bilingual MM/EN provider | **PARTIAL** | 956 keys; Super Admin body copy still lags (see §6) |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -81,7 +81,7 @@ app declares.
 
 ## 4. Traveler-facing pages
 
-All 42 declared routes resolve, verified by a headless crawl of every path and
+All 43 declared routes resolve, verified by a headless crawl of every path and
 by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 
 | Route | Status | Notes |
