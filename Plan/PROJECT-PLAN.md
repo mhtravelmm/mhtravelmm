@@ -5,6 +5,8 @@
 - `Plan/PROJECT-PLAN.md` is now the single source of truth for product requirements, implementation history, backend handoff, and remaining plan context.
 - `Doc/COMPLETED-WORK.md` records completed work in a concise delivery-oriented format.
 - `Doc/REMAINING-WORK.md` records open production, backend, UX, and configuration work.
+- `Doc/STATUS.md` is the one-page DONE / PARTIAL / PREVIEW / NOT DONE view and the place to start; `Doc/PLAN-VS-CODE.md` checks this Plan against the code.
+- Division of roles: this Plan holds product requirements and decisions; `Doc/` holds what is done and open. Working order: read `Doc/` (STATUS first), then this Plan, then write the Plan additions and improvements; code is written from the Plan; afterwards `Doc/` records the completed parts and how they were implemented.
 - Supporting non-plan documentation such as blog image licensing remains outside this consolidated plan.
 
 
@@ -25,8 +27,17 @@
 - Development approach: finish the user-facing side completely before
   designing Owner/Admin dashboards, since user-facing requirements define
   what the dashboards need to manage.
-- Home Page is being built to full completion first; other pages are
-  paused until it's done, then follow the same standard.
+- Home Page design is complete (confirmed 2026-11-21); it no longer blocks
+  other modules and fills out as they arrive.
+- Build priority (2026-11-21): MH Travel's own modules first: **Rentals**,
+  then **Blog posts** and **Travel Guide posts**. MH Travel must be able to
+  fully control each of them from both the system side and the Admin side
+  before other modules are worked on. All other modules (hotels, restaurants,
+  cafes, book shops, ticketing and so on) are filled in one by one,
+  gradually, afterwards.
+- The Shop Page template system (section 4) and the Operator system for
+  outside businesses (section 9) are planned capabilities and are not
+  scheduled as the next build step.
 
 ---
 
@@ -41,9 +52,10 @@
 - Cloudflare Workers/static hosting are part of the target deployment architecture.
   The checked-out repository currently contains the static Wrangler asset
   configuration, but no Worker JSON API or R2 data-access implementation.
-- Claude writes the application code directly. For Cloudflare Workers and
-  Supabase, Claude writes the code/SQL and the owner applies or deploys it,
-  with Claude guiding each step.
+- Application code is written in Cursor, step by step. Claude's job is the
+  Plan: read `Doc/` first, then this Plan, then write the additions and
+  improvements the Plan needs. Claude does not write application code.
+  (This replaces the earlier line saying Claude writes the code directly.)
 - Secrets (Supabase keys, tokens) live in a local, gitignored `.env` and in
   Cloudflare's build environment variables. They are never committed.
 
@@ -114,15 +126,15 @@ The following findings were checked against the source files, not inferred from 
 #### Runtime and route verification
 
 - `src/App.tsx` is the authoritative route table. It currently declares the Home, Cities, Nearby, Rentals, Restaurants (including `:id`), Book Shops (including `:id`), Ticketing, Travel Plans (including `:planId` details), Travel Guide (including `:guideId`), Blogs, Search, Account, Login, Signup, Admin Login, Super Admin, Shop Owner, Notifications, Account Notifications, and Favorites routes, plus a wildcard Not Found page.
-- `public/manus-routes.json` matches the concrete routes. It intentionally does not describe the wildcard route.
+- `public/manus-routes.json` lists the concrete routes except the legacy redirect `/blogs/:storyId` (25 of 26 on 2026-11-20, `Doc/PLAN-VS-CODE.md` §3.3). It intentionally does not describe the wildcard route. Either add `/blogs/:storyId` to it or record that redirect paths are intentionally omitted.
 - City cards now resolve through `/cities/:cityId`; the remaining undeclared catalog paths include `/attractions/:id`, `/hotels`, `/hotels/:id`, `/cafes/:id`, `/markets/:id`, `/rentals/:id`, `/ticketing/:id`, and legacy `/travel-plans/:id` links. Static links to those remaining paths fall through to the Not Found page.
-- `src/features/blogs/BlogsPage.tsx` uses the implemented query-string reader format `/blogs?story=<slug>`, but legacy `CardListing` data still contains `/blogs/<id>` hrefs. Those legacy paths do not match the router.
+- `src/features/blogs/BlogsPage.tsx` uses the implemented query-string reader format `/blogs?story=<slug>`. Legacy `/blogs/<id>` hrefs still in `CardListing` data work: `src/App.tsx` registers `/blogs/:storyId` and `LegacyBlogRedirect` forwards it to `/blogs?story=<id>`.
 - Restaurant and Book Shop dynamic URLs currently render the same static page regardless of the `:id`; they do not select records by route parameter. The same limitation applies to the static detail content shown by those pages.
 
 #### Persistence and backend boundary
 
 - The app contains no `supabase/` migration directory or SQL source. The profile migration and RLS status are recorded in the backend/auth section of `Plan/PROJECT-PLAN.md` as work applied directly to the connected Supabase project; they are not independently reproducible from this checkout.
-- The only application Supabase calls found in source are optional Auth/session calls and `public.profiles` lookup in `src/lib/auth.tsx`. Catalogs, bookings, custom-plan requests, notifications, reviews, views, Favorites, Ticketing inventory, payments, and admin metrics do not call Supabase or another application API.
+- Application Supabase/API calls in source are limited to `src/lib/auth.tsx` (optional Auth/session and `public.profiles` lookup), `src/lib/mainOwnerApi.ts` (branch-account work) and `src/lib/blogMediaApi.ts` (fetch to the R2 upload endpoint). Catalogs, bookings, custom-plan requests, notifications, reviews, views, Favorites, Ticketing inventory, payments, and admin metrics do not call Supabase or another application API.
 - Home, City, Nearby, Travel Plan, Blog, Restaurant, Book Shop, Rental, Travel Guide, and Ticketing records are compiled TypeScript data or page-local arrays. Search deliberately searches only the imported Travel Plans, Travel Guides, Blogs, and Popular arrays.
 - Favorites are shared and synchronized, but only through the browser `localStorage` key `mh-travel-favorite-overrides` and same-tab/storage events in `src/lib/favorites.tsx`. They are not user-scoped and remain after logout or when another local user uses the same browser.
 - Custom Plan submission, Rental submission, and Ticketing order confirmation change local React state only. They do not create request IDs, persist payloads, notify MH Travel, reserve inventory, lock seats, take payment, or send contact requests.
@@ -140,7 +152,7 @@ The following findings were checked against the source files, not inferred from 
 
 #### Verified source-level issues to keep in the backlog
 
-- Home, Blog, Nearby, ad, and static catalog links still point to several routes that are not declared, especially `/hotels`, `/markets`, `/cafes`, `/attractions`, `/travel-plans/:id`, and `/blogs/:id`; City card links now resolve to the implemented `/cities/:cityId` detail route.
+- Home, Blog, Nearby, ad, and static catalog links still point to several routes that are not declared, especially `/hotels`, `/markets`, `/cafes`, `/attractions`, and `/travel-plans/:id` (legacy `/blogs/:id` now redirects to the Blog reader); the full count is 48 broken links, listed in `Doc/STATUS.md` §5. City card links now resolve to the implemented `/cities/:cityId` detail route.
 - The Restaurant menu category selector changes state but the displayed dish list is not filtered by category. The Book Shop category selector similarly changes state without filtering the displayed books.
 - Restaurant and Book Shop directions, call, map, view-all, and related CTA controls are mostly visual buttons without navigation or external-action handlers.
 - Account, Notifications, and Super Admin screens render useful UI sections, but their visible bookings, messages, reviews, activity, metrics, and notification data are sample/frontend state until backend data sources are connected.
@@ -301,6 +313,12 @@ selects one of them; a page never overrides the internal dimensions itself.
   can change only their own Shop Page. The UI/UX work is planned separately
   from the existing Shop Owner dashboard and does not change the standard
   `/shop-owner` management workspace.
+- Status (2026-11-21): design and build of the templates are deferred to a
+  later stage; this section records that the system will exist. Founder's
+  expectation: a hotel page gets about 10 designs plus one MH Travel default,
+  with genuinely different UI/UX rather than recolors. Which categories get
+  templates first, and whether 2,000 MMK/month applies to every category,
+  are decided when template work starts.
 
 ---
 
@@ -410,6 +428,51 @@ Common rules:
   and travel costs on top of the daily rate. Exact mechanics to be
   finalized later.
 
+### Rental: priority module, types and rules (2026-11-21)
+
+Rental is the first priority module (section 1). It is owned and operated by
+MH Travel, so both the system side and the Rental Admin side must be fully
+controllable.
+
+Founder's notes on types and rules:
+
+- Types named: cars, motorbikes, bicycles, e-bikes, camping tents
+  (ရွက်ဖျင်တဲ), boats, horse carriages, tricycles (သုံးဘီး). Compared with the
+  category list above, **e-bike** and **tricycle** are new to the list
+  (e-bike and scooter already appear in the Rentals UI reference). Boats appear
+  above as "motorboat". Travel guide (hire-a-person) is on the list above but
+  was not in the 2026-11-21 notes; it stays unless the founder removes it.
+- Each type has its own flow and rules; they are not one shared form.
+  Bicycle: pick a bicycle type and rent. Car: a driver is booked with the car,
+  and there are further choices (vehicle type such as an express vehicle, a
+  35-seater, and so on), each with its own rules. One vehicle-type word in the
+  notes (written "အာတာဖတ်") is not yet matched to a known vehicle type.
+- Availability differs by city. Example: Yangon has no motorbike or camping
+  tent rental.
+
+Already built as preview (details in `Doc/COMPLETED-WORK.md` and the Rentals
+record below): a city-first order flow for Yangon, Bagan, Mandalay, Inle Lake
+and Ngapali with city-specific categories and branch pickup; motorbike and
+bicycle share a self-drive flow; cars have their own flow with family car
+(4–5 seats), 35-seat minibus and 45-seat bus, each with local and foreigner
+rates; start and end dates; delivery or branch pickup; an estimated total; and
+a submission that hands off to MH Travel by phone.
+
+Proposed additions, pending founder confirmation:
+
+1. Rental Admin controls: categories and types, per-type rules (driver
+   required, minimum days, vehicle options), a city × category availability
+   matrix, branches, local/foreigner rates, and terms text.
+2. Persist rental requests with a request ID, a notification, and a status
+   (for example new, called, confirmed, cancelled), as listed in
+   `Doc/REMAINING-WORK.md`.
+3. Hold each type's flow and rules as data, so adding e-bikes or tricycles
+   does not need new page code.
+
+Confirm: tricycle and e-bike details, whether boats go beyond motorboat, the
+"အာတာဖတ်" vehicle type, and that Yangon's rental data matches the Yangon
+restriction above.
+
 ---
 
 ## 9. Owner Business Model
@@ -504,6 +567,27 @@ Common rules:
   persistence, authentication, uniqueness enforcement, and authorization
   remain open backend work.
 
+### Operator system for outside businesses (planned, not scheduled; 2026-11-21)
+
+- Other businesses, such as a ticket seller, can use the system as their own
+  system. The operator's admin account is where tickets are sold and cut.
+- Operator data stays in the operator's own admin account data and is **not
+  sent to MH Travel**. MH Travel pulls only **seat availability (free/taken)**
+  and **date availability**.
+- Operators can design their own custom vouchers/tickets.
+- To reconcile: section 7 describes Ticketing as MH Travel's own product
+  integrated by API; this extends it to outside operators. The Main Owner and
+  Branch Owner model above assumes MH Travel records ticket attribution,
+  revenue-share snapshots and wallet ledgers. If operator data is not sent to
+  MH Travel, what MH Travel can see and settle must be redefined.
+- Open questions: what MH Travel stores about a sale (seat marker only, or a
+  booking reference) and how payment, commission and refunds work if booking
+  data stays with the operator; how availability is fetched and what happens
+  when an operator system is offline; whether the voucher designer is
+  free-form or a fixed field set and who owns required legal fields;
+  operator onboarding, subscription and whether the Branch Owner billing still
+  applies.
+
 ---
 
 ## 10. Content: Blog and Travel Guide
@@ -538,6 +622,44 @@ Blog:
   article text/media, and related content span the available viewport instead
   of a centered max-width column; keep only small responsive gutters and avoid
   horizontal overflow on phones.
+
+### Blog editor: current state and additions (2026-11-21)
+
+Current (see `Doc/COMPLETED-WORK.md`): Super Admin Blog Post Management has a
+bilingual editor, add-a-category, search and status filters, draft / publish /
+schedule with native date and time, a cover photo plus additional photos, and
+inline bilingual text and image story blocks. All images go through the
+resize / WebP / 450 KB pipeline to the R2 endpoint, with a local preview
+fallback. The public reader renders sponsored slots above, within existing ad
+blocks, and below the article.
+
+Gaps: the composer has no ad block; blocks can be inserted and removed but
+there is no explicit reorder; images carry no alt text, caption or credit; the
+editor is reachable only by Super Admin although section 3 defines a Blog Post
+Admin role; the backend is not built (see "Blog, media, and Cloudflare R2" in
+`Doc/REMAINING-WORK.md`).
+
+Proposed additions, pending founder confirmation:
+
+1. An **ad slot block** in the composer. The writer places the slot; the ad
+   itself comes from the Ads system, which only Super Admin and Ads Admin
+   manage (section 3). An empty slot collapses, and a filled one is labelled
+   "Sponsored".
+2. Explicit block reordering (move up / down).
+3. Per-image alt text (MM/EN), optional caption and credit.
+4. Store the post as ordered structured blocks rather than HTML, so web and
+   mobile render the same post and an ad slot cannot be broken by pasted
+   markup.
+5. Publish checks: cover photo present, alt text on every image, both
+   languages complete, category chosen.
+6. Give the Blog Post Admin role access to this editor, without ad
+   management.
+7. Limits on ad slots per post: a maximum count, no two adjacent, none before
+   the first paragraph.
+
+Open decision: whether ad slots are placed manually by the writer or inserted
+by an automatic rule. Recommendation: start manual and add an automatic rule
+later.
 
 Travel Guide:
 
@@ -698,10 +820,7 @@ it is a pre-arrival matter.
   Attractions, Popular Hotels, Restaurants, Book Shops, Rentals, Transport
   Services, Cafes, Markets, and Popular Searches in the same section pattern
   as the deployed `/cities` page.
-- City discovery rows now use five desktop columns, matching the five records
-  currently present in each City catalog. This removes the unused sixth-column
-  whitespace visible beside Restaurants, Book Shops, Rentals, and the other
-  five-card sections while preserving the responsive mobile/tablet grid.
+- City discovery rows are passed `columns={5}` and are capped at five card widths plus gaps. They are a width-capped flex row, not a five-column CSS grid (`Doc/PLAN-VS-CODE.md` §3.4). This matches the five records currently in each City catalog, removes the unused sixth-column whitespace beside Restaurants, Book Shops, Rentals and the other five-card sections, and preserves the responsive mobile/tablet layout.
 - Nearby page at `/nearby` follows the user's [Drive visual reference](https://drive.google.com/file/d/1eiuGD1sIiv8jlmkKHHOnHBGHWsIPFVaW/view?usp=sharing): a Shwedagon/map-pin hero; Yangon selector, 500 m/1 km/5 km/10 km radius chips and search; icon categories for Hotels, Guesthouses, Restaurants, Cafes, Bars, Exchange, Hospitals, Clinics, Bookstores, Gyms, Temples, and City Markets, plus the existing Rentals category; a six-card Nearby Places grid with View All; Quick Filters for distance, Top Rated, Near Me, and Open Now; and a Popular Nearby row.
 - Preserve browser geolocation with Yangon fallback, live keyword/category filtering, rating/distance behavior and shared favorite state. Keep existing `near-*` IDs, use unique IDs for added records, and include the full Nearby catalog in Favorites and Account resolution. Display “All” and the 13 categories as circular icon buttons in one horizontal row that continuously moves right-to-left; pause on hover/focus and respect reduced-motion preferences by leaving a static manually scrollable row. Keep stacked mobile search controls, compact place cards, persistent five-tab phone navigation, Home-only full footer, and global copyright.
 - Nearby Categories now follows the Home Categories visual contract: 36px icon circles, 64px item width, 16px icons, 8px labels, the shared `animate-marquee` 22-second loop, and the same duplicated continuous-scroll structure. Nearby keeps its own click handler so All/category selection continues to filter Nearby results.
@@ -744,6 +863,14 @@ it is a pre-arrival matter.
 - Travel guide rental expense mechanics.
 - Owner and Admin dashboard screens, after the user-facing pages are done.
 
+### Decisions needed (from `Doc/PLAN-VS-CODE.md` and the 2026-11-21 review)
+
+1. **Card-size rule.** Section 4 says `md` is the default for every grid row, and also that five- and six-column rows use `xs` or `sm`. Fifteen Home and City rows follow the first; the code cannot satisfy both. Pick one rule and delete the other.
+2. **Load More rule.** Two separate implementations exist (Blogs and Travel Guide, page size 6) with no check that the last row is full or that more matches remain. Define one shared rule.
+3. **Role names.** Section 3 lists Super Admin, Ads Admin, Admin, Rental Admin, Payment Admin, Travel Guide Content Admin, Blog Post Admin and Owner Admin. The Admin Management form offers Content Manager, Support Manager, Operations Admin, Finance Admin and Ads Manager. Decide the mapping.
+4. **Blog ad placement:** manual blocks or an automatic rule (see section 10).
+5. **Rental confirmations** listed at the end of the Rental subsection in section 8.
+6. **Operator system** questions listed in section 9.
 
 ## Rentals UI reference provided by the user (2026-11-08)
 
@@ -1071,7 +1198,7 @@ Search currently searches the frontend catalog data. Travel Guide content and Se
 - Category-only searches such as `Hotel` now use one row with fixed `All`, `Top rated`, and `Nearby` controls followed by rotating city chips. The city chip window advances every 10 seconds while the three fixed controls remain stationary; selecting a city opens that category’s listings for the selected city.
 - Combined city/category searches such as `ရန်ကုန် ဟိုတယ်` now include a fixed `All` control alongside `Top rated` and `Nearby`. Hotel cards carry currency-aware nightly price badges in addition to the shared rating, distance, view count, favorite, and title metadata.
 - EN/MM coverage audit completed: traveler-facing routes and the shared traveler shell consume the language context, while Super Admin body copy still contains untranslated English beyond its translated navigation labels. Shop Owner has no language-context integration and remains English-only. The gap is documented for the next localization pass.
-- City discovery rows were corrected from six to five desktop columns because each City catalog currently contains five cards. Restaurants, Book Shops, Rentals, Hotels, Attractions, Transport, Cafes, and Markets now fill the available row width without an empty sixth-column gap.
+- City discovery rows were corrected from six to a five-card width cap (`columns={5}`, a width-capped flex row rather than a five-column CSS grid) because each City catalog currently contains five cards. Restaurants, Book Shops, Rentals, Hotels, Attractions, Transport, Cafes, and Markets now fill the available row width without an empty sixth-column gap.
 - Mobile drawer order was corrected to follow the intended phone flow: Navigate links, Favorites and display controls, Help & Support, Content/contact, payment/download sections, Legal, then copyright. The duplicate MH Travel tagline block and duplicate Account/Login action were removed because the fixed phone header and bottom navigation already provide those destinations. Notifications remain in the phone header and are not duplicated in the drawer.
 
 ## 2. Completed traveler-facing pages
