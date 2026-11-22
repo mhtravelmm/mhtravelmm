@@ -4,23 +4,15 @@
 
 ---
 
-## 1. Current build state (audit, `main` @ `5f3924b`, 2026-11-20)
+## 1. Current build state
 
-Source of truth for status: `Doc/STATUS.md`. Summary:
+Not repeated here, to avoid a second copy of the status. Read in this order:
 
-- Typecheck, Vite build and ESLint pass (0 errors, 7 warnings).
-- 26 declared routes, all render. Most traveler pages are PREVIEW (seed data / localStorage, no backend persistence).
-- Supabase migrations and RLS exist (profiles, favorites, custom_plan_requests, bookings, notifications, reviews, ads, admin_audit_logs). Forms are not yet wired to them. The `operator_branches` migration is still required.
-- Shop Owner and Main Owner dashboards have no i18n (English only). Super Admin body copy is mostly English.
-- Blog media: R2 upload adapter exists; no Worker deployed.
+1. `Doc/STATUS.md` — one-page DONE / PARTIAL / PREVIEW / NOT DONE, with audit commit.
+2. `Doc/COMPLETED-WORK.md` and `Doc/REMAINING-WORK.md` — detail behind finished and open work.
+3. `Doc/PLAN-VS-CODE.md` — the Plan checked against the code, with 7 recommended plan edits (section 7 of that file). Item 1 (the card-size rule contradiction, section 4.1) needs the founder's decision. These edits are not yet applied to `PROJECT-PLAN.md`; for example the stale `/blogs/:id` claims are still in it.
 
-### Known defects to schedule
-
-1. 48 broken internal links: 10 missing category pages (`/hotels`, `/cafes`, `/attractions`, `/markets`, `/populars`, `/reviews`, `/categories`, `/partners`, `/awards`, `/guides`), 38 missing detail routes (`/hotels/:id`, `/cafes/:id`, `/markets/:id`, `/attractions/:id`, `/ticketing/:id`, `/rentals/:id`, plus `/emergency`, `/exchange`, `/sim_card`), and the `/book_shop` typo (should be `/book-shops`).
-2. `/restaurants/:id` and `/book-shops/:id` do not select a record by `id`.
-3. Restaurant menu category and Book Shop category selectors change state but do not filter.
-4. Load More on Blogs and Travel Guide (page size 6, 4 columns) leaves a half row.
-5. Accessibility pass pending (139 buttons without `aria-label` listed for review; 5 images without `alt`).
+Rule for this addendum: any decision below is checked against `Doc/` first, and anything that changes what is done or not done is recorded in `Doc/` after the code is written.
 
 ---
 
