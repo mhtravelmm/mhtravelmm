@@ -185,13 +185,7 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   for Ads Admin, earnings and payouts for Payment Admin, users and support for
   Admin, and bookings for Owner Admin. Super Admin keeps all sections. Route
   guards only hide menus; the server must check the role on every write
-  (sections 8, 10 and 17).
-  Travel Guide Content Admin roles have no route today (role guards exist only
-  for Super Admin, Shop Owner and Main Owner). Add one role-guarded `/admin`
-  workspace that shows only the sections a role may use (Rental Admin:
-  Rentals; Blog Post Admin: Blog; Travel Guide Content Admin: Guides) and
-  reuses the same panels Super Admin has in `/super-admin`. Super Admin keeps
-  all sections.
+  (sections 8, 10 and 16A).
 
 ---
 
@@ -790,7 +784,7 @@ POST multipart with the user's Supabase token. Allow only Super Admin and Blog P
 
 #### 6. Reader contract
 
-The public API returns the reader's `BlogPost`: a `text` block becomes `paragraph` with `{ en, mm }`; an `image` block becomes `image` with `alt` and `caption` as `{ en, mm }`; an `ad` block stays `ad` and renders the `blog_inline` placement (section 17). Where a post has two or more ad blocks, the ad service avoids showing the same creative twice in one post.
+The public API returns the reader's `BlogPost`: a `text` block becomes `paragraph` with `{ en, mm }`; an `image` block becomes `image` with `alt` and `caption` as `{ en, mm }`; an `ad` block stays `ad` and renders the `blog_inline` placement (section 16A). Where a post has two or more ad blocks, the ad service avoids showing the same creative twice in one post.
 
 #### 7. Acceptance criteria
 
@@ -1099,35 +1093,35 @@ Made by Claude under the founder's delegation; the founder can change any of the
 1. **Rentals (section 8):** tables for catalog, availability, rates, terms and orders; price by city × category × variant; sign-in required to submit; order status flow; Rental Admin dashboard.
 2. **Blog (section 10):** the ad limit stays at 3 as in code; captions become bilingual; `galleryUrls` is removed; slug, read time, autosave, scheduled publishing by a job, optimistic concurrency and the R2 media endpoint are specified.
 3. **Travel Guide (section 10):** guide and stop tables, duration derived from stop times, one earning row per guide created on first publish, listing-removal handling.
-4. **Ads and the Adsboard (section 17):** placement catalog, tables, serving rules, campaign lifecycle with Super Admin approval, dashboard sections, creative limits.
+4. **Ads and the Adsboard (section 16A):** placement catalog, tables, serving rules, campaign lifecycle with Super Admin approval, dashboard sections, creative limits.
 
 ### Still needing the founder's input
 
 1. **Rentals (section 8):** is scooter also excluded from Yangon; does the self-drive car category stay when cars are booked with a driver; what are "အာတာဖတ်" and the "express" vehicle; bicycle types; e-bike and tricycle details; do boats go beyond motorboat; may guests submit without signing in.
 2. **Blog (section 10):** how a new post gets the rating and distance that every card shows.
 3. **Travel Guide (section 10):** can a guide span more than one day; the per-post rate and when it becomes payable.
-4. **Ads (section 17):** how advertisers are charged and invoiced; the AdSense / AdMob accounts; whether the mobile app uses the same ad service; who besides Super Admin approves campaigns.
+4. **Ads (section 16A):** how advertisers are charged and invoiced; the AdSense / AdMob accounts; whether the mobile app uses the same ad service; who besides Super Admin approves campaigns.
 5. **Operator system (section 9)** questions, and template questions when template work starts (section 4).
 
-## 17. Ads system and Adsboard (2026-11-22)
+## 16A. Ads system and Adsboard (2026-11-22)
 
 The Adsboard is the Ads Management dashboard. It controls every ad shown in the web app and, later, the mobile app. Written against `src/components/ui/AdSlot.tsx`, `src/data/ads.ts`, the Ads Management panel in `SuperAdminPage.tsx` and `Doc/STATUS.md` (PREVIEW, local state).
 
-### 17.1 Rules (already decided)
+### 16A.1 Rules (already decided)
 
 - Order of delivery: **Admin Ads → Google AdSense / AdMob → collapse**. When nothing is available the slot renders nothing and the layout reflows; no empty box, ever.
 - Only Super Admin and Ads Admin manage ads (`canManageAds`). Blog, Guide and other roles never do.
 - Every ad shows a **Sponsored** label and opens with `rel="noopener noreferrer sponsored"`.
 - Each placement has an on/off toggle, and the page can show no ad at all.
 
-### 17.2 As built
+### 16A.2 As built
 
 - `AdSlot({ placement, fetchAd })` calls `fetchAd(placement)` and renders an `AdCreative` (`id`, `type` image or video, `mediaUrl`, `clickThroughUrl`, `advertiser`). Video plays muted and looped. It collapses on `null`.
 - Placement keys in code: `home_hero`, `home_after_travel_plans`, `home_after_hotels`, `home_after_blogs`, `home_after_reviews`, `home_after_partners`, `blog_post_top`, `blog_post_bottom`, `blog_inline`. Any `blog_*` key falls back to `blog_inline`. The Rentals top banner is a fixed compact banner, not a placement yet.
 - `fetchMockAd` serves local SVG banners (800 × 220). The Supabase `ads` table exists with RLS and is not used by the page. Its columns must be checked before the schema below is applied.
 - The console has nine pages (Home, Cities, City Detail, Travel Plans, Travel Plan Detail, Blogs, Blog Detail, Nearby, User Dashboard), each with ads `{ page, slot, name, advertiser, active }`, add, edit, preview and publish or pause. All local state.
 
-### 17.3 Placements
+### 16A.3 Placements
 
 One key per position, named `<page>_<position>`. Existing keys keep their names. Each placement has a page, a label (MM/EN), a format, an `active` toggle, and whether AdSense / AdMob fallback is allowed.
 
@@ -1140,21 +1134,21 @@ One key per position, named `<page>_<position>`. Existing keys keep their names.
 
 Keys for pages other than Home, Blog and Rentals are proposed and are created when a page first gets an `AdSlot`.
 
-### 17.4 Data model (Supabase)
+### 16A.4 Data model (Supabase)
 
 | Table | Key columns | Notes |
 |---|---|---|
 | `ad_advertisers` | `id`, `name`, `contact_name`, `contact_phone`, `contact_email`, `notes` | Not public |
-| `ad_campaigns` | `id`, `advertiser_id`, `name`, `status`, `start_at`, `end_at`, `priority`, `weight`, `created_by`, `approved_by`, `approved_at` | Status in 17.6 |
+| `ad_campaigns` | `id`, `advertiser_id`, `name`, `status`, `start_at`, `end_at`, `priority`, `weight`, `created_by`, `approved_by`, `approved_at` | Status in 16A.6 |
 | `ad_creatives` | `id`, `campaign_id`, `type`, `media_key`, `click_url`, `alt_mm`, `alt_en`, `approval` (`draft` / `pending` / `approved` / `rejected`), `rejected_reason`, `bytes` | Media in R2 |
-| `ad_placements` | `key`, `page`, `label_mm`, `label_en`, `format`, `active`, `fallback_allowed`, `sort_order` | The 17.3 catalog |
+| `ad_placements` | `key`, `page`, `label_mm`, `label_en`, `format`, `active`, `fallback_allowed`, `sort_order` | The 16A.3 catalog |
 | `ad_assignments` | `campaign_id`, `placement_key`, `starts_at`, `ends_at` | Which campaign runs where |
 | `ad_events` | `placement_key`, `creative_id`, `kind` (`impression` / `click`), `at`, `session_hash`, `user_id` (nullable) | Raw events, kept 90 days |
 | `ad_stats_daily` | `day`, `placement_key`, `campaign_id`, `impressions`, `clicks` | Rolled up nightly, Myanmar Time days |
 
 If the existing `ads` table can hold these, extend it; otherwise migrate its rows into this shape and retire it.
 
-### 17.5 Serving (what the page calls)
+### 16A.5 Serving (what the page calls)
 
 `serve_ad(placement_key, language)` returns one creative or nothing:
 
@@ -1165,7 +1159,7 @@ If the existing `ads` table can hold these, extend it; otherwise migrate its row
 
 The response may be cached at the edge for 60 seconds. Click-through goes through `/ad/click/<creative_id>`, which records the click and redirects. An impression is counted when at least half the ad has been visible for 1 second (IntersectionObserver), once per creative per session per page view. Basic bot user agents are ignored.
 
-### 17.6 Campaign and creative lifecycle
+### 16A.6 Campaign and creative lifecycle
 
 | Campaign status | Meaning | Moves to |
 |---|---|---|
@@ -1179,7 +1173,7 @@ The response may be cached at the edge for 60 seconds. Click-through goes throug
 
 Ads Admin builds and submits; **Super Admin approves** (the console's creative approval). Every change writes an audit row. Pausing is immediate.
 
-### 17.7 Adsboard sections
+### 16A.7 Adsboard sections
 
 | Section | Contents |
 |---|---|
@@ -1191,22 +1185,22 @@ Ads Admin builds and submits; **Super Admin approves** (the console's creative a
 | Reports | Impressions, clicks, CTR and fill rate by placement, campaign and day; CSV export. |
 | Settings | AdSense / AdMob ids and per-placement fallback, creative limits, collapse behavior. |
 
-### 17.8 Creative requirements
+### 16A.8 Creative requirements
 
 - **Image:** JPEG, PNG or WebP, converted to WebP, at most 300 KB, banner shaped like the current 800 × 220 mocks.
 - **Video:** MP4, muted, looped, at most 3 MB and 15 seconds.
 - **Alt text** in Myanmar and English is required; it replaces today's generic "Ad by …".
 - **Click URL:** `https` or an internal path only; a block-list of domains is kept in Settings.
 
-### 17.9 Access and audit
+### 16A.9 Access and audit
 
 Direct reads of the ad tables are denied to the public; they use `serve_ad` and the click endpoint only. Super Admin and Ads Admin read and write; Payment Admin reads reports. The role is checked on the server. Every campaign, creative, placement and settings change writes an admin audit row.
 
-### 17.10 Build steps (for Cursor)
+### 16A.10 Build steps (for Cursor)
 
-1. Check the live `ads` table, then migrate the tables above with RLS. 2. Seed `ad_placements` from 17.3. 3. `serve_ad`, the click endpoint and the event beacon. 4. Replace `fetchMockAd` with `serve_ad` in `AdSlot`, keeping the collapse. 5. Rentals top becomes `rentals_top`. 6. Adsboard Pages and placements, then Campaigns and Creatives. 7. Approval flow. 8. Reports and the nightly roll-up. 9. AdSense / AdMob fallback.
+1. Check the live `ads` table, then migrate the tables above with RLS. 2. Seed `ad_placements` from 16A.3. 3. `serve_ad`, the click endpoint and the event beacon. 4. Replace `fetchMockAd` with `serve_ad` in `AdSlot`, keeping the collapse. 5. Rentals top becomes `rentals_top`. 6. Adsboard Pages and placements, then Campaigns and Creatives. 7. Approval flow. 8. Reports and the nightly roll-up. 9. AdSense / AdMob fallback.
 
-### 17.11 Acceptance criteria
+### 16A.11 Acceptance criteria
 
 1. A Live, approved campaign shows in its placement; pausing it removes the ad on the next request.
 2. A placement turned off, or with nothing to show, renders no box.
@@ -1216,7 +1210,7 @@ Direct reads of the ad tables are denied to the public; they use `serve_ad` and 
 6. Every ad carries a Sponsored label and alt text in both languages.
 7. The Adsboard totals equal the sum of the daily roll-up.
 
-### 17.12 Still to define
+### 16A.12 Still to define
 
 How advertisers are charged (flat fee, CPM or CPC) and invoiced; the AdSense / AdMob accounts and ids; whether the mobile app uses the same `serve_ad`; who besides Super Admin may approve.
 
