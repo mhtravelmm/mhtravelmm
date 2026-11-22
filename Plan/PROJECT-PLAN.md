@@ -171,6 +171,13 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   created by an Admin.
 - Only Super Admin and Ads Admin manage ad content. Super Admin creates the
   other admin accounts.
+- Role names (decided 2026-11-22): the names above are the product roles. The
+  Admin Management form must offer these names, not its earlier choices.
+  Mapping from the earlier form choices: Content Manager → Blog Post Admin
+  and Travel Guide Content Admin (two roles, one per content type); Support
+  Manager → Admin; Operations Admin → Admin, or Rental Admin for rentals;
+  Finance Admin → Payment Admin; Ads Manager → Ads Admin. Permission groups
+  stay as the way to scope each role.
 
 ---
 
@@ -202,9 +209,14 @@ selects one of them; a page never overrides the internal dimensions itself.
 - Even `xl` stays compact: it is a slightly larger card, not a hero panel.
   No card may exceed the `xl` values above, and no size may be applied outside
   this table.
-- A row picks its size from its column count as well as its importance: five
-  and six column rows use `xs` or `sm`, four column rows use `lg` at most, and
-  only three column rows may use `xl`.
+- A row picks its size from its role in the table above, with two limits from
+  its column count: four column rows use `lg` at most, and only three column
+  rows may use `xl`. Five column rows of primary listings (Hotels,
+  Restaurants, Book Shops, Rentals, Transport, Markets, Cafes and Attractions
+  on Home and City) use `md`; six column Populars use `xs`; City's Top
+  attractions strip stays `xs`. Decided 2026-11-22, resolving
+  `Doc/PLAN-VS-CODE.md` §4.1: the Plan now matches the code and no row needs
+  to change. `xs` readability on phones stays on the UI backlog.
 - A card has a hard maximum width, given by its size (`maxWidth` in
   `CARD_SIZES`). A card must never stretch to fill a wide container: no card
   may render as a long bar. The maximum for `xs`/`sm`/`md`/`lg`/`xl` is
@@ -219,6 +231,11 @@ selects one of them; a page never overrides the internal dimensions itself.
   stretching its cards.
 - Horizontal single-row strips keep a fixed card width and scroll sideways on
   phones.
+- Load More (decided 2026-11-22): the page size is 12, which divides evenly
+  into two, three, four and six columns, so a revealed batch always fills its
+  rows. The button appears only while matching items remain beyond those
+  shown, and it reveals a whole batch. Blogs and Travel Guide share one helper
+  instead of the two separate implementations they have now.
 - A grid that hosts cards directly (Search, City, Favorites, Account,
   Blogs-related, Travel Plans) repeats the same cap: `justify-items-center`
   plus `max-w-[columns × the size's max width + gaps]`, so no page can
@@ -458,7 +475,7 @@ bicycle share a self-drive flow; cars have their own flow with family car
 rates; start and end dates; delivery or branch pickup; an estimated total; and
 a submission that hands off to MH Travel by phone.
 
-Proposed additions, pending founder confirmation:
+Decided additions (2026-11-22, Claude under the founder's delegation; revisit if wrong):
 
 1. Rental Admin controls: categories and types, per-type rules (driver
    required, minimum days, vehicle options), a city × category availability
@@ -468,8 +485,10 @@ Proposed additions, pending founder confirmation:
    `Doc/REMAINING-WORK.md`.
 3. Hold each type's flow and rules as data, so adding e-bikes or tricycles
    does not need new page code.
+4. Category list: add **E-bike** and **Tricycle**. Boats stay one **Boat**
+   category with motorboat as its current type. Travel guide hire stays.
 
-Confirm: tricycle and e-bike details, whether boats go beyond motorboat, the
+Still to confirm: tricycle and e-bike details, whether boats go beyond motorboat, the
 "အာတာဖတ်" vehicle type, and that Yangon's rental data matches the Yangon
 restriction above.
 
@@ -639,7 +658,7 @@ editor is reachable only by Super Admin although section 3 defines a Blog Post
 Admin role; the backend is not built (see "Blog, media, and Cloudflare R2" in
 `Doc/REMAINING-WORK.md`).
 
-Proposed additions, pending founder confirmation:
+Decided additions (2026-11-22, Claude under the founder's delegation; revisit if wrong):
 
 1. An **ad slot block** in the composer. The writer places the slot; the ad
    itself comes from the Ads system, which only Super Admin and Ads Admin
@@ -657,9 +676,8 @@ Proposed additions, pending founder confirmation:
 7. Limits on ad slots per post: a maximum count, no two adjacent, none before
    the first paragraph.
 
-Open decision: whether ad slots are placed manually by the writer or inserted
-by an automatic rule. Recommendation: start manual and add an automatic rule
-later.
+Decided 2026-11-22: ad slots are placed manually by the writer as blocks. An
+automatic insertion rule may be added later.
 
 Travel Guide:
 
@@ -687,6 +705,37 @@ Travel Guide:
 - After the Travel Guide listing and its Load More control, place one horizontal
   discovery row each for Top attractions, Restaurants, and Cafes, in that order,
   before the global copyright strip. Keep the full footer exclusive to Home.
+
+### Travel Guide: current state and Admin additions (2026-11-22)
+
+Current (`Doc/STATUS.md`): `/travel-guide` is PREVIEW with category and search
+filters; `/travel-guide/:guideId` is DONE with the full reader and itinerary
+timeline. Guide content is compiled data. There is no Admin editor for guides,
+and the Travel Guide Content Admin role has no route or dashboard (role guards
+exist only for Super Admin, Shop Owner and Main Owner).
+
+Decided additions (Claude under the founder's delegation; revisit if wrong):
+
+1. A **Travel Guide editor** for Super Admin and Travel Guide Content Admin,
+   in the same shell as the Blog editor: bilingual title and excerpt, a
+   category from the existing filters (Myanmar, Nature, Adventure, Culture,
+   Food, City Tour), a cover photo, and Draft / Publish / Schedule.
+2. An **itinerary builder** in place of free text. A guide is ordered stops;
+   each stop has a time, a listing chosen from MH Travel's own database (no
+   outside places, as above), a bilingual description, and photos through the
+   existing WebP/R2 pipeline. Stops can be reordered. Each stop's Directions
+   button reuses the How-to-Get-There module.
+3. **Shared content infrastructure** with Blog: status, scheduling, revisions,
+   audit log and media handling are built once; only the block schemas differ
+   (Blog: text, image, ad slot; Guide: stop).
+4. **Publish checks:** cover present, both languages complete, at least one
+   stop, every stop linked to an existing listing, stop times in ascending
+   order.
+5. **Per-post earning record:** each published guide creates an earning row for
+   its author, with the amount set by Admin, so payout can be calculated
+   later.
+
+Still to define: the per-post rate and when it becomes payable.
 
 ---
 
@@ -863,14 +912,22 @@ it is a pre-arrival matter.
 - Travel guide rental expense mechanics.
 - Owner and Admin dashboard screens, after the user-facing pages are done.
 
-### Decisions needed (from `Doc/PLAN-VS-CODE.md` and the 2026-11-21 review)
+### Decisions (2026-11-22)
 
-1. **Card-size rule.** Section 4 says `md` is the default for every grid row, and also that five- and six-column rows use `xs` or `sm`. Fifteen Home and City rows follow the first; the code cannot satisfy both. Pick one rule and delete the other.
-2. **Load More rule.** Two separate implementations exist (Blogs and Travel Guide, page size 6) with no check that the last row is full or that more matches remain. Define one shared rule.
-3. **Role names.** Section 3 lists Super Admin, Ads Admin, Admin, Rental Admin, Payment Admin, Travel Guide Content Admin, Blog Post Admin and Owner Admin. The Admin Management form offers Content Manager, Support Manager, Operations Admin, Finance Admin and Ads Manager. Decide the mapping.
-4. **Blog ad placement:** manual blocks or an automatic rule (see section 10).
-5. **Rental confirmations** listed at the end of the Rental subsection in section 8.
-6. **Operator system** questions listed in section 9.
+Made by Claude under the founder's delegation; the founder can change any of them.
+
+1. **Card-size rule:** `md` stays the default for five column primary rows; the column-count rule is reduced to the `lg` / `xl` limits (section 4). No code change.
+2. **Load More:** page size 12, one shared helper, shown only while more items remain (section 4). Needs a code change in Blogs and Travel Guide.
+3. **Role names:** the section 3 roles win; the Admin Management form is renamed to match (section 3). Needs a code change.
+4. **Blog ads:** placed manually as blocks (section 10).
+5. **Rental categories:** add E-bike and Tricycle (section 8).
+6. **Travel Guide Admin:** editor, itinerary builder and shared content infrastructure (section 10).
+
+### Still needing the founder's input
+
+1. Rental facts: what "အာတာဖတ်" is, tricycle and e-bike details, whether boats go beyond motorboat, and that Yangon's rental data matches the Yangon restriction (section 8).
+2. Travel Guide per-post rate and when it becomes payable (section 10).
+3. Operator system questions (section 9), and template questions when template work starts (section 4).
 
 ## Rentals UI reference provided by the user (2026-11-08)
 
