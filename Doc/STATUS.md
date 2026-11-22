@@ -2,7 +2,8 @@
 
 **Last audited:** 22 November 2026
 **Audited against:** `main` @ `ecb231f` plus the 22 November work on the guide
-route follower, the two owner dashboards, and the Foreign Tourist section.
+route follower, the two owner dashboards, the Foreign Tourist section, and the
+Super Admin localization pass.
 
 This file is the single status view for the project. It replaces guesswork about
 what is finished: every item below was checked against the actual source tree,
@@ -114,7 +115,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/login` | **PARTIAL** | UI complete; local preview session |
 | `/signup` | **PARTIAL** | UI complete; local preview session |
 | `/admin/login` | **PARTIAL** | Separated from traveler login |
-| `/super-admin` | **PARTIAL** | Guarded; body copy still largely English |
+| `/super-admin` | **PARTIAL** | Guarded; shell and panels bilingual, the two content editors are not |
 | `/shop-owner` | **PARTIAL** | Guarded; bilingual labels, preview data |
 | `/main-owner` | **PARTIAL** | Guarded; bilingual labels, preview data |
 
@@ -175,8 +176,8 @@ places rather than advice.
 | Super Admin Ads Management | **PREVIEW** | Page-oriented placements, local state |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |
 | Admin Management | **PARTIAL** | Local state; form offers the eight Plan §3 roles and creates a real local admin account with the chosen role |
-| Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally |
-| Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows; content is still local state |
+| Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally. Panel labels are still English-only |
+| Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows; content is still local state. Panel labels are still English-only |
 | Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
 | Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
 | Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected; Blog Post Admin and Travel Guide Content Admin reach only their own editor |
