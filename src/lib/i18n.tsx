@@ -1166,6 +1166,8 @@ const translations = {
   sa_owners_cred_note: { mm: "ဤယာယီ အချက်အလက်များကို သိမ်းဆည်းပါ သို့မဟုတ် ဆိုင်ပိုင်ရှင်ထံ လုံခြုံစွာ ပေးပို့ပါ။ စကားဝှက်ကို အကောင့်စာရင်းတွင် မပြပါ။", en: "Save or securely send these temporary credentials to the Shop Owner. The password is not shown in the account list." },
   sa_owners_username: { mm: "Username", en: "Username" },
   sa_owners_username_hint: { mm: "စာလုံးအသေး၊ ဂဏန်း သို့မဟုတ် underscore ကို အသုံးပြုပါ (၃–၃၂ လုံး)။", en: "Use lowercase letters, numbers, or underscores (3–32 characters)." },
+  sa_overview_hero_alt: { mm: "ညနေခင်းက ရွှေတိဂုံစေတီနှင့် ရန်ကုန်မြို့ မြင်ကွင်း", en: "Yangon skyline at dusk with Shwedagon pagoda" },
+  sa_owners_cred_username: { mm: "အသုံးပြုသူအမည်", en: "Username" },
   sa_owners_temp_password: { mm: "ယာယီ စကားဝှက်", en: "Temporary password" },
   sa_owners_form_title: { mm: "ဆိုင်ပိုင်ရှင် အကောင့်နှင့် login ဖန်တီးရန်", en: "Create Shop Owner account and login" },
   sa_owners_name: { mm: "ပိုင်ရှင် အမည် အပြည့်အစုံ", en: "Owner full name" },
