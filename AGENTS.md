@@ -38,6 +38,19 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `REMAINING-WORK.md` hold the detail, `PLAN-VS-CODE.md` records Plan drift. The
   authoritative product plan is `Plan/PROJECT-PLAN.md` — update it when a section ships.
 
+## Pushing to origin
+
+`~/.gitconfig` pins `credential.helper = !/usr/bin/gh auth git-credential`, and the
+`gh` token has no `Contents: write` scope, so a plain `git push` fails with 403
+"Permission to mhtravelmm/mhtravelmm.git denied to mhtravelmm". Push with a
+one-off `GIT_ASKPASS` script and both credential helpers cleared, then delete the
+script. Never write the token into the remote URL or `~/.gitconfig`:
+
+```
+git -c credential.helper= -c 'credential.https://github.com.helper=' \
+  push origin main
+```
+
 ## Verification habit
 
 Before calling a UI change done: typecheck, test, build, then load the route in headless
