@@ -3,7 +3,7 @@ import {
   actionForSave,
   appendAudit,
   auditFor,
-  describeAction,
+  actionLabelKey,
   MAX_REVISIONS_PER_ITEM,
   recordRevision,
   revisionsFor,
@@ -65,10 +65,10 @@ describe('audit log', () => {
   });
 });
 
-describe('describeAction', () => {
+describe('actionLabelKey', () => {
   it('describes each action in plain words', () => {
-    expect(describeAction('created')).toBe('Created');
-    expect(describeAction('restored')).toBe('Restored an earlier revision');
-    expect(describeAction('saved')).toBe('Saved a draft');
+    expect(actionLabelKey('created')).toBe('cw_action_created');
+    expect(actionLabelKey('restored')).toBe('cw_action_restored');
+    expect(actionLabelKey('saved')).toBe('cw_action_saved');
   });
 });

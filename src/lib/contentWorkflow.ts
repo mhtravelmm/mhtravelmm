@@ -1,3 +1,5 @@
+import type { TranslationKey } from './i18n';
+
 /**
  * Shared content infrastructure for Blog and Travel Guide (Plan §10 item 3).
  * Status and scheduling already live in each editor; this adds the revision
@@ -52,12 +54,13 @@ export function auditFor(log: AuditEntry[], contentId: string): AuditEntry[] {
   return log.filter((entry) => entry.contentId === contentId);
 }
 
-export function describeAction(action: ContentAction): string {
+/** The audit line is rendered through `t()`, so it resolves to a key, not English. */
+export function actionLabelKey(action: ContentAction): TranslationKey {
   switch (action) {
-    case 'created': return 'Created';
-    case 'published': return 'Published';
-    case 'scheduled': return 'Scheduled';
-    case 'restored': return 'Restored an earlier revision';
-    default: return 'Saved a draft';
+    case 'created': return 'cw_action_created';
+    case 'published': return 'cw_action_published';
+    case 'scheduled': return 'cw_action_scheduled';
+    case 'restored': return 'cw_action_restored';
+    default: return 'cw_action_saved';
   }
 }

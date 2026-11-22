@@ -1,4 +1,5 @@
 import type { GuideCategory } from '../data/travelGuideData';
+import type { PublishProblem } from './publishProblems';
 
 /** A stop's listing must already exist in MH Travel, so a guide cannot point elsewhere. */
 export type GuideStopDraft = {
@@ -54,34 +55,34 @@ export function moveStop(stops: GuideStopDraft[], index: number, offset: -1 | 1)
   return next;
 }
 
-export type GuideCheck = { ok: boolean; problems: string[] };
+export type GuideCheck = { ok: boolean; problems: PublishProblem[] };
 
 /**
  * Plan §10 item 4: what a guide needs before it may publish. `listingIds` is the
  * set of listings that exist, so a stop pointing at a removed listing blocks.
  */
 export function guidePublishCheck(draft: GuideDraft, listingIds: ReadonlySet<string>): GuideCheck {
-  const problems: string[] = [];
-  if (!draft.titleEn.trim() || !draft.titleMm.trim()) problems.push('Both title languages are required.');
-  if (!draft.excerptEn.trim() || !draft.excerptMm.trim()) problems.push('Both excerpt languages are required.');
-  if (!draft.coverUrl.trim()) problems.push('A cover photo is required.');
-  if (!draft.author.trim()) problems.push('An author is required.');
-  if (draft.stops.length === 0) problems.push('Add at least one stop.');
+  const problems: PublishProblem[] = [];
+  if (!draft.titleEn.trim() || !draft.titleMm.trim()) problems.push({ code: 'title_languages' });
+  if (!draft.excerptEn.trim() || !draft.excerptMm.trim()) problems.push({ code: 'excerpt_languages' });
+  if (!draft.coverUrl.trim()) problems.push({ code: 'cover' });
+  if (!draft.author.trim()) problems.push({ code: 'author' });
+  if (draft.stops.length === 0) problems.push({ code: 'stop_required' });
 
   const unknown = draft.stops.filter((stop) => !listingIds.has(stop.listingId)).length;
-  if (unknown > 0) problems.push(`${unknown} stop${unknown === 1 ? '' : 's'} must link to an existing MH Travel listing.`);
+  if (unknown > 0) problems.push({ code: 'stop_listing', count: unknown });
 
   const missingCopy = draft.stops.filter((stop) => !stop.titleEn.trim() || !stop.titleMm.trim() || !stop.descriptionEn.trim() || !stop.descriptionMm.trim()).length;
-  if (missingCopy > 0) problems.push(`${missingCopy} stop${missingCopy === 1 ? '' : 's'} need both languages.`);
+  if (missingCopy > 0) problems.push({ code: 'stop_languages', count: missingCopy });
 
   const times = draft.stops.map((stop) => minutesOfDay(stop.time));
-  if (times.some((time) => time === null)) problems.push('Every stop needs a time, in 24-hour HH:MM form.');
+  if (times.some((time) => time === null)) problems.push({ code: 'stop_time_format' });
   else if (times.some((time, index) => index > 0 && (time as number) < (times[index - 1] as number))) {
-    problems.push('Stop times must run in ascending order.');
+    problems.push({ code: 'stop_time_order' });
   }
 
   if (draft.status === 'Scheduled' && (!draft.scheduledDate || !draft.scheduledTime)) {
-    problems.push('A scheduled guide needs a date and a time.');
+    problems.push({ code: 'schedule' });
   }
   return { ok: problems.length === 0, problems };
 }

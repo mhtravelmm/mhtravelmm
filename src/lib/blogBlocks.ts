@@ -1,3 +1,5 @@
+import type { PublishProblem } from './publishProblems';
+
 /** Block kinds the Blog composer can place. The order is the reading order. */
 export type BlogBlock =
   | { id: string; type: 'text'; textEn: string; textMm: string }
@@ -42,11 +44,11 @@ export function moveBlock(blocks: BlogBlock[], index: number, offset: -1 | 1): B
  * Explains why another ad slot cannot be added at `index`, or returns null when
  * the slot is allowed. A slot cannot open the post or sit beside another slot.
  */
-export function adSlotProblem(blocks: BlogBlock[], index: number): string | null {
+export function adSlotProblem(blocks: BlogBlock[], index: number): PublishProblem | null {
   const count = blocks.filter((block) => block.type === 'ad').length;
-  if (count >= MAX_AD_SLOTS_PER_POST) return `A post can carry at most ${MAX_AD_SLOTS_PER_POST} ad slots.`;
-  if (index === 0) return 'An ad slot cannot be the first block.';
-  if (blocks[index - 1]?.type === 'ad' || blocks[index]?.type === 'ad') return 'Two ad slots cannot sit side by side.';
+  if (count >= MAX_AD_SLOTS_PER_POST) return { code: 'ad_max', count: MAX_AD_SLOTS_PER_POST };
+  if (index === 0) return { code: 'ad_first' };
+  if (blocks[index - 1]?.type === 'ad' || blocks[index]?.type === 'ad') return { code: 'ad_adjacent' };
   return null;
 }
 
@@ -63,7 +65,7 @@ export function normalizeAdSlots(blocks: BlogBlock[]): BlogBlock[] {
   return kept;
 }
 
-export type PublishCheck = { ok: boolean; problems: string[] };
+export type PublishCheck = { ok: boolean; problems: PublishProblem[] };
 
 type PublishInput = {
   status: BlogPostStatus;
@@ -80,18 +82,18 @@ type PublishInput = {
 
 /** Plan §10 item 5: what must be true before a post may leave Draft. */
 export function blogPublishCheck(input: PublishInput): PublishCheck {
-  const problems: string[] = [];
-  if (!input.titleEn.trim() || !input.titleMm.trim()) problems.push('Both title languages are required.');
-  if (!input.excerptEn.trim() || !input.excerptMm.trim()) problems.push('Both excerpt languages are required.');
-  if (!input.category.trim()) problems.push('Choose a category.');
-  if (!input.coverUrl.trim()) problems.push('A cover photo is required.');
+  const problems: PublishProblem[] = [];
+  if (!input.titleEn.trim() || !input.titleMm.trim()) problems.push({ code: 'title_languages' });
+  if (!input.excerptEn.trim() || !input.excerptMm.trim()) problems.push({ code: 'excerpt_languages' });
+  if (!input.category.trim()) problems.push({ code: 'category' });
+  if (!input.coverUrl.trim()) problems.push({ code: 'cover' });
   if (!input.blocks.some((block) => block.type === 'text' && (block.textEn.trim() || block.textMm.trim()))) {
-    problems.push('Add at least one paragraph of story text.');
+    problems.push({ code: 'story_text' });
   }
   const missingAlt = input.blocks.filter((block) => block.type === 'image' && (!block.altEn.trim() || !block.altMm.trim())).length;
-  if (missingAlt > 0) problems.push(`Alt text is missing in both languages on ${missingAlt} photo${missingAlt === 1 ? '' : 's'}.`);
+  if (missingAlt > 0) problems.push({ code: 'alt_missing', count: missingAlt });
   if (input.status === 'Scheduled' && (!input.scheduledDate || !input.scheduledTime)) {
-    problems.push('A scheduled post needs a date and a time.');
+    problems.push({ code: 'schedule' });
   }
   return { ok: problems.length === 0, problems };
 }

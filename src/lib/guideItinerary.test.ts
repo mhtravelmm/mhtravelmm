@@ -68,37 +68,37 @@ describe('guidePublishCheck', () => {
 
   it('requires a stop', () => {
     const result = guidePublishCheck({ ...base, stops: [] }, LISTINGS);
-    expect(result.problems).toContain('Add at least one stop.');
+    expect(result.problems).toContainEqual({ code: 'stop_required' });
   });
 
   it('rejects a stop whose listing does not exist', () => {
     const result = guidePublishCheck({ ...base, stops: [stop('08:00', 'gone')] }, LISTINGS);
-    expect(result.problems).toContain('1 stop must link to an existing MH Travel listing.');
+    expect(result.problems).toContainEqual({ code: 'stop_listing', count: 1 });
   });
 
   it('rejects stops that run out of order', () => {
     const result = guidePublishCheck({ ...base, stops: [stop('16:30'), stop('08:00', 'n1')] }, LISTINGS);
-    expect(result.problems).toContain('Stop times must run in ascending order.');
+    expect(result.problems).toContainEqual({ code: 'stop_time_order' });
   });
 
   it('rejects an unreadable time', () => {
     const result = guidePublishCheck({ ...base, stops: [stop('morning')] }, LISTINGS);
-    expect(result.problems).toContain('Every stop needs a time, in 24-hour HH:MM form.');
+    expect(result.problems).toContainEqual({ code: 'stop_time_format' });
   });
 
   it('requires both languages on every stop', () => {
     const result = guidePublishCheck({ ...base, stops: [{ ...stop('08:00'), descriptionMm: '' }] }, LISTINGS);
-    expect(result.problems).toContain('1 stop need both languages.');
+    expect(result.problems).toContainEqual({ code: 'stop_languages', count: 1 });
   });
 
   it('requires a date and time when scheduling', () => {
     const result = guidePublishCheck({ ...base, status: 'Scheduled' }, LISTINGS);
-    expect(result.problems).toContain('A scheduled guide needs a date and a time.');
+    expect(result.problems).toContainEqual({ code: 'schedule' });
   });
 
   it('requires a cover and an author', () => {
     const result = guidePublishCheck({ ...base, coverUrl: '', author: ' ' }, LISTINGS);
-    expect(result.problems).toContain('A cover photo is required.');
-    expect(result.problems).toContain('An author is required.');
+    expect(result.problems).toContainEqual({ code: 'cover' });
+    expect(result.problems).toContainEqual({ code: 'author' });
   });
 });

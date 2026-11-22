@@ -40,18 +40,18 @@ describe('moveBlock', () => {
 
 describe('ad slot placement', () => {
   it('refuses a slot as the first block', () => {
-    expect(adSlotProblem([], 0)).toBe('An ad slot cannot be the first block.');
+    expect(adSlotProblem([], 0)).toEqual({ code: 'ad_first' });
   });
 
   it('refuses two slots side by side', () => {
     const blocks = [createTextBlock(), createAdBlock()];
-    expect(adSlotProblem(blocks, 1)).toBe('Two ad slots cannot sit side by side.');
+    expect(adSlotProblem(blocks, 1)).toEqual({ code: 'ad_adjacent' });
   });
 
   it('refuses a slot beyond the per-post maximum', () => {
     const blocks = [createTextBlock()];
     for (let index = 0; index < MAX_AD_SLOTS_PER_POST; index += 1) blocks.push(createAdBlock(), createTextBlock());
-    expect(adSlotProblem(blocks, blocks.length)).toBe(`A post can carry at most ${MAX_AD_SLOTS_PER_POST} ad slots.`);
+    expect(adSlotProblem(blocks, blocks.length)).toEqual({ code: 'ad_max', count: MAX_AD_SLOTS_PER_POST });
   });
 
   it('allows a slot after a paragraph', () => {
@@ -73,21 +73,21 @@ describe('blogPublishCheck', () => {
   it('reports every missing language and the missing cover', () => {
     const result = blogPublishCheck({ ...base, titleMm: '', coverUrl: '', blocks: [createTextBlock()] });
     expect(result.ok).toBe(false);
-    expect(result.problems).toContain('Both title languages are required.');
-    expect(result.problems).toContain('A cover photo is required.');
-    expect(result.problems).toContain('Add at least one paragraph of story text.');
+    expect(result.problems).toContainEqual({ code: 'title_languages' });
+    expect(result.problems).toContainEqual({ code: 'cover' });
+    expect(result.problems).toContainEqual({ code: 'story_text' });
   });
 
   it('requires alt text in both languages', () => {
     const image = createImageBlock('/images/blog/bagan-sunrise.webp');
     const text = { ...createTextBlock(), textEn: 'Draft copy.', textMm: 'မူကြမ်း။' };
     const result = blogPublishCheck({ ...base, blocks: [text, image] });
-    expect(result.problems).toContain('Alt text is missing in both languages on 1 photo.');
+    expect(result.problems).toContainEqual({ code: 'alt_missing', count: 1 });
   });
 
   it('requires a date and time when scheduling', () => {
     const text = { ...createTextBlock(), textEn: 'Draft copy.', textMm: 'မူကြမ်း။' };
     const result = blogPublishCheck({ ...base, status: 'Scheduled', blocks: [text] });
-    expect(result.problems).toContain('A scheduled post needs a date and a time.');
+    expect(result.problems).toContainEqual({ code: 'schedule' });
   });
 });
