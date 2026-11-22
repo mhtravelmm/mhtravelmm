@@ -56,7 +56,7 @@ export function CityPage() {
 
       <section id="city-list" className="mb-5 scroll-mt-24">
         <div className="mb-2.5 flex items-center justify-between gap-3">
-          <h1 className="text-base font-medium text-text-primary">{t('section_cities')}</h1>
+          <h2 className="text-base font-medium text-text-primary">{t('section_cities')}</h2>
           <div className="flex w-40 items-center gap-2 rounded-full bg-bg-card px-3 py-1.5">
             <SearchIcon size={12} className="text-text-faint" />
             <input
@@ -70,14 +70,6 @@ export function CityPage() {
           {CITIES.map((city) => (
             <ListingCard key={city.id} listing={city} />
           ))}
-        </div>
-        <div className="mt-3 text-center">
-          <button
-            type="button"
-            className="rounded-full bg-bg-card px-4 py-1.5 text-[10px] text-brand-blue"
-          >
-            {t('see_more_cities')}
-          </button>
         </div>
       </section>
 

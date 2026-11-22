@@ -30,6 +30,7 @@ import { ListingGridSection } from '../home/sections/ListingGridSection';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useFavorites } from '../../lib/favorites';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { alignToRow, useGridColumnCount } from '../../lib/useGridColumnCount';
 import type { Language } from '../../types';
 
 const VIEWS_STORAGE_KEY = 'mh-travel-blog-view-counts';
@@ -385,6 +386,8 @@ export function BlogsPage() {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('latest');
   const [visibleCount, setVisibleCount] = useState(6);
+  const postsGridRef = useRef<HTMLDivElement>(null);
+  const postColumns = useGridColumnCount(postsGridRef);
   const [viewIncrements, setViewIncrements] = useState<Record<string, number>>(() => readStoredValue(VIEWS_STORAGE_KEY, {}));
   const [toast, setToast] = useState('');
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -510,7 +513,8 @@ export function BlogsPage() {
         ? (b.views + (viewIncrements[b.id] ?? 0)) - (a.views + (viewIncrements[a.id] ?? 0))
         : b.publishedAt.localeCompare(a.publishedAt));
   }, [activeCategory, language, query, sortMode, viewIncrements]);
-  const displayedPosts = visiblePosts.slice(0, visibleCount);
+  const postLimit = alignToRow(visiblePosts.length, visibleCount, postColumns);
+  const displayedPosts = visiblePosts.slice(0, postLimit);
 
   return (
     <div className="w-full pb-8 pt-3 sm:pt-5">
@@ -606,7 +610,7 @@ export function BlogsPage() {
             </div>
 
             {displayedPosts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-3">
+              <div ref={postsGridRef} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 xl:grid-cols-4 xl:gap-3">
                 {displayedPosts.map((post) => (
                   <StoryCard
                     key={post.id}

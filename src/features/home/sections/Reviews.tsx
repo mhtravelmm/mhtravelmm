@@ -7,7 +7,7 @@ export function Reviews() {
   const { t } = useLanguage();
   return (
     <section className="mb-5">
-      <SectionHeader title={t('section_reviews')} viewAllHref="/reviews" />
+      <SectionHeader title={t('section_reviews')} />
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
         {REVIEWS.map((r) => (
           <div key={r.id} className="rounded-card bg-review-bg p-2.5">

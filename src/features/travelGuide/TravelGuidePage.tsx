@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,6 +22,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import type { TranslationKey } from '../../lib/i18n';
 import { useLanguage } from '../../lib/i18n';
+import { alignToRow, useGridColumnCount } from '../../lib/useGridColumnCount';
 import type { Language } from '../../types';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { TRAVEL_GUIDE_STORIES, type GuideCategory, type TravelGuideStory } from '../../data/travelGuideData';
@@ -292,6 +293,8 @@ export function TravelGuidePage() {
   const [activeCategory, setActiveCategory] = useState<GuideFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_GUIDES);
+  const guidesGridRef = useRef<HTMLDivElement>(null);
+  const guideColumns = useGridColumnCount(guidesGridRef);
   const favoriteState = useToggleFavorite(TRAVEL_GUIDE_STORIES);
   const topAttractions = useToggleFavorite(TOP_ATTRACTIONS);
   const restaurants = useToggleFavorite(POPULAR_RESTAURANTS);
@@ -324,6 +327,8 @@ export function TravelGuidePage() {
       return matchesCategory && matchesQuery;
     });
   }, [activeCategory, searchQuery]);
+
+  const guideLimit = alignToRow(filteredGuides.length, visibleCount, guideColumns);
 
   const selectedGuide = guideId ? TRAVEL_GUIDE_STORIES.find((guide) => guide.id === guideId) : undefined;
 
@@ -416,8 +421,8 @@ export function TravelGuidePage() {
 
         {filteredGuides.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-4">
-              {filteredGuides.slice(0, visibleCount).map((guide) => (
+            <div ref={guidesGridRef} className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3.5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-4">
+              {filteredGuides.slice(0, guideLimit).map((guide) => (
                 <GuideCard
                   key={guide.id}
                   guide={guideWithFavorite(guide)}
@@ -427,7 +432,7 @@ export function TravelGuidePage() {
                 />
               ))}
             </div>
-            {visibleCount < filteredGuides.length && (
+            {filteredGuides.length > guideLimit && (
               <div className="mt-5 flex justify-center sm:mt-7">
                 <button
                   type="button"

@@ -9,7 +9,7 @@ export function Awards() {
   const { t } = useLanguage();
   return (
     <section className="mb-5">
-      <SectionHeader title={t('section_awards')} viewAllHref="/awards" />
+      <SectionHeader title={t('section_awards')} />
       <div className="grid grid-cols-4 gap-2">
         {AWARDS.map((a) => {
           const Icon = ICONS[a.icon] ?? Trophy;

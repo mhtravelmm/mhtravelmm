@@ -126,7 +126,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
             onClick={toggleMobileMenu}
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
-            className="md:hidden"
+            className="lg:hidden"
           >
             {mobileMenuOpen ? (
               <X size={19} className="text-text-primary transition" />
@@ -139,7 +139,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
           </Link>
         </div>
 
-        <nav className="hidden gap-4 md:flex">
+        <nav className="hidden gap-4 lg:flex">
           {navItems.map((item) => {
             const active = location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
             return (
@@ -191,7 +191,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
             <button
               type="button"
               onClick={() => setNotificationsOpen((v) => !v)}
-              aria-label="Notifications"
+              aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
             >
               <Bell size={16} className="text-text-secondary hover:text-text-primary transition" />
               {unreadCount > 0 && (

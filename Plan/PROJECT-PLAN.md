@@ -294,6 +294,15 @@ selects one of them; a page never overrides the internal dimensions itself.
 - Category-based template system: all pages of the same category share an
   identical design, while different categories can look completely
   different from each other.
+- Load More rule: a paged grid must add whole rows. Read the grid's rendered
+  column count, round the next page up to a multiple of it, and clamp the last
+  page to the records that exist. Six items in a four-column grid load as
+  eight. The implementation is `src/lib/useGridColumnCount.ts`; any new paged
+  list uses it rather than a hard-coded page size.
+- Header breakpoint rule: the desktop navigation appears at `lg`, not `md`,
+  because the nav plus the search, language, currency, theme, Favorites,
+  notification, and account controls do not fit at 768–1023px. Verified with no
+  horizontal overflow from 360px to 1280px.
 
 ### Shop Owner Web UI/UX template marketplace
 

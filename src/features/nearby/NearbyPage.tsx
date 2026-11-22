@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Bike,
   BookOpen,
@@ -83,7 +84,11 @@ function distanceBetweenKm(lat1: number, lng1: number, lat2: number, lng2: numbe
 export function NearbyPage() {
   const { t } = useLanguage();
   const favorites = useToggleFavorite(NEARBY_LISTINGS);
-  const [category, setCategory] = useState<'all' | NearbyCategory>('all');
+  const [searchParams] = useSearchParams();
+  const requestedCategory = searchParams.get('category') as NearbyCategory | null;
+  const [category, setCategory] = useState<'all' | NearbyCategory>(() =>
+    requestedCategory && CATEGORY_META.some((item) => item.id === requestedCategory) ? requestedCategory : 'all',
+  );
   const [radiusKm, setRadiusKm] = useState(5);
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
   const [showAllPlaces, setShowAllPlaces] = useState(false);

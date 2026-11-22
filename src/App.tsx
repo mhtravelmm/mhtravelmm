@@ -20,6 +20,9 @@ import { MainOwnerPage } from './features/mainOwner/MainOwnerPage';
 import { FavoritesPage } from './features/favorites/FavoritesPage';
 import { TravelGuidePage } from './features/travelGuide/TravelGuidePage';
 import { SearchPage } from './features/search/SearchPage';
+import { CategoryIndexPage, CategoryPage } from './features/category/CategoryPage';
+import { PlaceDetailPage } from './features/place/PlaceDetailPage';
+import { CATEGORY_SLUGS, PLACE_SLUGS } from './routes';
 import { AuthProvider, useAuth } from './lib/auth';
 
 function Shell({ children, showFooter = false, fullWidth = false, dashboardFooter = false }: { children: React.ReactNode; showFooter?: boolean; fullWidth?: boolean; dashboardFooter?: boolean }) {
@@ -51,6 +54,11 @@ function StandalonePageLayout({ children }: { children: React.ReactNode }) {
 }
 
 function PlaceholderPage({ title }: { title: string }) { return <Shell><p className="py-10 text-center text-sm text-text-muted">{title} — coming soon.</p></Shell>; }
+
+function LegacyCityRedirect() {
+  const { cityId } = useParams<{ cityId: string }>();
+  return <Navigate to={`/cities/${encodeURIComponent(cityId ?? '')}`} replace />;
+}
 
 function LegacyBlogRedirect() {
   const { storyId } = useParams<{ storyId: string }>();
@@ -89,11 +97,10 @@ function AppRoutes() {
     <Route path="/" element={<Shell showFooter><HomePage /></Shell>} />
     <Route path="/cities" element={<Shell><CityPage /></Shell>} />
     <Route path="/cities/:cityId" element={<Shell><CityDetailPage /></Shell>} />
+    <Route path="/city/:cityId" element={<LegacyCityRedirect />} />
     <Route path="/nearby" element={<Shell><NearbyPage /></Shell>} />
     <Route path="/rentals" element={<Shell><RentalsPage /></Shell>} />
-    <Route path="/restaurants" element={<Shell><RestaurantPage /></Shell>} />
     <Route path="/restaurants/:id" element={<Shell><RestaurantPage /></Shell>} />
-    <Route path="/book-shops" element={<Shell><BookShopPage /></Shell>} />
     <Route path="/book-shops/:id" element={<Shell><BookShopPage /></Shell>} />
     <Route path="/ticketing" element={<Shell><TicketingPage /></Shell>} />
     <Route path="/travel-plans" element={<Shell><TravelPlansPage /></Shell>} />
@@ -113,6 +120,13 @@ function AppRoutes() {
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />
+    <Route path="/categories" element={<Shell><CategoryIndexPage /></Shell>} />
+    {CATEGORY_SLUGS.map((slug) => (
+      <Route key={slug} path={`/${slug}`} element={<Shell><CategoryPage slug={slug} /></Shell>} />
+    ))}
+    {PLACE_SLUGS.map((slug) => (
+      <Route key={slug} path={`/${slug}/:id`} element={<Shell><PlaceDetailPage kind={slug} /></Shell>} />
+    ))}
     <Route path="*" element={<PlaceholderPage title="Not found" />} />
   </Routes>;
 }

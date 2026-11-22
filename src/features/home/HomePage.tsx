@@ -50,6 +50,9 @@ export function HomePage() {
 
   return (
     <>
+      {/* The hero is an ad slot by design, so the page heading is screen-reader
+          only rather than visible branding copy. */}
+      <h1 className="sr-only">{t('home_page_title')}</h1>
       <Hero />
       <Categories />
 

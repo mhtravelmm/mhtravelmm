@@ -119,7 +119,7 @@ const translations = {
   city_hero_subtitle: { mm: 'သွားချင်တဲ့မြို့ကို ရွေးပြီး နေရာများ၊ ဟိုတယ်များနဲ့ ဒေသခံအတွေ့အကြုံတွေကို ရှာဖွေပါ။', en: 'Choose a city and discover its places, stays, and local experiences.' },
   city_hero_detail: { mm: 'MH Travel နဲ့ မြန်မာနိုင်ငံတစ်ဝှမ်း ခရီးစဉ်ကို စတင်စီစဉ်လိုက်ပါ။', en: 'Start planning your next Myanmar journey with MH Travel.' },
   city_hero_browse: { mm: 'မြို့များကို ကြည့်ရန်', en: 'Explore cities' },
-  see_more_cities: { mm: 'မြို့ ထပ်ကြည့်ရန်', en: 'See more cities' },
+  home_page_title: { mm: 'MH Travel မြန်မာ — ခရီးစဉ်၊ ဟိုတယ်နှင့် နေရာများ', en: 'MH Travel Myanmar — trips, hotels and places' },
   section_top_attractions: { mm: 'ထင်ရှားသော နေရာများ', en: 'Top attractions' },
   section_popular_hotels: { mm: 'လူကြိုက်များသော ဟိုတယ်များ', en: 'Popular hotels' },
   section_restaurants: { mm: 'စားသောက်ဆိုင်များ', en: 'Restaurants' },
@@ -831,7 +831,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, language);
-    document.documentElement.lang = language;
+    document.documentElement.lang = language === 'mm' ? 'my' : 'en';
   }, [language]);
 
   const toggleLanguage = () => setLanguage((l) => (l === 'mm' ? 'en' : 'mm'));

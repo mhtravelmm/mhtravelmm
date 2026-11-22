@@ -1,7 +1,7 @@
 # Plan vs Code — Verification Record
 
 **Checked:** 20 November 2026
-**Against:** `main` @ `acbca41`
+**Against:** `main` @ `8cdcf4e` plus the audit commit of 20 November.
 **Method:** every claim below was read in `Plan/PROJECT-PLAN.md` and then tested
 against the source tree. Nothing here is inferred from earlier notes.
 
@@ -14,14 +14,16 @@ where it contradicts itself. It does not change any code or any plan text.
 
 | Result | Count |
 |---|---|
-| Plan claim **confirmed** by code | 9 |
-| Plan claim **stale** (code moved on) | 4 |
+| Plan claim **confirmed** by code | 8 |
+| Plan claim **stale** (code moved on) | 6 |
 | Plan **internally contradictory** | 1 (3 violations in code) |
-| Plan claim **still open / accurate as a gap** | 6 |
+| Plan claim **still open / accurate as a gap** | 3 |
 
 The Plan is broadly honest. Its weakness is age: the audit section is dated
-2026-11-09, and four claims in it have since been fixed in code without the
-doc being updated.
+2026-11-09, and six claims in it have since been fixed in code without the
+doc being updated. Three of those six — the broken links, the dead CTAs, and
+the ignored `:id` — were fixed on 20 November and are now guarded by tests,
+so the Plan's gap list is shorter than it reads.
 
 ---
 
@@ -33,7 +35,7 @@ doc being updated.
 | 2 | Five card sizes, max widths 150/190/240/300/340px | §4 table | `CARD_SIZES` in `ListingCard.tsx` matches exactly |
 | 3 | No `supabase/` migration directory in the checkout | §2A audit | Directory absent |
 | 4 | Currency uses hard-coded `MMK_PER_USD = 4500` | §2A audit | `DEFAULT_MMK_PER_USD = 4500` in `currency.tsx` |
-| 5 | No automated test runner in `package.json` | §2A audit | No `test` script, no vitest/jest |
+| 5 | ~~No automated test runner in `package.json`~~ | §2A audit | **Stale since 20 Nov:** `test` script + Vitest added (see §3.5) |
 | 6 | Local preview store keeps plaintext passwords | §2A audit | `type StoredUser = AuthUser & { password: string }` |
 | 7 | Favorites live in `mh-travel-favorite-overrides` only | §2A audit | `STORAGE_KEY` in `favorites.tsx` |
 | 8 | Blog reader uses `/blogs?story=<slug>` | §2A audit | `searchParams.get('story')` |
@@ -92,6 +94,31 @@ the grid is **not** a five-column CSS grid — it is a flex row capped at
 that the code does not use.
 
 **Fix**: describe the cap, not the column count.
+
+### 3.5 "No automated test runner"
+
+**Plan says** (§2A audit): `package.json` has no `test` script and no
+Vitest/Jest dependency, so nothing guards the tree.
+
+**Code says**: `npm test` runs Vitest over four files (23 tests).
+`src/routes.ts` is now the single route table; `App.tsx`, the tests, and
+`public/manus-routes.json` all read from it. A seed link to an undeclared route,
+a duplicated catalog id, or a manifest that drifts from the router fails the
+suite.
+
+**Fix**: drop the claim, and record `npm test` in the delivery checks.
+
+### 3.6 "Restaurant/Book Shop CTAs are visual only" and ":id is ignored"
+
+**Plan says** (§2A): the Directions, Call, and View-all buttons have no handler,
+and the two detail pages ignore the route parameter.
+
+**Code says**: both pages read `:id` through `useParams` and resolve the record
+from the catalog, their category selectors filter the menu and book lists, and
+Directions and Call build a Google Maps search URL and a `tel:` link from
+`src/lib/placeActions.ts`.
+
+**Fix**: move these three rows out of §5 into the fixed list.
 
 ---
 
@@ -156,14 +183,19 @@ five columns. The Plan's rule and these four grids disagree in the same way as
 
 | Plan item | Status in code |
 |---|---|
-| Restaurant menu category selector does not filter dishes | **Confirmed.** `menuCategory` state is set by the buttons at line 133, but line 137 renders `DISHES.map(...)` with no filter. |
-| Restaurant/Book Shop CTAs are visual only | **Confirmed.** Directions, Call, View all buttons have no handler. |
-| Restaurant/Book Shop `:id` ignores the route parameter | **Confirmed.** `RestaurantPage` and `BookShopPage` contain no `useParams`. |
 | Catalog, bookings, plans, notifications are compiled data, not API | **Confirmed.** No query layer outside auth, main-owner, and blog media. |
 | Custom Plan, Rental, Ticketing submissions are local state only | **Confirmed.** No insert, no request ID, no notification. |
 | Blog distances are seeded, not computed | **Confirmed.** Geolocation gates display only. |
 
-The Plan's honesty here is a strength. These six items should stay.
+The Plan's honesty here is a strength. These three items should stay.
+
+The three gap rows this section used to carry are closed:
+
+| Was | Now |
+|---|---|
+| Restaurant menu category selector did not filter dishes | `filterByCategory` in `src/lib/categoryFilter.ts`, unit-tested |
+| Restaurant/Book Shop CTAs were visual only | Directions and Call build real URLs; dead View-all labels removed |
+| Restaurant/Book Shop `:id` ignored the route parameter | Both pages resolve their record from `useParams` |
 
 ---
 
@@ -171,13 +203,16 @@ The Plan's honesty here is a strength. These six items should stay.
 
 Gaps in the Plan's coverage, found while checking it:
 
-1. **48 broken internal links.** The Plan lists the undeclared paths but never
-   counts them or ties them to the visible "View all" buttons. See
-   [`STATUS.md` §5](./STATUS.md#5-broken-internal-links--not-done-48-links).
-2. **`/book_shop` typo.** Not mentioned anywhere.
-3. **Load More behaviour.** Not specified, so the code defines it twice with
-   two different implementations and no row-full check.
-4. **Tablet horizontal overflow at 820px.** Not mentioned.
+1. ~~**48 broken internal links.**~~ **Fixed 20 Nov** and now enforced by
+   `npm test`. See [`STATUS.md` §5](./STATUS.md#5-internal-links--done-0-broken).
+2. ~~**`/book_shop` typo.**~~ **Fixed.** It maps to `/book-shops`.
+3. ~~**Load More behaviour.**~~ **Fixed 20 Nov.** Both lists share
+   `src/lib/useGridColumnCount.ts`, which rounds each page to a whole row. The
+   Plan still has no rule, so it is listed in §7 below.
+4. ~~**Tablet horizontal overflow at 820px.**~~ **Fixed 20 Nov.** The header
+   switched to its desktop nav at `md` before it had room; it now switches at
+   `lg`, and `/account` got a constrained grid column. Verified clean at ten
+   widths from 360px to 1280px.
 5. **`xs` card readability on phones** (145×67px, 9px/7px type). Not mentioned.
 6. **Shop Owner and Main Owner have no `useLanguage`.** The Plan mentions Super
    Admin body copy as English-only but not the other two dashboards.
@@ -199,8 +234,9 @@ Ordered by how much confusion each removes. None of these are code changes.
 4. **Add `/blogs/:storyId` to the route manifest** (§3.3).
 5. **Rewrite the "five desktop columns" sentences** to describe the width cap
    (§3.4).
-6. **Add a Load More rule** to §4, since it is a layout rule that currently
-   exists only in code.
+6. **Add a Load More rule** to §4. The code now implements it consistently,
+   but the Plan still does not state it, so the next list written by hand can
+   still get it wrong.
 7. **Point the Plan at `Doc/STATUS.md`** as the status view, so there is one
    answer to "what is left".
 

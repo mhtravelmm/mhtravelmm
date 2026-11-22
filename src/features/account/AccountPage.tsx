@@ -99,8 +99,8 @@ export function AccountPage() {
 
   return (
     <div className="account-dashboard mx-auto w-full max-w-[1280px] rounded-md bg-account-bg p-3 text-text-primary shadow-2xl shadow-black/10 sm:rounded-xl sm:p-1.5 lg:p-2">
-      <div className="grid gap-1.5 lg:grid-cols-[168px_minmax(0,1fr)] lg:gap-1.5">
-        <aside className="account-sidebar self-start rounded-xl border border-account-border bg-account-surface p-2.5 sm:p-2.5 lg:sticky lg:top-20">
+      <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-[168px_minmax(0,1fr)] lg:gap-1.5">
+        <aside className="account-sidebar min-w-0 self-start rounded-xl border border-account-border bg-account-surface p-2.5 sm:p-2.5 lg:sticky lg:top-20">
           <div className="flex items-center gap-3 lg:flex-col lg:gap-2 lg:py-1 lg:text-center">
             <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-account-accent/80 bg-gradient-to-br from-sky-400 to-blue-700 text-base font-bold text-white shadow-lg shadow-sky-900/30 sm:h-16 sm:w-16">
               {initials || 'MH'}
@@ -159,7 +159,7 @@ export function AccountPage() {
           </button>
         </aside>
 
-        <main className="min-w-0">
+        <div className="min-w-0">
           {view === 'overview' && (
             <Overview
               name={displayName}
@@ -177,7 +177,7 @@ export function AccountPage() {
           {view === 'messages' && <Messages />}
           {view === 'settings' && <SettingsView name={displayName} email={displayEmail} />}
           {view === 'support' && <Support />}
-        </main>
+        </div>
       </div>
     </div>
   );

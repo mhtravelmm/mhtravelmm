@@ -1,7 +1,8 @@
 # MH Travel — Remaining Work Record
 
 **Last updated:** 20 November 2026
-**Verified against:** `main` @ `5f3924b`
+**Verified against:** `main` @ `8cdcf4e` plus the 20 November audit commit;
+detail in [`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
 
 The application currently provides a substantial frontend and local-preview experience. The following work remains before production launch.
 
@@ -9,23 +10,17 @@ For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file expands its **NOT DONE** and
 **PARTIAL** items.
 
-## Broken internal links — 48 confirmed
+## Internal links — resolved 20 November 2026
 
-The largest concrete defect. Links in seed data and `viewAllHref` props point
-at routes that do not exist, so they all land on the `*` fallback and render
-"Not found — coming soon." Full breakdown in
-[`STATUS.md` §5](./STATUS.md#5-broken-internal-links--not-done-48-links).
+The 48 broken links this section used to list are fixed: nine catalog routes
+and six place-detail route families were added, `/book_shop` was corrected to
+`/book-shops`, and the three Home "View all" buttons that pointed at
+nonexistent sections were removed. Detail in
+[`COMPLETED-WORK.md`](./COMPLETED-WORK.md#route-integrity--verified-20-november-2026).
 
-- `/book_shop` is a typo for `/book-shops`. Fix first, it is one character.
-- Ten category pages are missing: `/hotels`, `/cafes`, `/attractions`,
-  `/markets`, `/populars`, `/reviews`, `/categories`, `/partners`, `/awards`,
-  `/guides`. Each is the target of a visible "View all" button.
-- Thirty-eight detail links are missing: `/hotels/:id` (8), `/markets/:id` (7),
-  `/cafes/:id` (5), `/attractions/:id` (5), `/ticketing/:id` (5),
-  `/rentals/:id` (5), plus `/emergency`, `/exchange`, `/sim_card`.
-
-For each, either add the route or stop rendering the card as a link. Leaving a
-card clickable when it leads to "coming soon" is worse than a static card.
+The fix is enforced rather than remembered. `npm test` resolves every seed
+`href` against the declared route table, so a new link to a missing route fails
+the suite instead of reaching a user as "coming soon."
 
 ## Authentication and authorization
 
@@ -65,11 +60,17 @@ card clickable when it leads to "coming soon" is worse than a static card.
 
 ## Routes, content, and UX backlog
 
-- Resolve remaining legacy or undeclared catalog routes such as hotel, market, cafe, attraction, rental detail, ticket detail, legacy Travel Plan, and legacy Blog URL paths.
-- Make Restaurant and Book Shop detail pages select real records by route parameter and connect directions, calls, maps, view-all, and related CTAs to real actions.
-- Make Restaurant and Book Shop category selectors filter their displayed menu/book lists.
+- Write the Load More rule into `PROJECT-PLAN.md` §4. Blogs and Travel Guide
+  already share `src/lib/useGridColumnCount.ts` and page by whole rows; the
+  Plan text is what is missing.
+- Connect the Directions, Call, and View-all CTAs on Restaurant, Book Shop, and
+  the place detail page to real handoff flows once business contact records
+  exist in Supabase. They currently build a Google Maps search URL and a
+  `tel:` link from seed data.
 - Complete remaining bilingual localization, especially Super Admin body copy and the Shop Owner interface.
-- Define and add automated behavioral tests; maintain typecheck, build, lint, and whitespace validation in delivery checks.
+- Add component-level behavioral tests. Route, link, manifest, and filter tests
+  exist and run under `npm test`; nothing yet renders a page and asserts on it,
+  so interaction regressions (filters, tabs, forms) are still caught by hand.
 
 ## External configuration and decisions
 
@@ -113,25 +114,41 @@ work can be sized.
   place.
 - **One section gap of 0px on `/blogs`.** Two sections sit flush against each
   other with no breathing room.
-- **Horizontal overflow at tablet width.** At 820px the document scrolls
-  sideways by 21–37px. Traced to the header's `flex items-center gap-3`
-  container, not to the cards. Predates the card work.
+- ~~**Horizontal overflow at tablet width.**~~ **Fixed 20 November 2026.** The
+  header switched to its desktop nav at `md` (768px) while the nav, search,
+  language, currency, theme, favorites, notification, and account controls
+  together need more room, so the header pushed the document 21–37px wide.
+  The nav now appears at `lg`. `/account` had the same problem from an
+  unconstrained grid column and is fixed too. Verified at 360, 390, 414, 600,
+  768, 820, 900, 1024, 1180, and 1280px across 15 routes: no overflow.
 
 ### Accessibility
 
-- **5 images have no `alt` attribute.** Small number, quick fix.
-- **139 buttons have no `aria-label`.** Most are text buttons where a label is
-  not required. This needs a real pass to separate icon-only buttons from text
-  buttons rather than a blanket edit.
-- **No automated accessibility test exists.** No axe, no lighthouse check in
-  delivery.
+Measured with axe-core in headless Chromium on 20 November 2026 across 23
+routes. Every check except contrast is now clean.
+
+- **0 images without `alt`.** All 183 rendered images carry one.
+- **0 interactive elements without an accessible name.** All 1120 have a label
+  from text, `aria-label`, or `title`. The six sponsored ad links and the
+  notification bell were the last gaps and are fixed.
+- **0 violations of every axe rule except `color-contrast`.** Heading order,
+  landmark structure, tab roles, form labels, and `html lang` all pass.
+- **73 `color-contrast` nodes on 18 routes.** One cause: white on
+  `brand-blue #4d8dff` is 3.2:1 and `brand-red #c0392b` as text on the dark card
+  is 3.3:1. Both are used at 9–12px where 4.5:1 is required. Fixing it means
+  changing the brand palette (`#356fe0` for the blue, a lighter red for text),
+  so it needs a design decision rather than a code edit.
+- **No automated accessibility test in delivery.** axe was run by hand for this
+  audit. The Vitest suite covers routes, links, and filters only, because axe
+  needs a browser and the suite deliberately runs without one.
 
 ### Interaction
 
-- **Load More does not check whether the last row is full.** Blogs pages by 6
-  and Travel Guide pages by 6, so on a four-column layout the button can appear
-  under a row with two empty slots, and can appear when nothing further
-  matches. Two independent implementations, no shared helper.
+- ~~**Load More does not check whether the last row is full.**~~ **Fixed 20
+  November 2026.** Both lists read their real column count through
+  `useGridColumnCount` and page by whole rows via `alignToRow`, so a request for
+  six in a four-column grid shows eight. The final page is clamped to what
+  exists. Unit-tested.
 - **No empty-state audit.** Empty states exist on some pages (Blogs search,
   Favorites, Travel Guide) but there is no check that every list has one.
 

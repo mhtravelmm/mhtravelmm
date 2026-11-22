@@ -9,7 +9,7 @@ This folder stores project documentation and implementation records.
   **Start here.**
 - [`COMPLETED-WORK.md`](./COMPLETED-WORK.md) — detail behind the finished work.
 - [`REMAINING-WORK.md`](./REMAINING-WORK.md) — detail behind the open work,
-  grouped by layer (links, auth, data, media, dashboards, UI/UX).
+  grouped by layer (auth, data, media, dashboards, UI/UX).
 - [`PLAN-VS-CODE.md`](./PLAN-VS-CODE.md) — the Plan checked against the code:
   confirmed claims, stale claims, and internal contradictions.
 
@@ -27,3 +27,19 @@ The consolidated product plan is maintained in
 
 `PREVIEW` is expected: the project is frontend-first, so most traveler features
 are intentionally preview-quality until backend wiring lands.
+
+## Delivery checks
+
+Run all four before calling work finished:
+
+```
+npm run typecheck
+npm test
+npm run lint
+npm run build
+```
+
+`npm test` is the guard that keeps the docs from going stale on the one point
+that is easy to get wrong: every seed link must resolve to a declared route, and
+`public/manus-routes.json` must list exactly those routes. Adding a page or a
+link without updating `src/routes.ts` fails the suite.

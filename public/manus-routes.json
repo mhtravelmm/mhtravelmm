@@ -1,30 +1,172 @@
 {
   "routes": [
-    { "path": "/", "title": "Home" },
-    { "path": "/cities", "title": "Cities" },
-    { "path": "/cities/:cityId", "title": "City details" },
-    { "path": "/nearby", "title": "Nearby" },
-    { "path": "/rentals", "title": "Rentals" },
-    { "path": "/restaurants", "title": "Restaurants" },
-    { "path": "/restaurants/:id", "title": "Restaurant details" },
-    { "path": "/book-shops", "title": "Book shops" },
-    { "path": "/book-shops/:id", "title": "Book shop details" },
-    { "path": "/ticketing", "title": "Ticketing" },
-    { "path": "/travel-plans", "title": "Travel plans" },
-    { "path": "/travel-plans/:planId", "title": "Travel plan details" },
-    { "path": "/travel-guide", "title": "Travel Guide" },
-    { "path": "/travel-guide/:guideId", "title": "Travel Guide details" },
-    { "path": "/blogs", "title": "Blogs" },
-    { "path": "/search", "title": "Search" },
-    { "path": "/account", "title": "User account" },
-    { "path": "/login", "title": "Login" },
-    { "path": "/signup", "title": "Registration" },
-    { "path": "/admin/login", "title": "Admin login" },
-    { "path": "/super-admin", "title": "Super Admin" },
-    { "path": "/shop-owner", "title": "Shop Owner Dashboard" },
-    { "path": "/main-owner", "title": "Main Owner Control Center" },
-    { "path": "/notifications", "title": "Notifications" },
-    { "path": "/account/notifications", "title": "Account notifications" },
-    { "path": "/favorites", "title": "Favorites" }
+    {
+      "path": "/",
+      "title": "Home"
+    },
+    {
+      "path": "/account",
+      "title": "User account"
+    },
+    {
+      "path": "/account/notifications",
+      "title": "Account notifications"
+    },
+    {
+      "path": "/admin/login",
+      "title": "Admin login"
+    },
+    {
+      "path": "/attractions",
+      "title": "Attractions"
+    },
+    {
+      "path": "/blogs",
+      "title": "Blogs"
+    },
+    {
+      "path": "/book-shops",
+      "title": "Book shops"
+    },
+    {
+      "path": "/cafes",
+      "title": "Cafes"
+    },
+    {
+      "path": "/categories",
+      "title": "Category index"
+    },
+    {
+      "path": "/cities",
+      "title": "Cities"
+    },
+    {
+      "path": "/favorites",
+      "title": "Favorites"
+    },
+    {
+      "path": "/hotels",
+      "title": "Hotels"
+    },
+    {
+      "path": "/login",
+      "title": "Login"
+    },
+    {
+      "path": "/main-owner",
+      "title": "Main Owner Control Center"
+    },
+    {
+      "path": "/markets",
+      "title": "Markets"
+    },
+    {
+      "path": "/nearby",
+      "title": "Nearby"
+    },
+    {
+      "path": "/notifications",
+      "title": "Notifications"
+    },
+    {
+      "path": "/populars",
+      "title": "Populars"
+    },
+    {
+      "path": "/rentals",
+      "title": "Rentals"
+    },
+    {
+      "path": "/restaurants",
+      "title": "Restaurants"
+    },
+    {
+      "path": "/search",
+      "title": "Search"
+    },
+    {
+      "path": "/shop-owner",
+      "title": "Shop Owner Dashboard"
+    },
+    {
+      "path": "/signup",
+      "title": "Registration"
+    },
+    {
+      "path": "/super-admin",
+      "title": "Super Admin"
+    },
+    {
+      "path": "/ticketing",
+      "title": "Ticketing"
+    },
+    {
+      "path": "/transport",
+      "title": "Transport operators"
+    },
+    {
+      "path": "/travel-guide",
+      "title": "Travel Guide"
+    },
+    {
+      "path": "/travel-plans",
+      "title": "Travel plans"
+    },
+    {
+      "path": "/attractions/:id",
+      "title": "Attraction details"
+    },
+    {
+      "path": "/blogs/:storyId",
+      "title": "Legacy blog story redirect"
+    },
+    {
+      "path": "/book-shops/:id",
+      "title": "Book shop details"
+    },
+    {
+      "path": "/cafes/:id",
+      "title": "Cafe details"
+    },
+    {
+      "path": "/cities/:cityId",
+      "title": "City details"
+    },
+    {
+      "path": "/city/:cityId",
+      "title": "Legacy city details redirect"
+    },
+    {
+      "path": "/hotels/:id",
+      "title": "Hotel details"
+    },
+    {
+      "path": "/markets/:id",
+      "title": "Market details"
+    },
+    {
+      "path": "/populars/:id",
+      "title": "Popular place details"
+    },
+    {
+      "path": "/rentals/:id",
+      "title": "Rental details"
+    },
+    {
+      "path": "/restaurants/:id",
+      "title": "Restaurant details"
+    },
+    {
+      "path": "/ticketing/:id",
+      "title": "Ticketing operator details"
+    },
+    {
+      "path": "/travel-guide/:guideId",
+      "title": "Travel Guide details"
+    },
+    {
+      "path": "/travel-plans/:planId",
+      "title": "Travel plan details"
+    }
   ]
 }

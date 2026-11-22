@@ -1,7 +1,8 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 20 November 2026
-**Verified against:** `main` @ `5f3924b`
+**Verified against:** `main` @ `5f3924b` plus the route, accessibility,
+layout, and paging work of 20 November 2026.
 
 This document records the frontend features, preview workflows, backend preparation, and documentation work completed so far. Production/backend boundaries remain explicitly listed in [`REMAINING-WORK.md`](./REMAINING-WORK.md).
 
@@ -54,6 +55,7 @@ For the one-page view of what is finished versus open, read
 ## Validation and delivery
 
 - TypeScript typecheck and Vite production builds have passed for the latest feature work.
+- `npm test` (Vitest) runs the route, link, and filter suite in under a second.
 - `git diff --check` has passed before recent deliveries.
 - ESLint has no errors; the repository retains seven existing non-blocking warnings.
 - Recent frontend and documentation changes have been committed and pushed to the GitHub `main` branch.
@@ -105,13 +107,40 @@ is ever wanted back.
 
 ## Route integrity — verified 20 November 2026
 
-All 26 routes declared in `public/manus-routes.json` resolve in `src/App.tsx`,
+All 42 routes declared in `public/manus-routes.json` resolve in `src/App.tsx`,
 and every declared route is reachable. The `*` fallback renders a placeholder
 rather than crashing.
 
-This does not mean every link works. Links inside seed data point at routes
-that are not declared; those are recorded in
-[`STATUS.md` §5](./STATUS.md#5-broken-internal-links--not-done-48-links).
+The 48 broken links recorded in the earlier audit are fixed:
+
+- Nine catalog routes (`/attractions`, `/hotels`, `/restaurants`, `/cafes`,
+  `/markets`, `/book-shops`, `/rentals`, `/transport`, `/populars`) plus
+  `/categories` as the index, all served by `CategoryPage` and
+  `CategoryIndexPage`.
+- Six place-detail families (`/hotels/:id`, `/cafes/:id`, `/markets/:id`,
+  `/attractions/:id`, `/ticketing/:id`, `/rentals/:id`) served by one
+  `PlaceDetailPage` that resolves its record through `placeCatalog.ts`.
+- The `/book_shop` underscore typo now maps to `/book-shops`.
+- `viewAllHref` was removed from Reviews, Partners, and Awards: those sections
+  already render their full content inline, so the button led nowhere.
+
+`src/routes.ts` is the single route table. `App.tsx` builds its catalog and
+place routes from it, and the tests read it, so a route cannot be declared in
+one place and forgotten in another.
+
+## Link and route tests — 20 November 2026
+
+`npm test` runs Vitest over four files, 23 tests:
+
+| File | What it proves |
+|---|---|
+| `src/data/links.test.ts` | Every seed `href` resolves to a declared route; no duplicate route paths; every catalog id is unique within its catalog; a place href resolves to the record that owns it |
+| `src/routes.manifest.test.ts` | `public/manus-routes.json` lists exactly the declared routes, each once, each with a title |
+| `src/lib/categoryFilter.test.ts` | Category options and filtering, plus the map-search and phone-dial href builders |
+| `src/lib/useGridColumnCount.test.ts` | Whole-row paging maths, including clamping the last page so no record is hidden |
+
+The suite runs in under a second and needs no browser, so it can gate every
+delivery check alongside typecheck, build, and lint.
 
 ## Code hygiene — verified 20 November 2026
 
@@ -119,3 +148,56 @@ that are not declared; those are recorded in
 - No `console.log` left in source.
 - ESLint has zero errors and seven pre-existing non-blocking warnings.
 - Typecheck and production build pass on the audited commit.
+- `npm test` passes: 23 tests over the route table, seed links, filters, and
+  paging.
+
+## Accessibility — measured 20 November 2026
+
+axe-core run in headless Chromium at 1440px across 23 routes: every declared
+page plus the Super Admin, Shop Owner, and Main Owner dashboards.
+
+- **242 rendered images, 0 without `alt`.**
+- **1120 interactive elements, 0 without an accessible name.**
+- **0 violations of every rule except `color-contrast`.** That covers heading
+  order, landmark structure, tab roles, form labels, and `html lang`.
+- **64 `color-contrast` nodes on 17 routes**, down from 562 before the audit.
+  Two pairs cause 55 of them and both are brand colours: white on
+  `brand-blue #4d8dff` (3.2:1) and `brand-red #c0392b` as text on the dark card
+  (3.3:1). Changing them changes the brand palette, so the decision is recorded
+  in [`REMAINING-WORK.md`](./REMAINING-WORK.md) instead of being made silently.
+
+Fixed along the way:
+
+- Six sponsored ad links in `AdSlot` had no accessible name. They now carry
+  `aria-label="Sponsored: <advertiser>"`, and the decorative ad video is
+  `aria-hidden`.
+- The notification bell read "Notifications" while its badge said "3", which
+  axe flags as a name/content mismatch. The label now includes the unread count.
+- `document.documentElement.lang` was set to `mm`, which is not a language code.
+  Burmese is `my`, so the tag is now mapped.
+- The viewport meta tag set `maximum-scale=1.0, user-scalable=no`, which blocks
+  pinch zoom. Removed.
+- Ticketing's category buttons used `role="tab"` with no `tablist` parent.
+- `/account` nested a second `<main>` inside the shell's `<main>`.
+
+## Layout — horizontal overflow fixed 20 November 2026
+
+The document scrolled sideways by 21–37px at 820px. The header switched to its
+desktop navigation at `md` (768px), but the nav plus search, language, currency,
+theme, Favorites, notifications, and account controls need more width than that.
+The nav now appears at `lg`. `/account` had the same problem from an
+unconstrained grid column and is fixed too.
+
+Verified at 360, 390, 414, 600, 768, 820, 900, 1024, 1180, and 1280px across 15
+routes: no horizontal overflow anywhere.
+
+## Paging — fixed 20 November 2026
+
+Blogs and Travel Guide each paged by a hard-coded six, which leaves a ragged
+last row on a four-column grid. Both now share `src/lib/useGridColumnCount.ts`:
+it reads the grid's real column count from the computed style, so no breakpoint
+is duplicated in JavaScript, and `alignToRow` rounds each page up to a whole
+row. The last page is clamped to what exists, so nothing is hidden.
+
+Confirmed in the browser: Blogs renders 8 cards at 1440px and 6 at 390px;
+Travel Guide renders 8 and 6 the same way.

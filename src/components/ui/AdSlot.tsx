@@ -61,6 +61,7 @@ export function AdSlot({ placement, fetchAd, devPlaceholder }: AdSlotProps) {
       href={ad.clickThroughUrl}
       target="_blank"
       rel="noopener noreferrer sponsored"
+      aria-label={`Sponsored: ${ad.advertiser}`}
       className="block overflow-hidden rounded-lg"
       data-ad-placement={placement}
       data-advertiser={ad.advertiser}
@@ -68,7 +69,7 @@ export function AdSlot({ placement, fetchAd, devPlaceholder }: AdSlotProps) {
       {ad.type === 'image' ? (
         <img src={ad.mediaUrl} alt={`Ad by ${ad.advertiser}`} className="w-full" />
       ) : (
-        <video src={ad.mediaUrl} autoPlay muted loop playsInline className="w-full" />
+        <video src={ad.mediaUrl} autoPlay muted loop playsInline aria-hidden="true" className="w-full" />
       )}
     </a>
   );

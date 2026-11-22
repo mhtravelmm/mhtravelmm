@@ -230,7 +230,7 @@ export function TicketingPage() {
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-border bg-bg-card shadow-sm">
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-border px-2 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-3">
+        <div role="tablist" className="flex items-center gap-1 overflow-x-auto border-b border-border px-2 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-3">
           {PRIMARY_PRODUCTS.map((product) => {
             const Icon = product.icon;
             const active = type === product.id;

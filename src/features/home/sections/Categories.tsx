@@ -31,6 +31,23 @@ const ICONS: Record<string, LucideIcon> = {
   MapPin,
 };
 
+// Where each category tile goes. Most open a catalog page that lists that
+// catalog; the four with no catalog of their own point at the page that
+// actually serves them instead of a path that does not exist.
+const CATEGORY_HREFS: Record<string, string> = {
+  book_shop: '/book-shops',
+  hotels: '/hotels',
+  ticketing: '/ticketing',
+  rentals: '/rentals',
+  restaurants: '/restaurants',
+  attractions: '/attractions',
+  guides: '/travel-guide',
+  exchange: '/nearby?category=exchange',
+  emergency: '/nearby?category=hospital',
+  sim_card: '/search?q=sim',
+  nearby: '/nearby',
+};
+
 // Maps each category's data key to its translation key (see lib/i18n.tsx)
 const CATEGORY_LABEL_KEYS: Record<string, TranslationKey> = {
   book_shop: 'cat_book_shop',
@@ -59,7 +76,7 @@ function CategoryItem({
   const labelKey = CATEGORY_LABEL_KEYS[cat.key];
   return (
     <Link
-      to={`/${cat.key}`}
+      to={CATEGORY_HREFS[cat.key] ?? '/'}
       aria-hidden={ariaHidden}
       tabIndex={ariaHidden ? -1 : undefined}
       className="flex shrink-0 basis-[64px] flex-col items-center gap-1"
