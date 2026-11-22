@@ -1,8 +1,9 @@
 # MH Travel — Remaining Work Record
 
-**Last updated:** 20 November 2026
-**Verified against:** `main` @ `8cdcf4e` plus the 20 November audit commit;
-detail in [`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
+**Last updated:** 22 November 2026
+**Verified against:** `main` @ `8b9f1d2` plus the 22 November work on the guide
+route follower and the two owner dashboards; detail in
+[`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
 
 The application currently provides a substantial frontend and local-preview experience. The following work remains before production launch.
 
@@ -69,10 +70,13 @@ the suite instead of reaching a user as "coming soon."
   the place detail page to real handoff flows once business contact records
   exist in Supabase. They currently build a Google Maps search URL and a
   `tel:` link from seed data.
-- Complete remaining bilingual localization, especially Super Admin body copy and the Shop Owner interface.
-- Add component-level behavioral tests. Route, link, manifest, and filter tests
-  exist and run under `npm test`; nothing yet renders a page and asserts on it,
-  so interaction regressions (filters, tabs, forms) are still caught by hand.
+- Complete remaining bilingual localization: Super Admin body copy is the last
+  dashboard that still renders mostly English. Shop Owner and Main Owner were
+  localized on 22 November 2026.
+- Add component-level behavioral tests. Route, link, manifest, filter, and
+  domain-rule tests exist and run under `npm test` (79 tests in 11 files);
+  nothing yet renders a page and asserts on it, so interaction regressions
+  (filters, tabs, forms) are still caught by hand.
 
 ## External configuration and decisions
 

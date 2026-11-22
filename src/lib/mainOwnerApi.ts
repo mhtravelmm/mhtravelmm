@@ -1,3 +1,4 @@
+import type { TranslationKey } from './i18n';
 import { isSupabaseConfigured, supabase } from './supabase';
 
 export type BranchStatus = 'Active' | 'Pending' | 'Suspended';
@@ -26,10 +27,10 @@ export type BranchAccountInput = {
 };
 
 export type BranchField = keyof BranchAccountInput;
-export type BranchFieldErrors = Partial<Record<BranchField, string>>;
+export type BranchFieldErrors = Partial<Record<BranchField, TranslationKey>>;
 export type BranchAccountResult =
   | { ok: true; branch: BranchAccount; source: 'supabase' | 'preview' }
-  | { ok: false; message: string; errors?: BranchFieldErrors };
+  | { ok: false; message: TranslationKey; errors?: BranchFieldErrors };
 
 const PREVIEW_BRANCHES_KEY = 'mh-main-owner-branch-accounts';
 const MONTHLY_BRANCH_FEE_MMK = 10000;
@@ -55,13 +56,13 @@ export function validateBranchAccount(rawInput: BranchAccountInput): BranchField
   const phonePattern = /^(?:09\d{7,9}|\+?959\d{7,9})$/;
   const share = Number(input.share);
 
-  if (!namePattern.test(input.station)) errors.station = 'Use 2–80 letters or numbers and avoid special symbols.';
-  if (!input.city || input.city.length < 2 || input.city.length > 60) errors.city = 'Enter a city between 2 and 60 characters.';
-  if (input.address.length > 160) errors.address = 'Address must be 160 characters or fewer.';
-  if (input.owner && (input.owner.length < 2 || input.owner.length > 80)) errors.owner = 'Owner name must be 2–80 characters.';
-  if (!usernamePattern.test(input.username)) errors.username = 'Use 4–32 lowercase letters, numbers, or underscores; start with a letter.';
-  if (!phonePattern.test(phoneDigits)) errors.phone = 'Enter a valid Myanmar phone number, for example 09 400 686 925.';
-  if (!Number.isFinite(share) || share < 0 || share > 100) errors.share = 'Revenue share must be between 0 and 100%.';
+  if (!namePattern.test(input.station)) errors.station = 'owner_err_station';
+  if (!input.city || input.city.length < 2 || input.city.length > 60) errors.city = 'owner_err_city';
+  if (input.address.length > 160) errors.address = 'owner_err_address';
+  if (input.owner && (input.owner.length < 2 || input.owner.length > 80)) errors.owner = 'owner_err_owner_name';
+  if (!usernamePattern.test(input.username)) errors.username = 'owner_err_username';
+  if (!phonePattern.test(phoneDigits)) errors.phone = 'owner_err_phone';
+  if (!Number.isFinite(share) || share < 0 || share > 100) errors.share = 'owner_err_share';
 
   return errors;
 }
@@ -99,10 +100,10 @@ function savePreviewBranch(branch: BranchAccount) {
 export async function createBranchAccount(rawInput: BranchAccountInput): Promise<BranchAccountResult> {
   const input = trimInput(rawInput);
   const errors = validateBranchAccount(input);
-  if (Object.keys(errors).length > 0) return { ok: false, message: 'Please fix the highlighted fields.', errors };
+  if (Object.keys(errors).length > 0) return { ok: false, message: 'owner_err_fix_fields', errors };
 
   const duplicatePreview = readPreviewBranchAccounts().some((branch) => branch.username === input.username);
-  if (duplicatePreview) return { ok: false, message: 'This username is already used by a preview branch account.', errors: { username: 'Choose a unique username.' } };
+  if (duplicatePreview) return { ok: false, message: 'owner_err_duplicate_username', errors: { username: 'owner_err_username_taken' } };
 
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.from('operator_branches').insert({
@@ -118,7 +119,7 @@ export async function createBranchAccount(rawInput: BranchAccountInput): Promise
       status: 'pending',
     }).select('id, station_name, city, owner_name, username, monthly_fee_mmk, revenue_share_percent, status').single();
 
-    if (error) return { ok: false, message: error.code === '42P01' ? 'Branch API is not ready: create the operator_branches table and RLS policy first.' : error.message };
+    if (error) return { ok: false, message: 'owner_err_branch_api' };
     return { ok: true, branch: toBranchAccount(data as Record<string, unknown>, input), source: 'supabase' };
   }
 

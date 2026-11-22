@@ -1,8 +1,9 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 22 November 2026
-**Verified against:** `main` @ `b39aa0a` plus the Blog and Travel Guide admin
-editors, admin-role accounts, and rental-category work of 20–22 November 2026.
+**Verified against:** `main` @ `8b9f1d2` plus the Blog and Travel Guide admin
+editors, admin-role accounts, the rental-category work of 20–22 November 2026,
+and the same-day work on the guide route follower and the two owner dashboards.
 
 This document records the frontend features, preview workflows, backend preparation, and documentation work completed so far. Production/backend boundaries remain explicitly listed in [`REMAINING-WORK.md`](./REMAINING-WORK.md).
 
@@ -26,6 +27,30 @@ For the one-page view of what is finished versus open, read
 - Ticketing preview supports Bus, Train, Events, and Cinema flows with route/venue matching, seat selection where applicable, validation, and order-confirmation states.
 - Rentals preview supports city-specific availability, rental type selection, dates, customer type, delivery/branch pickup, pricing estimates, and submission handoff.
 - Shared Favorites persist locally, update immediately after save/unsave, and synchronize across same-tab and browser storage events.
+
+## Travel Guide route follower
+
+- `/travel-guide/:guideId` has a "Follow this route" control. It walks the
+  itinerary one stop at a time, showing the stop time, photo, description, and
+  a Directions link, and marks the matching row in the full timeline with
+  `aria-current="step"`.
+- `src/lib/guideFollow.ts` holds the rule: the index is clamped to the route,
+  the position is one-based, and stepping stops at both ends instead of
+  wrapping. Unit-tested in `guideFollow.test.ts`.
+- Bilingual copy for the follower is in `i18n.tsx` under `guide_follow_*`.
+
+## Shop Owner and Main Owner localization
+
+- Both dashboards now read every label through `useLanguage`, and both have a
+  language control in the header. English is still the default; switching
+  writes the shared `mh-travel-language` key, so the choice follows the user
+  across the traveler pages.
+- Numbers in both dashboards go through `Intl.NumberFormat`, so counts and
+  amounts render with Burmese digits in MM mode.
+- `mainOwnerApi.ts` returns translation keys instead of English sentences for
+  validation failures, so branch-account errors and the submit message render
+  in the active language. `validateBranchAccount` keeps the same rules.
+- Copy for the two dashboards lives under the `owner_*` key group.
 
 ## Authentication and administrative interfaces
 

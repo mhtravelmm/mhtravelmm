@@ -1,8 +1,8 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 20 November 2026
-**Audited against:** `main` @ `8cdcf4e` plus the audit commit that carries
-this file's 20 November findings.
+**Last audited:** 22 November 2026
+**Audited against:** `main` @ `8b9f1d2` plus the 22 November work on the guide
+route follower and the two owner dashboards.
 
 This file is the single status view for the project. It replaces guesswork about
 what is finished: every item below was checked against the actual source tree,
@@ -45,7 +45,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (29 tests, 5 files) |
+| `npm test` (vitest) | **PASS** (79 tests, 11 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (42 declared routes, all render) |
 
@@ -64,7 +64,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **PARTIAL** | 761 keys; dashboards lag (see §6) |
+| Bilingual MM/EN provider | **PARTIAL** | 928 keys; Super Admin body copy still lags (see §6) |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -102,7 +102,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/travel-plans` | **PREVIEW** | Search, filters, custom-plan builder |
 | `/travel-plans/:planId` | **PREVIEW** | Generated itinerary, pricing, CTA |
 | `/travel-guide` | **PREVIEW** | Category + search filters |
-| `/travel-guide/:guideId` | **DONE** | Full guide reader with itinerary timeline |
+| `/travel-guide/:guideId` | **DONE** | Guide reader with itinerary timeline and a stop-by-stop "Follow this route" stepper |
 | `/blogs` | **PREVIEW** | Listing + in-page reader via `?story=` |
 | `/blogs/:storyId` | **DONE** | Legacy path redirects to `/blogs?story=:id` |
 | `/search` | **PREVIEW** | City/category/combined query modes |
@@ -113,9 +113,9 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/login` | **PARTIAL** | UI complete; local preview session |
 | `/signup` | **PARTIAL** | UI complete; local preview session |
 | `/admin/login` | **PARTIAL** | Separated from traveler login |
-| `/super-admin` | **PARTIAL** | Guarded; English-only body copy |
-| `/shop-owner` | **PARTIAL** | Guarded; no i18n at all |
-| `/main-owner` | **PARTIAL** | Guarded; no i18n at all |
+| `/super-admin` | **PARTIAL** | Guarded; body copy still largely English |
+| `/shop-owner` | **PARTIAL** | Guarded; bilingual labels, preview data |
+| `/main-owner` | **PARTIAL** | Guarded; bilingual labels, preview data |
 
 ---
 
@@ -174,8 +174,8 @@ are referenced by the Plan as future utility pages. No seed data links to them.
 | Admin Management | **PARTIAL** | Local state; form offers the eight Plan §3 roles and creates a real local admin account with the chosen role |
 | Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally |
 | Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows; content is still local state |
-| Shop Owner dashboard | **PARTIAL** | English-only, no `useLanguage` |
-| Main Owner dashboard | **PARTIAL** | English-only, no `useLanguage` |
+| Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
+| Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
 | Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected; Blog Post Admin and Travel Guide Content Admin reach only their own editor |
 
 ---
@@ -261,11 +261,12 @@ Two places where the doc and the tree disagreed, now reconciled:
 Steps 1 and 2 are now done, so the list starts where the frontend stops:
 
 1. Decide the two brand-palette contrast values, then re-run axe to zero.
-2. Localize Shop Owner and Main Owner.
-3. Wire Favorites, Notifications, and Reviews to the tables that already exist.
-4. Connect the Custom Plan, Rental, and Ticketing submissions to request
+2. ~~Localize Shop Owner and Main Owner.~~ **Done 22 November 2026.**
+3. Localize the remaining Super Admin body copy.
+4. Wire Favorites, Notifications, and Reviews to the tables that already exist.
+5. Connect the Custom Plan, Rental, and Ticketing submissions to request
    records with an ID and a confirmation.
-5. Replace seeded catalog data with city-scoped Supabase queries.
+6. Replace seeded catalog data with city-scoped Supabase queries.
 
-The first three are frontend work with no new infrastructure. Steps 4 and 5
+Steps 1, 3, and 4 are frontend work with no new infrastructure. Steps 5 and 6
 need the backend push.

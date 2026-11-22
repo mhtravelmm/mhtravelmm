@@ -22,6 +22,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import type { TranslationKey } from '../../lib/i18n';
 import { useLanguage } from '../../lib/i18n';
+import { followStep, stepIndex } from '../../lib/guideFollow';
 import { mapSearchUrl } from '../../lib/placeActions';
 import { usePagedList } from '../../lib/usePagedList';
 import type { Language } from '../../types';
@@ -178,6 +179,9 @@ function GuideDetail({
   onToggleFavorite: () => void;
 }) {
   const title = guide.localizedTitle[language];
+  const [followIndex, setFollowIndex] = useState<number | null>(null);
+  const follow = followIndex === null ? null : followStep(followIndex, guide.stops.length);
+  const activeStop = follow ? guide.stops[follow.index] : undefined;
 
   return (
     <div className="mx-auto w-full max-w-[1440px] space-y-4 md:space-y-6">
@@ -216,9 +220,80 @@ function GuideDetail({
             <h2 className="text-base font-bold text-text-primary sm:text-lg">{t('guide_itinerary')}</h2>
           </div>
           <p className="mt-1 text-xs text-text-muted sm:text-sm">{t('guide_itinerary_intro')}</p>
+
+          {guide.stops.length > 0 && (
+            <div className="mt-3">
+              {!follow || !activeStop ? (
+                <button
+                  type="button"
+                  onClick={() => setFollowIndex(0)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand-blue px-3 py-2 text-[11px] font-bold text-white transition hover:bg-brand-blueDark sm:text-xs"
+                >
+                  <Navigation size={14} />
+                  {t('guide_follow_route')}
+                </button>
+              ) : (
+                <div className="rounded-xl border border-brand-blue/40 bg-brand-blue/5 p-3 sm:p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand-blue sm:text-[11px]">
+                      {t('guide_follow_stop').replace('{position}', formatNumber(follow.position, language)).replace('{total}', formatNumber(follow.total, language))}
+                    </p>
+                    <button type="button" onClick={() => setFollowIndex(null)} className="text-[10px] font-semibold text-text-muted underline hover:text-text-primary sm:text-xs">
+                      {t('guide_follow_exit')}
+                    </button>
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-sm font-bold tabular-nums text-brand-blue sm:text-base">{activeStop.time}</span>
+                    <h3 className="text-sm font-semibold text-text-primary sm:text-base">{activeStop.title[language]}</h3>
+                  </div>
+                  {activeStop.imageUrl && (
+                    <img src={activeStop.imageUrl} alt={activeStop.title[language]} loading="lazy" className="mt-2 h-36 w-full rounded-lg object-cover sm:h-48" />
+                  )}
+                  <p className="mt-2 text-xs leading-relaxed text-text-secondary sm:text-sm">{activeStop.description[language]}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <a
+                      href={mapSearchUrl(activeStop.place)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-brand-blue px-3 py-1.5 text-[11px] font-bold text-white sm:text-xs"
+                    >
+                      <MapPin size={13} />
+                      {t('guide_directions')}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setFollowIndex(stepIndex(follow.index, follow.total, -1))}
+                      disabled={follow.isFirst}
+                      className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-[11px] font-semibold text-text-secondary transition hover:border-brand-blue hover:text-brand-blue disabled:opacity-40 sm:text-xs"
+                    >
+                      <ArrowLeft size={13} />
+                      {t('guide_follow_prev')}
+                    </button>
+                    {follow.isLast ? (
+                      <span className="text-[11px] font-semibold text-status-success sm:text-xs">{t('guide_follow_done')}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setFollowIndex(stepIndex(follow.index, follow.total, 1))}
+                        className="inline-flex items-center gap-1 rounded-lg border border-brand-blue px-3 py-1.5 text-[11px] font-semibold text-brand-blue transition hover:bg-brand-blue hover:text-white sm:text-xs"
+                      >
+                        {t('guide_follow_next')}
+                        <ArrowRight size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mt-5 space-y-0">
             {guide.stops.map((stop, index) => (
-              <div key={`${stop.time}-${stop.place}`} className="relative grid grid-cols-[56px_18px_minmax(0,1fr)] gap-2 sm:grid-cols-[68px_20px_minmax(0,1fr)] sm:gap-3">
+              <div
+                key={`${stop.time}-${stop.place}`}
+                aria-current={follow?.index === index ? 'step' : undefined}
+                className={`relative grid grid-cols-[56px_18px_minmax(0,1fr)] gap-2 rounded-lg sm:grid-cols-[68px_20px_minmax(0,1fr)] sm:gap-3 ${follow?.index === index ? 'bg-brand-blue/5 ring-1 ring-brand-blue/30' : ''}`}
+              >
                 <div className="pt-1 text-[11px] font-bold tabular-nums text-brand-blue sm:text-xs">{stop.time}</div>
                 <div className="relative flex justify-center">
                   <span className="z-10 mt-1.5 h-2.5 w-2.5 rounded-full border-2 border-brand-blue bg-bg-card" />
