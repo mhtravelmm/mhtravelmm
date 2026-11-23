@@ -852,13 +852,25 @@ to write them to yet.
 - Writes are recorded at the three sites that exist today: creating an admin
   account (`created`), setting a guide earning amount (`updated`) and marking it
   paid (`payment`).
+- **`src/lib/adminNotices.ts`** (new) raises the §16B.3 notification for the same
+  three decisions, in the bell the rental staff notices already use, so the
+  §16D Phase 0 gate ("Super Admin creates a Blog Post Admin and the audit row and
+  a notification appear") is met in one step. The per-recipient rows wait for
+  `notification_feed`.
+- The "Audit log ကြည့်ရန်" link on the Admin Management table used to write a
+  toast instead of opening the log; it now switches the workspace to the `audit`
+  section.
 
-**Verification.** `npx tsc --noEmit` clean; `npx vitest run` 27 files / 335
-tests (including `src/lib/adminAudit.test.ts` and the new
-`canReadAuditLog` cases); `npm run build` succeeds; `npx eslint src` reports the
-same 7 pre-existing warnings. Browser check at `/super-admin` in Burmese: after
-creating "May Myat Noe" the row was still in the table after a reload; a second
-account ("Khin Su") appeared at once with the Ads Admin permission label; the
-new "စစ်ဆေးမှု မှတ်တမ်း" section showed 1 row — actor `MH Travel Super Admin`,
-role Super Admin, action ဖန်တီးပြီး, object Admin အကောင့် `khin.su@mhtravel.com`,
-summary `Khin Su · Ads Admin · Ads Management`, source Admin လုပ်ငန်းခွင်.
+**Verification.** `npx tsc --noEmit` clean; `npx vitest run` 28 files / 338
+tests (including `src/lib/adminAudit.test.ts`, `src/lib/adminAccounts.test.ts`,
+`src/lib/adminNotices.test.ts` and the new `canReadAuditLog` cases);
+`npm run build` succeeds; `npx eslint src` reports the same 7 pre-existing
+warnings. Browser check at `/super-admin` in Burmese: after creating
+"May Myat Noe" the row was still in the table after a reload; "Khin Su" and
+"Nilar Win" appeared at once with the Ads Admin permission label; creating
+Nilar Win raised the bell notice "Admin အကောင့် အသစ် — Nilar Win ကို Ads Admin
+အဖြစ် ဖန်တီးပြီး" with the badge at 1; the "Audit log ကြည့်ရန်" link opened the
+"စစ်ဆေးမှု မှတ်တမ်း" section, which listed 2 rows — actor
+`MH Travel Super Admin`, role Super Admin, action ဖန်တီးပြီး, object Admin အကောင့်
+`nilar.win@mhtravel.com`, summary `Nilar Win · Ads Admin · Ads Management`,
+source Admin လုပ်ငန်းခွင်.

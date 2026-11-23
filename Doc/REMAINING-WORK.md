@@ -48,6 +48,10 @@ the suite instead of reaching a user as "coming soon."
   write the same row from every other write path (owners, ads approval, blog and
   guide publish, rental order status, currency, roles), and move the store to
   `admin_audit_logs` so rows are append-only in the database and kept 24 months.
+- Those three decisions also raise a bell notice through `src/lib/adminNotices.ts`.
+  §16B.3 wants a recipient per event (the author, the Rental Admin, Super Admin)
+  and Supabase Realtime delivery, so what remains is `notification_feed` and the
+  per-recipient fan-out.
 - Connect Admin and Shop Owner creation forms to Supabase Auth invitations, profile/business records, acceptance flows, and audit history. Plaintext preview passwords must not be used in production.
 
 ## Data persistence and APIs

@@ -11,6 +11,7 @@ import {
 import { authorTotals, earningsForAuthor } from '../../lib/guideEarnings';
 import { useGuideEarnings } from '../../lib/guideEarningsStore';
 import { recordAdminAudit } from '../../lib/adminAudit';
+import { pushAdminNotice } from '../../lib/adminNotices';
 
 /**
  * Plan §16B.1: guide earnings belong to Payment Admin (`F`), with Admin on `R`
@@ -67,6 +68,12 @@ export function GuideEarningsPanel() {
       summary: `amount ${amountUsd} USD`,
       source: 'earnings',
     });
+    pushAdminNotice({
+      title: t('sa_notice_earning_amount_title'),
+      message: t('sa_notice_earning_amount_body')
+        .replace('{guide}', guideTitle || rowId)
+        .replace('{amount}', `${amountUsd} USD`),
+    });
   }
 
   function commitPaid(rowId: string, guideTitle: string, amountUsd: number | null) {
@@ -79,6 +86,12 @@ export function GuideEarningsPanel() {
       objectId: guideTitle || rowId,
       summary: `paid ${amountUsd ?? 0} USD`,
       source: 'earnings',
+    });
+    pushAdminNotice({
+      title: t('sa_notice_earning_paid_title'),
+      message: t('sa_notice_earning_paid_body')
+        .replace('{guide}', guideTitle || rowId)
+        .replace('{amount}', `${amountUsd ?? 0} USD`),
     });
   }
 

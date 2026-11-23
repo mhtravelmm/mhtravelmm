@@ -48,7 +48,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (314 tests, 25 files) |
+| `npm test` (vitest) | **PASS** (338 tests, 28 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (43 declared routes, all render) |
 
@@ -67,7 +67,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **DONE** | 1,610 keys in `src/lib/translations.ts`; every traveler page, dashboard shell, both content editors and the Rental Admin panel are localized |
+| Bilingual MM/EN provider | **DONE** | 1,659 keys in `src/lib/translations.ts`; every traveler page, dashboard shell, both content editors and the Rental Admin panel are localized |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -182,7 +182,7 @@ places rather than advice.
 | Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows in their own `GuideEarningsPanel` section (Payment Admin sets the amount and settles, the author reads its own rows); content is still local state. Localized through `useLanguage` |
 | Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
 | Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
-| Audit log | **PARTIAL** | `src/lib/adminAudit.ts` + `AuditLogPanel` implement Plan §16B.2: one append-only row per decision (actor, actor role, action, object type, object id, summary, UTC time, source), searchable and filterable, Super Admin only per the §16B.1 settings row. Recorded today for admin-account creation, guide-earning amount and settlement; the store is browser storage until `admin_audit_logs` is wired |
+| Audit log | **PARTIAL** | `src/lib/adminAudit.ts` + `AuditLogPanel` implement Plan §16B.2: one append-only row per decision (actor, actor role, action, object type, object id, summary, UTC time, source), searchable and filterable, Super Admin only per the §16B.1 settings row. Recorded today for admin-account creation, guide-earning amount and settlement, each of which also raises a §16B.3 notification in the admin bell (`src/lib/adminNotices.ts`); the store is browser storage until `admin_audit_logs` is wired |
 | Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected. Plan §3 and §16B.1 now scope one admin workspace per role: `src/lib/adminWorkspace.ts` lists the sections each role may open, and the Super Admin page filters its navigation through it, so Ads Admin sees only Ads, Payment Admin only orders/reports/currency/guide earnings, Blog Post Admin only Blogs, and Travel Guide Content Admin only Guides and its own earnings. `src/lib/roleMapping.ts` maps every one of the eight `profiles.role` slugs to a product role, and `auth.tsx` hydrates `adminRole` from the profile row, which is what the workspace reads |
 
 ---

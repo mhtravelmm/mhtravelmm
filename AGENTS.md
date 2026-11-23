@@ -66,9 +66,10 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `adminAccounts` comes from `useAuth()`, so a created admin survives a reload.
 - Every admin write appends one row through `recordAdminAudit()` from
   `adminAudit.ts` (actor, actor role, action, object type, object id, summary,
-  UTC time, source) and the log is read in `AuditLogPanel`. Add the call at the
-  write site, not in the panel, and add the `audit` section to
-  `adminWorkspace.ts` before touching the nav.
+  UTC time, source) and raises the matching bell notice through
+  `pushAdminNotice()` from `adminNotices.ts`. Both calls go at the write site,
+  not in the panel, and the `audit` section goes into `adminWorkspace.ts` before
+  the nav is touched. The log is read in `AuditLogPanel`.
 
 ## Pushing to origin
 
