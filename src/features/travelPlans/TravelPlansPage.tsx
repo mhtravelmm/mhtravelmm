@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { POPULARS, TRAVEL_PLANS } from '../../data/homeData';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useLanguage } from '../../lib/i18n';
+import { formatRating, hasRating } from '../../lib/cardMeta';
 import { useTravelRequests } from '../../lib/travelRequests';
 import type { CardListing } from '../../types';
 
@@ -421,7 +422,7 @@ export function TravelPlanDetailPage() {
     <section className="relative overflow-hidden rounded-2xl border border-border bg-bg-card">
       <img src={image} alt={plan.title} className="h-56 w-full object-cover sm:h-72" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#06162c] via-[#06162c]/55 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{language === 'mm' ? 'MH Travel ခရီးစဉ်' : 'MH Travel itinerary'}</p><h1 className="mt-1 text-2xl font-extrabold text-white sm:text-4xl">{localizedPlanTitle(plan.title, language)}</h1><p className="mt-2 text-sm text-slate-200">{plan.durationLabel[language]} · ★ {plan.rating.toFixed(1)} · {plan.views.toLocaleString()} views</p></div>
+      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{language === 'mm' ? 'MH Travel ခရီးစဉ်' : 'MH Travel itinerary'}</p><h1 className="mt-1 text-2xl font-extrabold text-white sm:text-4xl">{localizedPlanTitle(plan.title, language)}</h1><p className="mt-2 text-sm text-slate-200">{plan.durationLabel[language]}{hasRating(plan) && <> · ★ {formatRating(plan.rating, language)}</>} · {plan.views.toLocaleString()} views</p></div>
     </section>
 
     <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">

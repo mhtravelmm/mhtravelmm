@@ -18,6 +18,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import { useCurrency } from '../../lib/currency';
 import { useLanguage } from '../../lib/i18n';
+import { formatRating, hasRating } from '../../lib/cardMeta';
 import { useFavorites } from '../../lib/favorites';
 import { mapSearchUrl, telHref } from '../../lib/placeActions';
 import { categoryOptions, filterByCategory } from '../../lib/categoryFilter';
@@ -56,7 +57,7 @@ const AMENITIES = [
 ];
 
 export function RestaurantPage() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const { formatPrice } = useCurrency();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { id } = useParams<{ id: string }>();
@@ -96,7 +97,9 @@ export function RestaurantPage() {
               <span className="mb-2 inline-flex rounded-full bg-status-success px-2 py-1 text-[10px] font-medium text-white">{t('restaurant_open_now')}</span>
               <h1 className="font-serif text-2xl text-white sm:text-4xl">{restaurant.title}</h1>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/90">
-                <span className="inline-flex items-center gap-1 text-status-rating"><Star size={13} fill="currentColor" /> {restaurant.rating.toFixed(1)}</span>
+                {hasRating(restaurant) && (
+                  <span className="inline-flex items-center gap-1 text-status-rating"><Star size={13} fill="currentColor" /> {formatRating(restaurant.rating, language)}</span>
+                )}
                 <span>(230 {t('restaurant_reviews')})</span>
                 <span>·</span>
                 <span>Burmese, Asian</span>
