@@ -1494,3 +1494,23 @@ into both languages rather than leaving one byline empty.
 Verified in the browser: the guide editor shows both author fields, and
 `/travel-guide/tg1` shows "မင်းထက်" under ရေးသားသူ where it used to show
 "Min Htet". `npm test` 56 files / 630 tests; typecheck and build clean.
+
+## Guide draft autosave — Plan §10 §4, 26 November 2026
+
+The 30-second draft save already ran in the Blog editor; the Travel Guide
+editor had no autosave at all, so a guide being written was held only in the
+browser tab. `TravelGuidesPanel.tsx` now runs the same rule from
+`src/lib/draftAutosave.ts`: the row is written every 30 seconds with no
+revision and no audit row, the first write creates the guide row, and an
+untouched editor creates nothing.
+
+Only a `Draft` is autosaved. A Published or Scheduled guide is left alone,
+because those rows change through the explicit Save that runs
+`guidePublishCheck` and the version guard. A write advances `editingVersion`
+so the Save that follows is not refused as stale against our own write, and the
+editor header shows the last autosave time.
+
+Verified in the browser: a new guide typed for one tick appeared as a မူကြမ်း
+row with the timestamp in the editor; editing a Published guide for the same
+length wrote nothing and kept its published title. `npm test` 56 files /
+630 tests; typecheck and build clean.

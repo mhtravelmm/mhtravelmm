@@ -897,6 +897,9 @@ Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib
   and only for a `Draft`; a Published or Scheduled post still changes through
   the explicit Save, which runs the publish checks. The first write of a new
   post creates its row, so a long draft is never held only in the editor.
+  The same rule now runs in the Travel Guide editor: `TravelGuidesPanel.tsx`
+  reuses `draftAutosave.ts`, creates the guide row on the first write, and
+  leaves a Published or Scheduled guide alone.
 - **Guide author is bilingual (26 November 2026):** `GuideDraft` carries
   `authorEn` and `authorMm` instead of one `author`, so the reader shows the
   byline in the reader's language. The editor asks for both, and a guide saved
@@ -1010,7 +1013,7 @@ Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/l
 - **Earnings** (`guideEarnings.ts`, persisted by `guideEarningsStore.ts`): one row per guide (`guideId`, `guideTitle`, `author`, `publishedAt`, `amountUsd` null until set, `amountSetAt`, `paid`, `paidAt`). `setEarningAmount` ignores negative or non-finite values; `markEarningPaid` works only when an amount exists; `earningsForAuthor` narrows the list for a Guide Content Admin; `authorTotals` gives each author's payable USD, settled USD and pending rows. The section itself is `GuideEarningsPanel` (Plan §16B.1): Payment Admin sets the amount and settles, Admin reads every author, Guide Content Admin reads only its own.
 - **Reader projection** (`contentReader.ts`): stops are sorted by time, `place` comes from the linked listing rather than the typed text, and duration is the span between the first and last stop, at least one hour. The reader accepts the guide by id.
 - **Scheduling and earnings** (24 November 2026): a scheduled guide publishes through the same job as a blog post, and the first publish writes its earning row, so a republish cannot create a second one.
-- **Not built:** a `guideId` slug separate from the row id, localized author, autosave, server-side `version` checks, and handling of a removed listing.
+- **Not built:** a `guideId` slug separate from the row id, server-side `version` checks, and handling of a removed listing. Localized author and draft autosave are built (26 November 2026).
 
 #### 2. Decisions for the system
 

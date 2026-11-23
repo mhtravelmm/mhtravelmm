@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, EyeOff, ImagePlus, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { LISTING_IDS, LISTING_INDEX, listingTitle } from '../../data/listingIndex';
 import type { GuideCategory } from '../../data/travelGuideData';
@@ -35,6 +35,14 @@ import {
   type GuideDraft,
   type GuideStopDraft,
 } from '../../lib/guideItinerary';
+import {
+  EMPTY_AUTOSAVE,
+  afterAutosave,
+  formFingerprint,
+  isWritableDraft,
+  shouldAutosave,
+  type AutosaveState,
+} from '../../lib/draftAutosave';
 import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuditRecorder } from '../../lib/adminAudit';
@@ -88,6 +96,12 @@ const emptyDraft: GuideDraft = {
   scheduledTime: '',
 };
 
+/** The fingerprint of an untouched editor, so a blank draft creates no row. */
+const EMPTY_DRAFT_FINGERPRINT = formFingerprint([
+  emptyDraft.titleEn, emptyDraft.titleMm, emptyDraft.excerptEn, emptyDraft.excerptMm,
+  emptyDraft.category, emptyDraft.coverUrl, emptyDraft.authorEn, emptyDraft.authorMm, emptyDraft.stops,
+]);
+
 export function TravelGuidesPanel({ runAction }: { runAction: (label: string) => void }) {
   const { t, language } = useLanguage();
   const recordAdminAction = useAuditRecorder();
@@ -102,6 +116,14 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
   const [notice, setNotice] = useState('');
   const [revisions, setRevisions] = useRevisions<GuideDraft>('guide');
   const [audit, setAudit] = useContentAudit('guide');
+  const [autosavedAt, setAutosavedAt] = useState<number | null>(null);
+  const autosave = useRef<AutosaveState>(EMPTY_AUTOSAVE);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+  const guidesRef = useRef(guides);
+  guidesRef.current = guides;
+  const editingIdRef = useRef(editingId);
+  editingIdRef.current = editingId;
 
   const filtered = useMemo(
     () => guides.filter((guide) => `${guide.titleEn} ${guide.titleMm} ${guide.authorEn} ${guide.authorMm}`.toLowerCase().includes(query.toLowerCase())),
@@ -118,6 +140,8 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
   }
 
   function openNew() {
+    autosave.current = EMPTY_AUTOSAVE;
+    setAutosavedAt(null);
     setEditingId(null);
     setEditingVersion(0);
     setRestoredFrom(null);
@@ -130,6 +154,8 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     const wall = guide.status === 'Scheduled' && guide.scheduledFor
       ? utcToMyanmarWallClock(guide.scheduledFor)
       : null;
+    autosave.current = EMPTY_AUTOSAVE;
+    setAutosavedAt(null);
     setEditingId(guide.id);
     setEditingVersion(guide.version);
     setRestoredFrom(null);
@@ -150,6 +176,55 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     });
     setShowEditor(true);
   }
+
+  /**
+   * Plan §10 §4 "Draft save": a draft is written every 30 seconds with no
+   * revision and no audit row; the explicit Save adds both. Only a Draft is
+   * autosaved — a Published or Scheduled guide changes through `save`, which
+   * runs `guidePublishCheck` and the version guard.
+   *
+   * The draft is read through a ref so typing does not restart the timer, and a
+   * write advances `editingVersion` so the Save that follows is not refused as
+   * stale against our own write.
+   */
+  useEffect(() => {
+    if (!showEditor || conflict) return;
+    const tick = window.setInterval(() => {
+      const current = draftRef.current;
+      const fingerprint = formFingerprint([
+        current.titleEn, current.titleMm, current.excerptEn, current.excerptMm,
+        current.category, current.coverUrl, current.authorEn, current.authorMm, current.stops,
+      ]);
+      if (!isWritableDraft(EMPTY_DRAFT_FINGERPRINT, fingerprint)) return;
+      const now = Date.now();
+      if (!shouldAutosave(autosave.current, fingerprint, now)) return;
+
+      const id = editingIdRef.current ?? `guide-${now}`;
+      const existing = guidesRef.current.find((guide) => guide.id === id);
+      if (existing && existing.status !== 'Draft') return;
+
+      const version = (existing?.version ?? 0) + 1;
+      const row: AdminGuide = {
+        ...current,
+        stops: sortStopsByTime(current.stops),
+        id,
+        status: 'Draft',
+        publishedAt: existing?.publishedAt ?? '',
+        scheduledFor: null,
+        deletedAt: existing?.deletedAt ?? null,
+        version,
+        views: existing?.views ?? 0,
+      };
+      autosave.current = afterAutosave(fingerprint, now);
+      setAutosavedAt(now);
+      setEditingId(id);
+      setEditingVersion(version);
+      setGuides((rows) => (existing
+        ? rows.map((guide) => (guide.id === id ? row : guide))
+        : [row, ...rows]));
+    }, 5000);
+    return () => window.clearInterval(tick);
+  }, [showEditor, conflict, setGuides]);
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -417,13 +492,14 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
           }}
           conflict={conflict}
           onReload={reloadAfterConflict}
+          autosavedAt={autosavedAt}
         />
       )}
     </div>
   );
 }
 
-function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, history, auditTrail, onRestore, conflict, onReload }: {
+function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, history, auditTrail, onRestore, conflict, onReload, autosavedAt }: {
   draft: GuideDraft;
   editing: boolean;
   onChange: <K extends keyof GuideDraft>(key: K, value: GuideDraft[K]) => void;
@@ -435,8 +511,9 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
   onRestore: (snapshot: GuideDraft, revisionId: string) => void;
   conflict: boolean;
   onReload: () => void;
+  autosavedAt: number | null;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState('');
   const check = guidePublishCheck(draft, LISTING_IDS);
@@ -467,6 +544,11 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300">{t('tg_editor_kicker')}</p>
             <h2 className="mt-0.5 text-base font-extrabold text-white">{editing ? t('tg_editor_edit') : t('tg_editor_new')}</h2>
+            {autosavedAt !== null && (
+              <p className="mt-0.5 text-[9px] text-slate-400" role="status">
+                {fill(t('bp_autosaved_at'), { time: new Date(autosavedAt).toLocaleTimeString(language === 'mm' ? 'my-MM' : 'en-GB', { hour: '2-digit', minute: '2-digit' }) })}
+              </p>
+            )}
           </div>
           <button type="button" onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white" aria-label={t('cw_editor_close')}><X size={17} /></button>
         </div>
