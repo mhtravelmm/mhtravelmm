@@ -18,7 +18,7 @@ const base: GuideDraft = {
   titleEn: 'One day in Yangon', titleMm: 'ရန်ကုန် တစ်ရက်',
   excerptEn: 'A calm walk through the center.', excerptMm: 'မြို့လယ်ကို အေးအေးလျှောက်ခရီး။',
   category: 'myanmar', coverUrl: '/images/blog/shwedagon-evening.webp',
-  author: 'MH Travel Guides', stops: [stop('08:00'), stop('11:30', 'n1')],
+  authorEn: 'MH Travel Guides', authorMm: 'MH Travel Guides', stops: [stop('08:00'), stop('11:30', 'n1')],
   status: 'Published', scheduledDate: '', scheduledTime: '',
 };
 
@@ -96,9 +96,9 @@ describe('guidePublishCheck', () => {
     expect(result.problems).toContainEqual({ code: 'schedule' });
   });
 
-  it('requires a cover and an author', () => {
-    const result = guidePublishCheck({ ...base, coverUrl: '', author: ' ' }, LISTINGS);
+  it('requires a cover and both author languages', () => {
+    const result = guidePublishCheck({ ...base, coverUrl: '', authorEn: ' ', authorMm: '' }, LISTINGS);
     expect(result.problems).toContainEqual({ code: 'cover' });
-    expect(result.problems).toContainEqual({ code: 'author' });
+    expect(result.problems).toContainEqual({ code: 'author_languages' });
   });
 });

@@ -21,7 +21,9 @@ export type GuideDraft = {
   excerptMm: string;
   category: GuideCategory;
   coverUrl: string;
-  author: string;
+  /** Plan §10 §2: bilingual, as the reader shows it. */
+  authorEn: string;
+  authorMm: string;
   stops: GuideStopDraft[];
   status: 'Draft' | 'Published' | 'Scheduled';
   scheduledDate: string;
@@ -66,7 +68,7 @@ export function guidePublishCheck(draft: GuideDraft, listingIds: ReadonlySet<str
   if (!draft.titleEn.trim() || !draft.titleMm.trim()) problems.push({ code: 'title_languages' });
   if (!draft.excerptEn.trim() || !draft.excerptMm.trim()) problems.push({ code: 'excerpt_languages' });
   if (!draft.coverUrl.trim()) problems.push({ code: 'cover' });
-  if (!draft.author.trim()) problems.push({ code: 'author' });
+  if (!draft.authorEn.trim() || !draft.authorMm.trim()) problems.push({ code: 'author_languages' });
   if (draft.stops.length === 0) problems.push({ code: 'stop_required' });
 
   const unknown = draft.stops.filter((stop) => !listingIds.has(stop.listingId)).length;

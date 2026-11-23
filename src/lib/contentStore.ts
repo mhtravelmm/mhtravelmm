@@ -138,7 +138,8 @@ export function seedGuides(): AdminGuide[] {
     excerptMm: guide.summary.mm,
     category: guide.category as GuideCategory,
     coverUrl: guide.imageUrl ?? '',
-    author: guide.author.en,
+    authorEn: guide.author.en,
+    authorMm: guide.author.mm,
     stops: guide.stops.map((stop) => ({
       id: `${guide.id}-${stop.time}`,
       time: stop.time,
@@ -228,8 +229,13 @@ function normalizeGuide(guide: AdminGuide): AdminGuide {
     ?? (guide.status === 'Scheduled' && guide.scheduledDate && guide.scheduledTime
       ? new Date(`${guide.scheduledDate}T${guide.scheduledTime}`).toISOString()
       : null);
+  // A guide saved before the author was bilingual keeps its one value in both
+  // languages rather than showing an empty byline on the other side.
+  const legacy = guide as AdminGuide & { author?: string };
   return {
     ...guide,
+    authorEn: guide.authorEn ?? legacy.author ?? '',
+    authorMm: guide.authorMm ?? legacy.author ?? '',
     scheduledDate: guide.scheduledDate ?? '',
     scheduledTime: guide.scheduledTime ?? '',
     scheduledFor: Number.isNaN(new Date(scheduledFor ?? '').getTime()) ? null : scheduledFor,

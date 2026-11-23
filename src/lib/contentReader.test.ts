@@ -231,6 +231,11 @@ describe('an admin guide as a reader story', () => {
     expect(reader.some((story) => story.id === 'later')).toBe(false);
   });
 
+  it('carries each author language through to the reader', () => {
+    const story = adminGuideToReader(guide({ authorEn: 'Min Htet', authorMm: 'မင်းထက်' }));
+    expect(story.author).toEqual({ en: 'Min Htet', mm: 'မင်းထက်' });
+  });
+
   it('derives the stop place from the listing, never from typed text', () => {
     const story = adminGuideToReader(guide({
       stops: [{

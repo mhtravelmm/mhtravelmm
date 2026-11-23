@@ -200,7 +200,7 @@ export function adminGuideToReader(guide: AdminGuide): TravelGuideStory {
     isFavorited: false,
     views: guide.views,
     publishedAt: guide.publishedAt,
-    author: { en: guide.author, mm: guide.author },
+    author: { en: guide.authorEn, mm: guide.authorMm },
     duration: durationOf(stops),
     href: `/travel-guide/${guide.id}`,
     stops,

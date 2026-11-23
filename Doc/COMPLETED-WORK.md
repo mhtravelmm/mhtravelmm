@@ -1475,3 +1475,22 @@ holding.
 
 `npm run typecheck` clean; `npm test` 56 files / 626 tests; `npm run build`
 succeeds.
+
+## Guide author is bilingual — Plan §10 §2, 26 November 2026
+
+A guide carried one `author` string, so the reader showed the English byline to
+a Myanmar reader: `adminGuideToReader` copied it into both languages. The seed
+data already had both (`{ mm: 'မင်းထက်', en: 'Min Htet' }`); the editor and the
+store threw the Myanmar one away.
+
+`GuideDraft.authorEn` / `authorMm` replace the single field. The editor has two
+fields, `guidePublishCheck` asks for both (`author_languages`), the reader maps
+each one through, and the audit and earnings paths keep the English name
+because that is what an operator and a payout row read.
+
+`normalizeGuide` keeps a guide saved with the old single field: the value goes
+into both languages rather than leaving one byline empty.
+
+Verified in the browser: the guide editor shows both author fields, and
+`/travel-guide/tg1` shows "မင်းထက်" under ရေးသားသူ where it used to show
+"Min Htet". `npm test` 56 files / 630 tests; typecheck and build clean.

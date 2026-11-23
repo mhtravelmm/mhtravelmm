@@ -80,7 +80,8 @@ const emptyDraft: GuideDraft = {
   excerptMm: '',
   category: 'myanmar',
   coverUrl: '/images/blog/shwedagon-evening.webp',
-  author: 'MH Travel Guides',
+  authorEn: 'MH Travel Guides',
+  authorMm: 'MH Travel Guides',
   stops: [createStop()],
   status: 'Draft',
   scheduledDate: '',
@@ -103,7 +104,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
   const [audit, setAudit] = useContentAudit('guide');
 
   const filtered = useMemo(
-    () => guides.filter((guide) => `${guide.titleEn} ${guide.titleMm} ${guide.author}`.toLowerCase().includes(query.toLowerCase())),
+    () => guides.filter((guide) => `${guide.titleEn} ${guide.titleMm} ${guide.authorEn} ${guide.authorMm}`.toLowerCase().includes(query.toLowerCase())),
     [guides, query],
   );
 
@@ -140,7 +141,8 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       excerptMm: guide.excerptMm,
       category: guide.category,
       coverUrl: guide.coverUrl,
-      author: guide.author,
+      authorEn: guide.authorEn,
+      authorMm: guide.authorMm,
       stops: guide.stops,
       status: guide.status,
       scheduledDate: wall?.date ?? '',
@@ -191,7 +193,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       contentId: next.id,
       action: restoredFrom ? 'restored' : actionForSave(next.status, !editingId),
       at: new Date().toISOString(),
-      actor: draft.author || 'Travel Guide Content Admin',
+      actor: draft.authorEn || 'Travel Guide Content Admin',
     }));
     recordAdminAction({
       action: next.status === 'Draft' ? (editingId ? 'updated' : 'created') : 'published',
@@ -208,7 +210,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       addEarningForGuide({
         guideId: next.id,
         guideTitle: next.titleEn,
-        author: next.author,
+        author: next.authorEn,
         publishedAt: next.publishedAt,
       });
     }
@@ -235,7 +237,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       contentId: guide.id,
       action: 'unpublished',
       at: new Date().toISOString(),
-      actor: guide.author,
+      actor: guide.authorEn,
     }));
     recordAdminAction({
       action: 'updated',
@@ -256,7 +258,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       contentId: guide.id,
       action: 'deleted',
       at: new Date().toISOString(),
-      actor: guide.author,
+      actor: guide.authorEn,
     }));
     recordAdminAction({
       action: 'deleted',
@@ -275,7 +277,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       contentId: guide.id,
       action: 'restored',
       at: new Date().toISOString(),
-      actor: guide.author,
+      actor: guide.authorEn,
     }));
     recordAdminAction({
       action: 'updated',
@@ -306,7 +308,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       contentId: guide.id,
       action: 'published',
       at: new Date().toISOString(),
-      actor: guide.author,
+      actor: guide.authorEn,
     }));
     recordAdminAction({
       action: 'published',
@@ -318,7 +320,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     addEarningForGuide({
       guideId: guide.id,
       guideTitle: guide.titleEn,
-      author: guide.author,
+      author: guide.authorEn,
       publishedAt: new Date().toISOString().slice(0, 10),
     });
     pushFeedEvent('guide_published', {
@@ -375,7 +377,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
                   </td>
                   <td className="px-2 py-2.5 text-slate-400">{t(CATEGORY_KEYS[guide.category])}</td>
                   <td className="px-2 py-2.5 text-slate-400">{guide.stops.length}</td>
-                  <td className="px-2 py-2.5">{guide.author}</td>
+                  <td className="px-2 py-2.5">{guide.authorEn}</td>
                   <td className="px-2 py-2.5">
                     <span className={`rounded-full px-2 py-1 text-[9px] font-bold ${guide.status === 'Published' ? 'bg-green-500/20 text-green-300' : guide.status === 'Scheduled' ? 'bg-purple-500/20 text-purple-300' : 'bg-amber-500/20 text-amber-300'}`}>{t(STATUS_KEYS[guide.status])}</span>
                     {guide.status === 'Scheduled' && guide.scheduledFor && (
@@ -537,7 +539,8 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
               </select>
             </label>
 
-            <Field label={t('cw_field_author_required')} value={draft.author} onChange={(value) => onChange('author', value)} />
+            <Field label={t('cw_field_author_required')} value={draft.authorEn} onChange={(value) => onChange('authorEn', value)} />
+            <Field label={t('cw_field_author_mm_required')} value={draft.authorMm} onChange={(value) => onChange('authorMm', value)} />
 
             <label className="block">
               <span className="mb-1 block text-[9px] font-semibold text-slate-300">{t('cw_field_cover')}</span>

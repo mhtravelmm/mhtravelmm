@@ -897,6 +897,10 @@ Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib
   and only for a `Draft`; a Published or Scheduled post still changes through
   the explicit Save, which runs the publish checks. The first write of a new
   post creates its row, so a long draft is never held only in the editor.
+- **Guide author is bilingual (26 November 2026):** `GuideDraft` carries
+  `authorEn` and `authorMm` instead of one `author`, so the reader shows the
+  byline in the reader's language. The editor asks for both, and a guide saved
+  with the old single field keeps its value in both.
 - **Not built:** server-side `version` checks, and the reader's coordinates,
   rating and `read_minutes` from the table (they are derived in
   `contentReader.ts`).

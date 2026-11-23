@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { readBlogPosts, seedPosts, writeBlogPosts, type AdminPost } from './contentStore';
+import {
+  readBlogPosts,
+  readGuides,
+  seedGuides,
+  seedPosts,
+  writeBlogPosts,
+  writeGuides,
+  type AdminGuide,
+  type AdminPost,
+} from './contentStore';
 
 function fakeWindow() {
   const map = new Map<string, string>();
@@ -77,5 +86,34 @@ describe('reading a stored post', () => {
     expect(post.authorEn).toBe('Su Myat');
     expect(post.authorMm).toBe('စုမြတ်');
     expect(post.locationMm).toBe('ပုဂံ');
+  });
+});
+
+describe('reading a stored guide', () => {
+  /** A guide saved before the author was bilingual. */
+  function legacyGuide(): Record<string, unknown> {
+    const rest: Record<string, unknown> = { ...seedGuides()[0] };
+    delete rest.authorEn;
+    delete rest.authorMm;
+    return { ...rest, author: 'Min Htet' };
+  }
+
+  it('serves the seeded guides when nothing is stored', () => {
+    expect(readGuides().length).toBe(seedGuides().length);
+  });
+
+  it('keeps a one-language byline in both languages rather than losing it', () => {
+    writeGuides([legacyGuide() as unknown as AdminGuide]);
+    const [guide] = readGuides();
+    expect(guide.authorEn).toBe('Min Htet');
+    expect(guide.authorMm).toBe('Min Htet');
+  });
+
+  it('leaves a guide that is already bilingual untouched', () => {
+    const modern: AdminGuide = { ...seedGuides()[0], authorEn: 'Min Htet', authorMm: 'မင်းထက်' };
+    writeGuides([modern]);
+    const [guide] = readGuides();
+    expect(guide.authorEn).toBe('Min Htet');
+    expect(guide.authorMm).toBe('မင်းထက်');
   });
 });

@@ -14,6 +14,7 @@ export type PublishProblemCode =
   | 'alt_missing'
   | 'schedule'
   | 'author'
+  | 'author_languages'
   | 'stop_required'
   | 'stop_listing'
   | 'stop_languages'
@@ -35,6 +36,7 @@ export const PUBLISH_PROBLEM_KEYS: Record<PublishProblemCode, TranslationKey> = 
   alt_missing: 'cw_problem_alt_missing',
   schedule: 'cw_problem_schedule',
   author: 'cw_problem_author',
+  author_languages: 'cw_problem_author_languages',
   stop_required: 'cw_problem_stop_required',
   stop_listing: 'cw_problem_stop_listing',
   stop_languages: 'cw_problem_stop_languages',

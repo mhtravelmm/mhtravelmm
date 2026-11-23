@@ -97,7 +97,7 @@ export function publishDueContent(now = new Date()): PublishRun {
     addEarningForGuide({
       guideId: guide.id,
       guideTitle: guide.titleEn,
-      author: guide.author,
+      author: guide.authorEn,
       publishedAt: today(now),
     });
     pushFeedEvent('guide_published', {
