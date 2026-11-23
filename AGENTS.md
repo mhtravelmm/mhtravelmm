@@ -51,7 +51,11 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   author or `everyone`, and each reader filters with `canSee()` / `feedFor()`. Never
   broadcast an admin event to every bell — an event with no recipient writes nothing
   on purpose. `pushAdminNotice` stays for the bell; `pushFeedNotice` writes both.
-  Rows expire after 90 days (`pruneFeed`).
+  Rows expire after 90 days (`pruneFeed`). A row's `title` and `message` hold both
+  languages — write `translatePair()`/`fillPair()`, never an English-only string,
+  because a traveler reads the row later, in whatever language they have picked by
+  then. Readers go through `localizedOrFallback()`, and an age comes from
+  `src/lib/timeAgo.ts` (`timeAgoLabel`, `ageBucket`) rather than being stored.
 - **Scheduled jobs are data, not timers.** `src/lib/jobs.ts` holds the §16B.7
   registry (cadence + `wired` flag) and the runner; `src/lib/platformJobs.ts` binds the
   handlers and `src/App.tsx` ticks once a minute. A job must be safe to run twice —
