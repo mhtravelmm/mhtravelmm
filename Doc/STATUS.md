@@ -130,8 +130,8 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/search` | **PREVIEW** | City/category/combined query modes |
 | `/favorites` | **PREVIEW** | localStorage-backed |
 | `/account` | **PREVIEW** | Dashboard shell, sample state |
-| `/notifications` | **PREVIEW** | All/Unread/Read filters |
-| `/account/notifications` | **PREVIEW** | Same inbox, account-scoped path |
+| `/notifications` | **PREVIEW** | All/Unread/Read filters, Today/Yesterday/Earlier by Myanmar day, age translated in the reader's language |
+| `/account/notifications` | **PREVIEW** | Same inbox, account-scoped path; rows carry both languages and collapse one event to one row |
 | `/login` | **PARTIAL** | UI complete; local preview session |
 | `/signup` | **PARTIAL** | UI complete; local preview session |
 | `/admin/login` | **PARTIAL** | Separated from traveler login |
