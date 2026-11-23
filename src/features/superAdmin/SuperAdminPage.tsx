@@ -41,9 +41,10 @@ import { useCurrency } from '../../lib/currency';
 import { BlogPostsPanel } from './BlogPostsPanel';
 import { TravelGuidesPanel } from './TravelGuidesPanel';
 import { RentalAdminPanel } from './RentalAdminPanel';
+import { RentalOrdersPanel } from './RentalOrdersPanel';
 import { CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS } from '../../lib/adminRoles';
 
-type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals';
+type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals' | 'rentalOrders';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
 type AdminNotification = { id: string; title: string; message: string; createdAt: string; read: boolean };
 
@@ -73,6 +74,7 @@ const navItems: NavItem[] = [
   { id: 'bookings', labelKey: 'sa_nav_bookings', icon: CalendarDays },
   { id: 'content', labelKey: 'sa_nav_plans', icon: Map },
   { id: 'rentals', labelKey: 'sa_nav_rentals', icon: Building2 },
+  { id: 'rentalOrders', labelKey: 'sa_nav_rental_orders', icon: CalendarDays },
   { id: 'bookings', labelKey: 'sa_nav_tickets', icon: Plane },
   { id: 'guides', labelKey: 'sa_nav_guides', icon: BookOpen },
   { id: 'content', labelKey: 'sa_nav_cities', icon: MapPin },
@@ -233,7 +235,7 @@ export function SuperAdminPage() {
 
           <main className="p-1.5 sm:p-2 lg:p-3">
             {notice && <div role="status" className="fixed right-4 top-20 z-50 rounded-lg border border-cyan-300/30 bg-[#102e51] px-3 py-2 text-xs text-cyan-100 shadow-2xl">{notice}</div>}
-            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'ads' ? <AdsManagementPanel runAction={runAction} /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : activeView === 'rentals' ? <RentalAdminPanel runAction={runAction} /> : <AdminSection view={activeView} runAction={runAction} />}
+            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'ads' ? <AdsManagementPanel runAction={runAction} /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : activeView === 'rentals' ? <RentalAdminPanel runAction={runAction} /> : activeView === 'rentalOrders' ? <RentalOrdersPanel /> : <AdminSection view={activeView} runAction={runAction} />}
           </main>
           <footer className="mt-auto flex flex-col gap-1 border-t border-[#214263] bg-[#071a32] px-3 py-2 text-center text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:text-left"><div><p className="text-base font-bold text-[#27c2ff]">MH Travel</p><p className="mt-1">{t('sa_footer_tagline')}</p></div><p>{t('sa_copyright')}</p><div className="flex justify-center gap-2 text-cyan-300 sm:justify-end"><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">f</span><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">▶</span></div></footer>
         </div>
@@ -520,9 +522,9 @@ function AdsManagementPanel({ runAction }: { runAction: (label: string) => void 
 }
 
 function AdSummary({ icon: Icon, label, value, detail, tone }: { icon: LucideIcon; label: string; value: string; detail: string; tone: 'cyan' | 'blue' | 'purple' | 'green' }) { const tones = { cyan: 'text-cyan-300 bg-cyan-400/10', blue: 'text-blue-300 bg-blue-400/10', purple: 'text-purple-300 bg-purple-400/10', green: 'text-green-300 bg-green-400/10' }; return <div className="rounded-xl border border-[#294d76] bg-[#0b203b] p-3 shadow-xl"><span className={`inline-flex rounded-lg p-2.5 ${tones[tone]}`}><Icon size={17} /></span><p className="mt-3 text-xl font-extrabold">{value}</p><p className="mt-1 text-xs font-semibold text-slate-200">{label}</p><p className="mt-1 text-[10px] text-slate-400">{detail}</p></div>; }
-function AdminSection({ view, runAction }: { view: Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals'>; runAction: (label: string) => void }) {
+function AdminSection({ view, runAction }: { view: Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals' | 'rentalOrders'>; runAction: (label: string) => void }) {
   const { t } = useLanguage();
-  const meta: Record<Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals'>, { titleKey: TranslationKey; introKey: TranslationKey; icon: LucideIcon }> = {
+  const meta: Record<Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals' | 'rentalOrders'>, { titleKey: TranslationKey; introKey: TranslationKey; icon: LucideIcon }> = {
     users: { titleKey: 'sa_nav_users', introKey: 'admin_users_intro', icon: Users },
     bookings: { titleKey: 'sa_nav_bookings', introKey: 'admin_bookings_intro', icon: CalendarDays },
     content: { titleKey: 'sa_content_title', introKey: 'admin_content_intro', icon: BookOpen },

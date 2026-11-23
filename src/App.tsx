@@ -11,6 +11,7 @@ import { AccountPage } from './features/account/AccountPage';
 import { NotificationsPage } from './features/notifications/NotificationsPage';
 import { BookShopPage } from './features/bookShops/BookShopPage';
 import { RentalsPage } from './features/rentals/RentalsPage';
+import { RentalVoucherPage } from './features/rentals/RentalVoucherPage';
 import { TicketingPage } from './features/ticketing/TicketingPage';
 import { AuthPage } from './features/auth/AuthPage';
 import { AdminLoginPage } from './features/auth/AdminLoginPage';
@@ -119,6 +120,7 @@ function AppRoutes() {
     <Route path="/super-admin" element={<RequireSuperAdmin />} />
     <Route path="/shop-owner" element={<RequireShopOwner />} />
     <Route path="/main-owner" element={<RequireMainOwner />} />
+    <Route path="/account/bookings/:requestCode" element={<Shell><RentalVoucherPage /></Shell>} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />

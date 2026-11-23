@@ -21,22 +21,25 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../lib/auth';
 import { useCurrency } from '../../lib/currency';
 import { useLanguage } from '../../lib/i18n';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
-import { useTravelRequests } from '../../lib/travelRequests';
+import { useRentalOrders, type RentalFulfillment } from '../../lib/rentalOrders';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { RENTAL_PAGE_LISTINGS } from '../../data/cityPageData';
 import {
-  availableTypes,
+  activeTypes,
+  activeVariants,
   cardMetrics,
   cityHasType,
   estimateRental,
+  availableTypes,
   findRentalType,
   firstCityForType,
   localized,
   minimumEndDate,
-
   type RentalCustomerType,
   type RentalIconName,
   type RentalType,
@@ -44,7 +47,7 @@ import {
 import type { CardListing } from '../../types';
 
 type CustomerType = RentalCustomerType;
-type Fulfillment = 'delivery' | 'branch';
+type Fulfillment = RentalFulfillment;
 
 const ICONS: Record<RentalIconName, LucideIcon> = {
   bike: Bike,
@@ -57,9 +60,8 @@ const ICONS: Record<RentalIconName, LucideIcon> = {
   tricycle: ShipWheel,
 };
 
-/** Plan §8: types run their own flow, so this is the order the selector offers. */
-const CATEGORY_ORDER = ['bicycle', 'motorbike', 'car', 'camping_tent', 'motorboat', 'horse_carriage', 'ebike', 'scooter', 'tricycle', 'self_drive_car', 'travel_guide'];
-const PRIMARY_TYPES = ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car', 'self_drive_car'];
+/** Plan §8: the catalog carries `sortOrder`, so the selector just reads it. */
+const PRIMARY_TYPES = ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car'];
 
 function tomorrow() {
   const date = new Date();
@@ -70,7 +72,10 @@ function tomorrow() {
 export function RentalsPage() {
   const { language, t } = useLanguage();
   const { formatPrice } = useCurrency();
-  const { addRequest } = useTravelRequests();
+  const { createOrder } = useRentalOrders();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { currency, exchangeRate } = useCurrency();
   const { catalog } = useRentalCatalog();
   const favorites = useToggleFavorite(RENTAL_PAGE_LISTINGS);
   const favoriteListings = new Map(favorites.listings.map((listing) => [listing.id, listing]));
@@ -89,28 +94,38 @@ export function RentalsPage() {
   const [address, setAddress] = useState('');
   const [branch, setBranch] = useState('');
   const [phone, setPhone] = useState('');
-  const [optionId, setOptionId] = useState<string | null>(null);
-  const [submittedReference, setSubmittedReference] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState('');
+  const [specialRequests, setSpecialRequests] = useState('');
+  const [variantId, setVariantId] = useState<string | null>(null);
+  const [submittedCode, setSubmittedCode] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const city = catalog.cities.find((item) => item.id === cityId) ?? catalog.cities[0];
   const selected = findRentalType(catalog, typeId);
+  const variants = activeVariants(selected);
+  const chosenVariant = variants.find((variant) => variant.id === variantId) ?? variants[0];
   const earliestEnd = minimumEndDate(date, selected);
   const validEndDate = endDate < earliestEnd ? earliestEnd : endDate;
-  const estimate = estimateRental({ type: selected, customerType, optionId, startDate: date, endDate: validEndDate });
+  const estimate = estimateRental({
+    catalog,
+    cityId: city.id,
+    type: selected,
+    customerType,
+    variantId: chosenVariant?.id ?? null,
+    startDate: date,
+    endDate: validEndDate,
+  });
   const locationReady = fulfillment === 'branch' ? Boolean(branch) : address.trim().length >= 3;
-  const canSubmit = Boolean(selected && phone.trim().length >= 7 && locationReady && termsAccepted);
+  const nameReady = customerName.trim().length >= 2;
+  const canSubmit = Boolean(selected && nameReady && phone.trim().length >= 7 && locationReady && termsAccepted);
   const cityTypes = useMemo(() => availableTypes(catalog, city.id), [catalog, city.id]);
-  const driverTypes = useMemo(() => catalog.types.filter((type) => type.driverRequired), [catalog.types]);
-  const orderedTypes = useMemo(() => {
-    const byId = new Map(catalog.types.map((type) => [type.id, type]));
-    const ordered = CATEGORY_ORDER.flatMap((id) => byId.get(id) ?? []);
-    const rest = catalog.types.filter((type) => !CATEGORY_ORDER.includes(type.id));
-    return [...ordered, ...rest];
-  }, [catalog.types]);
+  const driverTypes = useMemo(() => activeTypes(catalog).filter((type) => type.driverRequired), [catalog]);
+  // Plan §8.2: the page only offers what the chosen city actually has, so
+  // Yangon never shows a motorbike or a scooter.
+  const orderedTypes = useMemo(() => availableTypes(catalog, city.id), [catalog, city.id]);
   const visibleTypes = showAll || query.trim() || activeFilter
     ? orderedTypes
-    : orderedTypes.filter((type) => PRIMARY_TYPES.includes(type.id));
+    : orderedTypes.filter((type) => PRIMARY_TYPES.includes(type.id) || orderedTypes.length <= 6);
   const visibleRentals = visibleTypes.filter((type) => {
     if (activeFilter && activeFilter !== type.id) return false;
     if (!query.trim()) return true;
@@ -123,40 +138,60 @@ export function RentalsPage() {
     setCityId(value);
     if (typeId && !cityHasType(catalog, value, typeId)) setTypeId(null);
     setBranch('');
-    setSubmittedReference(null);
+    setSubmittedCode(null);
   }
 
   function changeType(nextTypeId: string) {
     setTypeId(nextTypeId);
-    setOptionId(null);
-    setSubmittedReference(null);
+    setVariantId(null);
+    setSubmittedCode(null);
   }
 
   function beginRental(nextTypeId: string) {
+    // Plan §8.2 decision 11: a traveler must sign in, so the order lands in My Bookings.
+    if (!user) {
+      navigate(`/login?next=${encodeURIComponent('/rentals')}`);
+      return;
+    }
     if (!cityHasType(catalog, city.id, nextTypeId)) {
       const nextCity = firstCityForType(catalog, nextTypeId);
       if (nextCity) setCityId(nextCity.id);
     }
     setTypeId(nextTypeId);
-    setOptionId(null);
-    setSubmittedReference(null);
+    setVariantId(null);
+    setSubmittedCode(null);
     setTermsAccepted(false);
     setBookingOpen(true);
     window.setTimeout(() => document.getElementById('rentals-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   }
 
   function submitOrder() {
-    if (!canSubmit || !selected) return;
-    const handover = fulfillment === 'branch' ? branch : address.trim();
-    const option = selected.vehicleOptions.find((item) => item.id === optionId);
-    const label = option ? `${localized(selected.label, language)} · ${localized(option.label, language)}` : localized(selected.label, language);
-    const request = addRequest({
-      kind: 'rental',
-      title: label,
-      detail: `${localized(city.name, language)} · ${date} → ${validEndDate} · ${estimate.days} ${t('rentals_day_count')} · ${handover}`,
-      amountUsd: estimate.totalUsd,
+    if (!canSubmit || !selected || !user) return;
+    // The client total is a preview; the server recomputes it (Plan §8.7).
+    const order = createOrder({
+      userId: user.id,
+      customerName: customerName.trim(),
+      phone: phone.trim(),
+      cityId: city.id,
+      categoryId: selected.id,
+      variantId: chosenVariant?.id ?? null,
+      startDate: date,
+      endDate: validEndDate,
+      originalStartDate: date,
+      days: estimate.days,
+      participants,
+      customerType,
+      fulfillment,
+      branchId: fulfillment === 'branch' ? branch : null,
+      deliveryAddress: fulfillment === 'delivery' ? address.trim() : '',
+      specialRequests: specialRequests.trim(),
+      termsVersion: catalog.termsVersion,
+      rateUsd: estimate.rateUsd,
+      totalUsd: estimate.totalUsd,
+      displayCurrency: currency,
+      fxMmkPerUsd: exchangeRate,
     });
-    setSubmittedReference(request.id);
+    setSubmittedCode(order.requestCode);
   }
 
   /** A type with no seed listing still needs the four card fields (Plan §4). */
@@ -317,9 +352,9 @@ export function RentalsPage() {
                     <label className="rounded-lg bg-bg-cardAlt p-2.5"><span className="block text-[9px] text-text-faint">{t('rentals_participants')}</span><input type="number" min={1} max={45} value={participants} onChange={(event) => setParticipants(Math.max(1, Number(event.target.value)))} className="mt-1 w-full bg-transparent text-sm text-text-primary outline-none" /></label>
                     <label className="rounded-lg bg-bg-cardAlt p-2.5"><span className="block text-[9px] text-text-faint">{t('rentals_nationality')}</span><select value={customerType} onChange={(event) => setCustomerType(event.target.value as CustomerType)} className="mt-1 w-full bg-transparent text-[11px] text-text-primary outline-none"><option value="citizen">{t('rentals_citizen')}</option><option value="foreigner">{t('rentals_foreigner')}</option></select></label>
                   </div>
-                  {selected.vehicleOptions.length > 0 && (
+                  {variants.length > 0 && (
                     <>
-                      <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_car_type')}</span><select value={optionId ?? selected.vehicleOptions[0].id} onChange={(event) => { setOptionId(event.target.value); setSubmittedReference(null); }} className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-[11px] text-text-primary outline-none">{selected.vehicleOptions.map((option) => <option key={option.id} value={option.id}>{localized(option.label, language)}</option>)}</select></label>
+                      <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_car_type')}</span><select value={chosenVariant?.id ?? ''} onChange={(event) => { setVariantId(event.target.value); setSubmittedCode(null); }} className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-[11px] text-text-primary outline-none">{variants.map((variant) => <option key={variant.id} value={variant.id}>{localized(variant.label, language)}</option>)}</select></label>
                       <p className="rounded-lg bg-status-warningBg px-3 py-2 text-[10px] leading-4 text-status-warning">{t('rentals_car_note')}</p>
                     </>
                   )}
@@ -337,14 +372,22 @@ export function RentalsPage() {
                   ) : (
                     <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_choose_branch')}</span><select value={branch} onChange={(event) => setBranch(event.target.value)} className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-[11px] text-text-primary outline-none"><option value="">{t('rentals_choose_branch_placeholder')}</option>{city.branches.map((item) => <option key={item.id} value={item.id}>{localized(item.name, language)}</option>)}</select></label>
                   )}
+                  <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_customer_name')}</span><input value={customerName} onChange={(event) => { setCustomerName(event.target.value); setSubmittedCode(null); }} placeholder={t('rentals_customer_name_placeholder')} className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-[11px] text-text-primary outline-none placeholder:text-text-faint" /></label>
                   <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_phone')}</span><span className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2.5"><Phone size={14} className="text-brand-blue" /><input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder={t('rentals_phone_placeholder')} className="w-full bg-transparent text-xs text-text-primary outline-none placeholder:text-text-faint" /></span></label>
+                  <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_special_requests')}</span><textarea value={specialRequests} onChange={(event) => setSpecialRequests(event.target.value)} rows={2} placeholder={t('rentals_special_requests_placeholder')} className="w-full resize-none rounded-lg border border-border bg-bg px-3 py-2 text-[11px] text-text-primary outline-none placeholder:text-text-faint" /></label>
                   <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-bg-cardAlt px-3 py-2.5 text-[10px] leading-4 text-text-secondary">
-                    <input type="checkbox" checked={termsAccepted} onChange={(event) => { setTermsAccepted(event.target.checked); setSubmittedReference(null); }} className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-brand-blue" />
+                    <input type="checkbox" checked={termsAccepted} onChange={(event) => { setTermsAccepted(event.target.checked); setSubmittedCode(null); }} className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-brand-blue" />
                     <span>{t('rentals_accept_terms')}</span>
                   </label>
                   <button type="button" onClick={submitOrder} disabled={!canSubmit} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-blue px-3 py-3 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">{t('rentals_submit_order')} <ChevronRight size={14} /></button>
                   <p className="text-center text-[9px] leading-4 text-text-faint">{t('rentals_contact_note')}</p>
-                  {submittedReference && <div role="status" className="flex items-start gap-2 rounded-lg border border-status-success/30 bg-status-success/10 px-3 py-2 text-[10px] leading-4 text-status-success"><Check size={14} className="mt-0.5 shrink-0" /><span>{t('rentals_submitted')}<span className="mt-1 block font-mono">{t('account_request_reference')}: {submittedReference}</span></span></div>}
+                  {submittedCode && (
+                    <div role="status" className="space-y-1.5 rounded-lg border border-status-success/30 bg-status-success/10 px-3 py-2 text-[10px] leading-4 text-status-success">
+                      <p className="flex items-start gap-2"><Check size={14} className="mt-0.5 shrink-0" /><span>{t('rentals_submitted')}</span></p>
+                      <p className="font-mono">{t('account_request_reference')}: {submittedCode}</p>
+                      <Link to={`/account/bookings/${submittedCode}`} className="inline-flex items-center gap-1 font-semibold underline">{t('rentals_view_voucher')} <ArrowRight size={11} /></Link>
+                    </div>
+                  )}
                 </>
               )}
             </div>

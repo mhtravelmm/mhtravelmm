@@ -92,7 +92,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/cities` | **PREVIEW** | City grid + category explorer |
 | `/cities/:cityId` | **PREVIEW** | Hero, facts, recommendations, category explorer |
 | `/nearby` | **PREVIEW** | Geolocation with Yangon fallback, 13 categories |
-| `/rentals` | **PARTIAL** | 11 rental types (E-Bike, Scooter, Tricycle included) read from `src/data/rentalCatalog.ts`, with per-type driver/minimum-day rules, city × type availability and one shared pricing function. Editable from Super Admin → Rentals. Still local storage rather than catalog tables, and the submitted request is not read back |
+| `/rentals` | **PARTIAL** | Categories come from `src/data/rentalCatalog.ts` with the Plan §8.2 decisions applied: Yangon offers no motorbike or scooter, self-drive car is retired, car types and bicycle types are data. The selector lists only what the chosen city offers. A signed-in traveler submits an order with a `RNT-YYMMDD-####` code and opens `/account/bookings/<code>` for the printable voucher. Rental Admin → Orders drives the lifecycle (accept, record payment, complete, expire, cancel). Still browser storage rather than the catalog and order tables; migrations are committed but not applied |
 | `/restaurants` | **PREVIEW** | Menu, category filter, reviews, photos, CTA links |
 | `/restaurants/:id` | **PREVIEW** | Resolves the record from `:id` |
 | `/book-shops` | **PREVIEW** | Books, stationery, gifts, reviews, CTA links |
@@ -287,6 +287,17 @@ Steps 1 and 2 are now done, so the list starts where the frontend stops:
    edited from the Super Admin **Rentals** view. Pricing is one function shared
    by the estimate panel and the request. Moving the record from browser storage
    to catalog tables is the remaining step.
+
+   **Rental order lifecycle (Plan §8.3–§8.7), 22 November 2026.** `src/lib/rentalOrders.ts`
+   holds the order record, the status machine (`requested → accepted → paid →
+   completed`, plus `expired` and `cancelled`), the 12-hour payment window, the
+   one reschedule after payment and the voucher version. The traveler submits from
+   `/rentals` and prints the voucher at `/account/bookings/<request_code>`;
+   Rental Admin → Orders accepts, records payment, completes, expires and cancels.
+   `supabase/migrations/` carries the five migrations that make the server the
+   authority (`submit_rental_order`, `set_rental_order_status`,
+   `reschedule_rental_order`, `expire_overdue_rental_orders`); they are not
+   applied yet, so the browser record is still authoritative.
 6. ~~Connect the Custom Plan, Rental, and Ticketing submissions to request
    records with an ID and a confirmation.~~ **Done 22 November 2026.** Each
    submission now writes a request record with a reference such as

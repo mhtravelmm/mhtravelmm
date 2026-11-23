@@ -14,11 +14,17 @@ export type RentalIconName = 'bike' | 'bolt' | 'car' | 'compass' | 'tent' | 'boa
 
 export type RentalCustomerType = 'citizen' | 'foreigner';
 
-/** A vehicle choice inside a type, e.g. the three car sizes. */
-export type RentalVehicleOption = {
+/** Plan §8.3: `simple` books the category, `driver_vehicle` also picks a variant. */
+export type RentalFlow = 'simple' | 'driver_vehicle';
+
+/** A bookable variant inside a category: the car sizes, bicycle models, boat types. */
+export type RentalVariant = {
   id: string;
   label: Bilingual;
-  seats: number;
+  seats: number | null;
+  rules: Bilingual;
+  active: boolean;
+  sortOrder: number;
   rateUsd: number;
   foreignRateUsd: number;
 };
@@ -31,13 +37,17 @@ export type RentalType = {
   icon: RentalIconName;
   /** Listing whose rating, distance, views and heart the card reuses. */
   listingId?: string;
+  flow: RentalFlow;
   driverRequired: boolean;
   /** Charged days never drop below this; car types count the return leg. */
   minDays: number;
   rateUsd: number;
   foreignRateUsd: number;
-  vehicleOptions: RentalVehicleOption[];
+  variants: RentalVariant[];
   terms: Bilingual;
+  /** A retired category stays here so past orders still resolve; it is not offered. */
+  active: boolean;
+  sortOrder: number;
 };
 
 export type RentalBranch = { id: string; name: Bilingual };
@@ -47,16 +57,34 @@ export type RentalCity = { id: string; name: Bilingual; branches: RentalBranch[]
 /** `availability[cityId][typeId]` — the city × type matrix the Admin edits. */
 export type RentalAvailability = Record<string, Record<string, boolean>>;
 
+/**
+ * Plan §8.4 step 1: the most specific row wins. A null `cityId` or `variantId`
+ * is the default, so a category needs one base rate and only exceptions are
+ * listed.
+ */
+export type RentalRate = {
+  id: string;
+  categoryId: string;
+  variantId: string | null;
+  cityId: string | null;
+  rateLocalUsd: number;
+  rateForeignUsd: number;
+};
+
 export type RentalCatalog = {
+  termsVersion: string;
+  terms: Bilingual;
   types: RentalType[];
   cities: RentalCity[];
   availability: RentalAvailability;
-  terms: Bilingual;
+  rates: RentalRate[];
 };
 
 export function localized(value: Bilingual, language: Language): string {
   return language === 'mm' ? value.mm : value.en;
 }
+
+const NO_RULES: Bilingual = { mm: '', en: '' };
 
 const CAR_TERMS: Bilingual = {
   mm: 'ကားငှားရမ်းခြင်းတွင် ယာဉ်မောင်း ပါဝင်ပါသည်။ ခရီးစဉ်အတွက် ပြန်လာသည့်ရက်ကို ထည့်တွက်ပါသည်။',
@@ -79,6 +107,7 @@ const GEAR_TERMS: Bilingual = {
 };
 
 export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
+  termsVersion: '2026-11-22',
   terms: {
     mm: 'ငှားရမ်းမှု တောင်းဆိုချက်ကို MH Travel မှ ရရှိနိုင်မှု စစ်ဆေးပြီး အတည်ပြုပါမည်။ ငှားရမ်းချိန်အတွင်း ထိခိုက်မှုအတွက် တာဝန်ယူရပါမည်။',
     en: 'MH Travel checks availability and confirms each request. You are responsible for the vehicle while it is with you.',
@@ -91,12 +120,26 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/ubein-evening.webp',
       icon: 'bike',
       listingId: 'pre3',
+      flow: 'simple',
       driverRequired: false,
       minDays: 1,
       rateUsd: 8,
       foreignRateUsd: 10,
-      vehicleOptions: [],
+      variants: [
+        {
+          id: 'standard_bicycle',
+          label: { mm: 'စံစက်ဘီး', en: 'Standard bicycle' },
+          seats: 1,
+          rules: NO_RULES,
+          active: true,
+          sortOrder: 1,
+          rateUsd: 8,
+          foreignRateUsd: 10,
+        },
+      ],
       terms: GEAR_TERMS,
+      active: true,
+      sortOrder: 1,
     },
     {
       id: 'ebike',
@@ -105,12 +148,15 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/shwedagon-evening.webp',
       icon: 'bolt',
       listingId: 'pre6',
+      flow: 'simple',
       driverRequired: false,
       minDays: 1,
       rateUsd: 12,
       foreignRateUsd: 15,
-      vehicleOptions: [],
+      variants: [],
       terms: GEAR_TERMS,
+      active: true,
+      sortOrder: 2,
     },
     {
       id: 'motorbike',
@@ -119,12 +165,15 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/bagan-sunrise.webp',
       icon: 'bike',
       listingId: 'pre2',
+      flow: 'simple',
       driverRequired: false,
       minDays: 1,
       rateUsd: 18,
       foreignRateUsd: 22,
-      vehicleOptions: [],
+      variants: [],
       terms: SELF_DRIVE_TERMS,
+      active: true,
+      sortOrder: 3,
     },
     {
       id: 'scooter',
@@ -133,12 +182,15 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/inle-stilt-houses.webp',
       icon: 'bike',
       listingId: 'pre7',
+      flow: 'simple',
       driverRequired: false,
       minDays: 1,
       rateUsd: 10,
       foreignRateUsd: 13,
-      vehicleOptions: [],
+      variants: [],
       terms: SELF_DRIVE_TERMS,
+      active: true,
+      sortOrder: 4,
     },
     {
       id: 'tricycle',
@@ -147,12 +199,15 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/ubein-evening.webp',
       icon: 'tricycle',
       listingId: 'pre11',
+      flow: 'simple',
       driverRequired: true,
       minDays: 1,
       rateUsd: 14,
       foreignRateUsd: 18,
-      vehicleOptions: [],
+      variants: [],
       terms: GEAR_TERMS,
+      active: true,
+      sortOrder: 5,
     },
     {
       id: 'car',
@@ -161,30 +216,64 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/shwedagon-evening.webp',
       icon: 'car',
       listingId: 'pre1',
+      flow: 'driver_vehicle',
       driverRequired: true,
       minDays: 2,
       rateUsd: 42,
       foreignRateUsd: 55,
-      vehicleOptions: [
-        { id: 'family_car', label: { mm: 'အိမ်စီးကား (၄–၅ ယောက်စီး)', en: 'Family car (4–5 seats)' }, seats: 5, rateUsd: 42, foreignRateUsd: 55 },
-        { id: 'minibus_35', label: { mm: '၃၅ ယောက်စီးကား', en: '35-seat minibus' }, seats: 35, rateUsd: 180, foreignRateUsd: 225 },
-        { id: 'bus_45', label: { mm: '၄၅ ယောက်စီးကား', en: '45-seat bus' }, seats: 45, rateUsd: 240, foreignRateUsd: 295 },
+      variants: [
+        {
+          id: 'family_car',
+          label: { mm: 'အိမ်စီးကား (၄–၅ ယောက်စီး)', en: 'Family car (4–5 seats)' },
+          seats: 5,
+          rules: NO_RULES,
+          active: true,
+          sortOrder: 1,
+          rateUsd: 42,
+          foreignRateUsd: 55,
+        },
+        {
+          id: 'minibus_35',
+          label: { mm: '၃၅ ယောက်စီးကား', en: '35-seat minibus' },
+          seats: 35,
+          rules: NO_RULES,
+          active: true,
+          sortOrder: 2,
+          rateUsd: 180,
+          foreignRateUsd: 225,
+        },
+        {
+          id: 'bus_45',
+          label: { mm: '၄၅ ယောက်စီးကား', en: '45-seat bus' },
+          seats: 45,
+          rules: NO_RULES,
+          active: true,
+          sortOrder: 3,
+          rateUsd: 240,
+          foreignRateUsd: 295,
+        },
       ],
       terms: CAR_TERMS,
+      active: true,
+      sortOrder: 6,
     },
     {
+      // Plan §8.2: retired. The record stays so a past self-drive order still resolves.
       id: 'self_drive_car',
       label: { mm: 'ကိုယ်တိုင်မောင်းကား', en: 'Self-drive Car' },
       detail: { mm: 'လွတ်လပ်စွာ လမ်းကြောင်းရွေး၍ ကိုယ်တိုင်မောင်းနှင်ရန်', en: 'Choose your route and drive yourself.' },
       image: '/images/blog/ubein-evening.webp',
       icon: 'car',
       listingId: 'pre8',
+      flow: 'simple',
       driverRequired: false,
       minDays: 2,
       rateUsd: 32,
       foreignRateUsd: 42,
-      vehicleOptions: [],
+      variants: [],
       terms: SELF_DRIVE_TERMS,
+      active: false,
+      sortOrder: 7,
     },
     {
       id: 'horse_carriage',
@@ -193,12 +282,15 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/bagan-sunrise.webp',
       icon: 'compass',
       listingId: 'pre9',
+      flow: 'simple',
       driverRequired: true,
       minDays: 1,
       rateUsd: 28,
       foreignRateUsd: 34,
-      vehicleOptions: [],
+      variants: [],
       terms: GEAR_TERMS,
+      active: true,
+      sortOrder: 8,
     },
     {
       id: 'camping_tent',
@@ -207,26 +299,44 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/inle-stilt-houses.webp',
       icon: 'tent',
       listingId: 'pre10',
+      flow: 'simple',
       driverRequired: false,
       minDays: 1,
       rateUsd: 12,
       foreignRateUsd: 15,
-      vehicleOptions: [],
+      variants: [],
       terms: GEAR_TERMS,
+      active: true,
+      sortOrder: 9,
     },
     {
-      id: 'motorboat',
+      // Plan §8.2: one Boat category; "Motorboat" is its seeded variant.
+      id: 'boat',
       label: { mm: 'လှေ', en: 'Boat' },
       detail: { mm: 'အင်းလေးကန်နှင့် ရေလမ်းခရီးများအတွက်', en: 'For lake and river trips.' },
       image: '/images/blog/inle-stilt-houses.webp',
       icon: 'boat',
       listingId: 'pre5',
+      flow: 'driver_vehicle',
       driverRequired: true,
       minDays: 1,
       rateUsd: 55,
       foreignRateUsd: 68,
-      vehicleOptions: [],
+      variants: [
+        {
+          id: 'motorboat',
+          label: { mm: 'စက်လှေ', en: 'Motorboat' },
+          seats: 6,
+          rules: NO_RULES,
+          active: true,
+          sortOrder: 1,
+          rateUsd: 55,
+          foreignRateUsd: 68,
+        },
+      ],
       terms: GEAR_TERMS,
+      active: true,
+      sortOrder: 10,
     },
     {
       id: 'travel_guide',
@@ -235,12 +345,15 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       image: '/images/blog/bagan-sunrise.webp',
       icon: 'person',
       listingId: 'pre4',
+      flow: 'simple',
       driverRequired: true,
       minDays: 1,
       rateUsd: 35,
       foreignRateUsd: 45,
-      vehicleOptions: [],
+      variants: [],
       terms: GUIDE_TERMS,
+      active: true,
+      sortOrder: 11,
     },
   ],
   cities: [
@@ -270,16 +383,21 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
       branches: [{ id: 'ngapali-branch', name: { mm: 'ငပလီ MH Travel ရုံးခွဲ', en: 'Ngapali MH Travel Branch' } }],
     },
   ],
-  // Plan §8: availability is per city. The Yangon "no motorbike" restriction is
-  // still unconfirmed, so Yangon keeps the motorbike the page already offered.
   availability: {
-    yangon: { bicycle: true, ebike: true, motorbike: true, scooter: true, tricycle: true, car: true, self_drive_car: true, travel_guide: true },
-    bagan: { bicycle: true, ebike: true, motorbike: true, scooter: true, car: true, self_drive_car: true, horse_carriage: true, camping_tent: true, travel_guide: true },
-    mandalay: { bicycle: true, ebike: true, motorbike: true, scooter: true, tricycle: true, car: true, self_drive_car: true, travel_guide: true },
-    inle: { bicycle: true, ebike: true, motorbike: true, motorboat: true, camping_tent: true, travel_guide: true },
-    ngapali: { bicycle: true, ebike: true, motorbike: true, scooter: true, motorboat: true, camping_tent: true },
+    // Plan §8.2: Yangon has no motorbike rental, and a scooter is a motorbike.
+    yangon: { bicycle: true, ebike: true, tricycle: true, car: true, travel_guide: true },
+    bagan: { bicycle: true, ebike: true, motorbike: true, scooter: true, car: true, horse_carriage: true, camping_tent: true, travel_guide: true },
+    mandalay: { bicycle: true, ebike: true, motorbike: true, scooter: true, tricycle: true, car: true, travel_guide: true },
+    inle: { bicycle: true, ebike: true, motorbike: true, boat: true, camping_tent: true, travel_guide: true },
+    ngapali: { bicycle: true, ebike: true, motorbike: true, scooter: true, boat: true, camping_tent: true },
   },
+  rates: [],
 };
+
+/** Bookable types in catalog order; a retired record stays for history only. */
+export function activeTypes(catalog: RentalCatalog): RentalType[] {
+  return catalog.types.filter((type) => type.active).sort((a, b) => a.sortOrder - b.sortOrder);
+}
 
 export function findRentalType(catalog: RentalCatalog, typeId: string | null): RentalType | undefined {
   if (!typeId) return undefined;
@@ -287,12 +405,14 @@ export function findRentalType(catalog: RentalCatalog, typeId: string | null): R
 }
 
 export function cityHasType(catalog: RentalCatalog, cityId: string, typeId: string): boolean {
+  const type = findRentalType(catalog, typeId);
+  if (!type?.active) return false;
   return catalog.availability[cityId]?.[typeId] === true;
 }
 
 /** Types the chosen city actually offers, in catalog order. */
 export function availableTypes(catalog: RentalCatalog, cityId: string): RentalType[] {
-  return catalog.types.filter((type) => cityHasType(catalog, cityId, type.id));
+  return activeTypes(catalog).filter((type) => cityHasType(catalog, cityId, type.id));
 }
 
 /** The first city that offers the type, used when the traveler picks a type the city lacks. */
@@ -300,16 +420,46 @@ export function firstCityForType(catalog: RentalCatalog, typeId: string): Rental
   return catalog.cities.find((city) => cityHasType(catalog, city.id, typeId));
 }
 
-export function vehicleOption(type: RentalType, optionId: string | null): RentalVehicleOption | undefined {
-  if (!optionId) return undefined;
-  return type.vehicleOptions.find((option) => option.id === optionId);
+export function activeVariants(type: RentalType | undefined): RentalVariant[] {
+  if (!type) return [];
+  return type.variants.filter((variant) => variant.active).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-/** Local rate unless the traveler is a foreign visitor; a vehicle option overrides the type rate. */
-export function typeRateUsd(type: RentalType, customerType: RentalCustomerType, optionId?: string | null): number {
-  const option = vehicleOption(type, optionId ?? null);
-  if (option) return customerType === 'foreigner' ? option.foreignRateUsd : option.rateUsd;
-  return customerType === 'foreigner' ? type.foreignRateUsd : type.rateUsd;
+export function findVariant(type: RentalType | undefined, variantId: string | null): RentalVariant | undefined {
+  if (!type || !variantId) return undefined;
+  return type.variants.find((variant) => variant.id === variantId);
+}
+
+/** Plan §8.4 step 1: city + category + variant, then each less specific row. */
+export function findRate(
+  catalog: RentalCatalog,
+  cityId: string,
+  categoryId: string,
+  variantId: string | null,
+): RentalRate | undefined {
+  const rows = catalog.rates.filter((rate) => rate.categoryId === categoryId);
+  const match = (city: string | null, variant: string | null) =>
+    rows.find((rate) => (rate.cityId ?? null) === city && (rate.variantId ?? null) === variant);
+  return match(cityId, variantId) ?? match(cityId, null) ?? match(null, variantId) ?? match(null, null);
+}
+
+export type RateQuery = {
+  cityId: string;
+  type: RentalType | undefined;
+  variantId?: string | null;
+  customerType: RentalCustomerType;
+};
+
+/** Plan §8.4 steps 1–2: the most specific row wins, then the customer column. */
+export function typeRateUsd(catalog: RentalCatalog, query: RateQuery): number {
+  const { type, customerType } = query;
+  if (!type) return 0;
+  const variantId = query.variantId ?? null;
+  const variant = findVariant(type, variantId);
+  const rate = findRate(catalog, query.cityId, type.id, variantId);
+  const local = rate?.rateLocalUsd ?? variant?.rateUsd ?? type.rateUsd;
+  const foreign = rate?.rateForeignUsd ?? variant?.foreignRateUsd ?? type.foreignRateUsd;
+  return customerType === 'foreigner' ? foreign : local;
 }
 
 export function addDays(dateString: string, amount: number): string {
@@ -330,22 +480,29 @@ export function minimumEndDate(startDate: string, type: RentalType | undefined):
 }
 
 export type RentalEstimateInput = {
+  catalog: RentalCatalog;
+  cityId: string;
   type: RentalType | undefined;
   customerType: RentalCustomerType;
-  optionId?: string | null;
+  variantId?: string | null;
   startDate: string;
   endDate: string;
 };
 
 export type RentalEstimate = { days: number; rateUsd: number; totalUsd: number };
 
-/** Plan §8: daily rate × charged days, with the type's minimum day count enforced. */
+/** Plan §8.4 steps 3–4: rate × charged days, minimum days enforced, USD to 2 decimals. */
 export function estimateRental(input: RentalEstimateInput): RentalEstimate {
   const { type } = input;
   if (!type) return { days: 0, rateUsd: 0, totalUsd: 0 };
   const days = Math.max(type.minDays, inclusiveDays(input.startDate, input.endDate));
-  const rateUsd = typeRateUsd(type, input.customerType, input.optionId);
-  return { days, rateUsd, totalUsd: rateUsd * days };
+  const rateUsd = typeRateUsd(input.catalog, {
+    cityId: input.cityId,
+    type,
+    variantId: input.variantId,
+    customerType: input.customerType,
+  });
+  return { days, rateUsd, totalUsd: Math.round(rateUsd * days * 100) / 100 };
 }
 
 function idHash(id: string): number {
@@ -371,7 +528,8 @@ export function cardMetrics(type: RentalType): { rating: number; distanceKm: num
 /** Problems the Admin panel shows before saving, so a broken catalog never reaches a traveler. */
 export function rentalCatalogProblems(catalog: RentalCatalog): string[] {
   const problems: string[] = [];
-  if (catalog.types.length === 0) problems.push('no_types');
+  const bookable = activeTypes(catalog);
+  if (bookable.length === 0) problems.push('no_types');
   if (catalog.cities.length === 0) problems.push('no_cities');
   const typeIds = catalog.types.map((type) => type.id);
   if (new Set(typeIds).size !== typeIds.length) problems.push('duplicate_type');
@@ -381,12 +539,14 @@ export function rentalCatalogProblems(catalog: RentalCatalog): string[] {
     if (!(type.rateUsd > 0)) problems.push(`type_rate:${type.id}`);
     if (!(type.foreignRateUsd > 0)) problems.push(`type_foreign_rate:${type.id}`);
     if (!Number.isInteger(type.minDays) || type.minDays < 1) problems.push(`type_min_days:${type.id}`);
-    const optionIds = type.vehicleOptions.map((option) => option.id);
-    if (new Set(optionIds).size !== optionIds.length) problems.push(`option_duplicate:${type.id}`);
-    for (const option of type.vehicleOptions) {
-      if (!option.label.mm.trim() || !option.label.en.trim()) problems.push(`option_label:${type.id}:${option.id}`);
-      if (!(option.rateUsd > 0) || !(option.foreignRateUsd > 0)) problems.push(`option_rate:${type.id}:${option.id}`);
+    if (!type.active) continue;
+    const variantIds = type.variants.map((variant) => variant.id);
+    if (new Set(variantIds).size !== variantIds.length) problems.push(`variant_duplicate:${type.id}`);
+    for (const variant of type.variants) {
+      if (!variant.label.mm.trim() || !variant.label.en.trim()) problems.push(`variant_label:${type.id}:${variant.id}`);
+      if (!(variant.rateUsd > 0) || !(variant.foreignRateUsd > 0)) problems.push(`variant_rate:${type.id}:${variant.id}`);
     }
+    if (type.flow === 'driver_vehicle' && activeVariants(type).length === 0) problems.push(`type_no_variant:${type.id}`);
   }
 
   const cityIds = catalog.cities.map((city) => city.id);
@@ -398,9 +558,18 @@ export function rentalCatalogProblems(catalog: RentalCatalog): string[] {
     if (!city.branches.every((branch) => branch.name.mm.trim() && branch.name.en.trim())) problems.push(`branch_label:${city.id}`);
     const offered = Object.entries(catalog.availability[city.id] ?? {}).filter(([, on]) => on).map(([typeId]) => typeId);
     if (offered.length === 0) problems.push(`city_no_types:${city.id}`);
-    if (offered.some((typeId) => !typeIds.includes(typeId))) problems.push(`city_unknown_type:${city.id}`);
+    if (offered.some((typeId) => !bookable.some((type) => type.id === typeId))) problems.push(`city_unknown_type:${city.id}`);
   }
 
+  const rateIds = catalog.rates.map((rate) => rate.id);
+  if (new Set(rateIds).size !== rateIds.length) problems.push('duplicate_rate');
+  for (const rate of catalog.rates) {
+    if (!(rate.rateLocalUsd > 0) || !(rate.rateForeignUsd > 0)) problems.push(`rate_value:${rate.id}`);
+    if (!typeIds.includes(rate.categoryId)) problems.push(`rate_category:${rate.id}`);
+    if (rate.cityId && !cityIds.includes(rate.cityId)) problems.push(`rate_city:${rate.id}`);
+  }
+
+  if (!catalog.termsVersion.trim()) problems.push('terms_version');
   if (!catalog.terms.mm.trim() || !catalog.terms.en.trim()) problems.push('terms');
   return problems;
 }

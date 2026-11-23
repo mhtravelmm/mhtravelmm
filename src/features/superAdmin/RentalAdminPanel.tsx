@@ -21,11 +21,14 @@ import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import {
+  activeVariants,
   DEFAULT_RENTAL_CATALOG,
   rentalCatalogProblems,
   type RentalCatalog,
+  type RentalFlow,
   type RentalIconName,
   type RentalType,
+  type RentalVariant,
 } from '../../data/rentalCatalog';
 
 const ICONS: Record<RentalIconName, LucideIcon> = {
@@ -52,7 +55,16 @@ const PROBLEM_KEYS: Record<string, TranslationKey> = {
   no_cities: 'ra_problem_no_cities',
   duplicate_type: 'ra_problem_duplicate_type',
   duplicate_city: 'ra_problem_duplicate_city',
+  duplicate_rate: 'ra_problem_rate',
   terms: 'ra_problem_terms',
+  terms_version: 'ra_problem_terms',
+  type_no_variant: 'ra_problem_no_variant',
+  variant_duplicate: 'ra_problem_variant',
+  variant_label: 'ra_problem_variant',
+  variant_rate: 'ra_problem_variant',
+  rate_value: 'ra_problem_rate',
+  rate_category: 'ra_problem_rate',
+  rate_city: 'ra_problem_rate',
 };
 
 function problemKey(problem: string): TranslationKey {
@@ -76,6 +88,37 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
     }));
   }
 
+  function patchVariant(typeId: string, variantId: string, changes: Partial<RentalVariant>) {
+    setDraft((current) => ({
+      ...current,
+      types: current.types.map((type) =>
+        type.id === typeId
+          ? { ...type, variants: type.variants.map((variant) => (variant.id === variantId ? { ...variant, ...changes } : variant)) }
+          : type,
+      ),
+    }));
+  }
+
+  function newVariant(type: RentalType): RentalVariant {
+    const base = `variant_${type.variants.length + 1}`;
+    let id = base;
+    let index = 2;
+    while (type.variants.some((variant) => variant.id === id)) {
+      id = `${base}_${index}`;
+      index += 1;
+    }
+    return {
+      id,
+      label: { mm: '', en: '' },
+      seats: null,
+      rules: { mm: '', en: '' },
+      active: true,
+      sortOrder: type.variants.length + 1,
+      rateUsd: type.rateUsd,
+      foreignRateUsd: type.foreignRateUsd,
+    };
+  }
+
   function patchAvailability(cityId: string, typeId: string, on: boolean) {
     setDraft((current) => ({
       ...current,
@@ -97,12 +140,15 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
       detail: { mm: '', en: '' },
       image: IMAGE_CHOICES[0],
       icon: 'bike',
+      flow: 'simple',
       driverRequired: false,
       minDays: 1,
       rateUsd: 10,
       foreignRateUsd: 12,
-      vehicleOptions: [],
+      variants: [],
       terms: DEFAULT_RENTAL_CATALOG.types[0].terms,
+      active: true,
+      sortOrder: draft.types.length + 1,
     };
     setDraft((current) => ({ ...current, types: [...current.types, next] }));
     setOpenTypeId(id);
@@ -183,6 +229,15 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
                       <label className="block text-[10px] font-semibold text-slate-300">{t('ra_rate_local')}<input type="number" min="1" step="1" value={type.rateUsd} onChange={(event) => patchType(type.id, { rateUsd: Number(event.target.value) })} className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
                       <label className="block text-[10px] font-semibold text-slate-300">{t('ra_rate_foreign')}<input type="number" min="1" step="1" value={type.foreignRateUsd} onChange={(event) => patchType(type.id, { foreignRateUsd: Number(event.target.value) })} className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
                       <label className="block text-[10px] font-semibold text-slate-300">{t('ra_min_days')}<input type="number" min="1" step="1" value={type.minDays} onChange={(event) => patchType(type.id, { minDays: Number(event.target.value) })} className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
+                      <label className="block text-[10px] font-semibold text-slate-300">{t('ra_flow')}<select value={type.flow} onChange={(event) => patchType(type.id, { flow: event.target.value as RentalFlow })} className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300"><option value="simple">{t('ra_flow_simple')}</option><option value="driver_vehicle">{t('ra_flow_driver_vehicle')}</option></select></label>
+                      <label className="block text-[10px] font-semibold text-slate-300">{t('ra_sort_order')}<input type="number" min="1" step="1" value={type.sortOrder} onChange={(event) => patchType(type.id, { sortOrder: Number(event.target.value) })} className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <label className="flex flex-1 cursor-pointer items-center gap-2 rounded border border-[#2b527d] bg-[#081a31] px-2 py-1.5 text-[10px] text-slate-200">
+                        <input type="checkbox" checked={type.active} onChange={(event) => patchType(type.id, { active: event.target.checked })} className="h-3.5 w-3.5 accent-cyan-400" />
+                        {t('ra_active')}
+                      </label>
+                      <span className="flex items-center gap-1 rounded border border-[#2b527d] bg-[#081a31] px-2 py-1.5 text-[10px] text-slate-400">{activeVariants(type).length} {t('ra_options_active')}</span>
                     </div>
                     <label className="flex cursor-pointer items-center gap-2 rounded border border-[#2b527d] bg-[#081a31] px-2 py-1.5 text-[10px] text-slate-200">
                       <input type="checkbox" checked={type.driverRequired} onChange={(event) => patchType(type.id, { driverRequired: event.target.checked })} className="h-3.5 w-3.5 accent-cyan-400" />
@@ -196,18 +251,22 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
                     <div className="rounded border border-[#244668] bg-[#0b203b] p-2">
                       <div className="mb-1 flex items-center justify-between">
                         <p className="text-[10px] font-bold text-slate-200">{t('ra_options_title')}</p>
-                        <button type="button" onClick={() => patchType(type.id, { vehicleOptions: [...type.vehicleOptions, { id: `option_${type.vehicleOptions.length + 1}`, label: { mm: '', en: '' }, seats: 4, rateUsd: type.rateUsd, foreignRateUsd: type.foreignRateUsd }] })} className="text-[10px] font-bold text-cyan-300 hover:text-white">+ {t('ra_add_option')}</button>
+                        <button type="button" onClick={() => patchType(type.id, { variants: [...type.variants, newVariant(type)] })} className="text-[10px] font-bold text-cyan-300 hover:text-white">+ {t('ra_add_option')}</button>
                       </div>
-                      {type.vehicleOptions.length === 0 && <p className="text-[10px] text-slate-500">{t('ra_options_empty')}</p>}
+                      {type.variants.length === 0 && <p className="text-[10px] text-slate-500">{t('ra_options_empty')}</p>}
                       <div className="space-y-1.5">
-                        {type.vehicleOptions.map((option, index) => (
-                          <div key={`${option.id}-${index}`} className="grid grid-cols-2 gap-1.5 sm:grid-cols-6">
-                            <input value={option.label.mm} onChange={(event) => patchType(type.id, { vehicleOptions: type.vehicleOptions.map((item) => item.id === option.id ? { ...item, label: { ...item.label, mm: event.target.value } } : item) })} placeholder={t('ra_label_mm')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
-                            <input value={option.label.en} onChange={(event) => patchType(type.id, { vehicleOptions: type.vehicleOptions.map((item) => item.id === option.id ? { ...item, label: { ...item.label, en: event.target.value } } : item) })} placeholder={t('ra_label_en')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
-                            <input type="number" min="1" value={option.seats} onChange={(event) => patchType(type.id, { vehicleOptions: type.vehicleOptions.map((item) => item.id === option.id ? { ...item, seats: Number(event.target.value) } : item) })} placeholder={t('ra_seats')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
-                            <input type="number" min="1" value={option.rateUsd} onChange={(event) => patchType(type.id, { vehicleOptions: type.vehicleOptions.map((item) => item.id === option.id ? { ...item, rateUsd: Number(event.target.value) } : item) })} placeholder={t('ra_rate_local')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
-                            <input type="number" min="1" value={option.foreignRateUsd} onChange={(event) => patchType(type.id, { vehicleOptions: type.vehicleOptions.map((item) => item.id === option.id ? { ...item, foreignRateUsd: Number(event.target.value) } : item) })} placeholder={t('ra_rate_foreign')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
-                            <button type="button" aria-label={t('ra_remove_option')} onClick={() => patchType(type.id, { vehicleOptions: type.vehicleOptions.filter((item) => item.id !== option.id) })} className="justify-self-start rounded border border-[#2f6192] px-2 py-1 text-[10px] text-red-300 hover:bg-white/10"><Trash2 size={11} /></button>
+                        {type.variants.map((variant) => (
+                          <div key={variant.id} className="grid grid-cols-2 gap-1.5 sm:grid-cols-7">
+                            <input value={variant.label.mm} onChange={(event) => patchVariant(type.id, variant.id, { label: { ...variant.label, mm: event.target.value } })} placeholder={t('ra_label_mm')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
+                            <input value={variant.label.en} onChange={(event) => patchVariant(type.id, variant.id, { label: { ...variant.label, en: event.target.value } })} placeholder={t('ra_label_en')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
+                            <input type="number" min="1" value={variant.seats ?? ''} onChange={(event) => patchVariant(type.id, variant.id, { seats: event.target.value === '' ? null : Number(event.target.value) })} placeholder={t('ra_seats')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
+                            <input type="number" min="1" value={variant.rateUsd} onChange={(event) => patchVariant(type.id, variant.id, { rateUsd: Number(event.target.value) })} placeholder={t('ra_rate_local')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
+                            <input type="number" min="1" value={variant.foreignRateUsd} onChange={(event) => patchVariant(type.id, variant.id, { foreignRateUsd: Number(event.target.value) })} placeholder={t('ra_rate_foreign')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
+                            <label className="flex items-center gap-1 rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-slate-200">
+                              <input type="checkbox" checked={variant.active} onChange={(event) => patchVariant(type.id, variant.id, { active: event.target.checked })} className="h-3 w-3 accent-cyan-400" />
+                              {t('ra_active')}
+                            </label>
+                            <button type="button" aria-label={t('ra_remove_option')} onClick={() => patchType(type.id, { variants: type.variants.filter((item) => item.id !== variant.id) })} className="justify-self-start rounded border border-[#2f6192] px-2 py-1 text-[10px] text-red-300 hover:bg-white/10"><Trash2 size={11} /></button>
                           </div>
                         ))}
                       </div>
@@ -232,7 +291,7 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
             <thead className="text-slate-300">
               <tr>
                 <th className="sticky left-0 bg-[#0b203b] px-2 py-1.5">{t('ra_col_city')}</th>
-                {draft.types.map((type) => <th key={type.id} className="px-1 py-1.5 text-center font-semibold">{type.label[language] || type.id}</th>)}
+                {draft.types.filter((type) => type.active).map((type) => <th key={type.id} className="px-1 py-1.5 text-center font-semibold">{type.label[language] || type.id}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -242,7 +301,7 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
                     {city.name[language]}
                     <span className="ml-1 text-[9px] font-normal text-slate-500">{city.branches.length} {t('ra_branches_short')}</span>
                   </th>
-                  {draft.types.map((type) => (
+                  {draft.types.filter((type) => type.active).map((type) => (
                     <td key={type.id} className="px-1 py-1.5 text-center">
                       <input
                         type="checkbox"
@@ -263,6 +322,7 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
       <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
         <div className="border-b border-[#244668] px-3 py-2"><h2 className="flex items-center gap-2 text-sm font-bold"><Check size={16} className="text-[#26b8ff]" /> {t('ra_terms_title')}</h2></div>
         <div className="grid gap-2 p-3 sm:grid-cols-2">
+          <label className="block text-[10px] font-semibold text-slate-300 sm:col-span-2">{t('ra_terms_version')}<input value={draft.termsVersion} onChange={(event) => setDraft((current) => ({ ...current, termsVersion: event.target.value }))} className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
           <label className="block text-[10px] font-semibold text-slate-300">{t('ra_terms_mm')}<textarea rows={3} value={draft.terms.mm} onChange={(event) => setDraft((current) => ({ ...current, terms: { ...current.terms, mm: event.target.value } }))} className="mt-1 w-full resize-none rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
           <label className="block text-[10px] font-semibold text-slate-300">{t('ra_terms_en')}<textarea rows={3} value={draft.terms.en} onChange={(event) => setDraft((current) => ({ ...current, terms: { ...current.terms, en: event.target.value } }))} className="mt-1 w-full resize-none rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
         </div>

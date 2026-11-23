@@ -13,6 +13,10 @@
       "title": "Account notifications"
     },
     {
+      "path": "/account/bookings/:requestCode",
+      "title": "Rental voucher"
+    },
+    {
       "path": "/admin/login",
       "title": "Admin login"
     },

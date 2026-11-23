@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, type NavigateFunction } from 'react-router-dom';
+import { Link, useNavigate, type NavigateFunction } from 'react-router-dom';
 import {
   ArrowRight,
   BadgeCheck,
@@ -34,6 +34,9 @@ import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useCurrency } from '../../lib/currency';
 import { useAuth } from '../../lib/auth';
 import { requestsOfKind, useTravelRequests, type TravelRequest } from '../../lib/travelRequests';
+import { useRentalOrders, type RentalOrder } from '../../lib/rentalOrders';
+import { useRentalCatalog } from '../../lib/rentalCatalogStore';
+import { findRentalType, findVariant, localized } from '../../data/rentalCatalog';
 import { NOTIFICATIONS } from '../../data/notifications';
 import { TRAVEL_PLANS, BLOGS, POPULARS } from '../../data/homeData';
 import { TRAVEL_GUIDE_STORIES } from '../../data/travelGuideData';
@@ -86,7 +89,8 @@ export function AccountPage() {
   const [view, setView] = useState<DashboardView>('overview');
   const favorites = useToggleFavorite(allListings);
   const { requests } = useTravelRequests();
-  const bookingCount = requestsOfKind(requests, ['rental', 'ticket']).length;
+  const { orders } = useRentalOrders();
+  const bookingCount = orders.length + requestsOfKind(requests, ['ticket']).length;
   const planCount = requestsOfKind(requests, ['custom_plan']).length;
   const displayName = user?.name?.trim() || 'Min Htet';
   const displayEmail = user?.email || 'minhtet@gmail.com';
@@ -176,7 +180,7 @@ export function AccountPage() {
               onNavigate={navigate}
             />
           )}
-          {view === 'bookings' && <Bookings requests={requestsOfKind(requests, ['rental', 'ticket'])} />}
+          {view === 'bookings' && <Bookings orders={orders} requests={requestsOfKind(requests, ['ticket'])} />}
           {view === 'plans' && <Plans requests={requestsOfKind(requests, ['custom_plan'])} />}
           {view === 'guides' && <Guides listings={favorites.listings} toggle={favorites.toggle} />}
           {view === 'favorites' && <Favorites listings={favorites.listings} toggle={favorites.toggle} />}
@@ -434,13 +438,68 @@ function RequestRow({ request }: { request: TravelRequest }) {
   );
 }
 
-function Bookings({ requests }: { requests: TravelRequest[] }) {
+const ORDER_STATUS_KEY = {
+  requested: 'rv_status_requested',
+  accepted: 'rv_status_accepted',
+  paid: 'rv_status_paid',
+  completed: 'rv_status_completed',
+  expired: 'rv_status_expired',
+  cancelled: 'rv_status_cancelled',
+} as const;
+
+const ORDER_STATUS_TONE: Record<RentalOrder['status'], string> = {
+  requested: 'bg-sky-500/15 text-sky-300',
+  accepted: 'bg-amber-400/15 text-amber-300',
+  paid: 'bg-emerald-500/15 text-emerald-300',
+  completed: 'bg-slate-500/15 text-slate-300',
+  expired: 'bg-orange-400/15 text-orange-300',
+  cancelled: 'bg-red-500/15 text-red-300',
+};
+
+/** Plan §8.6: the voucher is one tap away from every rental order. */
+function RentalOrderRow({ order }: { order: RentalOrder }) {
+  const { t, language } = useLanguage();
+  const { formatPrice } = useCurrency();
+  const { catalog } = useRentalCatalog();
+  const type = findRentalType(catalog, order.categoryId);
+  const variant = findVariant(type, order.variantId);
+  const city = catalog.cities.find((item) => item.id === order.cityId);
+  const item = [type ? localized(type.label, language) : order.categoryId, variant ? localized(variant.label, language) : null]
+    .filter(Boolean)
+    .join(' · ');
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-account-border bg-account-elevated p-3 sm:flex-row sm:items-center">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full bg-account-accent/10 px-2 py-0.5 text-[10px] font-medium text-sky-200">{t('nav_rentals')}</span>
+          <span className="font-mono text-[10px] text-text-faint">{order.requestCode}</span>
+        </div>
+        <p className="mt-1 text-sm font-semibold text-text-primary">{item}</p>
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-muted">
+          <CalendarDays size={13} />
+          {order.startDate} → {order.endDate}
+          <span>{city ? localized(city.name, language) : order.cityId}</span>
+          <span>{order.days} {t('rentals_day_count')}</span>
+        </p>
+      </div>
+      <span className="self-start text-sm font-semibold text-text-primary sm:self-auto">{formatPrice(order.totalUsd)}</span>
+      <span className={`self-start rounded-full px-2.5 py-1 text-[10px] font-medium sm:self-auto ${ORDER_STATUS_TONE[order.status]}`}>{t(ORDER_STATUS_KEY[order.status])}</span>
+      <Link to={`/account/bookings/${order.requestCode}`} className="self-start rounded-lg bg-account-accent px-3 py-2 text-[10px] font-semibold text-white sm:self-auto">{t('rentals_view_voucher')}</Link>
+    </div>
+  );
+}
+
+function Bookings({ orders, requests }: { orders: RentalOrder[]; requests: TravelRequest[] }) {
   const { t } = useLanguage();
+  const empty = orders.length === 0 && requests.length === 0;
   return <PagePanel title={t('account_bookings')} intro={t('account_bookings_intro')}>
-    {requests.length > 0 ? (
-      <div className="space-y-3">{requests.map((request) => <RequestRow key={request.id} request={request} />)}</div>
-    ) : (
+    {empty ? (
       <EmptyState text={t('account_no_bookings')} />
+    ) : (
+      <div className="space-y-3">
+        {orders.map((order) => <RentalOrderRow key={order.id} order={order} />)}
+        {requests.map((request) => <RequestRow key={request.id} request={request} />)}
+      </div>
     )}
   </PagePanel>;
 }

@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { DEFAULT_RENTAL_CATALOG, rentalCatalogProblems, type RentalCatalog } from '../data/rentalCatalog';
+import {
+  DEFAULT_RENTAL_CATALOG,
+  rentalCatalogProblems,
+  type RentalCatalog,
+  type RentalType,
+  type RentalVariant,
+} from '../data/rentalCatalog';
 
 /**
- * Rental Admin edits (Plan §8 item 1) live here until the catalog tables exist.
+ * Rental Admin edits (Plan §8) live here until the catalog tables exist.
  * The page and the panel read the same record, so an edit reaches a traveler
  * without a reload and without page code knowing what changed.
  */
@@ -15,13 +21,50 @@ function isCatalog(value: unknown): value is RentalCatalog {
   return Array.isArray(record.types) && Array.isArray(record.cities) && typeof record.availability === 'object';
 }
 
+/**
+ * A catalog saved by an older build can lack fields added since (variants,
+ * rates, the terms version, active/sortOrder). Filling them here keeps a stale
+ * browser record usable instead of throwing the Admin's edits away.
+ */
+function normalizeType(type: RentalType, index: number): RentalType {
+  const legacy = type as RentalType & { vehicleOptions?: RentalVariant[] };
+  const variants = Array.isArray(type.variants) ? type.variants : (legacy.vehicleOptions ?? []);
+  return {
+    ...type,
+    flow: type.flow ?? (variants.length > 0 ? 'driver_vehicle' : 'simple'),
+    variants: variants.map((variant, position) => ({
+      id: variant.id,
+      label: variant.label,
+      seats: variant.seats ?? null,
+      rules: variant.rules ?? { mm: '', en: '' },
+      active: variant.active ?? true,
+      sortOrder: variant.sortOrder ?? position + 1,
+      rateUsd: variant.rateUsd,
+      foreignRateUsd: variant.foreignRateUsd,
+    })),
+    active: type.active ?? true,
+    sortOrder: type.sortOrder ?? index + 1,
+  };
+}
+
+function normalizeCatalog(catalog: RentalCatalog): RentalCatalog {
+  return {
+    termsVersion: catalog.termsVersion ?? DEFAULT_RENTAL_CATALOG.termsVersion,
+    terms: catalog.terms,
+    types: catalog.types.map(normalizeType),
+    cities: catalog.cities,
+    availability: catalog.availability,
+    rates: Array.isArray(catalog.rates) ? catalog.rates : [],
+  };
+}
+
 export function readRentalCatalog(): RentalCatalog {
   if (typeof window === 'undefined') return DEFAULT_RENTAL_CATALOG;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_RENTAL_CATALOG;
     const parsed: unknown = JSON.parse(raw);
-    return isCatalog(parsed) ? parsed : DEFAULT_RENTAL_CATALOG;
+    return isCatalog(parsed) ? normalizeCatalog(parsed) : DEFAULT_RENTAL_CATALOG;
   } catch {
     return DEFAULT_RENTAL_CATALOG;
   }
