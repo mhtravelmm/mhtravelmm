@@ -44,6 +44,12 @@ function detailLabel(run: JobRun | undefined, t: (key: TranslationKey) => string
     const [blog = '0', guide = '0'] = run.detail.split('/');
     return fill(t('sa_jobs_detail_published'), { blog, guide });
   }
+  if (run.id === 'ad_campaign_window') {
+    const [started = '0', ended = '0', reminded = '0'] = run.detail.split('/');
+    return fill(t('sa_jobs_detail_ads_window'), { started, ended, reminded });
+  }
+  if (run.id === 'ad_stats_rollup') return fill(t('sa_jobs_detail_rows'), { count: run.detail });
+  if (run.id === 'ad_events_purge') return fill(t('sa_jobs_detail_purged'), { count: run.detail });
   return fill(t('sa_jobs_detail_expired'), { count: run.detail });
 }
 

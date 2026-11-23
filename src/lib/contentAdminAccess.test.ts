@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canManageAds, canManageBlogs, canManageGuides, isContentRole } from './contentAdminAccess';
+import { canManageAds, canManageBlogs, canManageGuides, canReadAdReports, isContentRole } from './contentAdminAccess';
 
 describe('content admin access', () => {
   it('lets a Blog Post Admin open the Blog editor only', () => {
@@ -30,5 +30,12 @@ describe('content admin access', () => {
     expect(isContentRole('Travel Guide Content Admin')).toBe(true);
     expect(isContentRole('Rental Admin')).toBe(false);
     expect(isContentRole(undefined)).toBe(false);
+  });
+
+  it('lets Payment Admin read ad reports without managing ads', () => {
+    expect(canReadAdReports('Payment Admin')).toBe(true);
+    expect(canManageAds('Payment Admin')).toBe(false);
+    expect(canReadAdReports('Blog Post Admin')).toBe(false);
+    expect(canReadAdReports(undefined)).toBe(false);
   });
 });

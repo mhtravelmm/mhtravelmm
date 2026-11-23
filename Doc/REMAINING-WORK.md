@@ -213,8 +213,11 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   otherwise a cover edited after 30 days looks like an orphan. The blog and guide
   editors do not save to a table yet, so this lands with those tables.
 - Add an Ads creative upload path: `mediaRules.ts` already allows a 300 KB image
-  and a 3 MB / 15 s MP4 in `ads/`, but the Ads Management panel has no file input
-  yet, so a creative is still a name and an advertiser.
+  and a 3 MB / 15 s MP4 in `ads/`, and the Adsboard now enforces those limits
+  (`creativeProblem` in `src/lib/adCampaigns.ts` refuses a measured oversize or a
+  video over 15 seconds), but the panel still has no file input, so a creative is
+  still a URL and no byte count is measured. Until the Worker exists, `bytes` is
+  0 and the limit is not applied.
 - Add Blog Post, localized block, category, revision, SEO metadata, status, schedule, and audit tables. The block schema, revision cap, and audit actions already exist in `src/lib/blogBlocks.ts` and `src/lib/contentWorkflow.ts`, so the tables mirror that shape.
 - Persist cover, gallery, and inline story media transactionally with ordered blocks, alt text, captions, and R2 keys. The reader already renders ordered text, photo, and ad blocks with alt text and captions from local data.
 - Scheduled publishing execution and timezone handling are in place on the client (§10 §4): `src/lib/scheduleRules.ts` converts Myanmar Time to UTC, `src/lib/scheduledPublishing.ts` runs on the one-minute tick, and the reader reads the result. Unpublish, soft delete, restore and the stale-save refusal are also done (§10 §4, §7 acceptance 5–6): `src/lib/contentLifecycle.ts` holds the rules and `20261124000100_content_lifecycle.sql` puts the same version guard on the server. What is left is the server wiring and the parts the client cannot do: moderation, the 30-second draft autosave, public cache invalidation, and a `pg_cron` trigger. Revisions and the audit log live in browser storage today, so they still need the tables above to be shared between two editors.
@@ -224,7 +227,11 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
 
 - Replace seeded dashboard metrics and local preview records with scoped Supabase/API data.
 - Add permission groups, feature-level access checks, admin status transitions, and audit logs. Route-level scoping for the two content roles is done in `src/lib/contentAdminAccess.ts` and the admin shell; the remaining gap is server-side enforcement and account status changes.
-- Connect Ads Management to campaign persistence, creative storage, scheduling, budgets, reporting, approval, and AdSlot delivery.
+- Connect Ads Management to campaign persistence, creative storage, scheduling,
+  budgets, reporting, approval, and AdSlot delivery. The behaviour is built and
+  tested (§16A.1–§16A.9: serving order, status machine, approval queue, reports,
+  `ad_campaign_window` job), so what remains is the storage swap: apply
+  `20261125000100_ads.sql` and point `src/lib/adStore.ts` at the tables.
 - Build the Shop Owner template catalog and entitlement system: one Free template, paid templates at 2,000 MMK/month/shop, preview/apply switching, compatibility, billing, renewal, grace period, fallback, retirement, rollback, and analytics.
 - Implement the ticket operator hierarchy with parent-child operator/branch records, 10,000 MMK/month Branch Owner billing, scoped RLS, lifecycle states, ticket attribution, revenue-share snapshots, and audit events.
 - Implement MH Platform, Main Owner consolidated, and Branch Owner wallet ledgers, settlements, payouts, refunds, adjustments, withdrawal rules, and configurable commission/revenue-share policies after the business rules are finalized.
@@ -280,7 +287,25 @@ The current notification is a local preview implementation. Production should cr
 
 ## Page-based Ads Management — production work remaining
 
-Persist page routes, ad slots, creative/media, advertiser, schedule, approval state, and page-level permissions in Supabase/R2. Published ads must be fetched and rendered by the matching public page, while preview, pause, scheduling, analytics, and audit events must be backed by real APIs rather than local component state.
+The §16A build closed the behaviour side: `AdSlot` renders the served ad on every
+public page and walks Admin ad → AdSense → collapse, the seven Adsboard sections
+cover placements, campaigns, creatives, advertisers, reports and settings, and
+`ad_campaign_window` moves the statuses on the one-minute tick. What is left is
+the backend:
+
+- Apply `supabase/migrations/20261125000100_ads.sql` and replace the browser
+  stand-in in `src/lib/adStore.ts` with reads of `ad_placements`,
+  `ad_campaigns`, `ad_creatives`, `ad_advertisers` and `ad_stats_daily`.
+- Ship `serve_ad(placement_key, language)` as an RPC with the 60-second edge
+  cache, so the browser cannot read the tables directly (§16A.9).
+- Add the `/ad/click/<creative_id>` endpoint and the event beacon. Today a click
+  is recorded at the link, which means a blocked popup still counts it and a
+  server-side redirect cannot be audited.
+- Roll the raw `ad_events` up into `ad_stats_daily` on a nightly job and purge
+  past 90 days. `ad_stats_rollup` and `ad_events_purge` are declared but still
+  `wired: false` in `src/lib/jobs.ts`.
+- Keep the AdSense ids empty until the founder supplies them (§16A.12); the
+  fallback step is implemented and stays off while the client id is blank.
 
 
 ## UI/UX and accessibility backlog — audited 20 November 2026

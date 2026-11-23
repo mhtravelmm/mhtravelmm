@@ -34,6 +34,8 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
     expect(canOpenSection('Payment Admin', 'rentalReports')).toBe(true);
     expect(canOpenSection('Payment Admin', 'rentals')).toBe(false);
     expect(canOpenSection('Payment Admin', 'overview')).toBe(false);
+    // §16B.1 marks the Ads row `R (reports)` for Payment Admin.
+    expect(canOpenSection('Payment Admin', 'ads')).toBe(true);
   });
 
   it('gives Admin users, support and the read-only catalogs', () => {

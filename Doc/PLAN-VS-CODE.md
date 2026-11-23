@@ -224,6 +224,20 @@ reading the codes out of `supabase/migrations` so a new one cannot land
 untranslated. Criteria 6–8 stay open until the migrations are applied, because
 they describe what the server does.
 
+A seventh row is closed: Plan §16A.2 said the Adsboard was nine pages of local
+state with a fixed Rentals banner and no serving function the pages could call.
+§16A.1–§16A.9 are now implemented against one seam — `src/lib/adPlacements.ts`,
+`adCampaigns.ts`, `adStats.ts`, `adCampaignJobs.ts` and the browser stand-in in
+`adStore.ts` — with the §16A.4 DDL committed in
+`supabase/migrations/20261125000100_ads.sql` and the §16A.7 seven sections in
+`AdsManagementPanel.tsx`. Two Plan details still differ from the code, and both
+are deliberate: the fallback step is AdSense only until the mobile app ships
+(§16A.12), and a click is counted at the link rather than through the
+`/ad/click/<creative_id>` endpoint the Plan describes, because there is no
+server to redirect from yet. §16A.2's "columns must be checked before the schema
+is applied" is still open: the migration is written but not applied, so the
+browser storage remains the source of truth.
+
 The three gap rows this section used to carry are closed:
 
 | Was | Now |

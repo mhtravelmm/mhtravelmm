@@ -16,6 +16,14 @@ export function canManageAds(role: AdminRole | undefined): boolean {
   return role === 'Super Admin' || role === 'Ads Admin';
 }
 
+/**
+ * §16A.9: Payment Admin reads the ad reports but changes nothing, so this is a
+ * separate right from `canManageAds` rather than a broader one.
+ */
+export function canReadAdReports(role: AdminRole | undefined): boolean {
+  return canManageAds(role) || role === 'Payment Admin';
+}
+
 /** True for the roles that may sign in to the content workspace at all. */
 export function isContentRole(role: AdminRole | undefined): boolean {
   return role === 'Blog Post Admin' || role === 'Travel Guide Content Admin';

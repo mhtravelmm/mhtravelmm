@@ -24,8 +24,14 @@ beforeEach(() => { fakeWindow(); });
 
 const MINUTE = 60 * 1000;
 const at = (iso: string) => new Date(iso);
-// Both wired jobs, so a test about one does not trip over the other.
-const handlers = { rental_payment_expiry: () => 2, publish_due_content: () => '0/0' };
+// Every wired job, so a test about one does not trip over another.
+const handlers = {
+  rental_payment_expiry: () => 2,
+  publish_due_content: () => '0/0',
+  ad_campaign_window: () => '0/0/0',
+  ad_stats_rollup: () => 0,
+  ad_events_purge: () => 0,
+};
 
 describe('the §16B.7 schedule', () => {
   it('lists the eight jobs with the cadence the Plan gives', () => {
@@ -79,24 +85,28 @@ describe('the §16B.7 schedule', () => {
 describe('runDueJobs', () => {
   const now = at('2026-11-23T00:10:00Z');
   const lastRun = { rental_payment_expiry: '2026-11-23T00:00:00Z' };
+  // Both interval jobs are past their cadence; the three daily ones ran today,
+  // so their next wall-clock time is tomorrow.
+  const justRan: JobRun[] = [
+    { id: 'publish_due_content', at: '2026-11-23T00:08:00Z', outcome: 'ok', detail: '0/0' },
+    { id: 'ad_campaign_window', at: '2026-11-23T00:08:00Z', outcome: 'ok', detail: '0/0/0' },
+    { id: 'rental_payment_expiry', at: '2026-11-23T00:03:00Z', outcome: 'ok', detail: '0' },
+    { id: 'ad_stats_rollup', at: '2026-11-23T00:09:30Z', outcome: 'ok', detail: '0' },
+    { id: 'ad_events_purge', at: '2026-11-23T00:09:30Z', outcome: 'ok', detail: '0' },
+  ];
 
   it('logs one row per run and reports nothing when the job succeeds', () => {
-    const { runs, failures } = runDueJobs(now, handlers, [
-      { id: 'rental_payment_expiry', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0' },
-      { id: 'publish_due_content', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0/0' },
-    ]);
+    const { runs, failures } = runDueJobs(now, handlers, justRan);
     expect(failures).toEqual([]);
     expect(runs).toEqual([
       { id: 'publish_due_content', at: now.toISOString(), outcome: 'ok', detail: '0/0' },
+      { id: 'ad_campaign_window', at: now.toISOString(), outcome: 'ok', detail: '0/0/0' },
       { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'ok', detail: '2' },
     ]);
   });
 
   it('turns a throw into a failed row, which is what alerts Super Admin', () => {
-    const { failures } = runDueJobs(now, { ...handlers, rental_payment_expiry: () => { throw new Error('expire_failed'); } }, [
-      { id: 'rental_payment_expiry', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0' },
-      { id: 'publish_due_content', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0/0' },
-    ]);
+    const { failures } = runDueJobs(now, { ...handlers, rental_payment_expiry: () => { throw new Error('expire_failed'); } }, justRan);
     expect(failures).toEqual([
       { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'failed', detail: 'expire_failed' },
     ]);
@@ -112,9 +122,13 @@ describe('runDueJobs', () => {
 
   it('skips an unwired job without writing a row for it', () => {
     const { runs } = runDueJobs(now, {}, []);
-    // Only the two wired jobs are reported, so the six unbuilt jobs never fill
-    // the log.
-    expect(runs.map((run) => run.id).sort()).toEqual(['publish_due_content', 'rental_payment_expiry']);
+    // Only the due wired jobs are reported, so the three unbuilt jobs (one of
+    // which is due right now) never fill the log.
+    expect(runs.map((run) => run.id).sort()).toEqual([
+      'ad_campaign_window',
+      'publish_due_content',
+      'rental_payment_expiry',
+    ]);
     expect(runs.every((run) => run.outcome === 'not_wired')).toBe(true);
   });
 
@@ -123,8 +137,10 @@ describe('runDueJobs', () => {
       { id: 'rental_payment_expiry', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0' },
       { id: 'publish_due_content', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0/0' },
     ]);
+    // Both jobs just ran, so their missing handlers are what the tick reports.
     expect(runs).toEqual([
       { id: 'publish_due_content', at: now.toISOString(), outcome: 'not_wired', detail: '' },
+      { id: 'ad_campaign_window', at: now.toISOString(), outcome: 'not_wired', detail: '' },
       { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'not_wired', detail: '' },
     ]);
   });
@@ -174,6 +190,7 @@ describe('a failed job alerts Super Admin (Plan §16D Phase 0 gate)', () => {
     runDueJobs(now, handlers, []);
     expect(readJobRuns()).toEqual([
       { id: 'publish_due_content', at: now.toISOString(), outcome: 'ok', detail: '0/0' },
+      { id: 'ad_campaign_window', at: now.toISOString(), outcome: 'ok', detail: '0/0/0' },
       { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'ok', detail: '2' },
     ]);
     // The stored row is what stops the next tick from running it again.

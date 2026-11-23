@@ -23,6 +23,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AdSlot } from '../../components/ui/AdSlot';
 import { useAuth } from '../../lib/auth';
 import { useCurrency } from '../../lib/currency';
 import { useLanguage } from '../../lib/i18n';
@@ -258,6 +259,10 @@ export function RentalsPage() {
           </div>
         </div>
       </section>
+
+      {/* Plan §16A.3: the Rentals top banner is the `rentals_top` placement,
+          not a fixed banner, so the Adsboard can switch it off. */}
+      <AdSlot placement="rentals_top" />
 
       <section className="rounded-2xl border border-border bg-bg-card p-2.5 shadow-sm sm:p-3">
         <p className="mb-2 px-1 text-[10px] font-semibold text-text-secondary">{t('rentals_choose_type')}</p>

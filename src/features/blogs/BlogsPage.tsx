@@ -22,7 +22,6 @@ import type { LucideIcon } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { AdSlot } from '../../components/ui/AdSlot';
 import { ListingCard } from '../../components/ui/ListingCard';
-import { fetchMockAd } from '../../data/ads';
 import { BLOG_POSTS, type BlogBlock, type BlogCategory, type BlogPost } from '../../data/blogsData';
 import { ADDITIONAL_BLOG_POSTS } from '../../data/additionalBlogPosts';
 import { useBlogPosts } from '../../lib/contentStore';
@@ -262,7 +261,7 @@ function StoryBlock({ block, index, post, language }: { block: BlogBlock; index:
 
   return (
     <div key={`${post.id}-ad-${index}`} className="my-2">
-      <AdSlot placement={`blog_${post.id}_reader`} fetchAd={fetchMockAd} />
+      <AdSlot placement="blog_inline" />
     </div>
   );
 }
@@ -359,7 +358,7 @@ function StoryReader({
               <AutoTranslatedMark show={excerpt.autoTranslated} className="ml-1.5 align-middle" />
             </p>
             <div className="mb-6">
-              <AdSlot placement="blog_post_top" fetchAd={fetchMockAd} />
+              <AdSlot placement="blog_post_top" />
             </div>
             <div className="space-y-6">
               {post.blocks.map((block, index) => (
@@ -367,7 +366,7 @@ function StoryReader({
               ))}
             </div>
             <div className="mt-8">
-              <AdSlot placement="blog_post_bottom" fetchAd={fetchMockAd} />
+              <AdSlot placement="blog_post_bottom" />
             </div>
           </div>
         </div>

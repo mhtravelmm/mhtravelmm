@@ -1,5 +1,4 @@
 import { AdSlot } from '../../components/ui/AdSlot';
-import { fetchMockAd } from '../../data/ads';
 import { Hero } from './sections/Hero';
 import { Categories } from './sections/Categories';
 import { ListingGridSection } from './sections/ListingGridSection';
@@ -24,7 +23,7 @@ import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 function BreakAd({ placement }: { placement: string }) {
   return (
     <div className="mb-5">
-      <AdSlot placement={placement} fetchAd={fetchMockAd} />
+      <AdSlot placement={placement} />
     </div>
   );
 }

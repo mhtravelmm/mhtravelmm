@@ -1,6 +1,5 @@
 import { ArrowLeft, CalendarDays, Compass, MapPin, Search as SearchIcon } from 'lucide-react';
 import { AdSlot } from '../../components/ui/AdSlot';
-import { fetchMockAd } from '../../data/ads';
 import { ListingGridSection } from '../home/sections/ListingGridSection';
 import { SectionHeader } from '../home/sections/SectionHeader';
 import { ListingCard } from '../../components/ui/ListingCard';
@@ -24,7 +23,7 @@ import {
 function BreakAd({ placement }: { placement: string }) {
   return (
     <div className="mb-5">
-      <AdSlot placement={placement} fetchAd={fetchMockAd} />
+      <AdSlot placement={placement} />
     </div>
   );
 }

@@ -12,9 +12,12 @@ const OBJECTS: AdminAuditObject[] = [
   'ad',
   'rental_order',
   'currency_rate',
+  'translation',
+  'ad_campaign',
+  'ad_creative',
 ];
 
-const SOURCES = ['admin_workspace', 'auth', 'earnings', 'content', 'rental_orders', 'currency'] as const;
+const SOURCES = ['admin_workspace', 'auth', 'earnings', 'content', 'rental_orders', 'currency', 'ads'] as const;
 
 describe('adminAuditLabels', () => {
   it('names every action in both languages', () => {

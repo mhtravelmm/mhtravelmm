@@ -33,13 +33,13 @@ const HOUR = 60 * MINUTE;
 
 export const JOBS: JobDefinition[] = [
   { id: 'publish_due_content', schedule: { everyMs: MINUTE }, wired: true },
-  { id: 'ad_campaign_window', schedule: { everyMs: MINUTE }, wired: false },
+  { id: 'ad_campaign_window', schedule: { everyMs: MINUTE }, wired: true },
   { id: 'rental_payment_expiry', schedule: { everyMs: 5 * MINUTE }, wired: true },
   { id: 'subscription_expiry', schedule: { everyMs: HOUR }, wired: false },
   { id: 'renewal_reminders', schedule: { dailyAt: '09:00' }, wired: false },
-  { id: 'ad_stats_rollup', schedule: { dailyAt: '00:30' }, wired: false },
+  { id: 'ad_stats_rollup', schedule: { dailyAt: '00:30' }, wired: true },
   { id: 'orphan_media_cleanup', schedule: { dailyAt: '02:00' }, wired: false },
-  { id: 'ad_events_purge', schedule: { dailyAt: '00:00' }, wired: false },
+  { id: 'ad_events_purge', schedule: { dailyAt: '00:00' }, wired: true },
 ];
 
 const DAY_MS = 24 * HOUR;

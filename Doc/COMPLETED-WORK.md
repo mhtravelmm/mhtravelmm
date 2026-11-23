@@ -1,6 +1,6 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 24 November 2026
+**Last updated:** 25 November 2026
 **Verified against:** `main` plus the Rental catalog data module and Rental Admin
 panel, the per-account Favorites, notification, and review wiring, and the
 scheduled publishing seam that now sits between the Blog/Travel Guide editors
@@ -1250,3 +1250,68 @@ other editor's title survived, and `Reload` refilled the form from the newer
 row. Restoring an older revision wrote a `restored` audit row and a new
 revision. `/super-admin`, `/blogs` and `/travel-guide` showed zero horizontal
 overflow at 360, 768 and 1440 px.
+
+## The Ads system and Adsboard (Plan §16A) — 25 November 2026
+
+Plan §16A was written against the old console: nine pages of local state, a
+fixed Rentals banner, and no serving function the public pages could call. The
+work below closes that gap end to end — one seam for the Adsboard, the pages and
+the jobs.
+
+**Data (§16A.4).** `supabase/migrations/20261125000100_ads.sql` creates
+`ad_advertisers`, `ad_campaigns`, `ad_creatives`, `ad_placements`,
+`ad_assignments`, `ad_events` and `ad_stats_daily` with RLS and the indexes the
+serving query needs. The click URL is checked by a `check` constraint as well as
+in code, both alt languages are required, and `bytes` plus `duration_seconds`
+carry the §16A.8 measurements. `src/lib/adStore.ts` is the browser stand-in with
+the same shapes, so the tables replace it without moving a call site.
+
+**Serving (§16A.1, §16A.5).** `src/lib/adCampaigns.ts` holds the rules: the
+status machine, `canServe` (Live and inside the window), `campaignServesPlacement`
+(assigned, on, with an approved creative), `pickCampaign` (highest priority, then
+weighted rotation seeded on the placement and the minute) and `serveAd`, which
+answers `null` for every reason a slot must collapse. `AdSlot` now walks the full
+§16A.1 order: Admin ad, then AdSense when the placement allows fallback and a
+client id is set, then nothing. An impression is counted once the ad is half
+visible for a second, once per creative per session per page view; a click is
+counted as the link opens; bot user agents are ignored.
+
+**Adsboard (§16A.7).** `src/features/superAdmin/AdsManagementPanel.tsx` is the
+seven sections the Plan names:
+
+| Section | What it does |
+|---|---|
+| Overview | Active campaigns, live placements, impressions, clicks, CTR, pending creatives, campaigns ending in 7 days |
+| Pages and placements | Per-page placements with the on/off and fallback toggles, the current ad preview, the health state and the 24-hour fill rate |
+| Campaigns | Status, advertiser, placement and day filters; one create-edit form with the window, priority, weight, placements, fee and invoiced/paid flags |
+| Creatives and approvals | The Pending queue with preview, approve, and reject with a reason |
+| Advertisers | Contact details and campaign history; a rename follows the campaigns that carry the old name |
+| Reports | Totals and by day, placement and campaign, 7 / 30 / all, CSV export |
+| Settings | AdSense client and slot, the §16A.8 limits, and the blocked-domain list |
+
+`filterCampaigns` lives in the domain module rather than the panel, so the filter
+rule is tested on its own; a day filter matches a campaign whose window overlaps
+that day, not only one that starts on it.
+
+**Creative rules (§16A.8).** `creativeProblem` now takes the Settings limits and
+the blocked-domain list. A measured size over 300 KB (image) or 3 MB (video), a
+video longer than 15 seconds, or a click URL on a blocked host is refused with
+its own code; a size that is still unknown is not refused, because the browser
+stand-in has no upload Worker to measure it. `isSafeClickUrl` keeps `https` and
+internal paths and adds the host block list, with subdomain matching.
+
+**Access (§16A.9).** `canReadAdReports()` is separate from `canManageAds()`:
+Payment Admin opens the Ads section and sees Reports only, with a note that
+editing is not permitted, which is what the §16B.1 `R (reports)` row says.
+
+**Jobs (§16B.7).** `ad_campaign_window` is wired to the one-minute tick: it
+starts a campaign whose window opened, ends one past its `end_at`, and raises the
+ending-soon and ended notices once.
+
+**Verification.** `npm run typecheck` clean; `npm test` 46 files / 550 tests;
+`npm run build` succeeds; `npx eslint src` unchanged at 7 pre-existing warnings.
+Browser check at `/super-admin` in Burmese: the Advertisers tab listed six
+advertisers with their campaign and live counts; Campaigns showed `7/7` with the
+four filters and an empty-state message; Pages and placements showed the 24-hour
+fill rate in the panel title and the per-slot health. On `/` the ad slots still
+rendered with the `ကြော်ငြာ` label.

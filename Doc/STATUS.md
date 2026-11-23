@@ -1,6 +1,9 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 24 November 2026 (admin accounts, audit log, role change,
+**Last audited:** 25 November 2026 (the §16A Adsboard: the seven sections, the
+advertiser rows, the campaign filters, the AdSense fallback step in `AdSlot`, the
+§16A.8 creative limits and domain block list, and Payment Admin's read-only
+reports; before that, 24 November: admin accounts, audit log, role change,
 exchange-rate history, the shared money formatter, the §16B.7 jobs runner,
 scheduled publishing for Blog and Travel Guide, the content lifecycle —
 unpublish, soft delete, restore and the stale-save refusal — the §16B.3
@@ -179,7 +182,7 @@ places rather than advice.
 | Area | Status | Notes |
 |---|---|---|
 | Super Admin metrics/users/content | **PARTIAL** | Seeded metrics; body localized through `useLanguage` |
-| Super Admin Ads Management | **PREVIEW** | Page-oriented placements, local state |
+| Super Admin Ads Management (§16A) | **PREVIEW** | The Adsboard serves from `src/lib/adStore.ts`, which mirrors the §16A.4 tables (`ad_advertisers`, `ad_campaigns`, `ad_creatives`, `ad_placements`, `ad_events`, `ad_stats_daily`); the DDL is committed in `supabase/migrations/20261125000100_ads.sql` but not applied. Seven sections: Overview, Pages and placements (toggle, current ad, health state, 24-hour fill rate), Campaigns (status / advertiser / placement / day filters, one create-edit form with the fee and invoiced-paid flags), Creatives and approvals, Advertisers (contact details plus campaign history, and a rename follows the campaigns that carry the old name), Reports (by day, placement and campaign with CSV export) and Settings (AdSense ids, creative limits, blocked domains). Serving follows §16A.1 in `src/components/ui/AdSlot.tsx`: Admin ad, then AdSense when a client id is set and the placement allows fallback, then collapse. Payment Admin opens Reports read-only per the §16B.1 `R (reports)` row. Rows are still browser storage |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |
 | Admin Management | **PARTIAL** | Form offers the eight Plan §3 roles and creates a real local admin account with the chosen role. The table merges the seeded rows with the stored accounts (`src/lib/adminAccounts.ts`), so a created admin survives a reload. Each stored row now carries a role select backed by `changeAdminRole()`; the rules live in `src/lib/adminRoleChange.ts` (Super Admin only, no self-change, Super Admin row locked, unknown value and no-op refused) and a change writes a `role_change` audit row. Seeded rows are read-only because there is no stored record to rewrite. The rows themselves are still browser storage, not `public.profiles` |
 | Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally. Localized through `useLanguage` |
@@ -187,7 +190,7 @@ places rather than advice.
 | Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
 | Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
 | Audit log | **PARTIAL** | `src/lib/adminAudit.ts` + `AuditLogPanel` implement Plan §16B.2: one append-only row per decision (actor, actor role, action, object type, object id, summary, UTC time, source), searchable and filterable, Super Admin only per the §16B.1 settings row. Recorded now at every admin write that exists: admin-account creation, role change, shop-owner creation, guide-earning amount and settlement, blog and guide save/publish/delete, rental order status, payment, extras and currency rate. The labels live in `src/lib/adminAuditLabels.ts` and a test walks every action, object and source for MM and EN text. Admin-account creation, guide-earning amount and settlement also raise a §16B.3 notification in the admin bell (`src/lib/adminNotices.ts`); the store is browser storage until `admin_audit_logs` is wired |
-| Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected. Plan §3 and §16B.1 now scope one admin workspace per role: `src/lib/adminWorkspace.ts` lists the sections each role may open, and the Super Admin page filters its navigation through it, so Ads Admin sees only Ads, Payment Admin only orders/reports/currency/guide earnings, Blog Post Admin only Blogs, and Travel Guide Content Admin only Guides and its own earnings. `src/lib/roleMapping.ts` maps every one of the eight `profiles.role` slugs to a product role, and `auth.tsx` hydrates `adminRole` from the profile row, which is what the workspace reads |
+| Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected. Plan §3 and §16B.1 now scope one admin workspace per role: `src/lib/adminWorkspace.ts` lists the sections each role may open, and the Super Admin page filters its navigation through it, so Ads Admin sees only Ads, Payment Admin only orders/reports/currency/guide earnings plus the read-only ad reports (§16A.9), Blog Post Admin only Blogs, and Travel Guide Content Admin only Guides and its own earnings. `src/lib/roleMapping.ts` maps every one of the eight `profiles.role` slugs to a product role, and `auth.tsx` hydrates `adminRole` from the profile row, which is what the workspace reads |
 
 ---
 

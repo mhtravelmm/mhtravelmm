@@ -60,7 +60,7 @@ const SECTIONS_BY_ROLE: Record<AdminRole, WorkspaceSection[]> = {
   'Ads Admin': ['ads'],
   Admin: ['users', 'owners', 'bookings', 'content', 'blogs', 'guides', 'guideEarnings', 'rentals', 'rentalOrders', 'rentalReports', 'translations'],
   'Rental Admin': ['rentals', 'rentalOrders', 'rentalReports'],
-  'Payment Admin': ['rentalOrders', 'rentalReports', 'currency', 'guideEarnings'],
+  'Payment Admin': ['rentalOrders', 'rentalReports', 'currency', 'guideEarnings', 'ads'],
   'Travel Guide Content Admin': ['guides', 'guideEarnings'],
   'Blog Post Admin': ['blogs'],
   'Owner Admin': [],
