@@ -874,3 +874,61 @@ Nilar Win raised the bell notice "Admin အကောင့် အသစ် — N
 `MH Travel Super Admin`, role Super Admin, action ဖန်တီးပြီး, object Admin အကောင့်
 `nilar.win@mhtravel.com`, summary `Nilar Win · Ads Admin · Ads Management`,
 source Admin လုပ်ငန်းခွင်.
+
+## Audit coverage, exchange-rate history, and money formatting — 23 November 2026
+
+Three Plan sections moved forward together, because each one was a "the rule
+exists in the Plan but only half of it is in code" gap.
+
+**§16B.2 audit coverage.** `src/lib/adminAudit.ts` gained `useAuditRecorder()`,
+a hook that fills actor and actor role from `useAuth()` so a panel records with
+one call and cannot forget who did it. The remaining write paths now write a row:
+
+| Write | Action | Source |
+|---|---|---|
+| Shop Owner created | `created` | `admin_workspace` |
+| Exchange rate set | `updated` | `currency` |
+| Blog post saved / published / deleted | `updated` / `published` / `deleted` | `content` |
+| Travel guide saved / scheduled / published | `created` / `updated` / `published` | `content` |
+| Rental order accepted, completed, cancelled | `updated` | `rental_orders` |
+| Rental order paid | `payment` | `rental_orders` |
+| Rental extra added | `updated` | `rental_orders` |
+| Admin role changed | `role_change` | `admin_workspace` |
+
+The label maps moved out of the panel into `src/lib/adminAuditLabels.ts`, and
+`src/lib/adminAuditLabels.test.ts` walks every action, object type and source and
+fails if any of them has no MM or EN text — so adding a member to a union cannot
+ship an untranslated cell.
+
+**Role change (§16B.1 + §16B.2).** Admin Management now offers a role select per
+row, backed by `changeAdminRole()` in `src/lib/auth.tsx`. The rules live in
+`src/lib/adminRoleChange.ts` rather than in the panel: only a Super Admin may
+change a role, nobody may change their own, the Super Admin row is locked, an
+unknown value is refused, and a no-op writes nothing. The last two exist because
+the first browser check proved they were needed: an empty value wrote the audit
+row `Nilar Win · Ads Admin → ` with nothing after the arrow. Seeded rows are
+disabled too (`AdminRow.stored`), because they have no stored record to rewrite.
+
+**§16B.5 currency.** `src/lib/exchangeRates.ts` stores rates as append-only rows
+(`mmkPerUsd`, `effectiveFrom`, `setBy`, `note`); the rate in force is the latest
+row whose `effective_from` has passed, and the Plan's 4,500 remains the fallback
+until the first row exists. Super Admin → Currency takes an optional note and
+shows the history table, so the reason for a change survives. `supabase/migrations/20261123000100_exchange_rates.sql`
+commits the matching table, its RLS (public read; insert only for Super Admin and
+Payment Admin; no update or delete policy) and the `current_mmk_per_usd()`,
+`round_mmk()` and `usd_to_mmk()` functions.
+
+**Decision 33.** `src/lib/moneyFormat.ts` is the single formatter: USD to 2
+decimals, MMK rounded to the nearest 100. `currency.tsx` now delegates to it
+instead of rounding MMK itself, so the voucher, the rentals page and the admin
+preview cannot disagree.
+
+**Verification.** `npm run typecheck` clean; `npm test` 32 files / 359 tests
+(new: `adminAuditLabels`, `adminRoleChange`, `exchangeRates`, `moneyFormat`);
+`npm run build` succeeds; `npx eslint src` still 7 pre-existing warnings. Browser
+check at `/super-admin` in Burmese: saving `3,800` with the note "CBM reference
+rate" showed the new rate in the preview (`1 USD = 3,800 Ks`), appended one row
+to the history, and wrote the audit row `4,500 → 3,800 MMK per USD · CBM
+reference rate`; changing Nilar Win from Ads Admin to Payment Admin updated the
+row and its permission label to `Payments, Reports` and wrote the
+`role_change` audit row; selecting the role a row already has shows no error.

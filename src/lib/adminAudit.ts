@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { AdminRole } from './adminRoles';
+import { useAuth } from './auth';
 
 /**
  * Plan §16B.2: every create, update, payment and role change writes one row —
@@ -22,7 +23,9 @@ export type AdminAuditObject =
   | 'guide_earning'
   | 'guide'
   | 'blog'
-  | 'rental_order';
+  | 'ad'
+  | 'rental_order'
+  | 'currency_rate';
 
 export interface AdminAuditEntry {
   id: string;
@@ -35,7 +38,7 @@ export interface AdminAuditEntry {
   objectId: string;
   /** Short before/after or what changed, in one line. */
   summary: string;
-  source: 'admin_workspace' | 'auth' | 'earnings';
+  source: 'admin_workspace' | 'auth' | 'earnings' | 'content' | 'rental_orders' | 'currency';
 }
 
 const STORAGE_KEY = 'mh-travel-admin-audit';
@@ -75,6 +78,20 @@ export function recordAdminAudit(
   };
   writeAdminAudit([entry, ...readAdminAudit()]);
   return entry;
+}
+
+/**
+ * Binds the row to whoever is signed in, so a panel writes what changed and
+ * not who did it. Every §16B.2 write site uses this rather than passing the
+ * actor by hand.
+ */
+export function useAuditRecorder() {
+  const { user, adminRole } = useAuth();
+  return useCallback(
+    (input: Omit<AdminAuditEntry, 'id' | 'at' | 'actor' | 'actorRole'>) =>
+      recordAdminAudit({ ...input, actor: user?.name ?? '', actorRole: adminRole ?? 'system' }),
+    [adminRole, user],
+  );
 }
 
 export function useAdminAudit() {

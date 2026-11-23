@@ -25,6 +25,7 @@ import {
 } from '../../lib/blogBlocks';
 import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { useAuditRecorder } from '../../lib/adminAudit';
 import { problemMessage } from './publishProblemText';
 
 type AdminPost = {
@@ -137,6 +138,7 @@ function Summary({ label, value, tone }: { label: string; value: number; tone: '
 
 export function BlogPostsPanel({ runAction }: { runAction: (label: string) => void }) {
   const { t } = useLanguage();
+  const recordAdminAction = useAuditRecorder();
   const [posts, setPosts] = useState<AdminPost[]>(seedPosts);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [showEditor, setShowEditor] = useState(false);
@@ -250,6 +252,15 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       at: new Date().toISOString(),
       actor: 'Super Admin',
     }));
+    recordAdminAction({
+      action: next.status === 'Draft' ? (editingId ? 'updated' : 'created') : 'published',
+      objectType: 'blog',
+      objectId: id,
+      summary: next.status === 'Scheduled'
+        ? `${next.titleEn} · scheduled ${next.publishedAt}`
+        : `${next.titleEn} · ${next.status}`,
+      source: 'content',
+    });
     setShowEditor(false);
     notify(form.status === 'Published' ? t('bp_notice_published') : form.status === 'Scheduled' ? t('bp_notice_scheduled') : t('bp_notice_draft'));
   }
@@ -278,6 +289,13 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       at: new Date().toISOString(),
       actor: 'Super Admin',
     }));
+    recordAdminAction({
+      action: 'published',
+      objectType: 'blog',
+      objectId: post.id,
+      summary: post.titleEn,
+      source: 'content',
+    });
     notify(fill(t('bp_notice_now_published'), { title: post.titleEn }));
   }
 

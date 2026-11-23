@@ -1,11 +1,20 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Currency } from '../types';
+import { formatMoney } from './moneyFormat';
+import {
+  EXCHANGE_RATES_EVENT,
+  FALLBACK_MMK_PER_USD,
+  appendExchangeRate,
+  effectiveMmkPerUsd,
+  readExchangeRates,
+} from './exchangeRates';
 
 interface CurrencyContextValue {
   currency: Currency;
   toggleCurrency: () => void;
   exchangeRate: number;
-  setExchangeRate: (rate: number) => void;
+  /** Plan §16B.5: setting a rate appends a row, so the old rate stays on record. */
+  setExchangeRate: (rate: number, options?: { setBy?: string; note?: string }) => void;
   shopBaseCurrency: Currency;
   setShopBaseCurrency: (currency: Currency) => void;
   /** Formats a USD base price as a display string in the current currency. */
@@ -14,7 +23,6 @@ interface CurrencyContextValue {
   formatCurrencyAmount: (usd: number, currency: Currency) => string;
 }
 
-const DEFAULT_MMK_PER_USD = 4500;
 const CURRENCY_STORAGE_KEY = 'mh-travel-currency';
 const RATE_STORAGE_KEY = 'mh-travel-mmk-per-usd';
 const SHOP_BASE_CURRENCY_STORAGE_KEY = 'mh-travel-shop-base-currency';
@@ -26,17 +34,11 @@ function getStoredCurrency(key: string, fallback: Currency): Currency {
 }
 
 function getInitialRate(): number {
-  if (typeof window === 'undefined') return DEFAULT_MMK_PER_USD;
+  if (typeof window === 'undefined') return FALLBACK_MMK_PER_USD;
+  const fromRows = effectiveMmkPerUsd(readExchangeRates());
+  if (fromRows !== FALLBACK_MMK_PER_USD) return fromRows;
   const stored = Number(window.localStorage.getItem(RATE_STORAGE_KEY));
-  return Number.isFinite(stored) && stored > 0 ? stored : DEFAULT_MMK_PER_USD;
-}
-
-function formatPriceFor(usd: number, currency: Currency, exchangeRate: number): string {
-  if (currency === 'USD') {
-    return `$ ${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  const mmk = Math.round(usd * exchangeRate);
-  return `${mmk.toLocaleString('en-US')} Ks`;
+  return Number.isFinite(stored) && stored > 0 ? stored : FALLBACK_MMK_PER_USD;
 }
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null);
@@ -67,15 +69,24 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       if (event.key === CURRENCY_STORAGE_KEY && (event.newValue === 'MMK' || event.newValue === 'USD')) setCurrency(event.newValue);
       if (event.key === SHOP_BASE_CURRENCY_STORAGE_KEY && (event.newValue === 'MMK' || event.newValue === 'USD')) setShopBaseCurrencyState(event.newValue);
     }
+    function syncRateRows() {
+      setExchangeRateState(effectiveMmkPerUsd(readExchangeRates()));
+    }
     window.addEventListener('storage', syncCurrencySettings);
-    return () => window.removeEventListener('storage', syncCurrencySettings);
+    window.addEventListener(EXCHANGE_RATES_EVENT, syncRateRows);
+    return () => {
+      window.removeEventListener('storage', syncCurrencySettings);
+      window.removeEventListener(EXCHANGE_RATES_EVENT, syncRateRows);
+    };
   }, []);
 
   const toggleCurrency = () => setCurrency((current) => (current === 'MMK' ? 'USD' : 'MMK'));
-  const setExchangeRate = (rate: number) => {
-    if (Number.isFinite(rate) && rate > 0) setExchangeRateState(Math.round(rate * 100) / 100);
+  const setExchangeRate = (rate: number, options?: { setBy?: string; note?: string }) => {
+    if (!Number.isFinite(rate) || rate <= 0) return;
+    appendExchangeRate({ mmkPerUsd: rate, setBy: options?.setBy ?? 'Super Admin', note: options?.note });
+    setExchangeRateState(Math.round(rate * 100) / 100);
   };
-  const formatCurrencyAmount = (usd: number, targetCurrency: Currency) => formatPriceFor(usd, targetCurrency, exchangeRate);
+  const formatCurrencyAmount = (usd: number, targetCurrency: Currency) => formatMoney(usd, targetCurrency, exchangeRate);
   const formatPrice = (usd: number) => formatCurrencyAmount(usd, currency);
 
   return (

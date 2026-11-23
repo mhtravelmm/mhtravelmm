@@ -33,6 +33,7 @@ describe('adminRowFromUser', () => {
       role: 'Payment Admin',
       permissions: 'Payments, Reports',
       status: 'Active',
+      stored: true,
     });
   });
 

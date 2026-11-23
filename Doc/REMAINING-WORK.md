@@ -190,10 +190,18 @@ Still open on this track:
 
 ## Currency management — production work remaining
 
-- Persist exchange-rate history, effective dates, editor identity, and audit events in Supabase/Admin settings.
+- Exchange-rate history, effective dates, editor identity and the audit event are
+  now written client-side by `src/lib/exchangeRates.ts` (append-only rows, the
+  current rate is the latest row whose `effective_from` has passed, 4,500 stays as
+  the fallback) and shown in Super Admin → Currency. What remains: move the rows to
+  the `exchange_rates` table so they are append-only in the database and readable
+  by the Worker that prices an order.
 - Persist each Shop Owner's MMK/USD main currency on the business profile and apply it to real menu, service, rental, ticket, and booking prices.
 - Snapshot the exchange rate and displayed currency on every order/booking so historical totals do not change when Admin updates the rate.
-- Define server-side rounding, payment/refund currency, rate scheduling, permissions, and validation rules.
+- `src/lib/moneyFormat.ts` is the one formatter (USD 2 decimals, MMK to the
+  nearest 100, decision 33). Still open: the server-side copy of that rounding, the
+  payment/refund currency, rate scheduling ahead of time, and the permission check
+  on who may append a row.
 
 
 ## Shop Owner application notifications — production work remaining

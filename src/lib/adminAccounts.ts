@@ -14,6 +14,11 @@ export interface AdminRow {
   permissions: string;
   /** `Active` once the account exists; `Pending invite` until it signs in. */
   status: 'Active' | 'Pending invite';
+  /**
+   * True when the row came from a stored account. A seeded row has no record to
+   * rewrite, so Admin Management cannot change its role.
+   */
+  stored?: boolean;
 }
 
 /** The permission group a role starts with, which is what the form pre-selects. */
@@ -29,6 +34,7 @@ export function adminRowFromUser(user: AuthUser): AdminRow | null {
     role: user.adminRole,
     permissions: permissionsForRole(user.adminRole),
     status: 'Active',
+    stored: true,
   };
 }
 

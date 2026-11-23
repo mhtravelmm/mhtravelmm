@@ -6,6 +6,7 @@ import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { findRentalType, findVariant, localized } from '../../data/rentalCatalog';
 import { useAuth } from '../../lib/auth';
 import { canHandleOrders, canRecordPayment } from '../../lib/adminWorkspace';
+import { useAuditRecorder } from '../../lib/adminAudit';
 import {
   extrasTotalUsd,
   nextStatuses,
@@ -63,6 +64,7 @@ export function RentalOrdersPanel() {
   const { catalog } = useRentalCatalog();
   const { allOrders, setStatus, recordPayment, addExtra, noteOrder, expireOverdue } = useRentalOrders();
   const { user, adminRole } = useAuth();
+  const audit = useAuditRecorder();
   // Plan §16B.1: Payment Admin reads orders and records payments; accepting,
   // cancelling and completing stay with the order-handling roles.
   const mayHandle = canHandleOrders(adminRole);
@@ -258,7 +260,17 @@ export function RentalOrdersPanel() {
                             <button
                               type="button"
                               disabled={cancelDraft.reason.trim().length < 3}
-                              onClick={() => { setStatus(order.id, 'cancelled', cancelDraft.reason.trim()); setCancelDraft(null); }}
+                              onClick={() => {
+                                setStatus(order.id, 'cancelled', cancelDraft.reason.trim());
+                                audit({
+                                  action: 'updated',
+                                  objectType: 'rental_order',
+                                  objectId: order.requestCode,
+                                  summary: `cancelled · ${cancelDraft.reason.trim()}`,
+                                  source: 'rental_orders',
+                                });
+                                setCancelDraft(null);
+                              }}
                               className="rounded border border-red-400/60 bg-red-500/20 px-2 py-1 text-[10px] font-bold text-red-100 hover:bg-red-500/30 disabled:opacity-40"
                             >
                               {t('ra_orders_cancel_confirm')}
@@ -276,9 +288,26 @@ export function RentalOrdersPanel() {
                               key={to}
                               type="button"
                               onClick={() => {
-                                if (to === 'paid') recordPayment(order.id, method);
-                                else if (to === 'cancelled') setCancelDraft({ orderId: order.id, reason: '' });
-                                else setStatus(order.id, to);
+                                if (to === 'paid') {
+                                  recordPayment(order.id, method);
+                                  audit({
+                                    action: 'payment',
+                                    objectType: 'rental_order',
+                                    objectId: order.requestCode,
+                                    summary: `paid · ${method}`,
+                                    source: 'rental_orders',
+                                  });
+                                } else if (to === 'cancelled') setCancelDraft({ orderId: order.id, reason: '' });
+                                else {
+                                  setStatus(order.id, to);
+                                  audit({
+                                    action: 'updated',
+                                    objectType: 'rental_order',
+                                    objectId: order.requestCode,
+                                    summary: `status → ${to}`,
+                                    source: 'rental_orders',
+                                  });
+                                }
                               }}
                               className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] font-bold ${to === 'cancelled' || to === 'expired' ? 'border-red-400/40 text-red-200 hover:bg-red-500/10' : 'border-cyan-300/40 text-cyan-100 hover:bg-cyan-400/10'}`}
                             >
@@ -359,6 +388,13 @@ export function RentalOrdersPanel() {
                             disabled={!(extraDraft[order.id]?.description ?? '').trim() || Number(extraDraft[order.id]?.amount ?? 0) <= 0}
                             onClick={() => {
                               addExtra(order.id, extraDraft[order.id].description, Number(extraDraft[order.id].amount), user?.email ?? 'staff');
+                              audit({
+                                action: 'updated',
+                                objectType: 'rental_order',
+                                objectId: order.requestCode,
+                                summary: `extra · ${extraDraft[order.id].description} · $${Number(extraDraft[order.id].amount).toFixed(2)}`,
+                                source: 'rental_orders',
+                              });
                               setExtraDraft((current) => ({ ...current, [order.id]: { description: '', amount: '' } }));
                             }}
                             className="rounded border border-cyan-300/40 px-2 py-1 text-[10px] font-bold text-cyan-100 hover:bg-cyan-400/10 disabled:opacity-40"

@@ -1,51 +1,14 @@
 import { useMemo, useState } from 'react';
 import { Clock, Search, ShieldCheck } from 'lucide-react';
-import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { useLanguage } from '../../lib/i18n';
 import { useAdminAudit } from '../../lib/adminAudit';
-import type { AdminAuditAction, AdminAuditEntry, AdminAuditObject } from '../../lib/adminAudit';
+import type { AdminAuditAction } from '../../lib/adminAudit';
+import { ACTION_KEYS, ACTION_TONES, AUDIT_ACTIONS, OBJECT_KEYS, SOURCE_KEYS } from '../../lib/adminAuditLabels';
 
 /**
- * Plan §16B.2: every create, update, delete, publish, approve, payment and role
- * change writes one row. §16B.1 keeps "Settings and roles" with Super Admin, so
- * this reader is Super Admin only and is not scoped by actor.
+ * Plan §16B.2 reader. §16B.1 keeps "Settings and roles" with Super Admin, so the
+ * log is Super Admin only and is not scoped by actor.
  */
-const ACTIONS: AdminAuditAction[] = ['created', 'updated', 'deleted', 'published', 'approved', 'payment', 'role_change'];
-
-const ACTION_KEYS: Record<AdminAuditAction, TranslationKey> = {
-  created: 'sa_audit_action_created',
-  updated: 'sa_audit_action_updated',
-  deleted: 'sa_audit_action_deleted',
-  published: 'sa_audit_action_published',
-  approved: 'sa_audit_action_approved',
-  payment: 'sa_audit_action_payment',
-  role_change: 'sa_audit_action_role_change',
-};
-
-const OBJECT_KEYS: Record<AdminAuditObject, TranslationKey> = {
-  admin_account: 'sa_audit_object_admin_account',
-  shop_owner: 'sa_audit_object_shop_owner',
-  guide_earning: 'sa_audit_object_guide_earning',
-  guide: 'sa_audit_object_guide',
-  blog: 'sa_audit_object_blog',
-  rental_order: 'sa_audit_object_rental_order',
-};
-
-const SOURCE_KEYS: Record<AdminAuditEntry['source'], TranslationKey> = {
-  admin_workspace: 'sa_audit_source_admin_workspace',
-  auth: 'sa_audit_source_auth',
-  earnings: 'sa_audit_source_earnings',
-};
-
-const ACTION_TONES: Record<AdminAuditAction, string> = {
-  created: 'bg-emerald-500/20 text-emerald-300',
-  updated: 'bg-sky-500/20 text-sky-200',
-  deleted: 'bg-red-500/20 text-red-200',
-  published: 'bg-indigo-500/20 text-indigo-200',
-  approved: 'bg-teal-500/20 text-teal-200',
-  payment: 'bg-amber-500/20 text-amber-200',
-  role_change: 'bg-purple-500/20 text-purple-200',
-};
-
 export function AuditLogPanel() {
   const { t } = useLanguage();
   const { entries } = useAdminAudit();
@@ -100,7 +63,7 @@ export function AuditLogPanel() {
 
       <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
         <div className="flex flex-wrap items-center gap-1.5 border-b border-[#244668] p-2">
-          {(['all', ...ACTIONS] as const).map((option) => (
+          {(['all', ...AUDIT_ACTIONS] as const).map((option) => (
             <button
               key={option}
               type="button"

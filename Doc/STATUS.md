@@ -1,6 +1,7 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 23 November 2026 (admin accounts + audit log added)
+**Last audited:** 23 November 2026 (admin accounts, audit log, role change,
+exchange-rate history and the shared money formatter added)
 **Audited against:** `main` plus the rental order rules in
 `src/lib/rentalOrderRules.ts`, the Rental catalog data module, the Rental Admin
 panel, the per-account Favorites/notification/review wiring, and the earlier
@@ -48,7 +49,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (338 tests, 28 files) |
+| `npm test` (vitest) | **PASS** (352 tests, 31 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (43 declared routes, all render) |
 
@@ -177,12 +178,12 @@ places rather than advice.
 | Super Admin metrics/users/content | **PARTIAL** | Seeded metrics; body localized through `useLanguage` |
 | Super Admin Ads Management | **PREVIEW** | Page-oriented placements, local state |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |
-| Admin Management | **PARTIAL** | Form offers the eight Plan §3 roles and creates a real local admin account with the chosen role. The table merges the seeded rows with the stored accounts (`src/lib/adminAccounts.ts`), so a created admin survives a reload; the rows themselves are still browser storage, not `public.profiles` |
+| Admin Management | **PARTIAL** | Form offers the eight Plan §3 roles and creates a real local admin account with the chosen role. The table merges the seeded rows with the stored accounts (`src/lib/adminAccounts.ts`), so a created admin survives a reload. Each stored row now carries a role select backed by `changeAdminRole()`; the rules live in `src/lib/adminRoleChange.ts` (Super Admin only, no self-change, Super Admin row locked, unknown value and no-op refused) and a change writes a `role_change` audit row. Seeded rows are read-only because there is no stored record to rewrite. The rows themselves are still browser storage, not `public.profiles` |
 | Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally. Localized through `useLanguage` |
 | Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows in their own `GuideEarningsPanel` section (Payment Admin sets the amount and settles, the author reads its own rows); content is still local state. Localized through `useLanguage` |
 | Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
 | Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
-| Audit log | **PARTIAL** | `src/lib/adminAudit.ts` + `AuditLogPanel` implement Plan §16B.2: one append-only row per decision (actor, actor role, action, object type, object id, summary, UTC time, source), searchable and filterable, Super Admin only per the §16B.1 settings row. Recorded today for admin-account creation, guide-earning amount and settlement, each of which also raises a §16B.3 notification in the admin bell (`src/lib/adminNotices.ts`); the store is browser storage until `admin_audit_logs` is wired |
+| Audit log | **PARTIAL** | `src/lib/adminAudit.ts` + `AuditLogPanel` implement Plan §16B.2: one append-only row per decision (actor, actor role, action, object type, object id, summary, UTC time, source), searchable and filterable, Super Admin only per the §16B.1 settings row. Recorded now at every admin write that exists: admin-account creation, role change, shop-owner creation, guide-earning amount and settlement, blog and guide save/publish/delete, rental order status, payment, extras and currency rate. The labels live in `src/lib/adminAuditLabels.ts` and a test walks every action, object and source for MM and EN text. Admin-account creation, guide-earning amount and settlement also raise a §16B.3 notification in the admin bell (`src/lib/adminNotices.ts`); the store is browser storage until `admin_audit_logs` is wired |
 | Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected. Plan §3 and §16B.1 now scope one admin workspace per role: `src/lib/adminWorkspace.ts` lists the sections each role may open, and the Super Admin page filters its navigation through it, so Ads Admin sees only Ads, Payment Admin only orders/reports/currency/guide earnings, Blog Post Admin only Blogs, and Travel Guide Content Admin only Guides and its own earnings. `src/lib/roleMapping.ts` maps every one of the eight `profiles.role` slugs to a product role, and `auth.tsx` hydrates `adminRole` from the profile row, which is what the workspace reads |
 
 ---
@@ -198,7 +199,7 @@ places rather than advice.
 | Favorites persistence | **PARTIAL** | Per-account scope + `public.favorites` write-through; anon access still local |
 | Bookings / plan requests | **PREVIEW** | UI only, no insert |
 | Notifications | **PARTIAL** | Read state per account, synced to `public.notifications`; feed rows still seeded |
-| Exchange rate | **PREVIEW** | `1 USD = 4,500 MMK` hard-coded default |
+| Exchange rate | **PARTIAL** | Plan §16B.5 rows are in place client-side: `src/lib/exchangeRates.ts` appends `{mmkPerUsd, effectiveFrom, setBy, note}` and the rate in force is the latest row that has taken effect, with the Plan's 4,500 as the fallback. Super Admin → Currency shows the history table and takes a note per change; every change writes an audit row. One formatter (`src/lib/moneyFormat.ts`) does USD 2 decimals and MMK to the nearest 100. Still browser storage, not `exchange_rates` |
 | Rental order rules (§8.7) | **PREVIEW** | All fifteen checks mirrored in `src/lib/rentalOrderRules.ts`; the migration holds the authoritative copy |
 | Blog media (Cloudflare R2) | **PARTIAL** | Adapter exists, no deployed Worker |
 

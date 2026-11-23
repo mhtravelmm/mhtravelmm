@@ -33,6 +33,19 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `src/lib/rentalCatalogStore.ts`. Do not add a rental type as page code, and price with
   `estimateRental()` so the estimate panel and the submitted amount cannot disagree.
   `rentalCatalogProblems()` must stay empty for a save to be allowed.
+- **Every admin write records an audit row.** `useAuditRecorder()` in
+  `src/lib/adminAudit.ts` fills actor and role from `useAuth()`. The label maps for
+  the reader live in `src/lib/adminAuditLabels.ts`; `adminAuditLabels.test.ts` fails
+  if a new action, object type or source has no MM and EN text.
+- **A role change goes through `planRoleChange()`** in `src/lib/adminRoleChange.ts`,
+  never through a bare setter. It refuses a non-Super Admin, a self-change, the
+  Super Admin row, an unknown role value and a no-op — the last two because an empty
+  select once wrote an audit row ending in an arrow with nothing after it.
+- **Money is formatted by `src/lib/moneyFormat.ts` only**: USD 2 decimals, MMK to
+  the nearest 100 (decision 33). Do not round MMK inline in a component.
+- **Exchange rates are append-only rows** (`src/lib/exchangeRates.ts`): the rate in
+  force is the latest row whose `effectiveFrom` has passed, 4,500 is the fallback.
+  Never overwrite a rate; append one.
 - **Rental order rules live in `src/lib/rentalOrderRules.ts`**, one function per
   §8.7 check in the order `submit_rental_order` runs them, returning a stable
   `rental_error_*` code. `quoteRentalOrder()` is the only quote; `buildRentalOrder()`

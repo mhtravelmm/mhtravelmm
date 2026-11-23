@@ -24,6 +24,7 @@ import {
 } from '../../lib/guideItinerary';
 import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { useAuditRecorder } from '../../lib/adminAudit';
 import { problemMessage } from './publishProblemText';
 
 const CATEGORY_KEYS: Record<GuideCategory, TranslationKey> = {
@@ -104,6 +105,7 @@ const seedGuides: AdminGuide[] = TRAVEL_GUIDE_STORIES.map((guide) => ({
 
 export function TravelGuidesPanel({ runAction }: { runAction: (label: string) => void }) {
   const { t } = useLanguage();
+  const recordAdminAction = useAuditRecorder();
   const [guides, setGuides] = useState<AdminGuide[]>(seedGuides);
   const [draft, setDraft] = useState<GuideDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -178,6 +180,15 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       at: new Date().toISOString(),
       actor: draft.author || 'Travel Guide Content Admin',
     }));
+    recordAdminAction({
+      action: next.status === 'Draft' ? (editingId ? 'updated' : 'created') : 'published',
+      objectType: 'guide',
+      objectId: next.id,
+      summary: next.status === 'Scheduled'
+        ? `${next.titleEn} · scheduled ${next.publishedAt}`
+        : `${next.titleEn} · ${next.status}`,
+      source: 'content',
+    });
     if (next.status === 'Published') {
       // Plan §16B.1: the row is created here and owned by Payment Admin, so it
       // is written to the shared store rather than this panel's state.
@@ -206,6 +217,13 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       at: new Date().toISOString(),
       actor: guide.author,
     }));
+    recordAdminAction({
+      action: 'published',
+      objectType: 'guide',
+      objectId: guide.id,
+      summary: guide.titleEn,
+      source: 'content',
+    });
     addEarningForGuide({
       guideId: guide.id,
       guideTitle: guide.titleEn,

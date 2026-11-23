@@ -8,6 +8,7 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronRight,
+  Clock,
   CircleDollarSign,
   Coins,
   FileText,
@@ -52,10 +53,12 @@ import {
   readStaffNotifications,
   type StaffNotification,
 } from '../../lib/rentalNotifications';
-import { CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS } from '../../lib/adminRoles';
+import { ADMIN_ROLES, CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS, type AdminRole } from '../../lib/adminRoles';
 import { sectionsForRole } from '../../lib/adminWorkspace';
 import { adminSummary, mergeAdminRows, type AdminRow } from '../../lib/adminAccounts';
-import { recordAdminAudit } from '../../lib/adminAudit';
+import { recordAdminAudit, useAuditRecorder } from '../../lib/adminAudit';
+import { planRoleChange, roleChangeSummary, type RoleChangeRefusal } from '../../lib/adminRoleChange';
+import { EXCHANGE_RATES_EVENT, readExchangeRates } from '../../lib/exchangeRates';
 import { pushAdminNotice } from '../../lib/adminNotices';
 
 type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports' | 'audit';
@@ -332,14 +335,40 @@ function RecentUsers() {
 function CurrencySettingsPanel({ runAction }: { runAction: (label: string) => void }) {
   const { t } = useLanguage();
   const { exchangeRate, setExchangeRate, currency, formatCurrencyAmount } = useCurrency();
+  const { user } = useAuth();
+  const audit = useAuditRecorder();
   const [draftRate, setDraftRate] = useState(String(exchangeRate));
+  const [note, setNote] = useState('');
+  // Plan §16B.5: rows are append-only, so the panel reads the history rather
+  // than a single stored number.
+  const [rows, setRows] = useState(readExchangeRates);
+  useEffect(() => {
+    const sync = () => setRows(readExchangeRates());
+    window.addEventListener(EXCHANGE_RATES_EVENT, sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(EXCHANGE_RATES_EVENT, sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
 
   function saveRate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextRate = Number(draftRate);
     if (!Number.isFinite(nextRate) || nextRate <= 0) return;
-    setExchangeRate(nextRate);
-    runAction(`${t('sa_currency_saved')}: 1 USD = ${Math.round(nextRate).toLocaleString('en-US')} MMK`);
+    const before = Math.round(exchangeRate).toLocaleString('en-US');
+    const after = Math.round(nextRate).toLocaleString('en-US');
+    setExchangeRate(nextRate, { setBy: user?.name ?? 'Super Admin', note: note.trim() });
+    audit({
+      action: 'updated',
+      objectType: 'currency_rate',
+      objectId: 'USD/MMK',
+      summary: `${before} → ${after} MMK per USD${note.trim() ? ` · ${note.trim()}` : ''}`,
+      source: 'currency',
+    });
+    setRows(readExchangeRates());
+    setNote('');
+    runAction(`${t('sa_currency_saved')}: 1 USD = ${after} MMK`);
   }
 
   return <div className="mx-auto max-w-[1100px] space-y-3">
@@ -347,11 +376,13 @@ function CurrencySettingsPanel({ runAction }: { runAction: (label: string) => vo
     <div className="grid gap-2 lg:grid-cols-[1.1fr_0.9fr]">
       <Panel><PanelTitle icon={CircleDollarSign} title={t('sa_currency_rate_title')} /><form onSubmit={saveRate} className="space-y-3 p-3">
         <label className="block text-xs font-semibold text-slate-300">{t('sa_currency_rate_label')}<input value={draftRate} onChange={(event) => setDraftRate(event.target.value)} type="number" min="1" step="1" className="mt-1.5 w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300" /></label>
+        <label className="block text-xs font-semibold text-slate-300">{t('sa_currency_note_label')}<input value={note} onChange={(event) => setNote(event.target.value)} placeholder={t('sa_currency_note_placeholder')} className="mt-1.5 w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-3 py-2 text-sm text-white outline-none focus:border-cyan-300 placeholder:text-slate-500" /></label>
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-cyan-300/20 bg-cyan-300/5 p-2 text-xs"><span className="text-slate-300">{t('sa_currency_current')}</span><strong className="text-cyan-200">1 USD = {Math.round(exchangeRate).toLocaleString('en-US')} MMK</strong></div>
         <button type="submit" className="rounded-lg bg-[#168df4] px-3 py-2 text-xs font-bold text-white hover:bg-[#2aa6ff]">{t('sa_currency_save')}</button>
       </form></Panel>
       <Panel><PanelTitle icon={Globe2} title={t('sa_currency_preview')} /><div className="space-y-2 p-3 text-xs"><p className="text-slate-400">{t('sa_currency_display')} <strong className="text-white">{currency}</strong>.</p>{[1, 10, 100].map((amount) => <div key={amount} className="flex items-center justify-between rounded-lg border border-[#244668] bg-[#102c51] px-3 py-2"><span>{amount} USD</span><strong className="text-cyan-200">{formatCurrencyAmount(amount, 'MMK')}</strong></div>)}<p className="pt-1 text-[10px] text-slate-500">{t('sa_currency_note')}</p></div></Panel>
     </div>
+    <Panel><PanelTitle icon={Clock} title={t('sa_currency_history_title')} /><div className="border-b border-[#244668] px-3 py-2 text-[10px] text-slate-400">{t('sa_currency_history_note')}</div><div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-[11px]"><thead className="bg-[#091a31] text-slate-300"><tr><th className="px-3 py-2">{t('sa_currency_col_rate')}</th><th className="px-2 py-2">{t('sa_currency_col_from')}</th><th className="px-2 py-2">{t('sa_currency_col_by')}</th><th className="px-3 py-2">{t('sa_currency_col_note')}</th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} className="border-t border-[#1d3a5c] text-slate-200"><td className="px-3 py-2 font-semibold text-cyan-200">{Math.round(row.mmkPerUsd).toLocaleString('en-US')}</td><td className="whitespace-nowrap px-2 py-2 text-slate-400">{row.effectiveFrom.slice(0, 16).replace('T', ' ')}</td><td className="px-2 py-2 text-slate-300">{row.setBy}</td><td className="px-3 py-2 text-slate-400">{row.note || '—'}</td></tr>)}</tbody></table></div>{rows.length === 0 && <p className="p-4 text-center text-xs text-slate-500">{t('sa_currency_history_empty')}</p>}</Panel>
   </div>;
 }
 
@@ -376,7 +407,8 @@ const EMPTY_ADMIN_FORM: AdminForm = {
 function AdminManagementPanel({ runAction, onOpenAudit }: { runAction: (label: string) => void; onOpenAudit: () => void }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { createAdminAccount, adminAccounts, user, adminRole } = useAuth();
+  const { createAdminAccount, changeAdminRole, adminAccounts, user, adminRole } = useAuth();
+  const audit = useAuditRecorder();
   const [showForm, setShowForm] = useState(false);
   // Plan §16B.1: the table lists the accounts that exist, so a created admin
   // stays listed after a reload instead of living in this component's state.
@@ -384,6 +416,7 @@ function AdminManagementPanel({ runAction, onOpenAudit }: { runAction: (label: s
   const summary = useMemo(() => adminSummary(admins), [admins]);
   const [form, setForm] = useState<AdminForm>(EMPTY_ADMIN_FORM);
   const [formError, setFormError] = useState('');
+  const [roleError, setRoleError] = useState('');
 
   function updateForm(field: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -391,6 +424,43 @@ function AdminManagementPanel({ runAction, onOpenAudit }: { runAction: (label: s
 
   function selectRole(role: AdminForm['role']) {
     setForm((current) => ({ ...current, role, permissions: DEFAULT_PERMISSION_GROUP[role] }));
+  }
+
+  const REFUSALS: Record<RoleChangeRefusal, TranslationKey> = {
+    not_super_admin: 'sa_role_change_refused_forbidden',
+    self: 'sa_role_change_refused_self',
+    super_admin_locked: 'sa_role_change_refused_super',
+    unchanged: 'sa_role_change_refused_unchanged',
+    unknown_role: 'sa_role_change_refused_unknown',
+  };
+
+  function changeRole(target: AdminRow, nextRole: AdminRole) {
+    const plan = planRoleChange({
+      actorRole: adminRole,
+      actorEmail: user?.email ?? '',
+      targetEmail: target.email,
+      targetRole: target.role,
+      nextRole,
+    });
+    if (!plan.ok) {
+      // Selecting the role a row already has is not an error worth a banner.
+      setRoleError(plan.reason === 'unchanged' ? '' : t(REFUSALS[plan.reason]));
+      return;
+    }
+    const result = changeAdminRole(target.email, nextRole);
+    if (!result.ok) {
+      setRoleError(t('sa_role_change_refused_missing'));
+      return;
+    }
+    audit({
+      action: 'role_change',
+      objectType: 'admin_account',
+      objectId: target.email,
+      summary: `${target.name} · ${roleChangeSummary(plan.from, plan.to)}`,
+      source: 'admin_workspace',
+    });
+    setRoleError('');
+    runAction(t('sa_role_change_saved').replace('{name}', target.name).replace('{role}', plan.to));
   }
 
   async function createAdmin(event: FormEvent<HTMLFormElement>) {
@@ -427,7 +497,7 @@ function AdminManagementPanel({ runAction, onOpenAudit }: { runAction: (label: s
     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">{t('sa_admins_kicker')}</p><h1 className="mt-1 text-lg font-extrabold sm:text-3xl">{t('sa_nav_admins')}</h1><p className="mt-1 text-sm text-slate-400">{t('sa_admins_intro')}</p></div><button type="button" onClick={() => setShowForm((open) => !open)} className="inline-flex w-fit items-center gap-2 rounded-lg bg-[#168df4] px-3 py-2 text-[10px] font-bold hover:bg-[#2aa6ff]"><UserPlus size={16} /> {t('sa_action_create_admin')}</button></div>
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><AdSummary icon={ShieldCheck} label={t('sa_admins_total')} value={String(summary.total)} detail={t('sa_admins_total_detail')} tone="cyan" /><AdSummary icon={Users} label={t('sa_admins_active')} value={String(summary.active)} detail={t('sa_admins_active_detail')} tone="green" /><AdSummary icon={UserPlus} label={t('sa_admins_pending')} value={String(summary.pending)} detail={t('sa_admins_pending_detail')} tone="purple" /><AdSummary icon={Settings} label={t('sa_admins_groups')} value={String(summary.groups)} detail={t('sa_admins_groups_detail')} tone="blue" /></div>
     {showForm && <Panel><PanelTitle icon={UserPlus} title={t('sa_admins_form_title')} /><form onSubmit={createAdmin} className="grid gap-1.5 p-2 sm:grid-cols-2 lg:grid-cols-3"><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_name')}</span><input required value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder={t('sa_admins_name_placeholder')} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_email')}</span><input required type="email" value={form.email} onChange={(event) => updateForm('email', event.target.value)} placeholder="admin@mhtravel.com" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_phone')}</span><input value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} placeholder="+95 9 ..." className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_password')}</span><input required minLength={8} type="password" value={form.password} onChange={(event) => updateForm('password', event.target.value)} placeholder={t('sa_admins_password_hint')} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_role')}</span><select value={form.role} onChange={(event) => selectRole(event.target.value as AdminForm['role'])} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{CREATABLE_ADMIN_ROLES.map((role) => <option key={role}>{role}</option>)}</select></label><label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_permissions')}</span><select value={form.permissions} onChange={(event) => updateForm('permissions', event.target.value)} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{PERMISSION_GROUPS.map((group) => <option key={group}>{group}</option>)}</select></label>{formError && <p role="alert" className="sm:col-span-2 lg:col-span-3 rounded-lg border border-red-400/40 bg-red-500/10 px-2 py-1.5 text-[10px] text-red-200">{formError}</p>}<div className="flex items-center gap-2 sm:col-span-2 lg:col-span-3"><button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-[10px] font-bold text-[#061426] hover:bg-cyan-300">{t('sa_admins_create')}</button><button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-[#2b527d] px-3 py-2 text-[10px] font-semibold text-slate-300 hover:bg-white/10">{t('sa_cancel')}</button><span className="text-[10px] text-slate-500">{t('sa_admins_note')}</span></div></form></Panel>}
-    <Panel><PanelTitle icon={ShieldCheck} title={t('sa_admins_table_title')} action={t('sa_admins_audit')} onAction={onOpenAudit} /><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-[11px]"><thead className="bg-[#091a31] text-slate-300"><tr><th className="px-4 py-3">{t('sa_col_admin')}</th><th className="px-2 py-3">{t('sa_col_email')}</th><th className="px-2 py-3">{t('sa_col_role')}</th><th className="px-2 py-3">{t('sa_col_permissions')}</th><th className="px-2 py-3">{t('sa_col_status')}</th><th className="px-4 py-3">{t('sa_col_action')}</th></tr></thead><tbody>{admins.map((admin) => <tr key={admin.email} className="border-t border-[#1d3a5c] text-slate-200"><td className="px-2 py-1.5 font-semibold">{admin.name}</td><td className="px-2 py-3 text-slate-400">{admin.email}</td><td className="px-2 py-3">{admin.role}</td><td className="px-2 py-3 text-slate-400">{admin.permissions}</td><td className="px-2 py-3"><span className={`rounded-full px-2 py-1 text-[9px] font-bold ${admin.status === 'Active' ? 'bg-green-500/25 text-green-300' : 'bg-amber-400/20 text-amber-300'}`}>{admin.status === 'Active' ? t('sa_status_active') : t('sa_status_pending_invite')}</span></td><td className="px-2 py-1.5"><button type="button" onClick={() => runAction(`${t('sa_review')} ${admin.name}`)} className="rounded-md border border-[#2f6192] px-2.5 py-1.5 text-[10px] font-semibold text-cyan-300 hover:bg-white/10">{t('sa_review')}</button></td></tr>)}</tbody></table></div></Panel>
+    <Panel><PanelTitle icon={ShieldCheck} title={t('sa_admins_table_title')} action={t('sa_admins_audit')} onAction={onOpenAudit} />{roleError && <p role="alert" className="border-b border-red-400/30 bg-red-500/10 px-3 py-2 text-[10px] text-red-200">{roleError}</p>}<div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-[11px]"><thead className="bg-[#091a31] text-slate-300"><tr><th className="px-4 py-3">{t('sa_col_admin')}</th><th className="px-2 py-3">{t('sa_col_email')}</th><th className="px-2 py-3">{t('sa_col_role')}</th><th className="px-2 py-3">{t('sa_col_permissions')}</th><th className="px-2 py-3">{t('sa_col_status')}</th><th className="px-4 py-3">{t('sa_col_action')}</th></tr></thead><tbody>{admins.map((admin) => <tr key={admin.email} className="border-t border-[#1d3a5c] text-slate-200"><td className="px-2 py-1.5 font-semibold">{admin.name}</td><td className="px-2 py-3 text-slate-400">{admin.email}</td><td className="px-2 py-3">{admin.role}</td><td className="px-2 py-3 text-slate-400">{admin.permissions}</td><td className="px-2 py-3"><span className={`rounded-full px-2 py-1 text-[9px] font-bold ${admin.status === 'Active' ? 'bg-green-500/25 text-green-300' : 'bg-amber-400/20 text-amber-300'}`}>{admin.status === 'Active' ? t('sa_status_active') : t('sa_status_pending_invite')}</span></td><td className="px-2 py-1.5"><div className="flex flex-wrap items-center gap-1"><select aria-label={`${t('sa_role_change_label')} — ${admin.name}`} value={admin.role} onChange={(event) => changeRole(admin, event.target.value as AdminRole)} disabled={admin.role === 'Super Admin' || !admin.stored} className="rounded-md border border-[#2f6192] bg-[#081a31] px-2 py-1.5 text-[10px] text-cyan-200 outline-none disabled:opacity-40">{ADMIN_ROLES.map((role) => <option key={role} value={role}>{role}</option>)}</select><button type="button" onClick={() => runAction(`${t('sa_review')} ${admin.name}`)} className="rounded-md border border-[#2f6192] px-2.5 py-1.5 text-[10px] font-semibold text-cyan-300 hover:bg-white/10">{t('sa_review')}</button></div></td></tr>)}</tbody></table></div></Panel>
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-400/20 bg-[#0d2f57] p-3 text-xs text-blue-100"><p><strong className="text-white">{t('sa_admins_staff_title')}</strong> {t('sa_admins_staff_note')}</p><button type="button" onClick={() => navigate('/super-admin')} className="font-bold text-cyan-300 hover:text-white">{t('sa_back_dashboard')} <ChevronRight size={14} className="inline" /></button></div>
   </div>;
 }
@@ -436,6 +506,7 @@ function ShopOwnersPanel({ runAction, onOwnerApplication }: { runAction: (label:
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { createShopOwner } = useAuth();
+  const audit = useAuditRecorder();
   const [showForm, setShowForm] = useState(false);
   const [createdOwners, setCreatedOwners] = useState([
     { owner: 'The Rangoon House', shop: 'The Rangoon House', username: 'rangoon_house', city: 'Yangon', category: 'Restaurant', status: 'Active' },
@@ -468,6 +539,13 @@ function ShopOwnersPanel({ runAction, onOwnerApplication }: { runAction: (label:
       return;
     }
     setCreatedOwners((current) => [{ owner: form.owner, shop: form.shop, username: form.username, city: form.city, category: form.category, status: 'Pending' }, ...current]);
+    audit({
+      action: 'created',
+      objectType: 'shop_owner',
+      objectId: form.username.trim().toLowerCase(),
+      summary: `${form.shop} · ${form.city} · ${form.category}`,
+      source: 'admin_workspace',
+    });
     onOwnerApplication({ owner: form.owner, business: form.shop, city: form.city, category: form.category });
     setLastCredentials({ shop: form.shop, username: form.username, password: form.password });
     setForm({ owner: '', shop: '', email: '', phone: '', username: '', password: '', city: 'Yangon', category: 'Restaurant' });
@@ -507,6 +585,7 @@ function AdsManagementPanel({ runAction }: { runAction: (label: string) => void 
     { name: 'Nearby', path: '/nearby', labelKey: 'sa_page_nearby', detailKey: 'sa_page_nearby_detail' },
     { name: 'User Dashboard', path: '/account', labelKey: 'sa_page_account', detailKey: 'sa_page_account_detail' },
   ] as const;
+  const audit = useAuditRecorder();
   const [selectedPage, setSelectedPage] = useState('Home');
   const [ads, setAds] = useState<PageAd[]>([
     { id: 1, page: 'Home', slot: 'Hero banner', name: 'Explore Myanmar', advertiser: 'MH Travel', active: true },
@@ -531,10 +610,24 @@ function AdsManagementPanel({ runAction }: { runAction: (label: string) => void 
     if (!draft.name.trim() || !draft.advertiser.trim()) return;
     if (draft.id) {
       setAds((items) => items.map((ad) => ad.id === draft.id ? { ...ad, ...draft } : ad));
+      audit({
+        action: 'updated',
+        objectType: 'ad',
+        objectId: `${selectedPage}/${draft.slot}`,
+        summary: `${draft.name} · ${draft.advertiser}`,
+        source: 'admin_workspace',
+      });
       runAction(`${draft.name} ${t('sa_ads_updated')} ${t(currentPage.labelKey)}`);
     } else {
       const next = { ...draft, id: Date.now(), page: selectedPage };
       setAds((items) => [...items, next]);
+      audit({
+        action: 'created',
+        objectType: 'ad',
+        objectId: `${selectedPage}/${draft.slot}`,
+        summary: `${draft.name} · ${draft.advertiser}`,
+        source: 'admin_workspace',
+      });
       runAction(`${draft.name} ${t('sa_ads_added')} ${t(currentPage.labelKey)}`);
     }
     setEditorOpen(false);
@@ -543,7 +636,15 @@ function AdsManagementPanel({ runAction }: { runAction: (label: string) => void 
   function toggleAd(id: number) {
     setAds((items) => items.map((ad) => ad.id === id ? { ...ad, active: !ad.active } : ad));
     const ad = ads.find((item) => item.id === id);
-    if (ad) runAction(`${ad.name} ${ad.active ? t('sa_status_paused') : t('sa_status_published')} · ${t(currentPage.labelKey)}`);
+    if (!ad) return;
+    audit({
+      action: ad.active ? 'updated' : 'published',
+      objectType: 'ad',
+      objectId: `${ad.page}/${ad.slot}`,
+      summary: `${ad.name} · ${ad.active ? 'paused' : 'live'}`,
+      source: 'admin_workspace',
+    });
+    runAction(`${ad.name} ${ad.active ? t('sa_status_paused') : t('sa_status_published')} · ${t(currentPage.labelKey)}`);
   }
 
   return <div className="mx-auto max-w-[1400px] space-y-3">
@@ -560,9 +661,11 @@ function AdsManagementPanel({ runAction }: { runAction: (label: string) => void 
 }
 
 function AdSummary({ icon: Icon, label, value, detail, tone }: { icon: LucideIcon; label: string; value: string; detail: string; tone: 'cyan' | 'blue' | 'purple' | 'green' }) { const tones = { cyan: 'text-cyan-300 bg-cyan-400/10', blue: 'text-blue-300 bg-blue-400/10', purple: 'text-purple-300 bg-purple-400/10', green: 'text-green-300 bg-green-400/10' }; return <div className="rounded-xl border border-[#294d76] bg-[#0b203b] p-3 shadow-xl"><span className={`inline-flex rounded-lg p-2.5 ${tones[tone]}`}><Icon size={17} /></span><p className="mt-3 text-xl font-extrabold">{value}</p><p className="mt-1 text-xs font-semibold text-slate-200">{label}</p><p className="mt-1 text-[10px] text-slate-400">{detail}</p></div>; }
-function AdminSection({ view, runAction }: { view: Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports'>; runAction: (label: string) => void }) {
+type PlaceholderView = Extract<AdminView, 'users' | 'bookings' | 'content'>;
+
+function AdminSection({ view, runAction }: { view: PlaceholderView; runAction: (label: string) => void }) {
   const { t } = useLanguage();
-  const meta: Record<Exclude<AdminView, 'overview' | 'admins' | 'owners' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports'>, { titleKey: TranslationKey; introKey: TranslationKey; icon: LucideIcon }> = {
+  const meta: Record<PlaceholderView, { titleKey: TranslationKey; introKey: TranslationKey; icon: LucideIcon }> = {
     users: { titleKey: 'sa_nav_users', introKey: 'admin_users_intro', icon: Users },
     bookings: { titleKey: 'sa_nav_bookings', introKey: 'admin_bookings_intro', icon: CalendarDays },
     content: { titleKey: 'sa_content_title', introKey: 'admin_content_intro', icon: BookOpen },

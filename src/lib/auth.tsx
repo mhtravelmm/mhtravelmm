@@ -31,6 +31,8 @@ interface AuthContextValue {
   /** Admin accounts on record, so Admin Management lists what was created. */
   adminAccounts: AuthUser[];
   createAdminAccount: (input: { name: string; email: string; role: AdminRole; password: string }) => Promise<AuthResult>;
+  /** Plan §16B.2: a role change is an audited write, so it goes through one call. */
+  changeAdminRole: (email: string, role: AdminRole) => AuthResult;
   login: (identifier: string, password: string) => Promise<AuthResult>;
   loginAdmin: (identifier: string, password: string) => Promise<AuthResult>;
   createShopOwner: (input: { owner: string; shop: string; email: string; phone: string; username: string; password: string; city: string; category: string }) => Promise<AuthResult>;
@@ -173,6 +175,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       saveUsers(users);
       emitAuthChange();
       return { ok: true, role: 'admin_staff' };
+    },
+    changeAdminRole(email, role) {
+      const target = email.trim().toLowerCase();
+      const users = readUsers();
+      const match = users.find((candidate) => candidate.email === target);
+      if (!match) return { ok: false, message: 'auth_user_missing' };
+      saveUsers(users.map((candidate) => (candidate.email === target ? { ...candidate, adminRole: role } : candidate)));
+      // The signed-in account is the one in the session, so it is re-written too.
+      if (user?.email === target) {
+        const nextSession = { ...user, adminRole: role };
+        window.localStorage.setItem(SESSION_KEY, JSON.stringify(nextSession));
+        setUser(nextSession);
+      }
+      emitAuthChange();
+      return { ok: true, role: match.role };
     },
     async loginAdmin(identifier, password) {
       const normalizedIdentifier = identifier.trim().toLowerCase();
