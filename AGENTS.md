@@ -123,6 +123,16 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   and prices are never translated (`isTranslatable`), and a reviewed row
   (`approved` or `edited`) is what removes the marker. The Admin queue is
   `TranslationReviewPanel` under the `translations` workspace section.
+- Ads rules live in `src/lib/adCampaigns.ts`, not in `AdsManagementPanel.tsx`:
+  `canServe`, `campaignServesPlacement`, `pickCampaign` and `serveAd` are the
+  §16A.5 serving order, `filterCampaigns` is the campaign filter, and
+  `campaignProblem`/`creativeProblem` are the save checks. Pass the Settings
+  `{ blockedDomains, limits }` to both problem functions, or the §16A.8 rules
+  silently stop applying. A placement that cannot serve must return `null` so
+  `AdSlot` collapses instead of rendering an empty box. `canReadAdReports()` is
+  separate from `canManageAds()` — Payment Admin reads the reports and edits
+  nothing — and `adStore.ts` is the browser stand-in for the §16A.4 tables, so
+  keep its row shapes equal to `20261125000100_ads.sql`.
 - Every upload goes through `checkMedia()` in `mediaRules.ts` before the file is
   read, and the folder is named by the caller: `uploadContentImage(file,
   'blog-posts')` or `'guide-stops'`. Never hard-code a byte limit at the call
