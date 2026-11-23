@@ -1308,10 +1308,22 @@ editing is not permitted, which is what the §16B.1 `R (reports)` row says.
 starts a campaign whose window opened, ends one past its `end_at`, and raises the
 ending-soon and ended notices once.
 
-**Verification.** `npm run typecheck` clean; `npm test` 46 files / 550 tests;
+**Placement pass.** Every §16A.3 key now has a live `AdSlot`: `cities_top` and
+`city_detail_after_restaurants` on the two city pages, `travel_plans_top` and
+`travel_plan_detail_inline` on the plan pages, `nearby_top` and `account_top`.
+`home_after_blogs` sits directly after the blog grid rather than after the
+popular-searches strip, so the key means what its name says.
+`src/lib/adPlacementWiring.test.ts` reads the pages and fails when a slot names a
+key the catalog does not declare, and it also fails when a seeded creative points
+at a file that is not under `public/` — four seeds did, so they were repointed to
+images the repository actually ships.
+
+**Verification.** `npm run typecheck` clean; `npm test` 49 files / 570 tests;
 `npm run build` succeeds; `npx eslint src` unchanged at 7 pre-existing warnings.
 Browser check at `/super-admin` in Burmese: the Advertisers tab listed six
 advertisers with their campaign and live counts; Campaigns showed `7/7` with the
 four filters and an empty-state message; Pages and placements showed the 24-hour
-fill rate in the panel title and the per-slot health. On `/` the ad slots still
-rendered with the `ကြော်ငြာ` label.
+fill rate in the panel title and the per-slot health. On `/`, `/cities`,
+`/nearby`, `/account` and `/travel-plans/tp4` the ad slots rendered with the
+`ကြော်ငြာ` label, and `/ad/click/cr-home-hero?p=home_hero&s=test-session-1`
+recorded the click and then redirected to `/travel-plans`.

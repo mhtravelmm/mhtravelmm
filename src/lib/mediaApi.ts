@@ -29,7 +29,7 @@ export type MediaErrorCode =
   | MediaRejection;
 
 export type MediaUploadResult =
-  | { ok: true; url: string; key: string; bytes: number; kind: MediaKind; source: 'r2' | 'preview' }
+  | { ok: true; url: string; key: string; bytes: number; kind: MediaKind; source: 'r2' | 'preview'; seconds?: number }
   | { ok: false; code: MediaErrorCode; message: string };
 
 export interface UploadOptions {
@@ -159,7 +159,7 @@ export async function uploadMedia(source: File, folder: MediaFolder, options: Up
     const key = `${check.prefix}${prepared.file.name}`;
 
     if (!endpoint) {
-      return { ok: true, url: prepared.dataUrl || URL.createObjectURL(prepared.file), key: `preview/${key}`, bytes, kind, source: 'preview' };
+      return { ok: true, url: prepared.dataUrl || URL.createObjectURL(prepared.file), key: `preview/${key}`, bytes, kind, source: 'preview', seconds };
     }
 
     const body = new FormData();
@@ -171,7 +171,7 @@ export async function uploadMedia(source: File, folder: MediaFolder, options: Up
     const response = await fetch(endpoint, { method: 'POST', body });
     const payload = await response.json().catch(() => ({})) as { url?: string; key?: string; message?: string };
     if (!response.ok || !payload.url) return fail('r2_failed', payload.message);
-    return { ok: true, url: payload.url, key: payload.key || key, bytes, kind, source: 'r2' };
+    return { ok: true, url: payload.url, key: payload.key || key, bytes, kind, source: 'r2', seconds };
   } catch (error) {
     if (error instanceof MediaError) return fail(error.code, error.message);
     return fail('generic', error instanceof Error ? error.message : undefined);

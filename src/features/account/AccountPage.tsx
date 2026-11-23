@@ -38,6 +38,7 @@ import { useRentalOrders, type RentalOrder } from '../../lib/rentalOrders';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { findRentalType, findVariant, localized } from '../../data/rentalCatalog';
 import { NOTIFICATIONS } from '../../data/notifications';
+import { AdSlot } from '../../components/ui/AdSlot';
 import { TRAVEL_PLANS, BLOGS, POPULARS } from '../../data/homeData';
 import { TRAVEL_GUIDE_STORIES } from '../../data/travelGuideData';
 import { TOP_ATTRACTIONS, POPULAR_HOTELS, POPULAR_RESTAURANTS, POPULAR_BOOK_SHOPS, RENTAL_PAGE_LISTINGS, POPULAR_TRANSPORT, POPULAR_CAFES, POPULAR_MARKETS } from '../../data/cityPageData';
@@ -242,6 +243,8 @@ function Overview({
           </button>
         </div>
       </section>
+
+      <AdSlot placement="account_top" />
 
       <div className="grid grid-cols-2 gap-1.5 xl:grid-cols-4">
         <StatCard icon={Briefcase} value={String(bookingCount)} label={t('account_stat_bookings')} tone="blue" onClick={() => onOpen('bookings')} />

@@ -24,6 +24,7 @@ import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { NEARBY_LISTINGS, type NearbyCategory } from '../../data/nearbyData';
 import { NearbyPlaceCard } from './NearbyPlaceCard';
+import { AdSlot } from '../../components/ui/AdSlot';
 
 type QuickFilter = 'all' | 'within_1' | 'one_to_five' | 'five_to_ten' | 'top_rated' | 'near_me' | 'open_now';
 
@@ -181,6 +182,8 @@ export function NearbyPage() {
           </div>
         </div>
       </section>
+
+      <div className="mb-4"><AdSlot placement="nearby_top" /></div>
 
       <section className="mb-5">
         <h2 className="mb-2 text-sm font-semibold text-text-primary">{t('nearby_categories_title')}</h2>

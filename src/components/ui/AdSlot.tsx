@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLanguage } from '../../lib/i18n';
 import { placementByKey } from '../../lib/adPlacements';
+import { clickThroughHref } from '../../lib/adClicks';
 import { readAdSettings, readPlacements, recordAdEvent, serveAdNow } from '../../lib/adStore';
 import {
   IMPRESSION_VISIBLE_MS,
@@ -179,19 +180,12 @@ export function AdSlot({ placement, fetchAd = serveFromStore, devPlaceholder }: 
   return (
     <a
       ref={linkRef}
-      href={served.clickThroughUrl}
+      // §16A.5: the click goes through `/ad/click/<id>`, which records it and
+      // redirects, so the count survives a copied link and a middle-click.
+      href={clickThroughHref(served.id, served.placementKey ?? placement, sessionRef.current)}
       target="_blank"
       rel="noopener noreferrer sponsored"
       aria-label={`Sponsored: ${served.advertiser}`}
-      onClick={() => {
-        recordAdEvent({
-          placementKey: served.placementKey ?? placement,
-          campaignId: served.campaignId ?? '',
-          creativeId: served.id,
-          kind: 'click',
-          sessionHash: sessionRef.current,
-        });
-      }}
       className="block overflow-hidden rounded-lg"
       data-ad-placement={placement}
       data-advertiser={served.advertiser}

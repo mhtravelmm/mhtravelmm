@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock3, MapPinned, Search, Send, SlidersHorizontal, Users } from 'lucide-react';
 import { ListingCard } from '../../components/ui/ListingCard';
+import { AdSlot } from '../../components/ui/AdSlot';
 import { useNavigate, useParams } from 'react-router-dom';
 import { POPULARS, TRAVEL_PLANS } from '../../data/homeData';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
@@ -156,6 +157,8 @@ export function TravelPlansPage() {
           </div>
         </div>
       </section>
+
+      <div className="mb-4"><AdSlot placement="travel_plans_top" /></div>
 
       <section className="mb-4 flex flex-col gap-2 rounded-card border border-border bg-bg-card p-2 sm:flex-row sm:items-center">
         <label className="relative min-w-0 flex-1">
@@ -423,6 +426,7 @@ export function TravelPlanDetailPage() {
 
     <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
       <section className="rounded-card border border-border bg-bg-card p-4 sm:p-5"><div className="mb-5 flex flex-wrap gap-3"><Info icon={CalendarDays} label={language === 'mm' ? 'ကြာချိန်' : 'Duration'} value={plan.durationLabel[language]} /><Info icon={Clock3} label={language === 'mm' ? 'အချိန်ဇယား' : 'Schedule'} value={language === 'mm' ? 'နေ့စဉ်ထွက်ခွာ' : 'Daily departures'} /><Info icon={Users} label={language === 'mm' ? 'ခရီးသွားများ' : 'Travelers'} value={language === 'mm' ? 'စိတ်ကြိုက်ရွေးချယ်' : 'Flexible group size'} /></div><h2 className="text-lg font-bold text-text-primary">{language === 'mm' ? 'ခရီးစဉ်အစီအစဉ်' : 'Trip itinerary'}</h2><div className="mt-4 space-y-3">{Array.from({ length: plan.durationDays }, (_, index) => { const destination = localizedDestinations[Math.min(index, localizedDestinations.length - 1)]; return <div key={index} className="flex gap-3 rounded-lg border border-border bg-bg p-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-xs font-bold text-brand-blue">{index + 1}</span><div><p className="text-xs font-bold text-text-primary">{language === 'mm' ? `နေ့ ${index + 1} · ${destination}` : `Day ${index + 1} · ${destination}`}</p><p className="mt-1 text-[11px] leading-5 text-text-muted">{language === 'mm' ? `${destination} တွင် အဓိကနေရာများကို လည်ပတ်ပြီး MH Travel အဖွဲ့၏ ခရီးစဉ်အကူအညီ ရယူနိုင်ပါသည်။` : `Explore the highlights around ${destination} with local recommendations and MH Travel support.`}</p></div></div>; })}</div></section>
+      <div className="lg:col-span-2"><AdSlot placement="travel_plan_detail_inline" /></div>
       <aside className="h-fit rounded-card border border-brand-blue/25 bg-bg-card p-4 sm:p-5"><p className="text-xs text-text-muted">{language === 'mm' ? 'ခန့်မှန်းစျေးနှုန်း' : 'Estimated starting price'}</p><p className="mt-1 text-3xl font-extrabold text-brand-red">${plan.priceUsd?.toLocaleString()} <span className="text-xs font-medium text-text-muted">/ {language === 'mm' ? 'လူတစ်ဦး' : 'person'}</span></p><p className="mt-2 text-xs leading-5 text-text-muted">{language === 'mm' ? 'တည်းခိုခန်း၊ သယ်ယူပို့ဆောင်ရေးနှင့် ခရီးသွားအရေအတွက်အလိုက် MH Travel မှ အတည်ပြု quotation ပြန်ပေးပါမည်။' : 'Final pricing is confirmed by MH Travel based on accommodation, transport, and traveler details.'}</p><button type="button" onClick={() => navigate('/travel-plans#custom-plan')} className="mt-5 w-full rounded-md bg-brand-red px-4 py-3 text-xs font-semibold text-white hover:brightness-110">{language === 'mm' ? 'ဒီခရီးစဉ်ကို တောင်းဆိုမည်' : 'Request this plan'}</button><button type="button" onClick={() => navigate('/travel-plans')} className="mt-2 w-full rounded-md border border-border px-4 py-3 text-xs font-semibold text-text-secondary hover:border-brand-blue/60">{language === 'mm' ? 'အစီအစဉ်များအားလုံးကြည့်မည်' : 'Browse all plans'}</button></aside>
     </div>
   </div>;

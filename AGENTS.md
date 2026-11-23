@@ -133,6 +133,16 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   separate from `canManageAds()` — Payment Admin reads the reports and edits
   nothing — and `adStore.ts` is the browser stand-in for the §16A.4 tables, so
   keep its row shapes equal to `20261125000100_ads.sql`.
+- An ad link never points at the advertiser URL. `clickThroughHref()` in
+  `adClicks.ts` builds `/ad/click/<creativeId>?p=<placement>&s=<session>`,
+  `AdClickRedirect` records the click and then replaces the history entry with
+  the resolved target, so a copied link still counts once and the back button
+  does not re-fire it. Add a slot with `<AdSlot placement="...">` and use a key
+  `adPlacements.ts` already declares — `adPlacementWiring.test.ts` reads the
+  pages and fails on a key the catalog does not know, because an unknown key
+  serves nothing and the slot silently collapses. The same test also fails when a
+  seeded creative points at an image that is not under `public/`, so repoint a
+  seed at a shipped file instead of adding a placeholder path.
 - Every upload goes through `checkMedia()` in `mediaRules.ts` before the file is
   read, and the folder is named by the caller: `uploadContentImage(file,
   'blog-posts')` or `'guide-stops'`. Never hard-code a byte limit at the call

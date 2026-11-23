@@ -66,6 +66,7 @@ import {
   type AdStatsRow,
 } from '../../lib/adStats';
 import { formatScheduleLabel, myanmarWallClockToUtc, utcToMyanmarWallClock } from '../../lib/scheduleRules';
+import { uploadMedia, type MediaErrorCode } from '../../lib/mediaApi';
 import { myanmarToday } from '../../lib/myanmarTime';
 
 /**
@@ -171,6 +172,24 @@ function draftFromCampaign(campaign: AdCampaign): CampaignDraft {
   };
 }
 
+/** §16A.8: the measured size and length, so the form refuses what the Worker would. */
+const MEDIA_KEYS: Record<MediaErrorCode, TranslationKey> = {
+  choose_image: 'cw_media_choose_image',
+  original_too_large: 'cw_media_original_too_large',
+  unreadable: 'cw_media_unreadable',
+  preview_failed: 'cw_media_preview_failed',
+  unsupported: 'cw_media_unsupported',
+  compress_failed: 'cw_media_compress_failed',
+  still_large: 'cw_media_still_large',
+  r2_failed: 'cw_media_r2_failed',
+  generic: 'cw_media_generic',
+  unsupported_type: 'cw_media_unsupported_type',
+  too_large: 'cw_media_too_large',
+  video_too_long: 'cw_media_video_too_long',
+  shop_required: 'cw_media_shop_required',
+  quota_reached: 'cw_media_quota_reached',
+};
+
 type CreativeDraft = {
   id: string;
   campaignId: string;
@@ -179,10 +198,26 @@ type CreativeDraft = {
   clickUrl: string;
   altMm: string;
   altEn: string;
+  bytes: number;
+  durationSeconds: number;
 };
 
 function emptyCreative(campaignId: string): CreativeDraft {
-  return { id: '', campaignId, type: 'image', mediaUrl: '', clickUrl: '', altMm: '', altEn: '' };
+  return { id: '', campaignId, type: 'image', mediaUrl: '', clickUrl: '', altMm: '', altEn: '', bytes: 0, durationSeconds: 0 };
+}
+
+function draftFromCreative(creative: AdCreativeRow): CreativeDraft {
+  return {
+    id: creative.id,
+    campaignId: creative.campaignId,
+    type: creative.type,
+    mediaUrl: creative.mediaUrl,
+    clickUrl: creative.clickUrl,
+    altMm: creative.altMm,
+    altEn: creative.altEn,
+    bytes: creative.bytes,
+    durationSeconds: creative.durationSeconds ?? 0,
+  };
 }
 
 export function AdsManagementPanel() {
@@ -206,6 +241,8 @@ export function AdsManagementPanel() {
   const [creativeDraft, setCreativeDraft] = useState<CreativeDraft | null>(null);
   const [problem, setProblem] = useState<TranslationKey | null>(null);
   const [notice, setNotice] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState('');
   const [rejectingId, setRejectingId] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [rangeDays, setRangeDays] = useState<'7' | '30' | 'all'>('7');
@@ -352,13 +389,44 @@ export function AdsManagementPanel() {
       altEn: creativeDraft.altEn.trim(),
       approval: existing?.approval ?? 'pending',
       rejectedReason: existing?.rejectedReason ?? '',
-      bytes: existing?.bytes ?? 0,
+      bytes: creativeDraft.bytes,
+      durationSeconds: creativeDraft.type === 'video' ? creativeDraft.durationSeconds : undefined,
     };
     saveCreatives((current) => (existing ? current.map((item) => (item.id === row.id ? row : item)) : [row, ...current]));
     record('updated', row.id, `${row.type} · ${row.clickUrl}`, 'ad_creative');
     setCreativeDraft(null);
     setProblem(null);
     setNotice(t('ad_save_done'));
+  }
+
+  /**
+   * §16A.8: the file goes through `uploadMedia(…, 'ads')`, which measures the
+   * bytes and the video length before it stores anything. The measured values
+   * are what `creativeProblem` checks, so a 4 MB banner is refused here with the
+   * same code the Worker would return.
+   */
+  async function uploadCreativeFile(file: File | undefined) {
+    if (!file || !creativeDraft) return;
+    setUploading(true);
+    setUploadMessage(t('ad_creative_uploading'));
+    const result = await uploadMedia(file, 'ads');
+    setUploading(false);
+    if (!result.ok) {
+      setUploadMessage(t(MEDIA_KEYS[result.code]));
+      return;
+    }
+    const seconds = result.seconds ?? 0;
+    setCreativeDraft((current) => current && {
+      ...current,
+      type: result.kind,
+      mediaUrl: result.url,
+      bytes: result.bytes,
+      durationSeconds: seconds,
+    });
+    setUploadMessage(fill(t(result.kind === 'video' ? 'ad_creative_uploaded' : 'ad_creative_uploaded_image'), {
+      size: Math.max(1, Math.round(result.bytes / 1024)),
+      seconds: String(Math.round(seconds)),
+    }));
   }
 
   function reviewCreative(creative: AdCreativeRow, approval: CreativeApproval, reason = '') {
@@ -744,7 +812,10 @@ export function AdsManagementPanel() {
                           <strong className="block truncate text-[10px] text-white">{creative.type} · {creative.clickUrl}</strong>
                           <span className="block truncate text-[9px] text-slate-500">{creative.altEn}</span>
                         </span>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${creative.approval === 'approved' ? 'bg-green-500/20 text-green-300' : creative.approval === 'pending' ? 'bg-amber-500/20 text-amber-200' : creative.approval === 'rejected' ? 'bg-red-500/20 text-red-200' : 'bg-slate-500/20 text-slate-300'}`}>{t(APPROVAL_KEYS[creative.approval])}</span>
+                        <span className="flex shrink-0 items-center gap-1">
+                          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${creative.approval === 'approved' ? 'bg-green-500/20 text-green-300' : creative.approval === 'pending' ? 'bg-amber-500/20 text-amber-200' : creative.approval === 'rejected' ? 'bg-red-500/20 text-red-200' : 'bg-slate-500/20 text-slate-300'}`}>{t(APPROVAL_KEYS[creative.approval])}</span>
+                          <button type="button" onClick={() => { setCreativeDraft(draftFromCreative(creative)); setProblem(null); setUploadMessage(''); }} aria-label={t('ad_campaign_edit')} className="rounded border border-[#2b527d] px-1.5 py-0.5 text-[9px] font-bold text-cyan-300 hover:bg-white/10">{t('ad_campaign_edit')}</button>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -754,7 +825,7 @@ export function AdsManagementPanel() {
           )}
 
           {creativeDraft && (
-            <Panel title={t('ad_creative_add')} icon={ImagePlus}>
+            <Panel title={creativeDraft.id ? t('ad_campaign_edit') : t('ad_creative_add')} icon={ImagePlus}>
               <form onSubmit={saveCreative} className="grid gap-2 p-3 sm:grid-cols-2">
                 <Field label={t('ad_creative_type')}>
                   <select value={creativeDraft.type} onChange={(event) => setCreativeDraft((current) => current && { ...current, type: event.target.value === 'video' ? 'video' : 'image' })} className={INPUT}>
@@ -763,7 +834,30 @@ export function AdsManagementPanel() {
                   </select>
                 </Field>
                 <Field label={t('ad_creative_media')}>
-                  <input required value={creativeDraft.mediaUrl} onChange={(event) => setCreativeDraft((current) => current && { ...current, mediaUrl: event.target.value })} placeholder="/images/blog/bagan-sunrise.webp" className={INPUT} />
+                  <div className="space-y-1">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,video/mp4"
+                      disabled={uploading}
+                      onChange={(event) => { void uploadCreativeFile(event.target.files?.[0]); event.currentTarget.value = ''; }}
+                      className="w-full rounded-md border border-[#2b527d] bg-[#081a31] px-2 py-1.5 text-[10px] text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-cyan-400 file:px-2 file:py-1 file:text-[9px] file:font-bold file:text-[#061426]"
+                    />
+                    <input required value={creativeDraft.mediaUrl} onChange={(event) => setCreativeDraft((current) => current && { ...current, mediaUrl: event.target.value, bytes: 0, durationSeconds: 0 })} placeholder={t('ad_creative_media_or')} className={INPUT} />
+                    <p className="text-[9px] text-slate-500">
+                      {fill(t('ad_creative_limit'), {
+                        imageKb: String(settings.imageMaxKb),
+                        videoKb: String(settings.videoMaxKb),
+                        seconds: String(settings.videoMaxSeconds),
+                      })}
+                    </p>
+                    {uploadMessage && <p role="status" className="text-[10px] font-semibold text-cyan-300">{uploadMessage}</p>}
+                    {(creativeDraft.bytes > 0 || creativeDraft.durationSeconds > 0) && (
+                      <p className="text-[10px] text-slate-400">
+                        {t('ad_creative_size')}: {Math.max(1, Math.round(creativeDraft.bytes / 1024))} KB
+                        {creativeDraft.type === 'video' && ` · ${t('ad_creative_duration')}: ${Math.round(creativeDraft.durationSeconds)} s`}
+                      </p>
+                    )}
+                  </div>
                 </Field>
                 <Field label={t('ad_creative_click')}>
                   <input required value={creativeDraft.clickUrl} onChange={(event) => setCreativeDraft((current) => current && { ...current, clickUrl: event.target.value })} placeholder="/travel-plans" className={INPUT} />
@@ -782,7 +876,7 @@ export function AdsManagementPanel() {
                 {problem && <p role="alert" className="sm:col-span-2 rounded-md border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-[10px] font-semibold text-red-200">{t(problem)}</p>}
                 <div className="flex items-center gap-2 sm:col-span-2">
                   <button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-[10px] font-bold text-[#061426]">{t('ad_campaign_save')}</button>
-                  <button type="button" onClick={() => { setCreativeDraft(null); setProblem(null); }} className="rounded-lg border border-[#2b527d] px-3 py-2 text-[10px] font-semibold text-slate-300">{t('sa_cancel')}</button>
+                  <button type="button" onClick={() => { setCreativeDraft(null); setProblem(null); setUploadMessage(''); }} className="rounded-lg border border-[#2b527d] px-3 py-2 text-[10px] font-semibold text-slate-300">{t('sa_cancel')}</button>
                 </div>
               </form>
             </Panel>

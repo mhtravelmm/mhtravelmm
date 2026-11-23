@@ -55,6 +55,7 @@ export const PARAM_PATHS = [
   '/travel-plans/:planId',
   '/travel-guide/:guideId',
   '/blogs/:storyId',
+  '/ad/click/:creativeId',
   '/account/bookings/:requestCode',
 ] as const;
 

@@ -293,17 +293,24 @@ cover placements, campaigns, creatives, advertisers, reports and settings, and
 `ad_campaign_window` moves the statuses on the one-minute tick. What is left is
 the backend:
 
-- Apply `supabase/migrations/20261125000100_ads.sql` and replace the browser
-  stand-in in `src/lib/adStore.ts` with reads of `ad_placements`,
-  `ad_campaigns`, `ad_creatives`, `ad_advertisers` and `ad_stats_daily`.
-- Ship `serve_ad(placement_key, language)` as an RPC with the 60-second edge
-  cache, so the browser cannot read the tables directly (§16A.9).
-- Add the `/ad/click/<creative_id>` endpoint and the event beacon. Today a click
-  is recorded at the link, which means a blocked popup still counts it and a
-  server-side redirect cannot be audited.
-- Roll the raw `ad_events` up into `ad_stats_daily` on a nightly job and purge
-  past 90 days. `ad_stats_rollup` and `ad_events_purge` are declared but still
-  `wired: false` in `src/lib/jobs.ts`.
+- Apply `supabase/migrations/20261125000100_ads.sql` and
+  `20261125000200_ads_serving.sql`, then replace the browser stand-in in
+  `src/lib/adStore.ts` with calls to the two RPCs and reads of the staff tables.
+  The SQL is written and tested for parity with the client rules
+  (`src/lib/adServing.test.ts`), but nothing has run against a live database, so
+  the browser storage is still the source of truth.
+- `serve_ad(placement_key)` exists in the migration with the §16A.5 rules
+  (placement toggle, window, approved creative, priority then a weighted draw)
+  and returns `fallback_allowed` so the page can take step 2. Still to add: the
+  `language` argument the Plan names, and the 60-second edge cache.
+- `/ad/click/<creative_id>` now exists as a client route
+  (`src/features/ads/AdClickRedirect.tsx`), records the click and redirects.
+  What is missing is the server side: `record_ad_click()` writes the event and
+  returns the URL, but the Worker endpoint that calls it, and the impression
+  beacon that survives a closed tab, are not built.
+- `ad_stats_rollup` and `ad_events_purge` are `wired: true` in
+  `src/lib/jobs.ts` and run against browser storage; their SQL twins exist but
+  are only called once a server job runner replaces the ticker.
 - Keep the AdSense ids empty until the founder supplies them (§16A.12); the
   fallback step is implemented and stays off while the client id is blank.
 

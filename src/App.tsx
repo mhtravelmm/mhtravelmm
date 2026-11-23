@@ -23,6 +23,7 @@ import { TravelGuidePage } from './features/travelGuide/TravelGuidePage';
 import { ForeignTouristPage } from './features/foreignTourist/ForeignTouristPage';
 import { SearchPage } from './features/search/SearchPage';
 import { CategoryIndexPage, CategoryPage } from './features/category/CategoryPage';
+import { AdClickRedirect } from './features/ads/AdClickRedirect';
 import { PlaceDetailPage } from './features/place/PlaceDetailPage';
 import { CATEGORY_SLUGS, PLACE_SLUGS } from './routes';
 import { useAuth } from './lib/auth';
@@ -131,6 +132,8 @@ function AppRoutes() {
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />
     <Route path="/categories" element={<Shell><CategoryIndexPage /></Shell>} />
+    {/* §16A.5: records the click, then redirects to the advertiser. */}
+    <Route path="/ad/click/:creativeId" element={<AdClickRedirect />} />
     {CATEGORY_SLUGS.map((slug) => (
       <Route key={slug} path={`/${slug}`} element={<Shell><CategoryPage slug={slug} /></Shell>} />
     ))}

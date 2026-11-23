@@ -83,12 +83,12 @@ export function HomePage() {
         columns={4}
         cardSize="sm"
       />
+      <BreakAd placement="home_after_blogs" />
       <ListingGridSection title={t('section_book_shops')} viewAllHref="/book-shops" listings={bookShops.listings} onToggleFavorite={bookShops.toggle} columns={5} cardSize="md" />
       <ListingGridSection title={t('section_rentals')} viewAllHref="/rentals" listings={rentals.listings} onToggleFavorite={rentals.toggle} columns={5} cardSize="md" />
       <ListingGridSection title={t('section_transport_operators')} viewAllHref="/ticketing" listings={transport.listings} onToggleFavorite={transport.toggle} columns={5} cardSize="md" />
       <ListingGridSection title={t('section_markets')} viewAllHref="/markets" listings={markets.listings} onToggleFavorite={markets.toggle} columns={5} cardSize="md" />
       <section className="mb-5"><h2 className="mb-2.5 text-sm font-medium text-text-primary">{t('section_popular_searches')}</h2><div className="flex flex-wrap gap-2">{POPULAR_SEARCHES.map((query) => <span key={query} className="rounded-full bg-bg-card px-3 py-1.5 text-[10px] text-text-secondary">{query}</span>)}</div></section>
-      <BreakAd placement="home_after_blogs" />
 
       <ListingGridSection
         title={t('section_populars')}

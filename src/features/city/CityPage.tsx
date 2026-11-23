@@ -53,6 +53,8 @@ export function CityPage() {
         </div>
       </section>
 
+      <BreakAd placement="cities_top" />
+
       <section id="city-list" className="mb-5 scroll-mt-24">
         <div className="mb-2.5 flex items-center justify-between gap-3">
           <h2 className="text-base font-medium text-text-primary">{t('section_cities')}</h2>
@@ -220,6 +222,7 @@ export function CityDetailPage() {
         {filteredBusinesses.length > 12 && <button type="button" onClick={() => setShowAllBusinesses((current) => !current)} className="mt-4 w-full rounded-md border border-brand-blue/30 px-4 py-2.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue/10">{showAllBusinesses ? (language === 'mm' ? 'လျှော့ပြမည်' : 'Show less') : (language === 'mm' ? `နောက်ထပ် ${filteredBusinesses.length - 12} ခုကြည့်မည်` : `Show ${filteredBusinesses.length - 12} more`)}</button>}
       </div>
     </section>
+    <div className="mt-5"><AdSlot placement="city_detail_after_restaurants" /></div>
     <section className="mt-7 rounded-2xl border border-brand-blue/25 bg-bg-card p-4 sm:p-6"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-blue">{language === 'mm' ? 'သင့်ခရီးစဉ်ကို စတင်ပါ' : 'Start your journey'}</p><h2 className="mt-1 text-xl font-bold text-text-primary">{language === 'mm' ? `${title} ခရီးစဉ်ကို စီစဉ်ပါ` : `Plan your ${title} trip`}</h2><p className="mt-1 text-xs leading-5 text-text-muted">{language === 'mm' ? 'နေ့ရက်၊ သယ်ယူပို့ဆောင်ရေးနှင့် တည်းခိုနေရာကို စိတ်ကြိုက်ရွေးချယ်ပြီး MH Travel quotation တောင်းနိုင်ပါသည်။' : 'Choose your dates, transport, and stay preferences, then request a personalized MH Travel quotation.'}</p></div><button type="button" onClick={() => navigate('/travel-plans#custom-plan')} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-brand-red px-4 py-3 text-xs font-semibold text-white hover:brightness-110">{language === 'mm' ? 'Custom Plan တောင်းမည်' : 'Build a Custom Plan'}</button></div></section>
   </div>;
 }
