@@ -1,10 +1,11 @@
 # MH Travel — Remaining Work Record
 
 **Last updated:** 22 November 2026
-**Verified against:** `main` plus the Rental catalog data module and Rental Admin
-panel, the per-account Favorites/notification/review wiring, and the 22 November
-work on the guide route follower, the two owner dashboards, and the Foreign
-Tourist section; detail in [`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
+**Verified against:** `main` plus the full Rental Admin panel (catalog,
+availability, rates, branches, terms, settings, orders) built to Plan §8.8, the
+per-account Favorites/notification/review wiring, and the 22 November work on the
+guide route follower, the two owner dashboards, and the Foreign Tourist section;
+detail in [`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
 
 The application currently provides a substantial frontend and local-preview experience. The following work remains before production launch.
 
@@ -53,6 +54,14 @@ the suite instead of reaching a user as "coming soon."
   browser stores (`rentalCatalogStore.ts`, `rentalOrders.ts`) with queries. Until
   then the browser record leads and the server rules are only mirrored in
   `src/lib/rentalOrders.ts`.
+- Rental Admin panel coverage (Plan §8.8): Catalog, Availability, Rates (city ×
+  category × variant with effective dates and history), Branches (name, address,
+  phone), Terms (publish a new version, keep the history), and Settings
+  (highlight threshold, minimum notice days) are all in the panel. Orders now
+  filter by status, city, type and rental-date range, search by code, name or
+  phone, carry a `tel:` Call button, require a reason to cancel, and flag a
+  Requested order past the Settings threshold. Still open: the Reports section
+  (Plan §8.9) with the CSV export.
 - Schedule the rental expiry job (Plan §16B.7, every 5 minutes). The function is
   committed; the `pg_cron` entry and the job-failure notification are not.
 - Send the rental notifications (Plan §16B.3): requested to Rental Admin;

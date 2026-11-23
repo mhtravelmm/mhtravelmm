@@ -15,6 +15,8 @@ import {
   inclusiveDays,
   localized,
   minimumEndDate,
+  rateHistory,
+  rateInForce,
   rentalCatalogProblems,
   typeRateUsd,
   type RentalCatalog,
@@ -187,6 +189,89 @@ describe('rental pricing', () => {
     expect(minimumEndDate('2026-11-20', car)).toBe(addDays('2026-11-20', 1));
     expect(minimumEndDate('2026-11-20', bicycle)).toBe('2026-11-20');
     expect(minimumEndDate('2026-11-20', undefined)).toBe('2026-11-20');
+  });
+});
+
+describe('rate rows in force and their history', () => {
+  it('keeps a row outside its own date range out of force', () => {
+    const row = { id: 'r1', categoryId: 'car', variantId: null, cityId: null, rateLocalUsd: 40, rateForeignUsd: 50, effectiveFrom: '2026-12-01', effectiveTo: '2026-12-31' };
+    expect(rateInForce(row, '2026-11-30')).toBe(false);
+    expect(rateInForce(row, '2026-12-15')).toBe(true);
+    expect(rateInForce(row, '2027-01-01')).toBe(false);
+  });
+
+  it('treats a row with no dates as the standing rate', () => {
+    const row = { id: 'r1', categoryId: 'car', variantId: null, cityId: null, rateLocalUsd: 40, rateForeignUsd: 50 };
+    expect(rateInForce(row, '2026-11-20')).toBe(true);
+    expect(rateInForce(row, '2099-01-01')).toBe(true);
+  });
+
+  it('prices from the row in force on the booking date, not a future one', () => {
+    const catalog = cloneCatalog();
+    catalog.rates = [
+      { id: 'old', categoryId: 'car', variantId: null, cityId: 'yangon', rateLocalUsd: 42, rateForeignUsd: 55, effectiveFrom: '2026-01-01', effectiveTo: '2026-11-30' },
+      { id: 'new', categoryId: 'car', variantId: null, cityId: 'yangon', rateLocalUsd: 60, rateForeignUsd: 78, effectiveFrom: '2026-12-01', effectiveTo: null },
+    ];
+    const car = findRentalType(catalog, 'car');
+    expect(findRate(catalog, 'yangon', 'car', null, '2026-11-20')?.id).toBe('old');
+    expect(findRate(catalog, 'yangon', 'car', null, '2026-12-02')?.id).toBe('new');
+    expect(typeRateUsd(catalog, { cityId: 'yangon', type: car, customerType: 'citizen' })).toBe(42);
+  });
+
+  it('lists every row for one key, newest first', () => {
+    const catalog = cloneCatalog();
+    catalog.rates = [
+      { id: 'a', categoryId: 'car', variantId: 'minibus_35', cityId: 'bagan', rateLocalUsd: 200, rateForeignUsd: 250, effectiveFrom: '2026-01-01' },
+      { id: 'b', categoryId: 'car', variantId: 'minibus_35', cityId: 'bagan', rateLocalUsd: 220, rateForeignUsd: 275, effectiveFrom: '2026-12-01' },
+      { id: 'other', categoryId: 'car', variantId: null, cityId: 'bagan', rateLocalUsd: 45, rateForeignUsd: 58 },
+    ];
+    expect(rateHistory(catalog, 'car', 'minibus_35', 'bagan').map((rate) => rate.id)).toEqual(['b', 'a']);
+    expect(rateHistory(catalog, 'car', null, 'bagan').map((rate) => rate.id)).toEqual(['other']);
+  });
+});
+
+describe('branches, terms and settings', () => {
+  it('gives every seeded branch an address and a phone for the voucher', () => {
+    for (const city of DEFAULT_RENTAL_CATALOG.cities) {
+      for (const branch of city.branches) {
+        expect(branch.address.length).toBeGreaterThan(2);
+        expect(branch.phone.length).toBeGreaterThan(6);
+      }
+    }
+  });
+
+  it('rejects a branch without an address or a phone', () => {
+    const catalog = cloneCatalog();
+    catalog.cities[0].branches[0].address = '  ';
+    expect(rentalCatalogProblems(catalog)).toContain(`branch_address:${catalog.cities[0].id}`);
+    const other = cloneCatalog();
+    other.cities[0].branches[0].phone = '123';
+    expect(rentalCatalogProblems(other)).toContain(`branch_phone:${other.cities[0].id}`);
+  });
+
+  it('keeps the published terms version in the history list', () => {
+    expect(DEFAULT_RENTAL_CATALOG.termsHistory.some((entry) => entry.version === DEFAULT_RENTAL_CATALOG.termsVersion)).toBe(true);
+  });
+
+  it('rejects a rate row naming a variant its category does not define', () => {
+    const catalog = cloneCatalog();
+    catalog.rates = [{ id: 'bad', categoryId: 'bicycle', variantId: 'minibus_35', cityId: null, rateLocalUsd: 10, rateForeignUsd: 12 }];
+    expect(rentalCatalogProblems(catalog)).toContain('rate_variant:bad');
+  });
+
+  it('rejects a rate row whose dates run backwards', () => {
+    const catalog = cloneCatalog();
+    catalog.rates = [{ id: 'bad', categoryId: 'car', variantId: null, cityId: null, rateLocalUsd: 40, rateForeignUsd: 50, effectiveFrom: '2026-12-31', effectiveTo: '2026-12-01' }];
+    expect(rentalCatalogProblems(catalog)).toContain('rate_range:bad');
+  });
+
+  it('rejects settings the dashboard cannot use', () => {
+    const catalog = cloneCatalog();
+    catalog.settings = { highlightAfterHours: 0, minNoticeDays: 1 };
+    expect(rentalCatalogProblems(catalog)).toContain('settings_highlight');
+    const other = cloneCatalog();
+    other.settings = { highlightAfterHours: 2, minNoticeDays: -1 };
+    expect(rentalCatalogProblems(other)).toContain('settings_notice');
   });
 });
 

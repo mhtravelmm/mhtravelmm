@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Bike,
@@ -6,10 +6,13 @@ import {
   Check,
   ChevronRight,
   Compass,
+  CalendarClock,
+  Coins,
   MapPin,
   Plus,
   RotateCcw,
   Save,
+  Settings2,
   ShipWheel,
   TentTree,
   Trash2,
@@ -23,10 +26,14 @@ import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import {
   activeVariants,
   DEFAULT_RENTAL_CATALOG,
+  localized,
+  rateHistory,
   rentalCatalogProblems,
   type RentalCatalog,
+  type RentalBranch,
   type RentalFlow,
   type RentalIconName,
+  type RentalRate,
   type RentalType,
   type RentalVariant,
 } from '../../data/rentalCatalog';
@@ -65,6 +72,12 @@ const PROBLEM_KEYS: Record<string, TranslationKey> = {
   rate_value: 'ra_problem_rate',
   rate_category: 'ra_problem_rate',
   rate_city: 'ra_problem_rate',
+  rate_variant: 'ra_problem_rate',
+  rate_range: 'ra_problem_rate',
+  branch_address: 'ra_problem_field',
+  branch_phone: 'ra_problem_field',
+  settings_highlight: 'ra_problem_settings',
+  settings_notice: 'ra_problem_settings',
 };
 
 function problemKey(problem: string): TranslationKey {
@@ -80,6 +93,32 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
 
   const problems = rentalCatalogProblems(draft);
   const dirty = JSON.stringify(draft) !== JSON.stringify(catalog);
+
+  /**
+   * Plan §8.8 Rates: a key can hold more than one row once a rate changes, so
+   * the older rows are listed under the table instead of being overwritten.
+   */
+  const historyKeys = useMemo(() => {
+    const seen = new Set<string>();
+    const groups: { key: string; rows: { label: string; rateLocalUsd: number; rateForeignUsd: number; effectiveFrom?: string; effectiveTo?: string | null }[] }[] = [];
+    for (const rate of draft.rates) {
+      const key = `${rate.categoryId}|${rate.variantId ?? ''}|${rate.cityId ?? ''}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const rows = rateHistory(draft, rate.categoryId, rate.variantId, rate.cityId);
+      if (rows.length < 2) continue;
+      const type = draft.types.find((item) => item.id === rate.categoryId);
+      const variant = type?.variants.find((item) => item.id === rate.variantId);
+      const city = draft.cities.find((item) => item.id === rate.cityId);
+      const label = [
+        type ? localized(type.label, language) : rate.categoryId,
+        variant ? localized(variant.label, language) : null,
+        city ? localized(city.name, language) : null,
+      ].filter(Boolean).join(' · ');
+      groups.push({ key, rows: rows.map((row) => ({ ...row, label })) });
+    }
+    return groups;
+  }, [draft, language]);
 
   function patchType(typeId: string, changes: Partial<RentalType>) {
     setDraft((current) => ({
@@ -166,6 +205,99 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
         }),
       ),
     }));
+  }
+
+  function newRate(): RentalRate {
+    const type = draft.types.find((item) => item.active) ?? draft.types[0];
+    let index = draft.rates.length + 1;
+    let id = `rate_${index}`;
+    while (draft.rates.some((rate) => rate.id === id)) {
+      index += 1;
+      id = `rate_${index}`;
+    }
+    return {
+      id,
+      categoryId: type?.id ?? '',
+      variantId: null,
+      cityId: null,
+      rateLocalUsd: type?.rateUsd ?? 10,
+      rateForeignUsd: type?.foreignRateUsd ?? 12,
+      effectiveFrom: new Date().toISOString().slice(0, 10),
+      effectiveTo: null,
+    };
+  }
+
+  function patchRate(rateId: string, changes: Partial<RentalRate>) {
+    setDraft((current) => ({
+      ...current,
+      rates: current.rates.map((rate) => (rate.id === rateId ? { ...rate, ...changes } : rate)),
+    }));
+  }
+
+  function removeRate(rateId: string) {
+    setDraft((current) => ({ ...current, rates: current.rates.filter((rate) => rate.id !== rateId) }));
+  }
+
+  function patchBranch(cityId: string, branchId: string, changes: Partial<RentalBranch>) {
+    setDraft((current) => ({
+      ...current,
+      cities: current.cities.map((city) =>
+        city.id === cityId
+          ? { ...city, branches: city.branches.map((branch) => (branch.id === branchId ? { ...branch, ...changes } : branch)) }
+          : city,
+      ),
+    }));
+  }
+
+  function addBranch(cityId: string) {
+    setDraft((current) => ({
+      ...current,
+      cities: current.cities.map((city) => {
+        if (city.id !== cityId) return city;
+        let index = city.branches.length + 1;
+        let id = `${cityId}-branch-${index}`;
+        while (city.branches.some((branch) => branch.id === id)) {
+          index += 1;
+          id = `${cityId}-branch-${index}`;
+        }
+        return {
+          ...city,
+          branches: [...city.branches, { id, name: { mm: '', en: '' }, address: '', phone: '' }],
+        };
+      }),
+    }));
+  }
+
+  function removeBranch(cityId: string, branchId: string) {
+    setDraft((current) => ({
+      ...current,
+      cities: current.cities.map((city) =>
+        city.id === cityId ? { ...city, branches: city.branches.filter((branch) => branch.id !== branchId) } : city,
+      ),
+    }));
+  }
+
+  /**
+   * Plan §8.8 Terms: publishing moves the current text into the history and
+   * starts a new version, so an order placed yesterday still prints the text
+   * its traveler accepted.
+   */
+  function publishTerms() {
+    const nextVersion = new Date().toISOString().slice(0, 10);
+    setDraft((current) => {
+      const history = current.termsHistory.some((entry) => entry.version === current.termsVersion)
+        ? current.termsHistory
+        : [{ version: current.termsVersion, body: current.terms, publishedAt: new Date().toISOString() }, ...current.termsHistory];
+      const version = history.some((entry) => entry.version === nextVersion)
+        ? `${nextVersion}-${history.length + 1}`
+        : nextVersion;
+      return {
+        ...current,
+        termsVersion: version,
+        termsHistory: [{ version, body: current.terms, publishedAt: new Date().toISOString() }, ...history],
+      };
+    });
+    runAction(t('ra_terms_published'));
   }
 
   function commit() {
@@ -320,16 +452,169 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
       </section>
 
       <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#244668] px-3 py-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold"><Coins size={16} className="text-[#26b8ff]" /> {t('ra_rates_title')}</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-400">{t('ra_rates_note')}</span>
+            <button type="button" onClick={() => setDraft((current) => ({ ...current, rates: [...current.rates, newRate()] }))} className="inline-flex items-center gap-1 rounded border border-[#2f6192] px-2 py-1 text-[10px] font-bold text-cyan-200 hover:bg-white/10"><Plus size={11} /> {t('ra_rates_add')}</button>
+          </div>
+        </div>
+        <div className="overflow-x-auto p-3">
+          {draft.rates.length === 0 ? (
+            <p className="rounded border border-dashed border-[#2b527d] px-3 py-4 text-center text-[10px] text-slate-500">{t('ra_rates_empty')}</p>
+          ) : (
+            <table className="w-full min-w-[860px] text-left text-[10px]">
+              <thead className="text-slate-300">
+                <tr>
+                  <th className="px-1 py-1.5">{t('ra_col_type')}</th>
+                  <th className="px-1 py-1.5">{t('ra_col_variant')}</th>
+                  <th className="px-1 py-1.5">{t('ra_col_city')}</th>
+                  <th className="px-1 py-1.5">{t('ra_rate_local')}</th>
+                  <th className="px-1 py-1.5">{t('ra_rate_foreign')}</th>
+                  <th className="px-1 py-1.5">{t('ra_col_from')}</th>
+                  <th className="px-1 py-1.5">{t('ra_col_to')}</th>
+                  <th className="px-1 py-1.5" />
+                </tr>
+              </thead>
+              <tbody>
+                {draft.rates.map((rate) => {
+                  const type = draft.types.find((item) => item.id === rate.categoryId);
+                  return (
+                    <tr key={rate.id} className="border-t border-[#1d3a5c]">
+                      <td className="px-1 py-1.5">
+                        <select value={rate.categoryId} onChange={(event) => patchRate(rate.id, { categoryId: event.target.value, variantId: null })} className="w-full rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none">
+                          {draft.types.map((item) => <option key={item.id} value={item.id}>{item.label[language] || item.id}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-1 py-1.5">
+                        <select value={rate.variantId ?? ''} onChange={(event) => patchRate(rate.id, { variantId: event.target.value || null })} className="w-full rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none">
+                          <option value="">{t('ra_col_no_variant')}</option>
+                          {(type?.variants ?? []).map((variant) => <option key={variant.id} value={variant.id}>{variant.label[language] || variant.id}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-1 py-1.5">
+                        <select value={rate.cityId ?? ''} onChange={(event) => patchRate(rate.id, { cityId: event.target.value || null })} className="w-full rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none">
+                          <option value="">{t('ra_col_all_cities')}</option>
+                          {draft.cities.map((city) => <option key={city.id} value={city.id}>{city.name[language] || city.id}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-1 py-1.5"><input type="number" min="1" step="0.01" value={rate.rateLocalUsd} onChange={(event) => patchRate(rate.id, { rateLocalUsd: Number(event.target.value) })} className="w-20 rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none" /></td>
+                      <td className="px-1 py-1.5"><input type="number" min="1" step="0.01" value={rate.rateForeignUsd} onChange={(event) => patchRate(rate.id, { rateForeignUsd: Number(event.target.value) })} className="w-20 rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none" /></td>
+                      <td className="px-1 py-1.5"><input type="date" value={rate.effectiveFrom ?? ''} onChange={(event) => patchRate(rate.id, { effectiveFrom: event.target.value })} className="rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none" /></td>
+                      <td className="px-1 py-1.5"><input type="date" value={rate.effectiveTo ?? ''} onChange={(event) => patchRate(rate.id, { effectiveTo: event.target.value || null })} className="rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none" /></td>
+                      <td className="px-1 py-1.5"><button type="button" aria-label={t('ra_remove_rate')} onClick={() => removeRate(rate.id)} className="rounded border border-red-400/40 px-1.5 py-1 text-[10px] text-red-300 hover:bg-red-500/10"><Trash2 size={11} /></button></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+          {historyKeys.length > 0 && (
+            <div className="mt-2 rounded border border-[#244668] bg-[#091b32] p-2">
+              <p className="mb-1 text-[10px] font-bold text-slate-200">{t('ra_rates_history')}</p>
+              <ul className="space-y-0.5">
+                {historyKeys.map(({ key, rows }) => (
+                  <li key={key} className="text-[9px] text-slate-400">
+                    <span className="text-slate-300">{rows[0].label}</span>
+                    {' — '}
+                    {rows.map((row) => `${row.rateLocalUsd}/${row.rateForeignUsd} USD (${row.effectiveFrom || '—'} → ${row.effectiveTo || '—'})`).join(' · ')}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="mt-2 text-[9px] text-slate-500">{t('ra_rates_supersede')}</p>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#244668] px-3 py-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold"><CalendarClock size={16} className="text-[#26b8ff]" /> {t('ra_branches_title')}</h2>
+          <span className="text-[10px] text-slate-400">{t('ra_branches_note')}</span>
+        </div>
+        <div className="space-y-2 p-3">
+          {draft.cities.map((city) => (
+            <div key={city.id} className="rounded border border-[#244668] bg-[#091b32] p-2">
+              <div className="mb-1.5 flex items-center justify-between">
+                <p className="text-[11px] font-bold text-slate-100">{city.name[language] || city.id}</p>
+                <button type="button" onClick={() => addBranch(city.id)} className="text-[10px] font-bold text-cyan-300 hover:text-white">+ {t('ra_branch_add')}</button>
+              </div>
+              <div className="space-y-1.5">
+                {city.branches.map((branch) => (
+                  <div key={branch.id} className="grid gap-1.5 sm:grid-cols-5">
+                    <input value={branch.name.mm} onChange={(event) => patchBranch(city.id, branch.id, { name: { ...branch.name, mm: event.target.value } })} placeholder={t('ra_label_mm')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
+                    <input value={branch.name.en} onChange={(event) => patchBranch(city.id, branch.id, { name: { ...branch.name, en: event.target.value } })} placeholder={t('ra_label_en')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
+                    <input value={branch.address} onChange={(event) => patchBranch(city.id, branch.id, { address: event.target.value })} placeholder={t('ra_branch_address')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none sm:col-span-2" />
+                    <div className="flex gap-1.5">
+                      <input value={branch.phone} onChange={(event) => patchBranch(city.id, branch.id, { phone: event.target.value })} placeholder={t('ra_branch_phone')} className="min-w-0 flex-1 rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none" />
+                      <button type="button" aria-label={t('ra_branch_remove')} onClick={() => removeBranch(city.id, branch.id)} className="shrink-0 rounded border border-red-400/40 px-1.5 py-1 text-[10px] text-red-300 hover:bg-red-500/10"><Trash2 size={11} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
         <div className="border-b border-[#244668] px-3 py-2"><h2 className="flex items-center gap-2 text-sm font-bold"><Check size={16} className="text-[#26b8ff]" /> {t('ra_terms_title')}</h2></div>
         <div className="grid gap-2 p-3 sm:grid-cols-2">
           <label className="block text-[10px] font-semibold text-slate-300 sm:col-span-2">{t('ra_terms_version')}<input value={draft.termsVersion} onChange={(event) => setDraft((current) => ({ ...current, termsVersion: event.target.value }))} className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
           <label className="block text-[10px] font-semibold text-slate-300">{t('ra_terms_mm')}<textarea rows={3} value={draft.terms.mm} onChange={(event) => setDraft((current) => ({ ...current, terms: { ...current.terms, mm: event.target.value } }))} className="mt-1 w-full resize-none rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
           <label className="block text-[10px] font-semibold text-slate-300">{t('ra_terms_en')}<textarea rows={3} value={draft.terms.en} onChange={(event) => setDraft((current) => ({ ...current, terms: { ...current.terms, en: event.target.value } }))} className="mt-1 w-full resize-none rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label>
         </div>
+        <div className="border-t border-[#244668] px-3 py-2">
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[10px] font-bold text-slate-200">{t('ra_terms_history_title')}</p>
+            <button type="button" onClick={publishTerms} className="inline-flex items-center gap-1.5 rounded border border-[#2f6192] px-2 py-1 text-[10px] font-bold text-cyan-200 hover:bg-white/10"><Check size={11} /> {t('ra_terms_publish')}</button>
+          </div>
+          <p className="mb-1.5 text-[9px] text-slate-500">{t('ra_terms_publish_note')}</p>
+          <ul className="space-y-1">
+            {draft.termsHistory.map((entry) => (
+              <li key={entry.version} className="flex flex-wrap items-center gap-2 rounded border border-[#244668] bg-[#091b32] px-2 py-1 text-[10px]">
+                <span className="font-mono text-cyan-200">{entry.version}</span>
+                {entry.version === draft.termsVersion && <span className="rounded-full bg-emerald-400/20 px-1.5 py-0.5 text-[9px] font-bold text-emerald-100">{t('ra_terms_current')}</span>}
+                <span className="min-w-0 flex-1 truncate text-slate-400">{entry.body[language]}</span>
+                <span className="text-[9px] text-slate-500">{new Date(entry.publishedAt).toLocaleDateString(language === 'mm' ? 'my-MM' : 'en-GB')}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#244668] px-3 py-2 text-[10px] text-slate-400">
           <p>{t('ra_reset_note')}</p>
           <button type="button" onClick={() => { reset(); setDraft(DEFAULT_RENTAL_CATALOG); runAction(t('ra_reset_done')); }} className="inline-flex items-center gap-1.5 rounded border border-[#2f6192] px-2 py-1 font-semibold text-slate-300 hover:bg-white/10"><RotateCcw size={11} /> {t('ra_reset')}</button>
         </div>
+      </section>
+
+      <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
+        <div className="border-b border-[#244668] px-3 py-2"><h2 className="flex items-center gap-2 text-sm font-bold"><Settings2 size={16} className="text-[#26b8ff]" /> {t('ra_settings_title')}</h2></div>
+        <div className="grid gap-2 p-3 sm:grid-cols-2">
+          <label className="block text-[10px] font-semibold text-slate-300">
+            {t('ra_settings_highlight')}
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={draft.settings.highlightAfterHours}
+              onChange={(event) => setDraft((current) => ({ ...current, settings: { ...current.settings, highlightAfterHours: Number(event.target.value) } }))}
+              className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300"
+            />
+          </label>
+          <label className="block text-[10px] font-semibold text-slate-300">
+            {t('ra_settings_notice')}
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={draft.settings.minNoticeDays}
+              onChange={(event) => setDraft((current) => ({ ...current, settings: { ...current.settings, minNoticeDays: Number(event.target.value) } }))}
+              className="mt-1 w-full rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300"
+            />
+          </label>
+        </div>
+        <p className="border-t border-[#244668] px-3 py-2 text-[9px] text-slate-500">{t('ra_settings_note')}</p>
       </section>
     </div>
   );

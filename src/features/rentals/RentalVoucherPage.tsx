@@ -107,14 +107,19 @@ export function RentalVoucherPage() {
   const mmkTotal = Math.round((order.totalUsd * order.fxMmkPerUsd) / 100) * 100;
 
   const rows: { label: string; value: string }[] = [
-    { label: t('rv_business'), value: `MH Travel Rental${branch ? ` — ${localized(branch.name, language)}` : ''}` },
+    {
+      label: t('rv_business'),
+      value: branch
+        ? `MH Travel Rental — ${localized(branch.name, language)}${branch.address ? `, ${branch.address}` : ''}`
+        : 'MH Travel Rental',
+    },
     { label: t('rv_city'), value: city ? localized(city.name, language) : order.cityId },
     { label: t('rv_dates'), value: `${order.startDate} → ${order.endDate}` },
     { label: t('rv_days'), value: `${order.days} ${t('rentals_day_count')}` },
     { label: t('rv_item'), value: itemLabel },
     { label: t('rv_participants'), value: String(order.participants) },
     { label: t('rv_customer'), value: order.customerName },
-    { label: t('rv_phone'), value: order.phone },
+    { label: t('rv_phone'), value: branch?.phone ? `${order.phone} · ${branch.phone}` : order.phone },
     {
       label: t('rv_handover'),
       value: order.fulfillment === 'branch'

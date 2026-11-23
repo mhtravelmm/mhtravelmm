@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   DEFAULT_RENTAL_CATALOG,
   rentalCatalogProblems,
+  type RentalBranch,
   type RentalCatalog,
   type RentalType,
   type RentalVariant,
@@ -47,14 +48,27 @@ function normalizeType(type: RentalType, index: number): RentalType {
   };
 }
 
+function normalizeBranch(branch: RentalBranch): RentalBranch {
+  return { ...branch, address: branch.address ?? '', phone: branch.phone ?? '' };
+}
+
 function normalizeCatalog(catalog: RentalCatalog): RentalCatalog {
+  const terms = catalog.terms ?? DEFAULT_RENTAL_CATALOG.terms;
+  const termsVersion = catalog.termsVersion ?? DEFAULT_RENTAL_CATALOG.termsVersion;
+  const history = Array.isArray(catalog.termsHistory) ? catalog.termsHistory : [];
   return {
-    termsVersion: catalog.termsVersion ?? DEFAULT_RENTAL_CATALOG.termsVersion,
-    terms: catalog.terms,
+    termsVersion,
+    terms,
+    // A catalog saved before the history existed still needs the current
+    // version in the list, or the Terms section would look empty.
+    termsHistory: history.some((entry) => entry.version === termsVersion)
+      ? history
+      : [{ version: termsVersion, body: terms, publishedAt: new Date().toISOString() }, ...history],
     types: catalog.types.map(normalizeType),
-    cities: catalog.cities,
+    cities: catalog.cities.map((city) => ({ ...city, branches: city.branches.map(normalizeBranch) })),
     availability: catalog.availability,
     rates: Array.isArray(catalog.rates) ? catalog.rates : [],
+    settings: catalog.settings ?? DEFAULT_RENTAL_CATALOG.settings,
   };
 }
 

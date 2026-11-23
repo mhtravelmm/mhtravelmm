@@ -63,9 +63,9 @@ const ICONS: Record<RentalIconName, LucideIcon> = {
 /** Plan §8: the catalog carries `sortOrder`, so the selector just reads it. */
 const PRIMARY_TYPES = ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car'];
 
-function tomorrow() {
+function addDaysFromToday(days: number) {
   const date = new Date();
-  date.setDate(date.getDate() + 1);
+  date.setDate(date.getDate() + Math.max(1, days));
   return date.toISOString().slice(0, 10);
 }
 
@@ -86,8 +86,9 @@ export function RentalsPage() {
   const [showAll, setShowAll] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [showPolicies, setShowPolicies] = useState(false);
-  const [date, setDate] = useState(tomorrow());
-  const [endDate, setEndDate] = useState(tomorrow());
+  const earliestStart = addDaysFromToday(catalog.settings.minNoticeDays);
+  const [date, setDate] = useState(earliestStart);
+  const [endDate, setEndDate] = useState(earliestStart);
   const [participants, setParticipants] = useState(1);
   const [customerType, setCustomerType] = useState<CustomerType>('citizen');
   const [fulfillment, setFulfillment] = useState<Fulfillment>('delivery');
@@ -337,7 +338,7 @@ export function RentalsPage() {
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-[10px] text-text-faint">{t('rentals_start_date')}</span>
-                  <input type="date" min={tomorrow()} value={date} onChange={(event) => { const nextDate = event.target.value; setDate(nextDate); const nextEarliest = minimumEndDate(nextDate, selected); if (validEndDate < nextEarliest) setEndDate(nextEarliest); }} className="w-full rounded-lg border border-border bg-bg px-2.5 py-2.5 text-[11px] text-text-primary outline-none" />
+                  <input type="date" min={earliestStart} value={date} onChange={(event) => { const nextDate = event.target.value; setDate(nextDate); const nextEarliest = minimumEndDate(nextDate, selected); if (validEndDate < nextEarliest) setEndDate(nextEarliest); }} className="w-full rounded-lg border border-border bg-bg px-2.5 py-2.5 text-[11px] text-text-primary outline-none" />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-[10px] text-text-faint">{t('rentals_end_date')}</span>

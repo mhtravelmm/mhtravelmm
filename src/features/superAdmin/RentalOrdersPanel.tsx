@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, Check, ChevronRight, Clock, FileText, RefreshCw, X } from 'lucide-react';
+import { AlertTriangle, Check, ChevronRight, Clock, FileText, Phone, RefreshCw, Search, X } from 'lucide-react';
 import { useLanguage } from '../../lib/i18n';
 import { useCurrency } from '../../lib/currency';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
@@ -61,11 +61,34 @@ export function RentalOrdersPanel() {
   const [filter, setFilter] = useState<RentalOrderStatus | 'all'>('all');
   const [openId, setOpenId] = useState<string | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<Record<string, RentalPaymentMethod>>({});
+  const [query, setQuery] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  /** Plan §8.8: a cancel carries a reason, so the dialog holds it per order. */
+  const [cancelDraft, setCancelDraft] = useState<{ orderId: string; reason: string } | null>(null);
 
-  const visible = useMemo(
-    () => (filter === 'all' ? allOrders : allOrders.filter((order) => order.status === filter)),
-    [allOrders, filter],
-  );
+  /** Plan §8.8: status, city, type, date range and a code/name/phone search. */
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return allOrders.filter((order) => {
+      if (filter !== 'all' && order.status !== filter) return false;
+      if (cityFilter && order.cityId !== cityFilter) return false;
+      if (typeFilter && order.categoryId !== typeFilter) return false;
+      // The range compares against the rental dates, which is what staff look for.
+      if (fromDate && order.endDate < fromDate) return false;
+      if (toDate && order.startDate > toDate) return false;
+      if (!needle) return true;
+      return (
+        order.requestCode.toLowerCase().includes(needle)
+        || order.customerName.toLowerCase().includes(needle)
+        || order.phone.toLowerCase().includes(needle)
+      );
+    });
+  }, [allOrders, cityFilter, filter, fromDate, query, toDate, typeFilter]);
+
+  const filtersActive = Boolean(query.trim() || cityFilter || typeFilter || fromDate || toDate);
 
   const counts = useMemo(() => {
     const tally: Record<string, number> = { all: allOrders.length };
@@ -78,6 +101,11 @@ export function RentalOrdersPanel() {
     const variant = findVariant(type, order.variantId);
     const base = type ? localized(type.label, language) : order.categoryId;
     return variant ? `${base} · ${localized(variant.label, language)}` : base;
+  }
+
+  /** Plan §8.5: hours a Requested order has waited, read against the Settings threshold. */
+  function waitingHours(order: RentalOrder): number {
+    return (Date.now() - new Date(order.createdAt).getTime()) / 3600000;
   }
 
   function cityLabel(order: RentalOrder): string {
@@ -96,6 +124,43 @@ export function RentalOrdersPanel() {
         <button type="button" onClick={expireOverdue} className="inline-flex items-center gap-2 self-start rounded-lg border border-[#2f6192] px-3 py-2 text-[11px] font-semibold text-slate-300 hover:bg-white/10">
           <RefreshCw size={15} /> {t('ra_orders_run_expiry')}
         </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1.5">
+        <label className="flex min-w-[180px] flex-1 items-center gap-1.5 rounded-lg border border-[#2b527d] bg-[#0b203b] px-2 py-1.5">
+          <Search size={12} className="shrink-0 text-slate-400" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('ra_orders_search')}
+            className="min-w-0 flex-1 bg-transparent text-[11px] text-white outline-none placeholder:text-slate-500"
+          />
+        </label>
+        <select value={cityFilter} onChange={(event) => setCityFilter(event.target.value)} className="rounded-lg border border-[#2b527d] bg-[#0b203b] px-2 py-1.5 text-[10px] text-white outline-none">
+          <option value="">{t('ra_orders_all_cities')}</option>
+          {catalog.cities.map((city) => <option key={city.id} value={city.id}>{localized(city.name, language)}</option>)}
+        </select>
+        <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-lg border border-[#2b527d] bg-[#0b203b] px-2 py-1.5 text-[10px] text-white outline-none">
+          <option value="">{t('ra_orders_all_types')}</option>
+          {catalog.types.map((type) => <option key={type.id} value={type.id}>{localized(type.label, language)}</option>)}
+        </select>
+        <label className="flex items-center gap-1 text-[10px] text-slate-400">
+          {t('ra_orders_filter_from')}
+          <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className="rounded-lg border border-[#2b527d] bg-[#0b203b] px-2 py-1.5 text-[10px] text-white outline-none" />
+        </label>
+        <label className="flex items-center gap-1 text-[10px] text-slate-400">
+          {t('ra_orders_filter_to')}
+          <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className="rounded-lg border border-[#2b527d] bg-[#0b203b] px-2 py-1.5 text-[10px] text-white outline-none" />
+        </label>
+        {filtersActive && (
+          <button
+            type="button"
+            onClick={() => { setQuery(''); setCityFilter(''); setTypeFilter(''); setFromDate(''); setToDate(''); }}
+            className="rounded-lg border border-[#2f6192] px-2 py-1.5 text-[10px] font-semibold text-slate-300 hover:bg-white/10"
+          >
+            {t('ra_orders_filter_clear')}
+          </button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -132,6 +197,11 @@ export function RentalOrdersPanel() {
                     <span className="text-[10px] text-slate-400">{order.startDate} → {order.endDate}</span>
                     <span className="text-[10px] font-semibold text-slate-200">{formatPrice(order.totalUsd)}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${STATUS_TONE[order.status]}`}>{t(STATUS_KEY[order.status])}</span>
+                    {order.status === 'requested' && waitingHours(order) >= catalog.settings.highlightAfterHours && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-400/20 px-2 py-0.5 text-[9px] font-bold text-red-100">
+                        <AlertTriangle size={10} /> {t('ra_orders_waiting')} {Math.floor(waitingHours(order))}h
+                      </span>
+                    )}
                     {order.status === 'accepted' && left > 0 && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-0.5 text-[9px] font-bold text-amber-100"><Clock size={10} />{hours}h {minutes}m</span>
                     )}
@@ -152,7 +222,37 @@ export function RentalOrdersPanel() {
                         <p className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1.5"><span className="text-slate-500">{t('rentals_special_requests')}: </span>{order.specialRequests}</p>
                       )}
 
-                      {canChange.length > 0 && (
+                      <a href={`tel:${order.phone.replace(/\s+/g, '')}`} className="inline-flex w-fit items-center gap-1 rounded border border-cyan-300/40 px-2 py-1 text-[10px] font-bold text-cyan-100 hover:bg-cyan-400/10">
+                        <Phone size={10} /> {t('ra_orders_call')} · {order.phone}
+                      </a>
+
+                      {cancelDraft?.orderId === order.id ? (
+                        <div className="space-y-1.5 rounded border border-red-400/40 bg-red-500/10 p-2">
+                          <label className="block text-[10px] font-semibold text-red-100">
+                            {t('ra_orders_cancel_reason')}
+                            <textarea
+                              rows={2}
+                              value={cancelDraft.reason}
+                              onChange={(event) => setCancelDraft({ orderId: order.id, reason: event.target.value })}
+                              className="mt-1 w-full resize-none rounded border border-red-400/40 bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none focus:border-red-300"
+                            />
+                          </label>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={cancelDraft.reason.trim().length < 3}
+                              onClick={() => { setStatus(order.id, 'cancelled', cancelDraft.reason.trim()); setCancelDraft(null); }}
+                              className="rounded border border-red-400/60 bg-red-500/20 px-2 py-1 text-[10px] font-bold text-red-100 hover:bg-red-500/30 disabled:opacity-40"
+                            >
+                              {t('ra_orders_cancel_confirm')}
+                            </button>
+                            <button type="button" onClick={() => setCancelDraft(null)} className="rounded border border-[#2f6192] px-2 py-1 text-[10px] font-semibold text-slate-300 hover:bg-white/10">
+                              {t('ra_orders_cancel_dismiss')}
+                            </button>
+                            {cancelDraft.reason.trim().length < 3 && <span className="text-[9px] text-red-200">{t('ra_orders_cancel_reason_required')}</span>}
+                          </div>
+                        </div>
+                      ) : canChange.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1.5">
                           {canChange.map((to) => (
                             <button
@@ -160,6 +260,7 @@ export function RentalOrdersPanel() {
                               type="button"
                               onClick={() => {
                                 if (to === 'paid') recordPayment(order.id, method);
+                                else if (to === 'cancelled') setCancelDraft({ orderId: order.id, reason: '' });
                                 else setStatus(order.id, to);
                               }}
                               className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] font-bold ${to === 'cancelled' || to === 'expired' ? 'border-red-400/40 text-red-200 hover:bg-red-500/10' : 'border-cyan-300/40 text-cyan-100 hover:bg-cyan-400/10'}`}

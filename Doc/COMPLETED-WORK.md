@@ -489,3 +489,59 @@ Super Admin and Ads Admin. The admin shell reads the signed-in role, shows only
 that editor in the sidebar, and opens it by default. Verified in the browser:
 creating a Blog Post Admin, signing in as them, and seeing a single "Blogs" nav
 item with no Ads entry.
+
+## Rental Admin panel completed to Plan §8.8 — 22 November 2026
+
+The Rental Admin panel previously covered types, rules, the city × type matrix
+and the general terms. Plan §8.8 asks for seven sections; all seven now exist,
+and the two shared data types they needed were added to the catalog model.
+
+**Catalog model.** `RentalBranch` gained `address` and `phone`, because the
+voucher prints both (Plan §8.6). `RentalRate` gained `effectiveFrom` and
+`effectiveTo`, so a rate change keeps its history instead of overwriting the old
+price. `RentalCatalog` gained `termsHistory` (the published versions, newest
+first) and `settings` (`highlightAfterHours`, `minNoticeDays`). The five seeded
+branches carry real-looking addresses and phone numbers, and
+`rentalCatalogStore.ts` fills the new fields for a catalog saved by an older
+build, so an existing Admin edit is not thrown away.
+
+**Rates.** The new table lists one row per city × category × variant with local
+and foreign amounts and effective dates. `rateInForce` and `newestRate` in
+`src/data/rentalCatalog.ts` decide which row applies on a given day, so a rate
+that starts next month does not change today's price. `rateHistory` groups the
+rows for one key, and the panel lists any key that holds more than one row, so a
+superseded price stays visible.
+
+**Branches.** Each city's branches are edited in place with Burmese and English
+names, an address and a phone. The voucher now prints the branch address and
+adds the branch phone beside the traveler's own.
+
+**Terms.** Publishing copies the current text into `termsHistory` and starts a
+new version dated today (with a suffix if the day already has one). Every order
+keeps the version it accepted, so an old voucher still prints its own policy.
+
+**Settings.** The two thresholds are edited in the panel and both are read
+elsewhere: `RentalOrdersPanel` flags a Requested order once it has waited longer
+than `highlightAfterHours`, and `RentalsPage` uses `minNoticeDays` as the
+earliest selectable start date.
+
+**Orders.** Plan §8.8 also asks the Orders list to filter and search. It now
+filters by status, city, category and rental-date range, searches the request
+code, customer name and phone, offers a `tel:` Call button, and requires a
+written reason before cancelling. A Requested order past the threshold shows a
+red waiting badge.
+
+**Validation and storage.** `rentalCatalogProblems` now rejects a branch without
+an address or a phone, a rate row naming a variant its category does not define,
+a rate row whose dates run backwards, and settings values the dashboard cannot
+use. `supabase/migrations/20261122000100_rental_catalog.sql` gained a
+`rental_settings` single-row table with RLS: everyone reads, Rental Admin and
+Super Admin write.
+
+**Verification.** `npx tsc --noEmit -p tsconfig.app.json` clean;
+`npx vitest run` 17 files / 168 tests (10 new in
+`src/data/rentalCatalog.test.ts` covering rate-in-force, history, branch
+address/phone, terms history, variant and date-range rejection, and settings);
+`npm run build` succeeds. Browser check at `/super-admin` → Rentals: all seven
+sections render, adding a rate row and saving works, and `/rentals` still prices
+from the type rates while the new dated row is not yet in force.

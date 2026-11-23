@@ -50,7 +50,7 @@ export type RentalType = {
   sortOrder: number;
 };
 
-export type RentalBranch = { id: string; name: Bilingual };
+export type RentalBranch = { id: string; name: Bilingual; address: string; phone: string };
 
 export type RentalCity = { id: string; name: Bilingual; branches: RentalBranch[] };
 
@@ -69,15 +69,31 @@ export type RentalRate = {
   cityId: string | null;
   rateLocalUsd: number;
   rateForeignUsd: number;
+  /** A row with no dates is the standing rate; dated rows form the history. */
+  effectiveFrom?: string;
+  effectiveTo?: string | null;
+};
+
+/** A superseded terms version stays here so an old order still prints its own policy. */
+export type RentalTermsVersion = { version: string; body: Bilingual; publishedAt: string };
+
+/** Plan §8.8 Settings: the two thresholds the dashboard and the form read. */
+export type RentalSettings = {
+  /** A Requested order older than this is highlighted for staff. */
+  highlightAfterHours: number;
+  /** How many days ahead the traveler must book. */
+  minNoticeDays: number;
 };
 
 export type RentalCatalog = {
   termsVersion: string;
   terms: Bilingual;
+  termsHistory: RentalTermsVersion[];
   types: RentalType[];
   cities: RentalCity[];
   availability: RentalAvailability;
   rates: RentalRate[];
+  settings: RentalSettings;
 };
 
 export function localized(value: Bilingual, language: Language): string {
@@ -360,27 +376,52 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
     {
       id: 'yangon',
       name: { mm: 'ရန်ကုန်', en: 'Yangon' },
-      branches: [{ id: 'yangon-downtown', name: { mm: 'ရန်ကုန် MH Travel ရုံးခွဲ — Downtown', en: 'Yangon MH Travel Branch — Downtown' } }],
+      branches: [{
+        id: 'yangon-downtown',
+        name: { mm: 'ရန်ကုန် MH Travel ရုံးခွဲ — Downtown', en: 'Yangon MH Travel Branch — Downtown' },
+        address: 'No. 168, Sule Pagoda Road, Kyauktada Township, Yangon',
+        phone: '+95 9 770 000 101',
+      }],
     },
     {
       id: 'bagan',
       name: { mm: 'ပုဂံ', en: 'Bagan' },
-      branches: [{ id: 'bagan-nyaung-u', name: { mm: 'ပုဂံ MH Travel ရုံးခွဲ — Nyaung-U', en: 'Bagan MH Travel Branch — Nyaung-U' } }],
+      branches: [{
+        id: 'bagan-nyaung-u',
+        name: { mm: 'ပုဂံ MH Travel ရုံးခွဲ — Nyaung-U', en: 'Bagan MH Travel Branch — Nyaung-U' },
+        address: 'Thiripyitsaya Road, Nyaung-U, Bagan',
+        phone: '+95 9 770 000 102',
+      }],
     },
     {
       id: 'mandalay',
       name: { mm: 'မန္တလေး', en: 'Mandalay' },
-      branches: [{ id: 'mandalay-78', name: { mm: 'မန္တလေး MH Travel ရုံးခွဲ — 78th Street', en: 'Mandalay MH Travel Branch — 78th Street' } }],
+      branches: [{
+        id: 'mandalay-78',
+        name: { mm: 'မန္တလေး MH Travel ရုံးခွဲ — 78th Street', en: 'Mandalay MH Travel Branch — 78th Street' },
+        address: 'No. 22, 78th Street, Chanayethazan Township, Mandalay',
+        phone: '+95 9 770 000 103',
+      }],
     },
     {
       id: 'inle',
       name: { mm: 'အင်းလေး', en: 'Inle Lake' },
-      branches: [{ id: 'inle-nyaung-shwe', name: { mm: 'ညောင်ရွှေ MH Travel ရုံးခွဲ', en: 'Nyaung Shwe MH Travel Branch' } }],
+      branches: [{
+        id: 'inle-nyaung-shwe',
+        name: { mm: 'ညောင်ရွှေ MH Travel ရုံးခွဲ', en: 'Nyaung Shwe MH Travel Branch' },
+        address: 'Mingala Road, Nyaung Shwe, Shan State',
+        phone: '+95 9 770 000 104',
+      }],
     },
     {
       id: 'ngapali',
       name: { mm: 'ငပလီ', en: 'Ngapali' },
-      branches: [{ id: 'ngapali-branch', name: { mm: 'ငပလီ MH Travel ရုံးခွဲ', en: 'Ngapali MH Travel Branch' } }],
+      branches: [{
+        id: 'ngapali-branch',
+        name: { mm: 'ငပလီ MH Travel ရုံးခွဲ', en: 'Ngapali MH Travel Branch' },
+        address: 'Main Road, Ngapali Beach, Thandwe, Rakhine State',
+        phone: '+95 9 770 000 105',
+      }],
     },
   ],
   availability: {
@@ -391,7 +432,22 @@ export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
     inle: { bicycle: true, ebike: true, motorbike: true, boat: true, camping_tent: true, travel_guide: true },
     ngapali: { bicycle: true, ebike: true, motorbike: true, scooter: true, boat: true, camping_tent: true },
   },
+  // Plan §8.8 Terms: the published versions, newest first. The current one is
+  // also the catalog's `termsVersion`/`terms`, so the reader needs one field.
+  termsHistory: [
+    {
+      version: '2026-11-22',
+      body: {
+        mm: 'ငှားရမ်းမှု တောင်းဆိုချက်ကို MH Travel မှ ရရှိနိုင်မှု စစ်ဆေးပြီး အတည်ပြုပါမည်။ ငှားရမ်းချိန်အတွင်း ထိခိုက်မှုအတွက် တာဝန်ယူရပါမည်။',
+        en: 'MH Travel checks availability and confirms each request. You are responsible for the vehicle while it is with you.',
+      },
+      publishedAt: '2026-11-22T00:00:00.000Z',
+    },
+  ],
+  // Plan §8.4: a category needs no rate row to be priced; rows are exceptions
+  // for one city or one variant, so the seed starts empty and the panel adds them.
   rates: [],
+  settings: { highlightAfterHours: 2, minNoticeDays: 1 },
 };
 
 /** Bookable types in catalog order; a retired record stays for history only. */
@@ -430,17 +486,53 @@ export function findVariant(type: RentalType | undefined, variantId: string | nu
   return type.variants.find((variant) => variant.id === variantId);
 }
 
+/**
+ * Plan §8.3: a rate row is only in force between its own dates. A row with no
+ * dates is the standing rate, so the seed and the tests need no dates.
+ */
+export function rateInForce(rate: RentalRate, on: string): boolean {
+  if (rate.effectiveFrom && rate.effectiveFrom > on) return false;
+  if (rate.effectiveTo && rate.effectiveTo < on) return false;
+  return true;
+}
+
+/** The newest in-force row for one key, so a dated row beats a standing one. */
+function newestRate(rows: RentalRate[], city: string | null, variant: string | null, on: string): RentalRate | undefined {
+  return rows
+    .filter((rate) => (rate.cityId ?? null) === city && (rate.variantId ?? null) === variant && rateInForce(rate, on))
+    .sort((a, b) => (b.effectiveFrom ?? '').localeCompare(a.effectiveFrom ?? ''))[0];
+}
+
 /** Plan §8.4 step 1: city + category + variant, then each less specific row. */
 export function findRate(
   catalog: RentalCatalog,
   cityId: string,
   categoryId: string,
   variantId: string | null,
+  on = new Date().toISOString().slice(0, 10),
 ): RentalRate | undefined {
   const rows = catalog.rates.filter((rate) => rate.categoryId === categoryId);
-  const match = (city: string | null, variant: string | null) =>
-    rows.find((rate) => (rate.cityId ?? null) === city && (rate.variantId ?? null) === variant);
-  return match(cityId, variantId) ?? match(cityId, null) ?? match(null, variantId) ?? match(null, null);
+  return newestRate(rows, cityId, variantId, on)
+    ?? newestRate(rows, cityId, null, on)
+    ?? newestRate(rows, null, variantId, on)
+    ?? newestRate(rows, null, null, on);
+}
+
+/** Every row for one key, newest first: the history the Rates section lists. */
+export function rateHistory(
+  catalog: RentalCatalog,
+  categoryId: string,
+  variantId: string | null,
+  cityId: string | null,
+): RentalRate[] {
+  return catalog.rates
+    .filter(
+      (rate) =>
+        rate.categoryId === categoryId
+        && (rate.variantId ?? null) === (variantId ?? null)
+        && (rate.cityId ?? null) === (cityId ?? null),
+    )
+    .sort((a, b) => (b.effectiveFrom ?? '').localeCompare(a.effectiveFrom ?? ''));
 }
 
 export type RateQuery = {
@@ -556,6 +648,8 @@ export function rentalCatalogProblems(catalog: RentalCatalog): string[] {
     const branchIds = city.branches.map((branch) => branch.id);
     if (new Set(branchIds).size !== branchIds.length) problems.push(`branch_duplicate:${city.id}`);
     if (!city.branches.every((branch) => branch.name.mm.trim() && branch.name.en.trim())) problems.push(`branch_label:${city.id}`);
+    if (!city.branches.every((branch) => branch.address.trim().length >= 3)) problems.push(`branch_address:${city.id}`);
+    if (!city.branches.every((branch) => branch.phone.trim().length >= 7)) problems.push(`branch_phone:${city.id}`);
     const offered = Object.entries(catalog.availability[city.id] ?? {}).filter(([, on]) => on).map(([typeId]) => typeId);
     if (offered.length === 0) problems.push(`city_no_types:${city.id}`);
     if (offered.some((typeId) => !bookable.some((type) => type.id === typeId))) problems.push(`city_unknown_type:${city.id}`);
@@ -567,9 +661,14 @@ export function rentalCatalogProblems(catalog: RentalCatalog): string[] {
     if (!(rate.rateLocalUsd > 0) || !(rate.rateForeignUsd > 0)) problems.push(`rate_value:${rate.id}`);
     if (!typeIds.includes(rate.categoryId)) problems.push(`rate_category:${rate.id}`);
     if (rate.cityId && !cityIds.includes(rate.cityId)) problems.push(`rate_city:${rate.id}`);
+    const type = catalog.types.find((item) => item.id === rate.categoryId);
+    if (rate.variantId && !type?.variants.some((variant) => variant.id === rate.variantId)) problems.push(`rate_variant:${rate.id}`);
+    if (rate.effectiveFrom && rate.effectiveTo && rate.effectiveTo < rate.effectiveFrom) problems.push(`rate_range:${rate.id}`);
   }
 
   if (!catalog.termsVersion.trim()) problems.push('terms_version');
   if (!catalog.terms.mm.trim() || !catalog.terms.en.trim()) problems.push('terms');
+  if (!(catalog.settings.highlightAfterHours >= 1)) problems.push('settings_highlight');
+  if (!(catalog.settings.minNoticeDays >= 0)) problems.push('settings_notice');
   return problems;
 }

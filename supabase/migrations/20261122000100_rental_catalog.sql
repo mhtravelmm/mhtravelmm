@@ -120,3 +120,25 @@ begin
     );
   end loop;
 end $$;
+
+-- Plan §8.8 Settings: the two thresholds the dashboard and the booking form
+-- read. A single row keeps them together, and the key stops a second row.
+create table if not exists public.rental_settings (
+  id boolean primary key default true check (id),
+  highlight_after_hours integer not null default 2 check (highlight_after_hours >= 1),
+  min_notice_days integer not null default 1 check (min_notice_days >= 0),
+  updated_at timestamptz not null default now(),
+  updated_by uuid references auth.users (id)
+);
+
+insert into public.rental_settings (id) values (true) on conflict (id) do nothing;
+
+alter table public.rental_settings enable row level security;
+
+-- Everyone reads the thresholds; only Rental Admin and Super Admin change them.
+drop policy if exists rental_settings_read on public.rental_settings;
+create policy rental_settings_read on public.rental_settings for select using (true);
+
+drop policy if exists rental_settings_write on public.rental_settings;
+create policy rental_settings_write on public.rental_settings for all
+  using (public.is_rental_staff()) with check (public.is_rental_staff());
