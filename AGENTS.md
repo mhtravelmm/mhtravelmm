@@ -99,6 +99,13 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   Guides editor, because §16B.1 gives the write to Payment Admin. The rows live
   in `guideEarningsStore.ts` so a second role can see them; publishing a guide
   adds a row through `addEarningForGuide()`.
+- Post and guide lifecycle rules live in `contentLifecycle.ts`, not in the
+  panels: unpublish, soft delete, restore and `isStaleSave`. Every one of them
+  bumps `version`, so a panel that changes a row must bump it too, and the
+  reader drops both the deleted row and the seed it took over — otherwise a
+  withdrawn seeded story stays live. `publish_due_content` skips a deleted row;
+  the server-side twin is the `version + 1` trigger in
+  `20261124000100_content_lifecycle.sql`.
 - The Admin Management table never holds rows in `useState`. It reads
   `mergeAdminRows(seeded, adminAccounts)` from `adminAccounts.ts`, where
   `adminAccounts` comes from `useAuth()`, so a created admin survives a reload.
