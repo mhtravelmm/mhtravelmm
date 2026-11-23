@@ -60,8 +60,10 @@ the suite instead of reaching a user as "coming soon."
   (highlight threshold, minimum notice days) are all in the panel. Orders now
   filter by status, city, type and rental-date range, search by code, name or
   phone, carry a `tel:` Call button, require a reason to cancel, and flag a
-  Requested order past the Settings threshold. Still open: the Reports section
-  (Plan §8.9) with the CSV export.
+  Requested order past the Settings threshold. The Reports section (Plan §8.9)
+  is in place too: status, city, type and day tallies, paid conversion, median
+  accept time, settled value in USD and MMK, and a CSV export. Still open: the
+  report reads the browser order list, so it moves to the tables with the rest.
 - Schedule the rental expiry job (Plan §16B.7, every 5 minutes). The function is
   committed; the `pg_cron` entry and the job-failure notification are not.
 - Send the rental notifications (Plan §16B.3): requested to Rental Admin;

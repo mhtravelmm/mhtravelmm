@@ -545,3 +545,33 @@ address/phone, terms history, variant and date-range rejection, and settings);
 `npm run build` succeeds. Browser check at `/super-admin` → Rentals: all seven
 sections render, adding a rate row and saving works, and `/rentals` still prices
 from the type rates while the new dated row is not yet in force.
+
+## Rental reports and the CSV export (Plan §8.9) — 22 November 2026
+
+`src/lib/rentalReports.ts` holds the report maths as pure functions over the
+order list, so the panel, the CSV and the tests read the same numbers.
+
+Status, city, type and day tallies carry a count and a USD total. Day buckets use
+Myanmar Time (UTC+6:30) rather than UTC, so an order placed at 20:00 UTC lands on
+the next Myanmar day instead of the previous one. Conversion counts Paid and
+Completed against every requested order, and median accept time uses only the
+orders that were actually accepted. Settled value covers Paid and Completed, and
+the MMK figure uses each order's own snapshotted rate, so a later exchange-rate
+change never rewrites an old order's value.
+
+`ordersToCsv` writes 21 columns and quotes per RFC 4180, so a name holding a
+comma or a quote survives the round trip, and an absent variant or payment method
+writes an empty cell instead of `null`.
+
+`RentalReportsPanel` renders the four headline figures, the four tables, a 7/30/
+90/365-day window and the CSV download, and it is wired into the admin sidebar as
+**Rental reports** next to Rental orders. The window compares against each
+order's start date, which is what a founder actually asks: what is booked in the
+coming month.
+
+**Verification.** `npx tsc --noEmit -p tsconfig.app.json` clean; `npx vitest run`
+18 files / 182 tests (14 new in `src/lib/rentalReports.test.ts` covering the
+Myanmar day boundary, the tallies, conversion, median accept time, settled value,
+and CSV quoting); `npm run build` succeeds. Browser check with two seeded orders:
+2 orders, 50% conversion, 2h median accept, $16.00 / 72,000 Ks settled, and the
+city, type and day tables matching the seeded rows.
