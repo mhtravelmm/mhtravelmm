@@ -143,6 +143,20 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   serves nothing and the slot silently collapses. The same test also fails when a
   seeded creative points at an image that is not under `public/`, so repoint a
   seed at a shipped file instead of adding a placeholder path.
+- `AdSlot` does not call the store directly. It calls `serveAdFor(placement,
+  language)` in `adServingApi.ts`, which asks `serve_ad(p_placement_key,
+  p_language)` when Supabase is configured, falls back to `serveAdNow()` when the
+  RPC cannot answer, and caches both answers for 60 seconds per placement and
+  language (§16A.5). A collapsed slot is cached too, so an empty placement is not
+  re-asked on every render.
+- Impressions and clicks leave the browser through `recordAdEventWithBeacon()`
+  in `adBeacon.ts`: the store writes the event first, then `navigator.sendBeacon`
+  posts it to `VITE_AD_EVENT_ENDPOINT`, with `fetch(..., { keepalive: true })` as
+  the fallback. The payload is placement, campaign, creative, kind and session
+  hash only — never a reader identity — because a beacon cannot carry an
+  `Authorization` header. `AdClickRedirect` additionally calls
+  `recordAdClickRemotely()`, which returns the redirect target from
+  `record_ad_click()` so a URL edited in the Adsboard wins over the local copy.
 - Every upload goes through `checkMedia()` in `mediaRules.ts` before the file is
   read, and the folder is named by the caller: `uploadContentImage(file,
   'blog-posts')` or `'guide-stops'`. Never hard-code a byte limit at the call

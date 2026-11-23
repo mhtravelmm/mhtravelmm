@@ -52,8 +52,18 @@ describe('ads serving migration', () => {
   });
 
   it('keeps the ad tables closed to the public and opens only the two calls', () => {
-    expect(sql).toContain('grant execute on function public.serve_ad(text) to anon, authenticated;');
+    expect(sql).toContain('grant execute on function public.serve_ad(text, text) to anon, authenticated;');
     expect(sql).toContain('grant execute on function public.record_ad_click(text, text, text) to anon, authenticated;');
+  });
+
+  it('takes the language argument the Plan names and answers one alt text', () => {
+    expect(sql).toContain('public.serve_ad(p_placement_key text, p_language text default');
+    expect(sql).toContain("case when p_language = 'en' then candidates.alt_en else candidates.alt_mm end");
+  });
+
+  it('drops the one-argument signature so a stale caller cannot reach the old body', () => {
+    expect(sql).toContain('drop function if exists public.serve_ad(text);');
+    expect(sql).toContain('drop function if exists public.serve_ad(text, text);');
   });
 
   it('counts a click once per session per page view', () => {

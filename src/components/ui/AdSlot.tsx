@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import type { Language } from '../../types';
 import { useLanguage } from '../../lib/i18n';
 import { placementByKey } from '../../lib/adPlacements';
 import { clickThroughHref } from '../../lib/adClicks';
-import { readAdSettings, readPlacements, recordAdEvent, serveAdNow } from '../../lib/adStore';
+import { recordAdEventWithBeacon } from '../../lib/adBeacon';
+import { serveAdFor } from '../../lib/adServingApi';
+import { readAdSettings, readPlacements } from '../../lib/adStore';
 import {
   IMPRESSION_VISIBLE_MS,
   IMPRESSION_VISIBLE_RATIO,
@@ -31,14 +34,18 @@ interface AdSlotProps {
    * available, in which case this component renders nothing and the
    * layout reflows — never an empty placeholder box.
    */
-  fetchAd?: (placement: string) => Promise<AdCreative | null>;
+  fetchAd?: (placement: string, language: Language) => Promise<AdCreative | null>;
   /** Escape hatch for a design-time placeholder in Storybook/dev only */
   devPlaceholder?: ReactNode;
 }
 
-/** Plan §16A.5: the default serving call reads the same rows the Adsboard writes. */
-async function serveFromStore(placement: string): Promise<AdCreative | null> {
-  const ad = serveAdNow(placement);
+/**
+ * Plan §16A.5: the default serving call is `serve_ad(placement_key, language)`,
+ * which answers from Supabase when it is configured and from the browser
+ * stand-in otherwise. Either way the answer is cached for 60 seconds.
+ */
+async function serveFromStore(placement: string, language: Language): Promise<AdCreative | null> {
+  const ad = await serveAdFor(placement, language);
   if (!ad) return null;
   return {
     id: ad.id,
@@ -118,13 +125,13 @@ export function AdSlot({ placement, fetchAd = serveFromStore, devPlaceholder }: 
   useEffect(() => {
     let cancelled = false;
     setAd('loading');
-    fetchAd(placement).then((result) => {
+    fetchAd(placement, language).then((result) => {
       if (!cancelled) setAd(result);
     });
     return () => {
       cancelled = true;
     };
-  }, [placement, fetchAd]);
+  }, [placement, fetchAd, language]);
 
   const served = ad === 'loading' ? null : ad;
 
@@ -138,7 +145,7 @@ export function AdSlot({ placement, fetchAd = serveFromStore, devPlaceholder }: 
       const visibleEnough = entry.intersectionRatio >= IMPRESSION_VISIBLE_RATIO;
       if (visibleEnough && timer === undefined) {
         timer = window.setTimeout(() => {
-          recordAdEvent({
+          recordAdEventWithBeacon({
             placementKey: served.placementKey ?? placement,
             campaignId: served.campaignId ?? '',
             creativeId: served.id,

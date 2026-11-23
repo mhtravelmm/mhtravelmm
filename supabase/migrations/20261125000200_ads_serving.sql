@@ -48,10 +48,17 @@ on conflict (key) do nothing;
 --
 -- `fallback_allowed` comes back with the row because §16A.1 step 2 is the
 -- page's decision: with no Admin ad and fallback on, the page asks AdSense.
+--
+-- `p_language` is the second argument the Plan names. It only chooses which
+-- alt text comes back in `alt_text`; both languages are still required by
+-- §16A.8 and both are still returned, so a reader that switches language
+-- mid-session does not need a second round trip. An unknown value falls back
+-- to Burmese rather than returning a null alt.
 -- ---------------------------------------------------------------------------
 drop function if exists public.serve_ad(text);
+drop function if exists public.serve_ad(text, text);
 
-create or replace function public.serve_ad(p_placement_key text)
+create or replace function public.serve_ad(p_placement_key text, p_language text default 'mm')
 returns table (
   creative_id text,
   campaign_id text,
@@ -60,6 +67,7 @@ returns table (
   click_url text,
   alt_mm text,
   alt_en text,
+  alt_text text,
   advertiser_name text,
   fallback_allowed boolean
 )
@@ -104,6 +112,7 @@ as $$
     candidates.click_url,
     candidates.alt_mm,
     candidates.alt_en,
+    case when p_language = 'en' then candidates.alt_en else candidates.alt_mm end,
     candidates.advertiser_name,
     placement.fallback_allowed
   from candidates, placement
@@ -113,7 +122,8 @@ $$;
 
 -- The public calls `serve_ad` and nothing else: the ad tables stay closed.
 revoke all on function public.serve_ad(text) from public;
-grant execute on function public.serve_ad(text) to anon, authenticated;
+revoke all on function public.serve_ad(text, text) from public;
+grant execute on function public.serve_ad(text, text) to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- §16A.5 click-through. The endpoint resolves the creative here so the click

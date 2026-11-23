@@ -299,15 +299,22 @@ the backend:
   The SQL is written and tested for parity with the client rules
   (`src/lib/adServing.test.ts`), but nothing has run against a live database, so
   the browser storage is still the source of truth.
-- `serve_ad(placement_key)` exists in the migration with the §16A.5 rules
-  (placement toggle, window, approved creative, priority then a weighted draw)
-  and returns `fallback_allowed` so the page can take step 2. Still to add: the
-  `language` argument the Plan names, and the 60-second edge cache.
-- `/ad/click/<creative_id>` now exists as a client route
-  (`src/features/ads/AdClickRedirect.tsx`), records the click and redirects.
-  What is missing is the server side: `record_ad_click()` writes the event and
-  returns the URL, but the Worker endpoint that calls it, and the impression
-  beacon that survives a closed tab, are not built.
+- `serve_ad(placement_key, language)` exists in the migration with the §16A.5
+  rules (placement toggle, window, approved creative, priority then a weighted
+  draw) and returns `fallback_allowed` so the page can take step 2, plus
+  `alt_text` for the language it was asked for. `serveAdFor()` in
+  `src/lib/adServingApi.ts` is the caller and caches for 60 seconds per
+  placement and language. What is left is the edge cache itself: the 60-second
+  window is currently a browser-side cache, so the first reader of each minute
+  still reaches the database.
+- `/ad/click/<creative_id>` exists as a client route
+  (`src/features/ads/AdClickRedirect.tsx`) and calls `record_ad_click()`
+  through `src/lib/adClickApi.ts`, using the URL the RPC returns as the
+  redirect target. Impressions and clicks are also posted to
+  `VITE_AD_EVENT_ENDPOINT` through `navigator.sendBeacon` (`adBeacon.ts`), so a
+  closed tab still reports. What is missing is the Worker that serves that
+  endpoint: it must call `record_ad_click()` / insert the impression, rate
+  limit by session hash, and refuse a payload whose creative does not exist.
 - `ad_stats_rollup` and `ad_events_purge` are `wired: true` in
   `src/lib/jobs.ts` and run against browser storage; their SQL twins exist but
   are only called once a server job runner replaces the ticker.
