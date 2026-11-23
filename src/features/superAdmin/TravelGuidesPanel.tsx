@@ -26,6 +26,7 @@ import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuditRecorder } from '../../lib/adminAudit';
 import { problemMessage } from './publishProblemText';
+import { pushFeedEvent } from '../../lib/notificationFeed';
 
 const CATEGORY_KEYS: Record<GuideCategory, TranslationKey> = {
   myanmar: 'guide_category_myanmar',
@@ -229,6 +230,11 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       guideTitle: guide.titleEn,
       author: guide.author,
       publishedAt: new Date().toISOString().slice(0, 10),
+    });
+    pushFeedEvent('guide_published', {
+      title: t('tg_feed_published_title'),
+      message: fill(t('tg_feed_published_body'), { title: guide.titleEn }),
+      href: `/travel-guide/${guide.id}`,
     });
     notify(fill(t('tg_notice_now_published'), { title: guide.titleEn }));
   }

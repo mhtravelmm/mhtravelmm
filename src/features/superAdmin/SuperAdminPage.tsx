@@ -61,6 +61,7 @@ import { recordAdminAudit, useAuditRecorder } from '../../lib/adminAudit';
 import { planRoleChange, roleChangeSummary, type RoleChangeRefusal } from '../../lib/adminRoleChange';
 import { EXCHANGE_RATES_EVENT, readExchangeRates } from '../../lib/exchangeRates';
 import { pushAdminNotice } from '../../lib/adminNotices';
+import { pushFeedEvent, useFeedRows } from '../../lib/notificationFeed';
 
 type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports' | 'audit' | 'jobs';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
@@ -155,18 +156,18 @@ export function SuperAdminPage() {
   const [period, setPeriod] = useState('Last 30 Days');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notice, setNotice] = useState('');
-  const [notifications, setNotifications] = useState<AdminNotification[]>(readAdminNotifications);
+  const [staffNotifications, setStaffNotifications] = useState<AdminNotification[]>(readAdminNotifications);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
-    window.localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(notifications));
-  }, [notifications]);
+    window.localStorage.setItem(ADMIN_NOTIFICATIONS_KEY, JSON.stringify(staffNotifications));
+  }, [staffNotifications]);
 
   useEffect(() => {
     function syncNotifications(event: StorageEvent) {
-      if (event.key === ADMIN_NOTIFICATIONS_KEY) setNotifications(readAdminNotifications());
+      if (event.key === ADMIN_NOTIFICATIONS_KEY) setStaffNotifications(readAdminNotifications());
     }
-    const syncLocal = () => setNotifications(readAdminNotifications());
+    const syncLocal = () => setStaffNotifications(readAdminNotifications());
     window.addEventListener('storage', syncNotifications);
     window.addEventListener(STAFF_NOTIFICATIONS_EVENT, syncLocal);
     return () => {
@@ -190,6 +191,18 @@ export function SuperAdminPage() {
   const visibleNav = navItems.filter((item) => allowedSections.includes(item.id));
   const activeView: AdminView = visibleNav.some((item) => item.id === view) ? view : (visibleNav[0]?.id ?? view);
 
+  // Plan §16B.3: the bell reads the shared feed too, narrowed to this role and
+  // account, so an ad approval never shows up for the Rental Admin.
+  const viewer = { role: effectiveRole, userId: user?.id ?? null, name: user?.name };
+  const { rows: feedRows, markAllRead: markFeedRead } = useFeedRows(viewer);
+  const notifications: AdminNotification[] = [...feedRows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    message: row.message,
+    createdAt: new Date(row.createdAt).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }),
+    read: row.read,
+  })), ...staffNotifications];
+
   function selectNav(nextView: AdminView) {
     setView(nextView);
     setMobileMenuOpen(false);
@@ -201,18 +214,16 @@ export function SuperAdminPage() {
   }
 
   function addOwnerApplicationNotification(shop: { owner: string; business: string; city: string; category: string }) {
-    setNotifications((current) => [{
-      id: `owner-application-${Date.now()}`,
+    pushFeedEvent('owner_application', {
       title: t('sa_owner_application_title'),
       message: `${shop.business} · ${shop.city} · ${shop.category} · submitted by ${shop.owner}`,
-      createdAt: new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }),
-      read: false,
-    }, ...current].slice(0, 30));
+    });
     setNotificationsOpen(true);
   }
 
   function markNotificationsRead() {
-    setNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
+    setStaffNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
+    markFeedRead();
   }
 
   const displayName = user?.name || t('admin_super_admin');
@@ -256,7 +267,7 @@ export function SuperAdminPage() {
               <button type="button" onClick={() => setNotificationsOpen((open) => !open)} className="relative rounded-full p-1.5 text-white hover:bg-white/10" aria-label={t('sa_notifications')}><Bell size={19} fill="currentColor" />{notifications.some((notification) => !notification.read) && <span className="absolute -right-0.5 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">{notifications.filter((notification) => !notification.read).length}</span>}</button>
               <div className="hidden items-center gap-2 sm:flex"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-700 text-[10px] font-bold text-white">{initials}</div><span className="text-sm font-semibold">{roleBadge}</span><ChevronDown size={14} className="text-slate-300" /></div>
             </div>
-            {notificationsOpen && <div className="absolute right-3 top-12 z-40 w-[min(360px,calc(100vw-24px))] rounded-lg border border-[#2b527d] bg-[#0b203b] p-2 shadow-2xl sm:right-5"><div className="flex items-center justify-between border-b border-[#244668] px-2 pb-2"><div><p className="text-xs font-bold text-white">{t('sa_admin_notifications')}</p><p className="text-[10px] text-slate-400">{t('sa_admin_notifications_detail')}</p></div><button type="button" onClick={markNotificationsRead} className="text-[10px] font-semibold text-cyan-300 hover:text-white">{t('sa_mark_all_read')}</button></div><div className="max-h-72 overflow-y-auto pt-1">{notifications.length === 0 ? <p className="px-2 py-5 text-center text-xs text-slate-400">{t('sa_no_notifications')}</p> : notifications.map((notification) => <button key={notification.id} type="button" onClick={() => setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read: true } : item))} className={`block w-full rounded-md px-2 py-2 text-left ${notification.read ? 'bg-transparent' : 'bg-cyan-400/10'}`}><div className="flex items-start gap-2"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${notification.read ? 'bg-slate-600' : 'bg-cyan-300'}`} /><span className="min-w-0"><strong className="block text-[11px] text-white">{notification.title}</strong><span className="mt-0.5 block text-[10px] leading-4 text-slate-300">{notification.message}</span><span className="mt-1 block text-[9px] text-slate-500">{notification.createdAt}</span></span></div></button>)}</div></div>}
+            {notificationsOpen && <div className="absolute right-3 top-12 z-40 w-[min(360px,calc(100vw-24px))] rounded-lg border border-[#2b527d] bg-[#0b203b] p-2 shadow-2xl sm:right-5"><div className="flex items-center justify-between border-b border-[#244668] px-2 pb-2"><div><p className="text-xs font-bold text-white">{t('sa_admin_notifications')}</p><p className="text-[10px] text-slate-400">{t('sa_admin_notifications_detail')}</p></div><button type="button" onClick={markNotificationsRead} className="text-[10px] font-semibold text-cyan-300 hover:text-white">{t('sa_mark_all_read')}</button></div><div className="max-h-72 overflow-y-auto pt-1">{notifications.length === 0 ? <p className="px-2 py-5 text-center text-xs text-slate-400">{t('sa_no_notifications')}</p> : notifications.map((notification) => <button key={notification.id} type="button" onClick={() => setStaffNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read: true } : item))} className={`block w-full rounded-md px-2 py-2 text-left ${notification.read ? 'bg-transparent' : 'bg-cyan-400/10'}`}><div className="flex items-start gap-2"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${notification.read ? 'bg-slate-600' : 'bg-cyan-300'}`} /><span className="min-w-0"><strong className="block text-[11px] text-white">{notification.title}</strong><span className="mt-0.5 block text-[10px] leading-4 text-slate-300">{notification.message}</span><span className="mt-1 block text-[9px] text-slate-500">{notification.createdAt}</span></span></div></button>)}</div></div>}
           </header>
 
           {mobileMenuOpen && <div className="border-b border-[#214263] bg-[#08182d] p-3 lg:hidden"><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{visibleNav.map((item, index) => { const Icon = item.icon; return <button key={`${item.labelKey}-mobile-${index}`} type="button" onClick={() => selectNav(item.id)} className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs ${item.id === activeView ? 'bg-[#168df4] text-white' : 'bg-white/5 text-slate-300'}`}><Icon size={15} />{t(item.labelKey)}</button>; })}</div><button type="button" onClick={signOut} className="mt-2 flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-400"><LogOut size={15} /> {t('sa_logout')}</button></div>}

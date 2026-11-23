@@ -46,6 +46,12 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
 - **Exchange rates are append-only rows** (`src/lib/exchangeRates.ts`): the rate in
   force is the latest row whose `effectiveFrom` has passed, 4,500 is the fallback.
   Never overwrite a rate; append one.
+- **Notifications are one feed with named recipients.** `src/lib/notificationFeed.ts`
+  holds the §16B.3 event table (`FEED_EVENTS`); a row names a role, an account, an
+  author or `everyone`, and each reader filters with `canSee()` / `feedFor()`. Never
+  broadcast an admin event to every bell — an event with no recipient writes nothing
+  on purpose. `pushAdminNotice` stays for the bell; `pushFeedNotice` writes both.
+  Rows expire after 90 days (`pruneFeed`).
 - **Scheduled jobs are data, not timers.** `src/lib/jobs.ts` holds the §16B.7
   registry (cadence + `wired` flag) and the runner; `src/lib/platformJobs.ts` binds the
   handlers and `src/App.tsx` ticks once a minute. A job must be safe to run twice —

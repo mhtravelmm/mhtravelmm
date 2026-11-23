@@ -973,3 +973,43 @@ all eight jobs, the rental expiry job reads `16:03 · 2026-11-23` with next due
 `16:08` and the result "ပြောင်းလဲမှု မရှိပါ", the other seven read "မချိတ်ရသေး",
 and the run log shows the same row.
 
+## Notification service with named recipients — Plan §16B.3, 23 November 2026
+
+The Plan asks for one notification service: a shared `notification_feed` plus the
+existing per-user read state, delivered to the bell, kept 90 days. The bell
+previously showed one flat list to every admin, so a Rental Admin saw ad
+approvals and a Super Admin saw rental requests.
+
+`src/lib/notificationFeed.ts` states the §16B.3 table as data. Each event names
+its default recipients — a product role, an account id, an author byline, or
+`everyone` — and one occurrence may narrow that list. `canSee()` answers the
+question per row, so the writer names the audience once and the reader filters;
+`feedFor()` adds the retention cut and the newest-first order. `pushFeedEvent()`
+refuses to write a row with no recipient, because an event nobody owns is a
+wiring mistake, not a broadcast.
+
+The writers now use it: a rental request and a reschedule go to Rental Admin and
+Super Admin, a rental status change goes to the traveler's own account and links
+their voucher, a published blog or guide is a row for everyone, a guide earning
+amount or payment is addressed to the guide's author by byline, a shop-owner
+application goes to Admin and Super Admin, and a failed job goes to Super Admin.
+The admin bell reads the feed beside the staff notices, narrowed by
+`useFeedRows()` to the signed-in role and account, so the badge counts only what
+that person may act on. The traveler's notifications page shows the same rows
+with the shared read map.
+
+`supabase/migrations/20261123000300_notification_feed.sql` commits the table,
+`can_read_feed_row()` (role, account, author-byline or everyone), a read policy
+that also hides an expired row, and `purge_expired_feed_rows()` for the §16B.7
+schedule. There is no insert policy: only the server functions that own an event
+may write a row.
+
+**Verification.** `npm run typecheck` clean; `npm test` 35 files / 399 tests
+(new: `notificationFeed`, plus feed assertions in `rentalOrders`, `adminNotices`
+and `jobs`); `npm run build` succeeds; `npx eslint src` unchanged at 7
+pre-existing warnings. Browser check at `/super-admin` with one row of each kind
+seeded: the Super Admin bell showed the job failure, the ad approval and the
+published post but not the Rental Admin row; a Rental Admin session showed the
+rental request and the published post but neither the job failure nor the ad
+approval; an Ads Admin session showed the published post only.
+

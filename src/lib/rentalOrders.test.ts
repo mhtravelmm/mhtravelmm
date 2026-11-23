@@ -25,6 +25,7 @@ import {
 import { DEFAULT_RENTAL_CATALOG } from '../data/rentalCatalog';
 import { addDaysToDay, myanmarToday } from './myanmarTime';
 import { readTravelerNotices } from './rentalNotifications';
+import { readFeed, canSee } from './notificationFeed';
 import { readRentalAudit } from './rentalAudit';
 import { quoteRentalOrder } from './rentalOrderRules';
 import { deliverRentalNotices } from './rentalOrders';
@@ -391,6 +392,51 @@ describe('the extra notice and its audit row', () => {
     expect(readTravelerNotices(order.userId)[0].kind).toBe('extra');
     const rows = readRentalAudit().filter((entry) => entry.orderCode === order.requestCode);
     expect(rows).toEqual([]);
+  });
+});
+
+describe('rental notices also land in the shared feed (Plan §16B.3)', () => {
+  beforeEach(() => {
+    const map = new Map<string, string>();
+    (globalThis as { window?: unknown }).window = {
+      localStorage: {
+        getItem: (key: string) => map.get(key) ?? null,
+        setItem: (key: string, value: string) => { map.set(key, value); },
+        removeItem: (key: string) => { map.delete(key); },
+        clear: () => map.clear(),
+        key: () => null,
+        get length() { return map.size; },
+      },
+      dispatchEvent: () => true,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    };
+  });
+
+  it('addresses a new request to the Rental Admin and the Super Admin', () => {
+    const order = baseOrder();
+    deliverRentalNotices(order, 'requested', new Date('2026-11-20T06:00:00.000Z'));
+    const rows = readFeed();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].event).toBe('rental_requested');
+    expect(canSee(rows[0], { role: 'Rental Admin' })).toBe(true);
+    expect(canSee(rows[0], { role: 'Super Admin' })).toBe(true);
+    expect(canSee(rows[0], { role: 'Ads Admin' })).toBe(false);
+  });
+
+  it('addresses a status change to the traveler and links their voucher', () => {
+    const accepted = baseOrder({ status: 'accepted' });
+    deliverRentalNotices(accepted, 'accepted', new Date('2026-11-20T06:00:00.000Z'), 'requested');
+    const rows = readFeed().filter((row) => row.event === 'rental_status');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].href).toBe('/account/bookings/RNT-261120-0001');
+    expect(canSee(rows[0], { userId: 'traveler-1' })).toBe(true);
+    expect(canSee(rows[0], { userId: 'traveler-2' })).toBe(false);
+  });
+
+  it('marks a reschedule as its own event', () => {
+    deliverRentalNotices(baseOrder(), 'rescheduled', new Date('2026-11-20T06:00:00.000Z'), '2026-12-01');
+    expect(readFeed().map((row) => row.event)).toEqual(['rental_rescheduled']);
   });
 });
 

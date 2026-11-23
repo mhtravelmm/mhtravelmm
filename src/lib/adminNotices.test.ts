@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { pushAdminNotice, unreadAdminNoticeCount } from './adminNotices';
+import { pushAdminNotice, pushFeedNotice, unreadAdminNoticeCount } from './adminNotices';
+import { canSee, readFeed } from './notificationFeed';
 import { readStaffNotifications } from './rentalNotifications';
 
 function fakeWindow() {
@@ -32,6 +33,15 @@ describe('admin notices (Plan §16B.3)', () => {
   it('counts only unread rows, so the badge clears once they are read', () => {
     pushAdminNotice({ title: 'Guide earning paid', message: '25 USD paid for Bagan' });
     expect(unreadAdminNoticeCount()).toBe(1);
+  });
+
+  it('writes the bell row and the addressed feed row in one call', () => {
+    pushFeedNotice('owner_application', { title: 'New application', message: 'Mandalay · hotel' });
+    expect(readStaffNotifications()).toHaveLength(1);
+    const rows = readFeed();
+    expect(rows).toHaveLength(1);
+    expect(canSee(rows[0], { role: 'Super Admin' })).toBe(true);
+    expect(canSee(rows[0], { role: 'Rental Admin' })).toBe(false);
   });
 
   it('keeps every notice separate even when two land in the same millisecond', () => {

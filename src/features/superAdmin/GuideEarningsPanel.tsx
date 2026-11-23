@@ -12,6 +12,7 @@ import { authorTotals, earningsForAuthor } from '../../lib/guideEarnings';
 import { useGuideEarnings } from '../../lib/guideEarningsStore';
 import { recordAdminAudit } from '../../lib/adminAudit';
 import { pushAdminNotice } from '../../lib/adminNotices';
+import { pushFeedEvent } from '../../lib/notificationFeed';
 
 /**
  * Plan §16B.1: guide earnings belong to Payment Admin (`F`), with Admin on `R`
@@ -68,12 +69,15 @@ export function GuideEarningsPanel() {
       summary: `amount ${amountUsd} USD`,
       source: 'earnings',
     });
-    pushAdminNotice({
-      title: t('sa_notice_earning_amount_title'),
-      message: t('sa_notice_earning_amount_body')
-        .replace('{guide}', guideTitle || rowId)
-        .replace('{amount}', `${amountUsd} USD`),
-    });
+    const title = t('sa_notice_earning_amount_title');
+    const message = t('sa_notice_earning_amount_body')
+      .replace('{guide}', guideTitle || rowId)
+      .replace('{amount}', `${amountUsd} USD`);
+    pushAdminNotice({ title, message });
+    // Plan §16B.3: the author is the recipient, so the row names them rather
+    // than every admin.
+    const author = rows.find((row) => row.id === rowId)?.author ?? '';
+    if (author) pushFeedEvent('guide_earning', { title, message, recipients: [{ kind: 'author', value: author }] });
   }
 
   function commitPaid(rowId: string, guideTitle: string, amountUsd: number | null) {
@@ -87,12 +91,13 @@ export function GuideEarningsPanel() {
       summary: `paid ${amountUsd ?? 0} USD`,
       source: 'earnings',
     });
-    pushAdminNotice({
-      title: t('sa_notice_earning_paid_title'),
-      message: t('sa_notice_earning_paid_body')
-        .replace('{guide}', guideTitle || rowId)
-        .replace('{amount}', `${amountUsd ?? 0} USD`),
-    });
+    const title = t('sa_notice_earning_paid_title');
+    const message = t('sa_notice_earning_paid_body')
+      .replace('{guide}', guideTitle || rowId)
+      .replace('{amount}', `${amountUsd ?? 0} USD`);
+    pushAdminNotice({ title, message });
+    const author = rows.find((row) => row.id === rowId)?.author ?? '';
+    if (author) pushFeedEvent('guide_earning', { title, message, recipients: [{ kind: 'author', value: author }] });
   }
 
   const stateKey = {

@@ -4,14 +4,24 @@ import { Link } from 'react-router-dom';
 import { NOTIFICATIONS, type NotificationItem } from '../../data/notifications';
 import { useLanguage } from '../../lib/i18n';
 import { useNotificationFeed } from '../../lib/notifications';
-import { useRentalNoticeItems } from '../../lib/rentalNotifications';
+import { useRentalNoticeItems, timeAgoLabel } from '../../lib/rentalNotifications';
+import { useFeedItems } from '../../lib/notificationFeed';
+import { useAuth } from '../../lib/auth';
 
 type Filter = 'all' | 'unread' | 'read';
 
 export function NotificationsPage() {
   const { language, t } = useLanguage();
+  const { user } = useAuth();
   const rentalNotices = useRentalNoticeItems(language);
-  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed([...rentalNotices, ...NOTIFICATIONS]);
+  // Plan §16B.3: the shared feed rows this account may see, beside the rental
+  // notices the order flow writes directly.
+  const feedItems = useFeedItems({ userId: user?.id ?? null, name: user?.name }, timeAgoLabel);
+  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed([
+    ...feedItems,
+    ...rentalNotices,
+    ...NOTIFICATIONS,
+  ]);
   const [filter, setFilter] = useState<Filter>('all');
 
   const visible = useMemo(() => notifications.filter((item) => filter === 'all' || (filter === 'unread' ? !item.isRead : item.isRead)), [filter, notifications]);

@@ -112,9 +112,16 @@ the suite instead of reaching a user as "coming soon."
 - `job_runs` is committed with the `pg_cron` entry for the rental expiry job but
   not applied. Until it is, the run log and the failure bell live in browser
   storage through `src/lib/jobs.ts`.
-- Send the rental notifications (Plan §16B.3): requested to Rental Admin;
-  accepted, paid, expired and cancelled to the traveler; rescheduled to Rental
-  Admin. The order timeline records each change; nothing is delivered yet.
+- Deliver the rental notifications (Plan §16B.3) through Supabase Realtime and
+  the `notifications` table. The rows are written now — requested and
+  rescheduled to Rental Admin, accepted, paid, expired and cancelled to the
+  traveler — and `notification_feed` is committed, but delivery is still
+  in-browser: a recipient sees the row when they open the app, not when it
+  happens.
+- Publish the rest of the §16B.3 events from the server: ad creative waiting for
+  approval, campaign ending in three days and campaign ended, subscription
+  ending at 7/3/1 days, and the traveler's rental notices. The table and the
+  recipient rules exist; only the writers that fire them are missing.
 - Add live ticket operator inventory, availability, seat maps, seat locking, payment, and provider/API integration.
 - Replace seeded city/category/business recommendations with city-scoped content tables, real pagination, map distance, open/closed state, availability, and review counts.
 - Add Admin-managed content tables and public API/cache invalidation for blogs, guides, listings, and search indexing.

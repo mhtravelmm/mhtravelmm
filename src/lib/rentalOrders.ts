@@ -20,6 +20,7 @@ import {
   writeStaffNotifications,
   type RentalNotice,
 } from './rentalNotifications';
+import { pushFeedEvent } from './notificationFeed';
 
 /**
  * Plan §8.5: a rental order is a record with a lifecycle, not a one-off form
@@ -420,6 +421,29 @@ export function deliverRentalNotices(order: RentalOrder, kind: RentalNotice['kin
   }
   const travelerNotices = notices.filter((notice) => notice.audience === 'traveler');
   if (travelerNotices.length > 0) appendTravelerNotices(order.userId, travelerNotices);
+  // Plan §16B.3: the same change also lands in the shared feed, addressed to
+  // the Rental Admin for a request or a reschedule and to the traveler's own
+  // account for a status change, so the recipient list comes from the table.
+  for (const notice of notices) {
+    const item = staffNotificationFor(notice, order);
+    if (notice.audience === 'staff') {
+      pushFeedEvent(kind === 'rescheduled' ? 'rental_rescheduled' : 'rental_requested', {
+        title: item.title,
+        message: item.message,
+        recipients: [{ kind: 'role', value: 'Rental Admin' }, { kind: 'role', value: 'Super Admin' }],
+        href: '/super-admin',
+        at,
+      });
+    } else {
+      pushFeedEvent('rental_status', {
+        title: item.title,
+        message: item.message,
+        recipients: [{ kind: 'user', value: order.userId }],
+        link: { code: order.requestCode },
+        at,
+      });
+    }
+  }
   // Requested and extra are not status changes, and each already writes its
   // own audit row where the change is made.
   if (kind !== 'requested' && kind !== 'extra') {

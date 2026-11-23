@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JOBS, alertJobFailures, dueJobs, lastRunsById, nextDailyRun, nextRunAt, readJobRuns, runDueJobs, type JobRun } from './jobs';
 import { readStaffNotifications } from './rentalNotifications';
+import { canSee, readFeed } from './notificationFeed';
 
 function fakeWindow() {
   const map = new Map<string, string>();
@@ -136,6 +137,19 @@ describe('a failed job alerts Super Admin (Plan §16D Phase 0 gate)', () => {
     expect(rows[0].title).toBe('Scheduled job failed');
     expect(rows[0].message).toBe('rental_payment_expiry · expire_failed');
     expect(rows[0].read).toBe(false);
+  });
+
+  it('also writes a feed row that only Super Admin may see', () => {
+    alertJobFailures(
+      [{ id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'failed', detail: 'expire_failed' }],
+      'Scheduled job failed',
+    );
+    const rows = readFeed();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].event).toBe('job_failed');
+    expect(rows[0].href).toBe('/super-admin');
+    expect(canSee(rows[0], { role: 'Super Admin' })).toBe(true);
+    expect(canSee(rows[0], { role: 'Ads Admin' })).toBe(false);
   });
 
   it('raises nothing when every job succeeded', () => {

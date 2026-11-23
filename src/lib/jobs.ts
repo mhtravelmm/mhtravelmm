@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { pushAdminNotice } from './adminNotices';
+import { pushFeedEvent } from './notificationFeed';
 
 /**
  * Plan §16B.7: every job is safe to run twice, logs its result, and notifies
@@ -158,10 +159,14 @@ export function runDueJobs(now: Date, handlers: JobHandlers, runs: JobRun[] = re
   return { runs: produced, failures };
 }
 
-/** Plan §16B.7: a failed job alerts Super Admin, in the bell they already read. */
+/** Plan §16B.7 and §16B.3: a failed job alerts Super Admin, in the bell they
+ * already read and in the shared feed row the table names. */
 export function alertJobFailures(failures: JobRun[], title: string): void {
   for (const failure of failures) {
-    pushAdminNotice({ title, message: `${failure.id} · ${failure.detail}` }, new Date(failure.at));
+    const at = new Date(failure.at);
+    const message = `${failure.id} · ${failure.detail}`;
+    pushAdminNotice({ title, message }, at);
+    pushFeedEvent('job_failed', { title, message, href: '/super-admin', at });
   }
 }
 
