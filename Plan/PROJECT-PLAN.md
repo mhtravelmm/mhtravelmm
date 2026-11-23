@@ -537,6 +537,7 @@ Verified against `src/features/rentals/RentalsPage.tsx`, `src/types/index.ts` an
 | `rental_terms` | `version` (primary key), `body_mm`, `body_en`, `published_at`, `published_by` | Each order stores the version accepted; it is also the cancellation policy on the voucher |
 | `rental_orders` | `id`, `request_code` (unique), `user_id`, `customer_name`, `phone`, `city_id`, `category_id`, `variant_id`, `start_date`, `end_date`, `original_start_date`, `days`, `participants`, `customer_type`, `fulfillment`, `branch_id`, `delivery_address`, `special_requests`, `terms_version`, `rate_usd`, `total_usd`, `display_currency`, `fx_mmk_per_usd`, `status`, `accepted_at`, `payment_deadline`, `payment_method`, `payment_received_at`, `received_by`, `voucher_version`, `rescheduled_count`, `handled_by`, `admin_note`, `created_at`, `updated_at` | Rate, total and deadline are set by the server |
 | `rental_order_events` | `id`, `order_id`, `from_status`, `to_status`, `actor_id`, `note`, `at` | Append-only timeline |
+| `rental_order_extras` | `id`, `order_id`, `description`, `amount_usd`, `added_by`, `at` | Travel guide expenses and other after-rental charges |
 | `my_bookings` (view) | union of `bookings` and `rental_orders` for one user | Account → My Bookings reads this view |
 
 **Access (RLS).** Catalog tables: everyone reads active rows; Rental Admin and Super Admin write. Orders: a traveler reads their own and creates one only through `submit_rental_order`; Rental Admin, Admin and Super Admin read all; Payment Admin reads totals and payment fields; status changes only through `set_rental_order_status`. Roles come from `public.profiles` and are checked on the server; client role helpers only hide menus.
@@ -1178,10 +1179,10 @@ shell and bilingual throughout:
 - The Blogs listing no longer shows the editorial eyebrow, “Latest stories”
   heading, or intro sentence; it opens directly with search/sort controls and
   the post cards.
-- Payment gateway details (KBZPay, AYA Pay and others).
-- R2 folder and naming convention for manually uploaded assets.
-- Travel guide rental expense mechanics.
-- Owner and Admin dashboard screens, after the user-facing pages are done.
+- Payment gateway (KBZPay, AYA Pay and others), decided 2026-11-22: until Phase 3 payments are recorded by staff. Each gateway later plugs in behind one adapter (`createPayment`, `verifyPayment`, `refund`, a webhook with signature check, idempotency keys), so booking statuses never change. Provider contracts and fees come from the founder when Phase 3 starts.
+- R2 folder and naming convention: decided in section 16B.6.
+- Travel guide rental expense mechanics, decided 2026-11-22: after the rental, Rental Admin records the guide's actual accommodation, food and travel costs as extra lines on the order (`rental_order_extras`: description, amount, added by, time). The traveler sees the updated total and is notified; the extras are collected the same way as the rental payment.
+- Owner and Admin dashboard screens: for the MH-owned modules they are specified in sections 8, 10 and 16A; the Owner and listing dashboards follow the user-facing listing pages in Phase 2 (section 16D).
 
 ## 16A. Ads system and Adsboard (2026-11-22)
 
