@@ -4,9 +4,10 @@ import { Search as SearchIcon } from 'lucide-react';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { useLanguage } from '../../lib/i18n';
 import { CATEGORIES } from './categories';
+import { fill } from '../../lib/fill';
 
 export function CategoryPage({ slug }: { slug: string }) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [query, setQuery] = useState('');
   const [showAll, setShowAll] = useState(false);
 
@@ -14,7 +15,7 @@ export function CategoryPage({ slug }: { slug: string }) {
   if (!category) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <p className="text-sm text-text-muted">{language === 'mm' ? 'အမျိုးအစား မတွေ့ပါ။' : 'Category not found.'}</p>
+        <p className="text-sm text-text-muted">{t('category_not_found')}</p>
       </div>
     );
   }
@@ -32,13 +33,13 @@ export function CategoryPage({ slug }: { slug: string }) {
         <div className="relative z-10 flex h-full items-center px-4 sm:px-7 md:px-10">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              {language === 'mm' ? 'အမျိုးအစား' : 'Category'}
+              {t('category_kicker')}
             </p>
             <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl md:text-[40px]">
               {language === 'mm' ? category.mm : category.en}
             </h1>
             <p className="mt-1 text-[11px] text-slate-200 sm:text-xs">
-              {filtered.length} {language === 'mm' ? 'ခု' : 'results'}
+              {fill(t('category_results'), { count: filtered.length })}
             </p>
           </div>
         </div>
@@ -46,12 +47,12 @@ export function CategoryPage({ slug }: { slug: string }) {
 
       <div className="rounded-2xl border border-border bg-bg-card p-3 sm:p-4">
         <label className="relative block">
-          <span className="sr-only">{language === 'mm' ? 'ရှာဖွေရန်' : 'Search'}</span>
+          <span className="sr-only">{t('category_search_label')}</span>
           <SearchIcon size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-faint" />
           <input
             value={query}
             onChange={(event) => { setQuery(event.target.value); setShowAll(false); }}
-            placeholder={language === 'mm' ? 'ရှာဖွေရန်...' : 'Search...'}
+            placeholder={t('category_search_placeholder')}
             className="w-full rounded-md border border-border bg-bg py-2.5 pl-9 pr-3 text-xs text-text-primary outline-none placeholder:text-text-faint focus:border-brand-blue/60"
           />
         </label>
@@ -64,7 +65,7 @@ export function CategoryPage({ slug }: { slug: string }) {
           </div>
         ) : (
           <div className="mt-4 rounded-lg border border-dashed border-border px-4 py-10 text-center text-xs text-text-muted">
-            {language === 'mm' ? 'ကိုက်ညီသော ရလဒ် မတွေ့ပါ။' : 'No matching results found.'}
+            {t('category_no_results')}
           </div>
         )}
 
@@ -75,8 +76,8 @@ export function CategoryPage({ slug }: { slug: string }) {
             className="mt-4 w-full rounded-md border border-brand-blue/30 px-4 py-2.5 text-xs font-semibold text-brand-blue hover:bg-brand-blue/10"
           >
             {showAll
-              ? (language === 'mm' ? 'လျှော့ပြမည်' : 'Show less')
-              : (language === 'mm' ? `နောက်ထပ် ${filtered.length - 12} ခုကြည့်မည်` : `Show ${filtered.length - 12} more`)}
+              ? t('category_show_less')
+              : fill(t('category_show_more'), { count: filtered.length - 12 })}
           </button>
         )}
       </div>
@@ -85,7 +86,7 @@ export function CategoryPage({ slug }: { slug: string }) {
 }
 
 export function CategoryIndexPage() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const total = CATEGORIES.reduce((sum, category) => sum + category.items.length, 0);
 
   return (
@@ -96,10 +97,10 @@ export function CategoryIndexPage() {
         <div className="relative z-10 flex h-full items-center px-4 sm:px-7 md:px-10">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-200">
-              {language === 'mm' ? 'ရှာဖွေပါ' : 'Browse'}
+              {t('category_browse_kicker')}
             </p>
             <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl md:text-[40px]">
-              {language === 'mm' ? 'အမျိုးအစားများ' : 'Categories'}
+              {t('category_index_title')}
             </h1>
           </div>
         </div>
@@ -114,14 +115,14 @@ export function CategoryIndexPage() {
           >
             <p className="text-sm font-semibold text-text-primary">{language === 'mm' ? category.mm : category.en}</p>
             <p className="mt-1 text-[10px] text-text-muted">
-              {category.items.length} {language === 'mm' ? 'ခု' : 'items'}
+              {fill(t('category_item_count'), { count: category.items.length })}
             </p>
           </Link>
         ))}
       </div>
 
       <p className="mt-5 text-center text-[11px] text-text-muted">
-        {language === 'mm' ? `စုစုပေါင်း ${total} ခု` : `${total} items across all categories`}
+        {fill(t('category_total_count'), { count: total })}
       </p>
     </div>
   );

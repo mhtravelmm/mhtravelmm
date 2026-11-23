@@ -200,6 +200,18 @@ export function resolveLocalized(text: LocalizedTextLike, language: Language, ro
   return { value: sourceText, autoTranslated: false, needs: language };
 }
 
+/**
+ * Plan §16B.4: a name, an address and a price are never translated, but they
+ * still must not come out blank. This reads the reader's language and falls
+ * back to the one that was written, with no Worker request and no marker.
+ */
+export function localizedOrFallback(text: LocalizedTextLike | undefined, language: Language): string {
+  if (!text) return '';
+  const own = text[language]?.trim() ?? '';
+  if (own !== '') return text[language];
+  return text[language === 'en' ? 'mm' : 'en'] ?? '';
+}
+
 /** The rows still waiting for a decision, for the Admin badge. */
 export function pendingReviewCount(rows: TranslationRow[]): number {
   return rows.filter((row) => row.status === 'auto').length;

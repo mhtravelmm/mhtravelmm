@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   findTranslation,
   isTranslatable,
+  localizedOrFallback,
   missingLanguage,
   pendingReviewCount,
   readTranslationCache,
@@ -137,6 +138,25 @@ describe('the translation cache (Plan §16B.4)', () => {
     expect(resolveLocalized({ en: 'Hello', mm: 'မင်္ဂလာပါ' }, 'en', [])).toMatchObject({
       value: 'Hello',
       autoTranslated: false,
+    });
+  });
+
+  describe('localizedOrFallback', () => {
+    it('reads the language that was written when the reader language is blank', () => {
+      expect(localizedOrFallback({ en: 'Bagan', mm: '' }, 'mm')).toBe('Bagan');
+      expect(localizedOrFallback({ en: '', mm: 'ပုဂံ' }, 'en')).toBe('ပုဂံ');
+    });
+
+    it('prefers the reader language when it is written', () => {
+      expect(localizedOrFallback({ en: 'Bagan', mm: 'ပုဂံ' }, 'mm')).toBe('ပုဂံ');
+    });
+
+    it('returns an empty string for a missing field instead of throwing', () => {
+      expect(localizedOrFallback(undefined, 'en')).toBe('');
+    });
+
+    it('never marks a fallback as translated, because a name is not translated', () => {
+      expect(localizedOrFallback({ en: 'No. 45, Inya Road', mm: '' }, 'mm')).toBe('No. 45, Inya Road');
     });
   });
 });

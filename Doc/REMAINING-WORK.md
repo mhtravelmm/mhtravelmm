@@ -181,10 +181,12 @@ table with its RLS and functions. What remains:
   reviewed it. `cache_translation`, `record_translation_view`,
   `review_translation` and `translation_review_queue` are committed and unused
   until the client reads the table.
-- **Finish the readers.** Blogs and Travel Guide resolve through
-  `useLocalizedText()`; the city, listing, restaurant, book-shop and rental copy
-  still index `text[language]` directly, so a half-translated record there shows
-  an empty string instead of the source text.
+- **Finish the readers.** Done 26 November 2026. Blogs and Travel Guide resolve
+  through `useLocalizedText()`; the city, category, place, restaurant, book-shop
+  and rental copy now read through `localizedOrFallback()`, which returns the
+  reader's language, else the language the text was written in, and never asks
+  the Worker or shows the marker. No reader indexes `text[language]` directly
+  any more, so a half-translated record shows the source text instead of a blank.
 - **Feed the queue.** Nothing creates an `auto` row except a reader who hit a
   missing language. The content editors should record which field was written in
   one language only, so the queue reflects what actually needs a decision rather
@@ -254,7 +256,7 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `tel:` link from seed data.
 - ~~Complete remaining bilingual localization.~~ **Done.** Every dashboard
   shell and body is localized, including `BlogPostsPanel.tsx` and
-  `TravelGuidesPanel.tsx` inside Super Admin; the dictionary (`src/lib/translations.ts`) holds 1,610 keys, all
+  `TravelGuidesPanel.tsx` inside Super Admin; the dictionary (`src/lib/translations.ts`) holds 2,001 keys, all
   filled in both `mm` and `en`. The remaining translation work is backend
   content, not UI strings.
 - Add component-level behavioral tests. Route, link, manifest, filter, and

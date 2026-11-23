@@ -1,6 +1,6 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 25 November 2026
+**Last updated:** 26 November 2026
 **Verified against:** `main` plus the Rental catalog data module and Rental Admin
 panel, the per-account Favorites, notification, and review wiring, and the
 scheduled publishing seam that now sits between the Blog/Travel Guide editors
@@ -232,6 +232,31 @@ voucher v2. Yangon's selector showed no motorbike or scooter.
   the audit line instead of English text.
 - `fill()` in `src/lib/fill.ts` replaces `{count}`/`{title}`-style
   placeholders, so one key serves every count and title. It is unit-tested.
+
+## Reader fallback for half-written copy (Plan §16B.4, 26 November 2026)
+
+- `localizedOrFallback()` in `src/lib/translationCache.ts` is the read every grid
+  and card uses. It returns the reader's language, else the language the text
+  was actually written in, and returns `''` for a missing field. It never calls
+  the Worker and never shows the auto-translated marker, which is the rule
+  §16B.4 sets for a name, an address and a price: those are not translated, they
+  are shown as written.
+- Wired into the city page (`bestFor`, `stay`, `travel`, the category chips, the
+  search label and placeholder, the result count, the empty state and
+  Show more/less), the category pages, the place detail page, the restaurant page
+  (dish name, description, badge, menu categories, amenities, nearby places and
+  the address/hours/price/cuisine facts) and the book shop page (book categories,
+  services, nearby places and the same facts). The rental admin panel already
+  used it for type and variant labels.
+- A grid resolves per card, so a twelve-card page does not fire twelve Worker
+  requests; the single-item reader (a blog story, a travel guide) still goes
+  through `useLocalizedText()` and keeps the marker. `localizedOrFallback` is
+  unit-tested for the blank-language, written-language and missing-field cases.
+- Restaurant and book-shop filter keys stay English (`category.en`) while the
+  button shows the reader's language, so switching language no longer drops the
+  selected category and the list never empties unexpectedly.
+- The four readers no longer index `text[language]` directly, so a record written
+  in one language renders that language instead of a blank.
 
 ## Authentication and administrative interfaces
 
@@ -721,7 +746,7 @@ visible to a test instead of hidden behind a cast.
 - **The dictionary moved to `src/lib/translations.ts`.** `i18n.tsx` was 1,727
   lines and exported both the dictionary and the provider, which the
   `react-refresh/only-export-components` rule flags. `translations.ts` now holds
-  the 1,610 keys, `TranslationKey` and `translate()`; `i18n.tsx` is 47 lines of
+  the 2,001 keys, `TranslationKey` and `translate()`; `i18n.tsx` is 47 lines of
   provider and re-exports the type, so no import site changed.
 - **Acceptance 1 — exactly one order per submit.** `canSubmit` on `/rentals`
   requires `!submittedCode`, so a second click cannot create a duplicate before

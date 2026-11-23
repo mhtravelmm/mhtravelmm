@@ -23,6 +23,7 @@ import { Link, useParams } from 'react-router-dom';
 import type { TranslationKey } from '../../lib/i18n';
 import { AutoTranslatedMark } from '../../components/ui/AutoTranslatedMark';
 import { useLocalizedText } from '../../lib/useLocalizedText';
+import { localizedOrFallback } from '../../lib/translationCache';
 import { useLanguage } from '../../lib/i18n';
 import { followStep, stepIndex } from '../../lib/guideFollow';
 import { mapSearchUrl } from '../../lib/placeActions';
@@ -137,8 +138,10 @@ function GuideCard({
   t: Translate;
   onToggleFavorite: () => void;
 }) {
-  const title = guide.localizedTitle[language];
-  const summary = guide.summary[language];
+  // A card face reads many guides at once, so it falls back to the language
+  // that was written instead of asking the Worker for each card.
+  const title = localizedOrFallback(guide.localizedTitle, language);
+  const summary = localizedOrFallback(guide.summary, language);
   // Plan §10 §2: a published guide is read at its slug; a seeded one keeps the
   // href in its data, which is its row id.
   const guideHref = guide.href || `/travel-guide/${guide.slug || guide.id}`;
@@ -206,7 +209,7 @@ function GuideDetail({
   t: Translate;
   onToggleFavorite: () => void;
 }) {
-  const title = guide.localizedTitle[language];
+  const title = localizedOrFallback(guide.localizedTitle, language);
   const localizedTitle = useLocalizedText(guide.localizedTitle, language);
   const localizedSummary = useLocalizedText(guide.summary, language);
   const [followIndex, setFollowIndex] = useState<number | null>(null);
@@ -280,7 +283,7 @@ function GuideDetail({
                     <StopTitle stop={activeStop} language={language} className="text-sm font-semibold text-text-primary sm:text-base" />
                   </div>
                   {activeStop.imageUrl && (
-                    <img src={activeStop.imageUrl} alt={activeStop.title[language]} loading="lazy" className="mt-2 h-36 w-full rounded-lg object-cover sm:h-48" />
+                    <img src={activeStop.imageUrl} alt={localizedOrFallback(activeStop.title, language)} loading="lazy" className="mt-2 h-36 w-full rounded-lg object-cover sm:h-48" />
                   )}
                   <StopDescription stop={activeStop} language={language} className="mt-2 text-xs leading-relaxed text-text-secondary sm:text-sm" />
                   <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -342,7 +345,7 @@ function GuideDetail({
                 <div className={`pb-5 ${index === guide.stops.length - 1 ? 'pb-0' : ''}`}>
                   <StopTitle stop={stop} language={language} className="text-sm font-semibold leading-snug text-text-primary sm:text-base" />
                   {stop.imageUrl && (
-                    <img src={stop.imageUrl} alt={stop.title[language]} loading="lazy" className="mt-2 h-32 w-full rounded-lg object-cover sm:h-40" />
+                    <img src={stop.imageUrl} alt={localizedOrFallback(stop.title, language)} loading="lazy" className="mt-2 h-32 w-full rounded-lg object-cover sm:h-40" />
                   )}
                   <StopDescription stop={stop} language={language} className="mt-1 text-xs leading-relaxed text-text-secondary sm:text-sm" />
                   {stop.listingMissing ? (
@@ -372,7 +375,7 @@ function GuideDetail({
             <span className="text-xs font-semibold text-text-muted">{t('guide_duration')}</span>
             <span className="inline-flex items-center gap-1.5 text-sm font-bold text-text-primary">
               <Clock3 size={15} className="text-brand-blue" />
-              {guide.duration[language]}
+              {localizedOrFallback(guide.duration, language)}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3 py-4">
@@ -395,7 +398,7 @@ function GuideDetail({
             <BookOpen size={15} className="mt-0.5 shrink-0 text-brand-blue" />
             <div>
               <p className="text-[10px] text-text-muted">{t('guide_author')}</p>
-              <p className="mt-0.5 text-sm font-semibold text-text-primary">{guide.author[language]}</p>
+              <p className="mt-0.5 text-sm font-semibold text-text-primary">{localizedOrFallback(guide.author, language)}</p>
             </div>
           </div>
           {guide.distanceKm > 0 && <div className="mt-4 flex items-start gap-2">

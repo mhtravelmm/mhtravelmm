@@ -22,7 +22,11 @@ import { formatRating, hasRating } from '../../lib/cardMeta';
 import { useFavorites } from '../../lib/favorites';
 import { mapSearchUrl, telHref } from '../../lib/placeActions';
 import { categoryOptions, filterByCategory } from '../../lib/categoryFilter';
+import { localizedOrFallback } from '../../lib/translationCache';
+import type { Language } from '../../types';
 import { POPULAR_RESTAURANTS } from '../../data/cityPageData';
+
+type Copy = { mm: string; en: string };
 
 const PHOTO_ASSETS = [
   '/images/blog/shwedagon-evening.webp',
@@ -31,29 +35,29 @@ const PHOTO_ASSETS = [
   '/images/blog/ubein-evening.webp',
 ];
 
-const DISHES = [
-  { name: 'Mohinga', category: 'Noodles', description: 'Traditional Burmese rice noodle soup with fish and herbs.', price: 2500, image: PHOTO_ASSETS[1], badge: 'Best seller' },
-  { name: 'Shan Noodle', category: 'Noodles', description: 'Rice noodles with spicy tomato sauce and minced pork.', price: 3000, image: PHOTO_ASSETS[2] },
-  { name: 'Chicken Curry', category: 'Traditional dishes', description: 'Burmese style chicken curry with coconut milk.', price: 4000, image: PHOTO_ASSETS[0] },
-  { name: 'Pork Spare Ribs', category: 'BBQ', description: 'BBQ pork spare ribs with a special house sauce.', price: 6000, image: PHOTO_ASSETS[3] },
-  { name: 'Tea Leaf Salad', category: 'Salads', description: 'Traditional fermented tea leaf salad with nuts.', price: 2500, image: PHOTO_ASSETS[1] },
-  { name: 'Fried Fish', category: 'Seafood', description: 'Crispy fried fish with spicy garlic sauce.', price: 5000, image: PHOTO_ASSETS[2] },
+const DISHES: { name: Copy; category: Copy; description: Copy; price: number; image: string; badge?: Copy }[] = [
+  { name: { mm: 'မုန့်ဟင်းခါး', en: 'Mohinga' }, category: { mm: 'ခေါက်ဆွဲ', en: 'Noodles' }, description: { mm: 'ငါးနှင့် ဆေးဖက်ဝင်အပင်များ ပါဝင်သော ရိုးရာ မုန့်ဟင်းခါး။', en: 'Traditional Burmese rice noodle soup with fish and herbs.' }, price: 2500, image: PHOTO_ASSETS[1], badge: { mm: 'အရောင်းရဆုံး', en: 'Best seller' } },
+  { name: { mm: 'ရှမ်းခေါက်ဆွဲ', en: 'Shan Noodle' }, category: { mm: 'ခေါက်ဆွဲ', en: 'Noodles' }, description: { mm: 'ခရမ်းချဉ်သီးငံပြာရည်နှင့် ဝက်သားမွှဖြင့် ရှမ်းခေါက်ဆွဲ။', en: 'Rice noodles with spicy tomato sauce and minced pork.' }, price: 3000, image: PHOTO_ASSETS[2] },
+  { name: { mm: 'ကြက်သားဟင်း', en: 'Chicken Curry' }, category: { mm: 'ရိုးရာအစားအစာ', en: 'Traditional dishes' }, description: { mm: 'အုန်းနို့ပါဝင်သော မြန်မာ့ပုံစံ ကြက်သားဟင်း။', en: 'Burmese style chicken curry with coconut milk.' }, price: 4000, image: PHOTO_ASSETS[0] },
+  { name: { mm: 'ဝက်နံရိုးကင်', en: 'Pork Spare Ribs' }, category: { mm: 'အသားကင်', en: 'BBQ' }, description: { mm: 'ဆိုင်ရဲ့ အထူးငံပြာရည်နှင့် ဝက်နံရိုးကင်။', en: 'BBQ pork spare ribs with a special house sauce.' }, price: 6000, image: PHOTO_ASSETS[3] },
+  { name: { mm: 'လက်ဖက်သုပ်', en: 'Tea Leaf Salad' }, category: { mm: 'အသုပ်များ', en: 'Salads' }, description: { mm: 'အခွံမာသီးများ ပါဝင်သော ရိုးရာ လက်ဖက်သုပ်။', en: 'Traditional fermented tea leaf salad with nuts.' }, price: 2500, image: PHOTO_ASSETS[1] },
+  { name: { mm: 'ငါးကြော်', en: 'Fried Fish' }, category: { mm: 'ပင်လယ်စာ', en: 'Seafood' }, description: { mm: 'ကြက်သွန်ဖြူ ငံပြာရည်နှင့် ကြွပ်ရွသော ငါးကြော်။', en: 'Crispy fried fish with spicy garlic sauce.' }, price: 5000, image: PHOTO_ASSETS[2] },
 ];
 
-const NEARBY = [
-  { name: 'Shwedagon Pagoda', distance: '2.1 km', image: PHOTO_ASSETS[0] },
-  { name: 'Inya Lake', distance: '1.4 km', image: PHOTO_ASSETS[1] },
-  { name: 'Bogyoke Market', distance: '3.8 km', image: PHOTO_ASSETS[2] },
-  { name: 'Kandawgyi Park', distance: '2.7 km', image: PHOTO_ASSETS[3] },
+const NEARBY: { name: Copy; distance: string; image: string }[] = [
+  { name: { mm: 'ရွှေတိဂုံဘုရား', en: 'Shwedagon Pagoda' }, distance: '2.1 km', image: PHOTO_ASSETS[0] },
+  { name: { mm: 'အင်းလျားကန်', en: 'Inya Lake' }, distance: '1.4 km', image: PHOTO_ASSETS[1] },
+  { name: { mm: 'ဗိုလ်ချုပ်ဈေး', en: 'Bogyoke Market' }, distance: '3.8 km', image: PHOTO_ASSETS[2] },
+  { name: { mm: 'ကန်တော်ကြီးပန်းခြံ', en: 'Kandawgyi Park' }, distance: '2.7 km', image: PHOTO_ASSETS[3] },
 ];
 
 const RESTAURANT_PHONE = '09 777 123 456';
 
-const AMENITIES = [
-  { icon: Utensils, label: 'Garden dining' },
-  { icon: Users, label: 'Family friendly' },
-  { icon: Wifi, label: 'Free Wi-Fi' },
-  { icon: CreditCard, label: 'Card accepted' },
+const AMENITIES: { icon: typeof Utensils; label: Copy }[] = [
+  { icon: Utensils, label: { mm: 'ဥယျာဉ်ထဲ စားသောက်နိုင်သည်', en: 'Garden dining' } },
+  { icon: Users, label: { mm: 'မိသားစုနှင့် သင့်တော်သည်', en: 'Family friendly' } },
+  { icon: Wifi, label: { mm: 'Wi-Fi အခမဲ့', en: 'Free Wi-Fi' } },
+  { icon: CreditCard, label: { mm: 'ကတ်ဖြင့် ပေးချေနိုင်သည်', en: 'Card accepted' } },
 ];
 
 export function RestaurantPage() {
@@ -66,8 +70,14 @@ export function RestaurantPage() {
   const [activeTab, setActiveTab] = useState<'food' | 'drinks' | 'photos' | 'reviews'>('food');
   const [menuCategory, setMenuCategory] = useState('All dishes');
 
-  const menuCategories = categoryOptions(DISHES, 'All dishes');
-  const visibleDishes = filterByCategory(DISHES, menuCategory, 'All dishes');
+  // The English label is the stable filter key; the button shows the reader's
+  // language, so switching language never drops the selected category.
+  const dishRows = DISHES.map((dish) => ({ ...dish, category: dish.category.en }));
+  const menuCategories = categoryOptions(dishRows, 'All dishes');
+  const visibleDishes = filterByCategory(dishRows, menuCategory, 'All dishes');
+  const dishCategoryLabel = (key: string) => key === 'All dishes'
+    ? t('restaurant_all_dishes')
+    : localizedOrFallback(DISHES.find((dish) => dish.category.en === key)?.category, language);
   const directionsUrl = mapSearchUrl(`${restaurant.title}, Yangon`);
   const restaurantTabs: { id: typeof activeTab; Icon: typeof Utensils; label: string }[] = [
     { id: 'food', Icon: Utensils, label: t('restaurant_food_menu') },
@@ -102,7 +112,7 @@ export function RestaurantPage() {
                 )}
                 <span>(230 {t('restaurant_reviews')})</span>
                 <span>·</span>
-                <span>Burmese, Asian</span>
+                <span>{t('restaurant_cuisine_value')}</span>
                 <span>·</span>
                 <span>$$</span>
               </div>
@@ -117,10 +127,10 @@ export function RestaurantPage() {
         </div>
 
         <div className="grid border-t border-border sm:grid-cols-4">
-          <InfoCell icon={MapPin} label={t('restaurant_address')} value="No. 45, Inya Road, Kamayut, Yangon" link={t('restaurant_view_map')} />
-          <InfoCell icon={Clock3} label={t('restaurant_open_hours')} value="10:00 AM – 10:00 PM" accent={t('restaurant_open_everyday')} />
-          <InfoCell icon={CreditCard} label={t('restaurant_price_range')} value="8,000 – 20,000 MMK" accent={t('restaurant_mid_range')} />
-          <InfoCell icon={Utensils} label={t('restaurant_cuisine')} value="Burmese, Asian" accent={t('restaurant_local_restaurant')} />
+          <InfoCell icon={MapPin} label={t('restaurant_address')} value={t('restaurant_address_value')} link={t('restaurant_view_map')} />
+          <InfoCell icon={Clock3} label={t('restaurant_open_hours')} value={t('restaurant_hours_value')} accent={t('restaurant_open_everyday')} />
+          <InfoCell icon={CreditCard} label={t('restaurant_price_range')} value={t('restaurant_price_value')} accent={t('restaurant_mid_range')} />
+          <InfoCell icon={Utensils} label={t('restaurant_cuisine')} value={t('restaurant_cuisine_value')} accent={t('restaurant_local_restaurant')} />
         </div>
       </section>
 
@@ -131,7 +141,7 @@ export function RestaurantPage() {
           <a href={directionsUrl} target="_blank" rel="noreferrer" className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-md bg-brand-blue px-3 py-2 text-xs font-medium text-white"><MapPin size={13} /> {t('restaurant_view_map')}</a>
         </div>
         <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4 lg:grid-cols-2">
-          {AMENITIES.map(({ icon: Icon, label }) => <div key={label} className="flex flex-col items-center justify-center gap-1 bg-bg-card p-3 text-center text-[10px] text-text-secondary"><Icon size={18} className="text-brand-blue" />{label}</div>)}
+          {AMENITIES.map(({ icon: Icon, label }) => <div key={label.en} className="flex flex-col items-center justify-center gap-1 bg-bg-card p-3 text-center text-[10px] text-text-secondary"><Icon size={18} className="text-brand-blue" />{localizedOrFallback(label, language)}</div>)}
         </div>
       </section>
 
@@ -143,12 +153,14 @@ export function RestaurantPage() {
         {activeTab === 'food' && (
           <div className="grid lg:grid-cols-[150px_1fr]">
             <aside className="border-b border-border p-2 lg:border-b-0 lg:border-r">
-              {menuCategories.map((category) => <button key={category} type="button" onClick={() => setMenuCategory(category)} className={`block w-full rounded-md px-3 py-2 text-left text-[10px] ${menuCategory === category ? 'bg-brand-blue text-white' : 'text-text-secondary hover:bg-bg-cardAlt'}`}>{category}</button>)}
+              {menuCategories.map((category) => <button key={category} type="button" onClick={() => setMenuCategory(category)} className={`block w-full rounded-md px-3 py-2 text-left text-[10px] ${menuCategory === category ? 'bg-brand-blue text-white' : 'text-text-secondary hover:bg-bg-cardAlt'}`}>{dishCategoryLabel(category)}</button>)}
             </aside>
             <div className="p-3 sm:p-4">
               <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-medium text-text-primary">{t('restaurant_popular_dishes')}</h2></div>
               <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-                {visibleDishes.map((dish) => <DishCard key={dish.name} dish={dish} formatPrice={formatPrice} />)}
+                {visibleDishes.length > 0
+                  ? visibleDishes.map((dish) => <DishCard key={dish.name.en} dish={dish} language={language} formatPrice={formatPrice} />)
+                  : <p className="rounded-md border border-dashed border-border px-3 py-8 text-center text-[10px] text-text-muted">{t('restaurant_no_dishes')}</p>}
               </div>
             </div>
           </div>
@@ -163,7 +175,7 @@ export function RestaurantPage() {
         <section className="rounded-card border border-border bg-bg-card p-3 sm:p-4"><SectionTitle icon={Camera} title={t('restaurant_venue_photos')} /><PhotoGrid compact /></section>
       </div>
 
-      <section className="mt-5"><SectionTitle icon={MapPin} title={t('restaurant_nearby_attractions')} /><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{NEARBY.map((place) => <div key={place.name} className="overflow-hidden rounded-card border border-border bg-bg-card"><img src={place.image} alt={place.name} className="h-20 w-full object-cover" /><div className="p-2"><p className="truncate text-[10px] text-text-primary">{place.name}</p><p className="mt-1 flex items-center gap-1 text-[9px] text-text-faint"><MapPin size={9} />{place.distance}</p></div></div>)}</div></section>
+      <section className="mt-5"><SectionTitle icon={MapPin} title={t('restaurant_nearby_attractions')} /><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{NEARBY.map((place) => { const name = localizedOrFallback(place.name, language); return <div key={place.name.en} className="overflow-hidden rounded-card border border-border bg-bg-card"><img src={place.image} alt={name} className="h-20 w-full object-cover" /><div className="p-2"><p className="truncate text-[10px] text-text-primary">{name}</p><p className="mt-1 flex items-center gap-1 text-[9px] text-text-faint"><MapPin size={9} />{place.distance}</p></div></div>; })}</div></section>
 
       <section className="mt-5 flex flex-col items-start justify-between gap-3 overflow-hidden rounded-card bg-gradient-to-r from-brand-blueDark to-brand-blue p-4 sm:flex-row sm:items-center"><div><h2 className="text-base font-medium text-white">{t('restaurant_cta_title')}</h2><p className="mt-1 text-xs text-white/75">{t('restaurant_cta_body')}</p></div><Link to="/travel-plans" className="rounded-md bg-white px-4 py-2 text-xs font-medium text-brand-blue">{t('restaurant_explore_button')}</Link></section>
     </div>
@@ -178,8 +190,13 @@ function SectionTitle({ icon: Icon, title }: { icon: typeof Camera; title: strin
   return <div className="mb-3 flex items-center justify-between"><h2 className="inline-flex items-center gap-1.5 text-sm font-medium text-text-primary"><Icon size={15} className="text-brand-blue" />{title}</h2></div>;
 }
 
-function DishCard({ dish, formatPrice }: { dish: (typeof DISHES)[number]; formatPrice: (usd: number) => string }) {
-  return <article className="overflow-hidden rounded-card border border-border bg-bg-cardAlt"><div className="relative"><img src={dish.image} alt={dish.name} className="h-28 w-full object-cover" />{dish.badge && <span className="absolute left-2 top-2 rounded bg-brand-red px-1.5 py-1 text-[9px] text-white">{dish.badge}</span>}</div><div className="p-2"><h3 className="text-xs font-medium text-text-primary">{dish.name}</h3><p className="mt-1 line-clamp-2 text-[10px] leading-4 text-text-muted">{dish.description}</p><p className="mt-2 text-right text-xs font-medium text-brand-blue">{formatPrice(dish.price / 4500)}</p></div></article>;
+type DishRow = Omit<(typeof DISHES)[number], 'category'> & { category: string };
+
+function DishCard({ dish, language, formatPrice }: { dish: DishRow; language: Language; formatPrice: (usd: number) => string }) {
+  // A dish name and its description are editorial copy, so they go through the
+  // reader seam; a card face falls back rather than asking the Worker.
+  const name = localizedOrFallback(dish.name, language);
+  return <article className="overflow-hidden rounded-card border border-border bg-bg-cardAlt"><div className="relative"><img src={dish.image} alt={name} className="h-28 w-full object-cover" />{dish.badge && <span className="absolute left-2 top-2 rounded bg-brand-red px-1.5 py-1 text-[9px] text-white">{localizedOrFallback(dish.badge, language)}</span>}</div><div className="p-2"><h3 className="text-xs font-medium text-text-primary">{name}</h3><p className="mt-1 line-clamp-2 text-[10px] leading-4 text-text-muted">{localizedOrFallback(dish.description, language)}</p><p className="mt-2 text-right text-xs font-medium text-brand-blue">{formatPrice(dish.price / 4500)}</p></div></article>;
 }
 
 function EmptyTab({ icon: Icon, text }: { icon: typeof Wine; text: string }) {

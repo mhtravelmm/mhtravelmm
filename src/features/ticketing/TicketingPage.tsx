@@ -18,6 +18,7 @@ import {
 import { useCurrency } from '../../lib/currency';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useTravelRequests } from '../../lib/travelRequests';
+import { localizedOrFallback } from '../../lib/translationCache';
 import {
   POPULAR_FLIGHT_ROUTES,
   TICKETING_CINEMA_VENUES,
@@ -47,23 +48,25 @@ const PRODUCT_LABELS: Record<TicketType, TranslationKey> = {
 
 type FieldOption = { value: string; label: string };
 
+// A place name is never translated (Plan §16B.4), but it still must not come
+// out blank when only one language was written, so it falls back.
 function placeOptions(language: 'mm' | 'en'): FieldOption[] {
   return TICKETING_PLACES.map((place) => ({
     value: place.id,
-    label: `${place.name[language]}${place.code ? ` (${place.code})` : ''}`,
+    label: `${localizedOrFallback(place.name, language)}${place.code ? ` (${place.code})` : ''}`,
   }));
 }
 
 function eventPlaceOptions(language: 'mm' | 'en'): FieldOption[] {
   return TICKETING_PLACES
     .filter((place) => TICKETING_SERVICES.some((service) => service.type === 'events' && service.city === place.id))
-    .map((place) => ({ value: place.id, label: place.name[language] }));
+    .map((place) => ({ value: place.id, label: localizedOrFallback(place.name, language) }));
 }
 
 function venuePlaceOptions(language: 'mm' | 'en'): FieldOption[] {
   return TICKETING_PLACES
     .filter((place) => TICKETING_CINEMA_VENUES.some((venue) => venue.city === place.id))
-    .map((place) => ({ value: place.id, label: place.name[language] }));
+    .map((place) => ({ value: place.id, label: localizedOrFallback(place.name, language) }));
 }
 
 function getPlace(id: string): TicketPlace {
@@ -189,7 +192,7 @@ export function TicketingPage() {
     const trip = `${getPlace(fromCity).name.en} → ${getPlace(toCity).name.en}`;
     const request = addRequest({
       kind: 'ticket',
-      title: `${selectedService.operator[language]} · ${selectedService.route[language]}`,
+      title: `${localizedOrFallback(selectedService.operator, language)} · ${localizedOrFallback(selectedService.route, language)}`,
       detail: `${type} · ${trip} · ${date}${selectedService.type === 'flight' ? ` → ${returnDate}` : ''} · ${orderQuantityLabel} × ${formatPrice(selectedService.price)}`,
       amountUsd: selectedService.price * orderQuantity,
     });
@@ -209,8 +212,8 @@ export function TicketingPage() {
           <div className="mt-5 rounded-xl bg-bg-cardAlt px-3 py-2 text-left"><p className="text-[9px] text-text-faint">{t('ticketing_order_number')}</p><p className="mt-1 font-mono text-sm text-brand-blue">{orderNumber}</p></div>
           <div className="mt-4 grid gap-2 text-left sm:grid-cols-2">
             <ConfirmationItem label={t('ticketing_product')} value={t(PRODUCT_LABELS[selectedService.type])} />
-            <ConfirmationItem label={t('ticketing_provider')} value={selectedService.operator[language]} />
-            <ConfirmationItem label={t('ticketing_trip')} value={selectedService.route[language]} />
+            <ConfirmationItem label={t('ticketing_provider')} value={localizedOrFallback(selectedService.operator, language)} />
+            <ConfirmationItem label={t('ticketing_trip')} value={localizedOrFallback(selectedService.route, language)} />
             <ConfirmationItem label={t('ticketing_date')} value={type === 'flight' ? `${formatDate(date, language)} – ${formatDate(returnDate, language)}` : `${formatDate(date, language)} · ${departureTime}`} />
             <ConfirmationItem label={t(selectedService.type === 'events' || selectedService.type === 'cinema' ? 'ticketing_ticket_quantity' : 'ticketing_passengers')} value={orderQuantityLabel} />
             {(selectedService.type === 'bus' || selectedService.type === 'cinema') && <ConfirmationItem label={t('ticketing_selected_seats')} value={selectedSeats.join(', ')} />}
@@ -284,13 +287,13 @@ export function TicketingPage() {
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-[1fr_1.2fr_1fr_auto]">
               <SelectField label={t('ticketing_city')} value={venueCity} onChange={changeVenueCity} options={venuePlaceOptions(language)} icon={<MapPin size={13} />} />
-              <SelectField label={t('ticketing_cinema_name')} value={venue?.id ?? ''} onChange={(value) => { setVenueId(value); setSearched(false); setSelectedServiceId(null); }} options={venues.map((item) => ({ value: item.id, label: item.name[language] }))} />
+              <SelectField label={t('ticketing_cinema_name')} value={venue?.id ?? ''} onChange={(value) => { setVenueId(value); setSearched(false); setSelectedServiceId(null); }} options={venues.map((item) => ({ value: item.id, label: localizedOrFallback(item.name, language) }))} />
               <DateField date={date} setDate={(value) => { setDate(value); setSearched(false); }} label={t('ticketing_date')} />
               <SearchButton onClick={() => { setSearched(true); setSelectedServiceId(null); }} label={t('ticketing_search_cinema')} />
             </div>
           )}
           {searched && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-cyan-400/25 bg-cyan-400/5 px-3 py-2 text-[9px] text-text-secondary sm:text-[10px]">
-            <span>{type === 'flight' || type === 'bus' || type === 'train' ? `${getPlace(fromCity).name[language]}${getPlace(fromCity).code ? ` (${getPlace(fromCity).code})` : ''} → ${getPlace(toCity).name[language]}${getPlace(toCity).code ? ` (${getPlace(toCity).code})` : ''} · ${formatDate(date, language)}` : type === 'events' ? `${getPlace(eventCity).name[language]} · ${formatDate(date, language)} · ${passengers} ${t('ticketing_ticket_quantity')}` : `${venue?.name[language]} · ${formatDate(date, language)}`}</span>
+            <span>{type === 'flight' || type === 'bus' || type === 'train' ? `${localizedOrFallback(getPlace(fromCity).name, language)}${getPlace(fromCity).code ? ` (${getPlace(fromCity).code})` : ''} → ${localizedOrFallback(getPlace(toCity).name, language)}${getPlace(toCity).code ? ` (${getPlace(toCity).code})` : ''} · ${formatDate(date, language)}` : type === 'events' ? `${localizedOrFallback(getPlace(eventCity).name, language)} · ${formatDate(date, language)} · ${passengers} ${t('ticketing_ticket_quantity')}` : `${venue ? localizedOrFallback(venue.name, language) : ''} · ${formatDate(date, language)}`}</span>
             <button type="button" onClick={() => setSearched(false)} className="font-semibold text-cyan-400 hover:text-cyan-200">{t('ticketing_edit')}</button>
           </div>}
         </div>
@@ -319,7 +322,7 @@ export function TicketingPage() {
           </div>
           {selectedService && (
             <aside className="h-fit rounded-2xl border border-cyan-400/20 bg-bg-card p-3.5 shadow-sm sm:p-4">
-              <div className="flex items-start justify-between gap-3"><div><p className="text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-400">{t('ticketing_booking_title')}</p><h3 className="mt-1 text-sm font-bold text-text-primary">{selectedService.operator[language]}</h3><p className="mt-1 text-[10px] text-text-muted">{selectedService.route[language]}</p></div><button type="button" onClick={() => { setSelectedServiceId(null); setSelectedSeats([]); }} aria-label={t('ticketing_close_booking')} className="rounded-full bg-bg-cardAlt p-1.5 text-text-muted hover:text-text-primary"><ChevronRight size={14} /></button></div>
+              <div className="flex items-start justify-between gap-3"><div><p className="text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-400">{t('ticketing_booking_title')}</p><h3 className="mt-1 text-sm font-bold text-text-primary">{localizedOrFallback(selectedService.operator, language)}</h3><p className="mt-1 text-[10px] text-text-muted">{localizedOrFallback(selectedService.route, language)}</p></div><button type="button" onClick={() => { setSelectedServiceId(null); setSelectedSeats([]); }} aria-label={t('ticketing_close_booking')} className="rounded-full bg-bg-cardAlt p-1.5 text-text-muted hover:text-text-primary"><ChevronRight size={14} /></button></div>
               <div className="mt-3 flex items-center justify-between border-y border-border py-2 text-[10px]"><span className="text-text-muted">{t('ticketing_price')}</span><strong className="text-sm text-brand-red">{formatPrice(selectedService.price)}{t('ticketing_per_ticket')}</strong></div>
               {selectedService.type === 'bus' && <>
                 <div className="mt-3 grid grid-cols-2 gap-2"><NumberField label={t('ticketing_passengers')} value={passengers} onChange={(value) => { setPassengers(value); setSelectedSeats([]); }} max={8} /><SelectField label={t('ticketing_nationality')} value={customerType} onChange={(value) => setCustomerType(value as 'citizen' | 'foreigner')} options={[{ value: 'citizen', label: t('ticketing_citizen') }, { value: 'foreigner', label: t('ticketing_foreigner') }]} /></div>
@@ -358,7 +361,7 @@ function PopularRouteCard({ route, language, formatPrice, onClick }: { route: Po
         <span className="relative z-10 text-sm font-extrabold tracking-wide text-white">{to.code}</span>
       </div>
       <div className="p-2.5">
-        <p className="truncate text-[10px] font-bold text-text-primary">{from.name[language]} <span className="text-cyan-400">→</span> {to.name[language]}</p>
+        <p className="truncate text-[10px] font-bold text-text-primary">{localizedOrFallback(from.name, language)} <span className="text-cyan-400">→</span> {localizedOrFallback(to.name, language)}</p>
         <div className="mt-1.5 flex items-center justify-between gap-1"><span className="text-[8px] uppercase tracking-wide text-text-faint">{language === 'mm' ? 'စတင်ဈေး' : 'From'}</span><strong className="text-[10px] text-brand-red">{formatPrice(route.price)}</strong><ArrowRight size={12} className="text-cyan-400 transition group-hover:translate-x-0.5" /></div>
       </div>
     </button>
@@ -370,8 +373,8 @@ function DealRow({ service, language, formatPrice, label, remainingLabel, select
     <article className={`grid grid-cols-[38px_minmax(0,1fr)] items-center gap-2.5 rounded-xl border bg-bg-card p-2.5 transition sm:grid-cols-[44px_minmax(0,1fr)_auto] sm:gap-3 ${selected ? 'border-cyan-400/60 ring-1 ring-cyan-400/20' : 'border-border hover:border-cyan-400/25'}`}>
       <div className={`flex h-9 w-9 items-center justify-center rounded-lg text-[9px] font-extrabold tracking-tight sm:h-10 sm:w-10 ${service.brandClass}`}>{service.mark}</div>
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5"><h3 className="truncate text-[10px] font-bold text-text-primary sm:text-xs">{service.operator[language]}</h3><span className="rounded-full bg-bg-cardAlt px-1.5 py-0.5 text-[8px] text-text-muted">{label}</span><span className="inline-flex items-center gap-1 text-[8px] text-status-success"><CheckCircle2 size={9} />{service.badge[language]}</span></div>
-        <p className="mt-1 truncate text-[9px] text-text-secondary sm:text-[10px]">{service.route[language]}</p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5"><h3 className="truncate text-[10px] font-bold text-text-primary sm:text-xs">{localizedOrFallback(service.operator, language)}</h3><span className="rounded-full bg-bg-cardAlt px-1.5 py-0.5 text-[8px] text-text-muted">{label}</span><span className="inline-flex items-center gap-1 text-[8px] text-status-success"><CheckCircle2 size={9} />{localizedOrFallback(service.badge, language)}</span></div>
+        <p className="mt-1 truncate text-[9px] text-text-secondary sm:text-[10px]">{localizedOrFallback(service.route, language)}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[8px] text-text-faint sm:text-[9px]">
           <span className="inline-flex items-center gap-1 font-semibold text-text-primary"><Clock3 size={9} />{service.depart}</span><ArrowRight size={9} /><span>{service.arrive}</span><span className="hidden text-border sm:inline">·</span><span>{service.duration}</span><span className="hidden text-border sm:inline">·</span><span>{service.seats} {remainingLabel}</span>
         </div>

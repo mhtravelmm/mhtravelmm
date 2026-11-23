@@ -9,7 +9,7 @@ import { findPlace, findPlaceKind } from './placeCatalog';
 
 export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
   const { id } = useParams<{ id: string }>();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { formatPrice } = useCurrency();
   const { isFavorite, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
@@ -21,14 +21,14 @@ export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
         <p className="text-sm text-text-muted">
-          {language === 'mm' ? 'ဤနေရာကို မတွေ့ပါ။' : 'This place could not be found.'}
+          {t('place_not_found')}
         </p>
         <button
           type="button"
           onClick={() => navigate(-1)}
           className="mt-4 inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-xs font-semibold text-white"
         >
-          <ArrowLeft size={14} /> {language === 'mm' ? 'နောက်သို့' : 'Go back'}
+          <ArrowLeft size={14} /> {t('place_go_back')}
         </button>
       </div>
     );
@@ -80,7 +80,7 @@ export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_280px]">
         <div className="rounded-xl border border-border bg-bg-card p-4">
           <h2 className="text-sm font-semibold text-text-primary">
-            {language === 'mm' ? 'အကြောင်း' : 'About'}
+            {t('place_about')}
           </h2>
           <p className="mt-2 text-xs leading-6 text-text-secondary">
             {language === 'mm' ? kind.mmIntro : kind.enIntro}
@@ -94,7 +94,7 @@ export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
               {formatPrice(listing.priceUsd)}
               {kind.slug === 'rentals' && (
                 <span className="ml-1 text-[10px] font-normal text-text-muted">
-                  {language === 'mm' ? '/ ရက်' : '/ day'}
+                  {t('place_per_day')}
                 </span>
               )}
             </p>
@@ -107,14 +107,14 @@ export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
             }`}
           >
             <Heart size={14} fill={saved ? 'currentColor' : 'none'} />
-            {saved ? (language === 'mm' ? 'သိမ်းထားပြီး' : 'Saved') : (language === 'mm' ? 'သိမ်းမည်' : 'Save')}
+            {saved ? t('place_saved') : t('place_save')}
           </button>
           <button
             type="button"
             onClick={() => navigate('/travel-plans')}
             className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-brand-blue px-3 py-2 text-xs font-semibold text-white hover:bg-brand-blueDark"
           >
-            {language === 'mm' ? 'ခရီးစဉ် စီစဉ်မည်' : 'Plan a trip'}
+            {t('place_plan_trip')}
           </button>
         </aside>
       </div>
@@ -122,7 +122,7 @@ export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
       {related.length > 0 && (
         <section className="mt-7">
           <h2 className="mb-3 text-base font-medium text-text-primary">
-            {language === 'mm' ? 'ဆက်စပ်သော နေရာများ' : 'Related places'}
+            {t('place_related')}
           </h2>
           <div className="grid max-w-[1240px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {related.map((item) => (

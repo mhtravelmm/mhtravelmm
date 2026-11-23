@@ -33,6 +33,7 @@ import { useFavorites } from '../../lib/favorites';
 import { AutoTranslatedMark } from '../../components/ui/AutoTranslatedMark';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useLocalizedText } from '../../lib/useLocalizedText';
+import { localizedOrFallback } from '../../lib/translationCache';
 import { usePagedList } from '../../lib/usePagedList';
 import type { Language } from '../../types';
 
@@ -55,8 +56,14 @@ const CATEGORY_FILTERS: { id: CategoryFilter; labelKey: TranslationKey; icon: Lu
   { id: 'others', labelKey: 'blog_category_others', icon: MoreHorizontal, tone: 'text-slate-300', activeTone: 'bg-slate-500' },
 ];
 
+/**
+ * Plan §16B.4: a grid shows many cards at once, so a card reads the text in
+ * the reader's language and falls back to the one that was written rather than
+ * asking the Worker for every card. The reader — one story on screen — is where
+ * a translation is fetched and marked.
+ */
 function getLocalizedCopy(post: BlogPost, language: Language) {
-  return { title: post.title[language], excerpt: post.excerpt[language] };
+  return { title: localizedOrFallback(post.title, language), excerpt: localizedOrFallback(post.excerpt, language) };
 }
 
 function readStoredValue<T>(key: string, fallback: T): T {
@@ -193,7 +200,7 @@ function StoryCard({
         </button>
         <span className="absolute bottom-1.5 left-1.5 flex items-center gap-1 text-[8px] text-white sm:bottom-2 sm:left-2 sm:text-[9px]">
           <MapPin size={8} />
-          {post.location[language]}
+          {localizedOrFallback(post.location, language)}
         </span>
       </div>
 
@@ -253,7 +260,7 @@ function StoryBlock({ block, index, post, language }: { block: BlogBlock; index:
       <figure key={`${post.id}-image-${index}`} className="overflow-hidden rounded-xl border border-border bg-bg-cardAlt">
         <img src={block.imageUrl} alt={text.value} loading="lazy" className="max-h-[480px] w-full object-cover" />
         {block.caption && (
-          <figcaption className="px-4 py-3 text-xs leading-5 text-text-faint">{block.caption[language]}</figcaption>
+          <figcaption className="px-4 py-3 text-xs leading-5 text-text-faint">{localizedOrFallback(block.caption, language)}</figcaption>
         )}
       </figure>
     );
@@ -331,7 +338,7 @@ function StoryReader({
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/10" />
           <div className="absolute bottom-4 left-2 right-2 sm:bottom-6 sm:left-4 sm:right-4">
             <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[11px] text-white backdrop-blur">
-              <MapPin size={12} /> {post.location[language]}
+              <MapPin size={12} /> {localizedOrFallback(post.location, language)}
             </span>
             <h2 id="blog-reader-title" className="w-full max-w-none font-serif text-2xl leading-tight text-white sm:text-3xl md:text-4xl">
               {title.value}
@@ -344,7 +351,7 @@ function StoryReader({
           <div className="w-full max-w-none">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
               <div>
-                <p className="text-sm font-medium text-text-primary">{post.author[language]}</p>
+                <p className="text-sm font-medium text-text-primary">{localizedOrFallback(post.author, language)}</p>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-faint">
                   <time dateTime={post.publishedAt}>{formatDate(post.publishedAt, language)}</time>
                   <span>{getReadTime(post.readMinutes, language, t)}</span>
@@ -525,7 +532,7 @@ export function BlogsPage() {
         if (activeCategory !== 'all' && post.category !== activeCategory) return false;
         if (!normalizedQuery) return true;
         const content = getLocalizedCopy(post, language);
-        return [content.title, content.excerpt, post.location[language]]
+        return [content.title, content.excerpt, localizedOrFallback(post.location, language)]
           .some((value) => value.toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US').includes(normalizedQuery));
       })
       .sort((a, b) => sortMode === 'popular'
@@ -717,8 +724,8 @@ export function BlogsPage() {
           <section className="mt-10 border-t border-border pt-6" aria-labelledby="related-stories-title">
             <h2 id="related-stories-title" className="mb-3 text-base font-medium text-text-primary">{t('blog_related_stories')}</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {allPosts.filter((post) => post.id !== selectedPost.id && post.location[language] === selectedPost.location[language]).concat(
-                allPosts.filter((post) => post.id !== selectedPost.id && post.location[language] !== selectedPost.location[language]),
+              {allPosts.filter((post) => post.id !== selectedPost.id && localizedOrFallback(post.location, language) === localizedOrFallback(selectedPost.location, language)).concat(
+                allPosts.filter((post) => post.id !== selectedPost.id && localizedOrFallback(post.location, language) !== localizedOrFallback(selectedPost.location, language)),
               ).slice(0, 3).map((post) => (
                 <StoryCard
                   key={post.id}

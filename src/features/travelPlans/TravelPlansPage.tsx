@@ -8,6 +8,7 @@ import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useLanguage } from '../../lib/i18n';
 import { formatRating, hasRating } from '../../lib/cardMeta';
 import { useTravelRequests } from '../../lib/travelRequests';
+import { localizedOrFallback } from '../../lib/translationCache';
 import type { CardListing } from '../../types';
 
 type DurationFilter = 'all' | 'short' | 'long';
@@ -122,7 +123,7 @@ export function TravelPlansPage() {
       .filter((plan) => {
         if (!needle) return true;
         const title = localizedPlanTitle(plan.title, language).toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
-        const subtitle = plan.durationLabel[language].toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
+        const subtitle = localizedOrFallback(plan.durationLabel, language).toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
         return title.includes(needle) || subtitle.includes(needle);
       })
       .sort((a, b) => {
@@ -133,7 +134,7 @@ export function TravelPlansPage() {
       .map((plan) => ({
         ...plan,
         title: localizedPlanTitle(plan.title, language),
-        subtitle: plan.durationLabel[language],
+        subtitle: localizedOrFallback(plan.durationLabel, language),
       }));
   }, [duration, language, listings, query, sortMode]);
 
@@ -422,11 +423,11 @@ export function TravelPlanDetailPage() {
     <section className="relative overflow-hidden rounded-2xl border border-border bg-bg-card">
       <img src={image} alt={plan.title} className="h-56 w-full object-cover sm:h-72" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#06162c] via-[#06162c]/55 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{language === 'mm' ? 'MH Travel ခရီးစဉ်' : 'MH Travel itinerary'}</p><h1 className="mt-1 text-2xl font-extrabold text-white sm:text-4xl">{localizedPlanTitle(plan.title, language)}</h1><p className="mt-2 text-sm text-slate-200">{plan.durationLabel[language]}{hasRating(plan) && <> · ★ {formatRating(plan.rating, language)}</>} · {plan.views.toLocaleString()} views</p></div>
+      <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{language === 'mm' ? 'MH Travel ခရီးစဉ်' : 'MH Travel itinerary'}</p><h1 className="mt-1 text-2xl font-extrabold text-white sm:text-4xl">{localizedPlanTitle(plan.title, language)}</h1><p className="mt-2 text-sm text-slate-200">{localizedOrFallback(plan.durationLabel, language)}{hasRating(plan) && <> · ★ {formatRating(plan.rating, language)}</>} · {plan.views.toLocaleString()} views</p></div>
     </section>
 
     <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-      <section className="rounded-card border border-border bg-bg-card p-4 sm:p-5"><div className="mb-5 flex flex-wrap gap-3"><Info icon={CalendarDays} label={language === 'mm' ? 'ကြာချိန်' : 'Duration'} value={plan.durationLabel[language]} /><Info icon={Clock3} label={language === 'mm' ? 'အချိန်ဇယား' : 'Schedule'} value={language === 'mm' ? 'နေ့စဉ်ထွက်ခွာ' : 'Daily departures'} /><Info icon={Users} label={language === 'mm' ? 'ခရီးသွားများ' : 'Travelers'} value={language === 'mm' ? 'စိတ်ကြိုက်ရွေးချယ်' : 'Flexible group size'} /></div><h2 className="text-lg font-bold text-text-primary">{language === 'mm' ? 'ခရီးစဉ်အစီအစဉ်' : 'Trip itinerary'}</h2><div className="mt-4 space-y-3">{Array.from({ length: plan.durationDays }, (_, index) => { const destination = localizedDestinations[Math.min(index, localizedDestinations.length - 1)]; return <div key={index} className="flex gap-3 rounded-lg border border-border bg-bg p-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-xs font-bold text-brand-blue">{index + 1}</span><div><p className="text-xs font-bold text-text-primary">{language === 'mm' ? `နေ့ ${index + 1} · ${destination}` : `Day ${index + 1} · ${destination}`}</p><p className="mt-1 text-[11px] leading-5 text-text-muted">{language === 'mm' ? `${destination} တွင် အဓိကနေရာများကို လည်ပတ်ပြီး MH Travel အဖွဲ့၏ ခရီးစဉ်အကူအညီ ရယူနိုင်ပါသည်။` : `Explore the highlights around ${destination} with local recommendations and MH Travel support.`}</p></div></div>; })}</div></section>
+      <section className="rounded-card border border-border bg-bg-card p-4 sm:p-5"><div className="mb-5 flex flex-wrap gap-3"><Info icon={CalendarDays} label={language === 'mm' ? 'ကြာချိန်' : 'Duration'} value={localizedOrFallback(plan.durationLabel, language)} /><Info icon={Clock3} label={language === 'mm' ? 'အချိန်ဇယား' : 'Schedule'} value={language === 'mm' ? 'နေ့စဉ်ထွက်ခွာ' : 'Daily departures'} /><Info icon={Users} label={language === 'mm' ? 'ခရီးသွားများ' : 'Travelers'} value={language === 'mm' ? 'စိတ်ကြိုက်ရွေးချယ်' : 'Flexible group size'} /></div><h2 className="text-lg font-bold text-text-primary">{language === 'mm' ? 'ခရီးစဉ်အစီအစဉ်' : 'Trip itinerary'}</h2><div className="mt-4 space-y-3">{Array.from({ length: plan.durationDays }, (_, index) => { const destination = localizedDestinations[Math.min(index, localizedDestinations.length - 1)]; return <div key={index} className="flex gap-3 rounded-lg border border-border bg-bg p-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-xs font-bold text-brand-blue">{index + 1}</span><div><p className="text-xs font-bold text-text-primary">{language === 'mm' ? `နေ့ ${index + 1} · ${destination}` : `Day ${index + 1} · ${destination}`}</p><p className="mt-1 text-[11px] leading-5 text-text-muted">{language === 'mm' ? `${destination} တွင် အဓိကနေရာများကို လည်ပတ်ပြီး MH Travel အဖွဲ့၏ ခရီးစဉ်အကူအညီ ရယူနိုင်ပါသည်။` : `Explore the highlights around ${destination} with local recommendations and MH Travel support.`}</p></div></div>; })}</div></section>
       <div className="lg:col-span-2"><AdSlot placement="travel_plan_detail_inline" /></div>
       <aside className="h-fit rounded-card border border-brand-blue/25 bg-bg-card p-4 sm:p-5"><p className="text-xs text-text-muted">{language === 'mm' ? 'ခန့်မှန်းစျေးနှုန်း' : 'Estimated starting price'}</p><p className="mt-1 text-3xl font-extrabold text-brand-red">${plan.priceUsd?.toLocaleString()} <span className="text-xs font-medium text-text-muted">/ {language === 'mm' ? 'လူတစ်ဦး' : 'person'}</span></p><p className="mt-2 text-xs leading-5 text-text-muted">{language === 'mm' ? 'တည်းခိုခန်း၊ သယ်ယူပို့ဆောင်ရေးနှင့် ခရီးသွားအရေအတွက်အလိုက် MH Travel မှ အတည်ပြု quotation ပြန်ပေးပါမည်။' : 'Final pricing is confirmed by MH Travel based on accommodation, transport, and traveler details.'}</p><button type="button" onClick={() => navigate('/travel-plans#custom-plan')} className="mt-5 w-full rounded-md bg-brand-red px-4 py-3 text-xs font-semibold text-white hover:brightness-110">{language === 'mm' ? 'ဒီခရီးစဉ်ကို တောင်းဆိုမည်' : 'Request this plan'}</button><button type="button" onClick={() => navigate('/travel-plans')} className="mt-2 w-full rounded-md border border-border px-4 py-3 text-xs font-semibold text-text-secondary hover:border-brand-blue/60">{language === 'mm' ? 'အစီအစဉ်များအားလုံးကြည့်မည်' : 'Browse all plans'}</button></aside>
     </div>

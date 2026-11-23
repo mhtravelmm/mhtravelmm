@@ -364,7 +364,7 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
               <div key={type.id}>
                 <button type="button" onClick={() => setOpenTypeId(open ? null : type.id)} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-white/5">
                   <Icon size={16} className="shrink-0 text-cyan-300" />
-                  <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-100">{type.label[language] || type.id}</span>
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-100">{localized(type.label, language) || type.id}</span>
                   <span className="shrink-0 rounded-full bg-[#102c51] px-2 py-0.5 text-[9px] text-slate-300">{type.rateUsd} USD / {type.foreignRateUsd} USD</span>
                   <span className="shrink-0 rounded-full bg-[#102c51] px-2 py-0.5 text-[9px] text-slate-300">{t('ra_min_days_short')} {type.minDays}</span>
                   {type.driverRequired && <span className="shrink-0 rounded-full bg-amber-400/20 px-2 py-0.5 text-[9px] font-bold text-amber-200">{t('ra_driver_short')}</span>}
@@ -444,14 +444,14 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
             <thead className="text-slate-300">
               <tr>
                 <th className="sticky left-0 bg-[#0b203b] px-2 py-1.5">{t('ra_col_city')}</th>
-                {draft.types.filter((type) => type.active).map((type) => <th key={type.id} className="px-1 py-1.5 text-center font-semibold">{type.label[language] || type.id}</th>)}
+                {draft.types.filter((type) => type.active).map((type) => <th key={type.id} className="px-1 py-1.5 text-center font-semibold">{localized(type.label, language) || type.id}</th>)}
               </tr>
             </thead>
             <tbody>
               {draft.cities.map((city) => (
                 <tr key={city.id} className="border-t border-[#1d3a5c]">
                   <th scope="row" className="sticky left-0 bg-[#0b203b] px-2 py-1.5 text-left text-[11px] font-semibold text-slate-100">
-                    {city.name[language]}
+                    {localized(city.name, language)}
                     <span className="ml-1 text-[9px] font-normal text-slate-500">{city.branches.length} {t('ra_branches_short')}</span>
                   </th>
                   {draft.types.filter((type) => type.active).map((type) => (
@@ -504,19 +504,19 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
                     <tr key={rate.id} className="border-t border-[#1d3a5c]">
                       <td className="px-1 py-1.5">
                         <select value={rate.categoryId} onChange={(event) => patchRate(rate.id, { categoryId: event.target.value, variantId: null })} className="w-full rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none">
-                          {draft.types.map((item) => <option key={item.id} value={item.id}>{item.label[language] || item.id}</option>)}
+                          {draft.types.map((item) => <option key={item.id} value={item.id}>{localized(item.label, language) || item.id}</option>)}
                         </select>
                       </td>
                       <td className="px-1 py-1.5">
                         <select value={rate.variantId ?? ''} onChange={(event) => patchRate(rate.id, { variantId: event.target.value || null })} className="w-full rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none">
                           <option value="">{t('ra_col_no_variant')}</option>
-                          {(type?.variants ?? []).map((variant) => <option key={variant.id} value={variant.id}>{variant.label[language] || variant.id}</option>)}
+                          {(type?.variants ?? []).map((variant) => <option key={variant.id} value={variant.id}>{localized(variant.label, language) || variant.id}</option>)}
                         </select>
                       </td>
                       <td className="px-1 py-1.5">
                         <select value={rate.cityId ?? ''} onChange={(event) => patchRate(rate.id, { cityId: event.target.value || null })} className="w-full rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none">
                           <option value="">{t('ra_col_all_cities')}</option>
-                          {draft.cities.map((city) => <option key={city.id} value={city.id}>{city.name[language] || city.id}</option>)}
+                          {draft.cities.map((city) => <option key={city.id} value={city.id}>{localized(city.name, language) || city.id}</option>)}
                         </select>
                       </td>
                       <td className="px-1 py-1.5"><input type="number" min="1" step="0.01" value={rate.rateLocalUsd} onChange={(event) => patchRate(rate.id, { rateLocalUsd: Number(event.target.value) })} className="w-20 rounded border border-[#2b527d] bg-[#081a31] px-1.5 py-1 text-[10px] text-white outline-none" /></td>
@@ -557,7 +557,7 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
           {draft.cities.map((city) => (
             <div key={city.id} className="rounded border border-[#244668] bg-[#091b32] p-2">
               <div className="mb-1.5 flex items-center justify-between">
-                <p className="text-[11px] font-bold text-slate-100">{city.name[language] || city.id}</p>
+                <p className="text-[11px] font-bold text-slate-100">{localized(city.name, language) || city.id}</p>
                 <button type="button" onClick={() => addBranch(city.id)} className="text-[10px] font-bold text-cyan-300 hover:text-white">+ {t('ra_branch_add')}</button>
               </div>
               <div className="space-y-1.5">
@@ -596,7 +596,7 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
               <li key={entry.version} className="flex flex-wrap items-center gap-2 rounded border border-[#244668] bg-[#091b32] px-2 py-1 text-[10px]">
                 <span className="font-mono text-cyan-200">{entry.version}</span>
                 {entry.version === draft.termsVersion && <span className="rounded-full bg-emerald-400/20 px-1.5 py-0.5 text-[9px] font-bold text-emerald-100">{t('ra_terms_current')}</span>}
-                <span className="min-w-0 flex-1 truncate text-slate-400">{entry.body[language]}</span>
+                <span className="min-w-0 flex-1 truncate text-slate-400">{localized(entry.body, language)}</span>
                 <span className="text-[9px] text-slate-500">{new Date(entry.publishedAt).toLocaleDateString(language === 'mm' ? 'my-MM' : 'en-GB')}</span>
               </li>
             ))}

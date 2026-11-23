@@ -97,8 +97,15 @@ export type RentalCatalog = {
   settings: RentalSettings;
 };
 
+/**
+ * Plan §16B.4: a label, a branch name or a terms body is not translated, but it
+ * still must not come out blank when only one language was written. The reader's
+ * language wins and the written one fills the gap.
+ */
 export function localized(value: Bilingual, language: Language): string {
-  return language === 'mm' ? value.mm : value.en;
+  const own = language === 'mm' ? value.mm : value.en;
+  if (own.trim() !== '') return own;
+  return language === 'mm' ? value.en : value.mm;
 }
 
 const NO_RULES: Bilingual = { mm: '', en: '' };
