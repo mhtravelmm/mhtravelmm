@@ -1605,11 +1605,11 @@ This section records the dashboard work completed from the supplied visual refer
 ### Blog post cover and gallery photo support — 2026-11-14
 - A Blog Post now supports one required Cover Photo plus multiple Additional Photos. Additional photos can be selected in one multi-file picker, previewed as thumbnails, and removed individually before saving.
 - Every gallery image uses the same media pipeline as the cover: type/original-size validation, longest-edge resize, WebP conversion, compression to the configured size limit, and upload under the `blog-posts` folder through the R2 media endpoint.
-- The local preview post model now carries `galleryUrls[]`; production Blog Post persistence must store ordered gallery media rows separately from the cover URL so public article rendering can preserve the selected order.
+- ~~The local preview post model now carries `galleryUrls[]`~~ **Superseded 26 November 2026:** `galleryUrls` was removed from the model. An extra photo is an image block, so it keeps its place in the story and its alt text; see §10 §2 and `src/lib/blogBlocks.ts`.
 
 ### Compact inline Blog story composer and date/time scheduling — 2026-11-14
 - Replaced the large body text fields with a compact story-flow composer made of bilingual text blocks and image blocks. Super Admin can insert a photo between text blocks, add another text block after it, reorder by composing the flow, and remove either block.
-- Cover Photo, Additional Photos, and Inline Story Photos all use the existing resize/WebP/compression/R2 upload pipeline. The local preview model now stores ordered `blocks[]` in addition to `galleryUrls[]`.
+- Cover Photo and Inline Story Photos use the existing resize/WebP/compression/R2 upload pipeline, and the model stores ordered `blocks[]`. The separate Additional Photos list was dropped on 26 November 2026; those photos are image blocks now.
 - Replaced free-typed schedule datetime text with native calendar date and clock time controls. A Scheduled post requires both values; Draft and Published posts remain compact.
 - The editor spacing, input heights, modal width, table density, summary cards, thumbnail sizes, and action buttons were reduced to avoid oversized boxes while preserving responsive mobile behavior.
 - Production still needs the public Blog reader to render ordered text/image blocks and the database schema to persist block order and media metadata.
