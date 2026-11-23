@@ -149,12 +149,13 @@ Still open on this track:
   the place detail page to real handoff flows once business contact records
   exist in Supabase. They currently build a Google Maps search URL and a
   `tel:` link from seed data.
-- Complete remaining bilingual localization: every dashboard shell and body is
-  localized as of 22 November 2026 (Shop Owner, Main Owner, Super Admin). What
-  is left is the two content editors inside Super Admin: `BlogPostsPanel.tsx`
-  and `TravelGuidesPanel.tsx` still render English labels.
+- ~~Complete remaining bilingual localization.~~ **Done.** Every dashboard
+  shell and body is localized, including `BlogPostsPanel.tsx` and
+  `TravelGuidesPanel.tsx` inside Super Admin; the provider holds 1,605 keys, all
+  filled in both `mm` and `en`. The remaining translation work is backend
+  content, not UI strings.
 - Add component-level behavioral tests. Route, link, manifest, filter, and
-  domain-rule tests exist and run under `npm test` (85 tests in 12 files);
+  domain-rule tests exist and run under `npm test` (248 tests in 21 files);
   nothing yet renders a page and asserts on it, so interaction regressions
   (filters, tabs, forms) are still caught by hand.
 

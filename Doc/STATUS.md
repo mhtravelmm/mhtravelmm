@@ -117,7 +117,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/login` | **PARTIAL** | UI complete; local preview session |
 | `/signup` | **PARTIAL** | UI complete; local preview session |
 | `/admin/login` | **PARTIAL** | Separated from traveler login |
-| `/super-admin` | **PARTIAL** | Guarded; shell and panels bilingual, the two content editors are not |
+| `/super-admin` | **PARTIAL** | Guarded; shell, every panel and both content editors are bilingual |
 | `/shop-owner` | **PARTIAL** | Guarded; bilingual labels, preview data |
 | `/main-owner` | **PARTIAL** | Guarded; bilingual labels, preview data |
 
