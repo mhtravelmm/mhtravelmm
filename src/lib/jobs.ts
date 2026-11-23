@@ -38,7 +38,7 @@ export const JOBS: JobDefinition[] = [
   { id: 'subscription_expiry', schedule: { everyMs: HOUR }, wired: false },
   { id: 'renewal_reminders', schedule: { dailyAt: '09:00' }, wired: false },
   { id: 'ad_stats_rollup', schedule: { dailyAt: '00:30' }, wired: true },
-  { id: 'orphan_media_cleanup', schedule: { dailyAt: '02:00' }, wired: false },
+  { id: 'orphan_media_cleanup', schedule: { dailyAt: '02:00' }, wired: true },
   { id: 'ad_events_purge', schedule: { dailyAt: '00:00' }, wired: true },
 ];
 

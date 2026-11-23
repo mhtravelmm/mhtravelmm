@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, EyeOff, ImagePlus, Pl
 import { LISTING_IDS, LISTING_INDEX, listingTitle } from '../../data/listingIndex';
 import type { GuideCategory } from '../../data/travelGuideData';
 import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
+import { registerMediaObject, touchMediaUrls } from '../../lib/mediaObjects';
 import { addEarningForGuide } from '../../lib/guideEarningsStore';
 import {
   actionForSave,
@@ -267,6 +268,9 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       version: (existing?.version ?? 0) + 1,
       views: existing?.views ?? 0,
     }, guides);
+    // Plan §16B.6: a save names the photos it keeps, so a photo the editor
+    // replaced is the only one that can age out.
+    touchMediaUrls([next.coverUrl, ...next.stops.map((stop) => stop.imageUrl)]);
     setGuides((current) => (editingId ? current.map((guide) => (guide.id === editingId ? next : guide)) : [next, ...current]));
     setRevisions((current) => recordRevision(current, {
       id: `rev-${Date.now()}`,
@@ -557,6 +561,9 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
     const result = await uploadContentImage(file, 'guide-stops');
     setUploading(false);
     if (!result.ok) return setUploadMessage(t(MEDIA_KEYS[result.code]));
+    if (result.source === 'r2') {
+      registerMediaObject({ key: result.key, url: result.url, folder: 'guide-stops', bytes: result.bytes, contentType: 'image/webp' });
+    }
     if (stopId) onStops(draft.stops.map((stop) => (stop.id === stopId ? { ...stop, imageUrl: result.url } : stop)));
     else onChange('coverUrl', result.url);
     setUploadMessage(fill(t('cw_upload_ok'), {

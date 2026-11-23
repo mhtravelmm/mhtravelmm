@@ -1567,3 +1567,34 @@ Verified in the browser: pointing "3 Days in Bagan" at a removed listing raised
 the panel banner with the guide and stop name, and `/travel-guide/tg1` still
 rendered the guide with one stop's Directions replaced. `npm test` 58 files /
 648 tests; typecheck, lint and build clean.
+
+## The nightly orphan media job is wired — Plan §16B.6, 26 November 2026
+
+`media_objects` is one row per stored file, carrying when a row last referenced
+it. The table is committed in `supabase/migrations/20261123000500_media_objects.sql`
+but not applied, so the job had nothing to read and stayed `wired: false`.
+
+`src/lib/mediaObjects.ts` is now the browser stand-in for that table, and the
+three calls map one-to-one onto the SQL functions: `registerMediaObject()` is
+`register_media_object()`, `touchMediaUrls()` is `touch_media_object()`, and
+`cleanupOrphanMedia()` is `orphan_media_objects(30)` plus the delete.
+
+- **Register:** both editors call it after an upload, and only when the file
+  actually reached R2. A preview data URL is not in the bucket, so a row for it
+  would describe nothing.
+- **Touch:** the explicit Save in Blog Post Management and Travel Guide
+  Management passes the photos the row still uses — the cover and every image
+  block, or the cover and every stop photo. A photo the editor replaced is the
+  only one that stops being touched, so it is the only one that can age out.
+- **Clean up:** `orphan_media_cleanup` is `wired: true` and bound in
+  `platformJobs.ts`. It removes what nothing has referenced for more than 30
+  days, reports the count, and finds nothing on a second run.
+
+A URL with no row is ignored rather than kept alive, so a seeded image or a
+hand-typed path cannot become immortal. A photo referenced exactly 30 days ago
+is kept: the rule is "more than", matching `isOrphan` and the SQL function.
+
+Verified in the browser: two registered objects with one aged past 40 days left
+one row after `cleanupOrphanMedia()`, and the job registry reports
+`orphan_media_cleanup` as wired. `npm test` 59 files / 660 tests; typecheck,
+lint and build clean.

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, CalendarDays, Edit3, Eye, EyeOff, ImagePlus, Megaphone, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
+import { registerMediaObject, touchMediaUrls } from '../../lib/mediaObjects';
 import {
   actionForSave,
   actionLabelKey,
@@ -394,6 +395,9 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
         : `${next.titleEn} · ${next.status}`,
       source: 'content',
     });
+    // Plan §16B.6: the save says which photos it still uses, so the nightly
+    // job can tell a dropped photo from one that is simply older.
+    touchMediaUrls([next.imageUrl, ...next.blocks.flatMap((block) => (block.type === 'image' ? [block.imageUrl] : []))]);
     setShowEditor(false);
     setRestoredFrom(null);
     notify(form.status === 'Published' ? t('bp_notice_published') : form.status === 'Scheduled' ? t('bp_notice_scheduled') : t('bp_notice_draft'));
@@ -673,6 +677,10 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
     const result = await uploadContentImage(file, 'blog-posts');
     setUploading(false);
     if (!result.ok) return setUploadMessage(t(MEDIA_KEYS[result.code]));
+    // Plan §16B.6: only an object that reached R2 has a row to keep alive.
+    if (result.source === 'r2') {
+      registerMediaObject({ key: result.key, url: result.url, folder: 'blog-posts', bytes: result.bytes, contentType: 'image/webp' });
+    }
     if (mode === 'cover') update('imageUrl', result.url);
     if (mode === 'inline') update('blocks', [...form.blocks, createImageBlock(result.url)]);
     setUploadMessage(fill(t('cw_upload_ok'), {

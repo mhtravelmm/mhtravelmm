@@ -122,8 +122,8 @@ describe('runDueJobs', () => {
 
   it('skips an unwired job without writing a row for it', () => {
     const { runs } = runDueJobs(now, {}, []);
-    // Only the due wired jobs are reported, so the three unbuilt jobs (one of
-    // which is due right now) never fill the log.
+    // Only the due wired jobs are reported, so a job still waiting for its
+    // table never fills the log.
     expect(runs.map((run) => run.id).sort()).toEqual([
       'ad_campaign_window',
       'publish_due_content',
