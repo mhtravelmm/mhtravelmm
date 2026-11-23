@@ -1602,6 +1602,9 @@ const translations = {
   bp_gallery_note: { mm: "ထပ်ဆောင်း ဓာတ်ပုံများကို ဇာတ်လမ်း အစီအစဉ်ထဲတွင် ဓာတ်ပုံ အပိုဒ်အဖြစ် ထည့်ပါ။", en: "Add extra photos as image blocks in the story flow above." },
   bp_seo_tags: { mm: "SEO တက်ဂ်များ", en: "SEO tags" },
   bp_seo_note: { mm: "SEO တက်ဂ်များသည် backend တွင်သာ ရှိပြီး အက်ပ်တွင် ဘယ်တော့မှ မပြပါ။", en: "SEO tags stay backend-only and never appear in the app." },
+  bp_ph_seo_tag: { mm: "တက်ဂ်တစ်ခု ရိုက်ထည့်ပါ", en: "Type a tag" },
+  bp_seo_add: { mm: "ထည့်မည်", en: "Add" },
+  bp_seo_remove: { mm: "ဖျက်မည်", en: "Remove" },
 
   // Travel Guide Management editor
   tg_kicker: { mm: "ခရီးသွားလမ်းညွှန် Content Admin", en: "Travel Guide Content Admin" },

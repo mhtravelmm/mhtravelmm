@@ -6,6 +6,7 @@ import type { BlogBlock, BlogPostStatus } from './blogBlocks';
 import type { AuditEntry, Revision } from './contentWorkflow';
 import type { GuideCategory } from '../data/travelGuideData';
 import type { GuideDraft } from './guideItinerary';
+import { normalizeTags } from './tagList';
 
 /**
  * Plan §10: the editors used to hold their content in component state, so a
@@ -34,7 +35,8 @@ export type AdminPost = {
   locationMm: string;
   imageUrl: string;
   blocks: BlogBlock[];
-  seoTags: string;
+  /** Plan §10 §1: a list, not one comma-separated field. */
+  seoTags: string[];
   status: BlogPostStatus;
   /** Set when the post goes live, as `YYYY-MM-DD`. */
   publishedAt: string;
@@ -105,7 +107,7 @@ export function seedPosts(): AdminPost[] {
     locationMm: post.location.mm,
     imageUrl: post.imageUrl ?? '',
     blocks: [{ id: `${post.id}-text`, type: 'text', textEn: post.excerpt.en, textMm: post.excerpt.mm }],
-    seoTags: post.seoTags.join(', '),
+    seoTags: normalizeTags(post.seoTags),
     status: 'Published',
     publishedAt: post.publishedAt,
     scheduledFor: null,
@@ -206,7 +208,7 @@ function normalizePost(post: AdminPost): AdminPost {
     excerptMm: post.excerptMm ?? '',
     ...legacyAuthorLocation(post),
     blocks: post.blocks.map(normalizeBlock),
-    seoTags: post.seoTags ?? '',
+    seoTags: normalizeTags(post.seoTags),
     scheduledFor: Number.isNaN(new Date(scheduledFor ?? '').getTime()) ? null : scheduledFor,
     deletedAt: post.deletedAt ?? null,
     version: post.version ?? 1,

@@ -36,6 +36,7 @@ import {
   type BlogPostStatus,
 } from '../../lib/blogBlocks';
 import { fill } from '../../lib/fill';
+import { normalizeTags, removeTag, tagToAdd } from '../../lib/tagList';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuditRecorder } from '../../lib/adminAudit';
 import { problemMessage } from './publishProblemText';
@@ -53,7 +54,9 @@ type FormState = {
   locationMm: string;
   imageUrl: string;
   blocks: BlogBlock[];
-  seoTags: string;
+  /** Plan §10 §1: a list. `seoTagDraft` is the text of a tag not added yet. */
+  seoTags: string[];
+  seoTagDraft: string;
   status: BlogPostStatus;
   scheduledDate: string;
   scheduledTime: string;
@@ -104,7 +107,8 @@ const emptyForm: FormState = {
   locationMm: '',
   imageUrl: '/images/blog/shwedagon-evening.webp',
   blocks: [createTextBlock()],
-  seoTags: '',
+  seoTags: [],
+  seoTagDraft: '',
   status: 'Draft',
   scheduledDate: '',
   scheduledTime: '',
@@ -179,6 +183,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       ...emptyForm,
       titleEn: post.titleEn,
       titleMm: post.titleMm,
+      excerptEn: post.excerptEn,
+      excerptMm: post.excerptMm,
       category: post.category,
       authorEn: post.authorEn,
       authorMm: post.authorMm,
@@ -186,6 +192,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       locationMm: post.locationMm,
       imageUrl: post.imageUrl,
       blocks: post.blocks.length ? post.blocks : [createTextBlock()],
+      seoTags: normalizeTags(post.seoTags),
+      seoTagDraft: '',
       status: post.status,
       scheduledDate: date,
       scheduledTime: time,
@@ -266,7 +274,7 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       locationMm: form.locationMm.trim() || form.locationEn.trim() || 'Myanmar',
       imageUrl: form.imageUrl.trim(),
       blocks: normalizeAdSlots(form.blocks),
-      seoTags: form.seoTags,
+      seoTags: normalizeTags([...form.seoTags, form.seoTagDraft]),
       status: form.status,
       // A Scheduled post has no publish date yet; the job sets it when the
       // time arrives, so the table never shows a future post as published.
@@ -716,7 +724,21 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
             <p className="-mt-1 text-[9px] text-slate-500">{t('bp_gallery_note')}</p>
             {uploadMessage && <p className="text-[9px] text-cyan-200">{uploadMessage}</p>}
 
-            <Field label={t('bp_seo_tags')} value={form.seoTags} onChange={(value) => update('seoTags', value)} />
+            <TagField
+              label={t('bp_seo_tags')}
+              tags={form.seoTags}
+              draft={form.seoTagDraft}
+              placeholder={t('bp_ph_seo_tag')}
+              addLabel={t('bp_seo_add')}
+              removeLabel={t('bp_seo_remove')}
+              onDraft={(value) => update('seoTagDraft', value)}
+              onAdd={() => {
+                const tag = tagToAdd(form.seoTags, form.seoTagDraft);
+                if (tag) update('seoTags', [...form.seoTags, tag]);
+                update('seoTagDraft', '');
+              }}
+              onRemove={(tag) => update('seoTags', removeTag(form.seoTags, tag))}
+            />
             <p className="-mt-1 text-[9px] text-slate-500">{t('bp_seo_note')}</p>
 
             <div className="grid grid-cols-2 gap-2">
@@ -786,6 +808,74 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function TagField({
+  label,
+  tags,
+  draft,
+  placeholder,
+  addLabel,
+  removeLabel,
+  onDraft,
+  onAdd,
+  onRemove,
+}: {
+  label: string;
+  tags: string[];
+  draft: string;
+  placeholder: string;
+  addLabel: string;
+  removeLabel: string;
+  onDraft: (value: string) => void;
+  onAdd: () => void;
+  onRemove: (tag: string) => void;
+}) {
+  return (
+    <div className="block">
+      <span className="mb-1 block text-[9px] font-semibold text-slate-300">{label}</span>
+      {tags.length > 0 && (
+        <ul className="mb-1 flex flex-wrap gap-1">
+          {tags.map((tag) => (
+            <li key={tag} className="inline-flex items-center gap-1 rounded-full bg-[#123152] px-2 py-0.5 text-[10px] text-slate-200">
+              {tag}
+              <button
+                type="button"
+                onClick={() => onRemove(tag)}
+                aria-label={`${removeLabel}: ${tag}`}
+                className="text-slate-400 transition hover:text-white"
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-1">
+        <input
+          value={draft}
+          onChange={(event) => onDraft(event.target.value)}
+          onKeyDown={(event) => {
+            // Enter adds a tag instead of submitting the editor's form.
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              onAdd();
+            }
+          }}
+          placeholder={placeholder}
+          aria-label={label}
+          className="h-8 min-w-0 flex-1 rounded border border-[#2b527d] bg-[#081a31] px-2.5 text-[11px] text-white outline-none placeholder:text-slate-600"
+        />
+        <button
+          type="button"
+          onClick={onAdd}
+          className="h-8 shrink-0 rounded border border-[#2b527d] px-2 text-[10px] text-slate-200 transition hover:bg-[#123152]"
+        >
+          {addLabel}
+        </button>
       </div>
     </div>
   );

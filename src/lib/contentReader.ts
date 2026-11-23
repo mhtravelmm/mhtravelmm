@@ -4,6 +4,7 @@ import type { BlogBlock } from './blogBlocks';
 import type { AdminGuide, AdminPost } from './contentStore';
 import { listingTitle } from '../data/listingIndex';
 import { minutesOfDay } from './guideItinerary';
+import { normalizeTags } from './tagList';
 
 /**
  * Plan §10 §4 Publish and §6 Reader contract: the reader shows what Admin
@@ -114,7 +115,7 @@ export function adminPostToReader(post: AdminPost, taken: Set<string>): BlogPost
     title: { en: post.titleEn, mm: post.titleMm },
     excerpt: excerptOf(post),
     blocks: toReaderBlocks(post.blocks),
-    seoTags: post.seoTags ? post.seoTags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+    seoTags: normalizeTags(post.seoTags),
     rating: 0,
     distanceKm: 0,
     isFavorited: false,

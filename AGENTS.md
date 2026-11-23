@@ -93,6 +93,13 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   unconditional. Format numbers with `Intl` and the `my-MM` locale, never a
   hand-written digit map.
 
+- **`seoTags` is `string[]`, not a comma-separated string.** `src/lib/tagList.ts`
+  is the only place a stored value becomes a list; it also accepts the old
+  string form so rows written before the change still load. When you add a field
+  to the Blog editor, carry it in `openPost` as well as in `emptyForm` — the
+  form is built from `emptyForm`, so a field left out there is silently blanked
+  on save.
+
 ## Conventions
 
 - One feature per folder under `src/features/<name>/`; page-level components end in `Page`.

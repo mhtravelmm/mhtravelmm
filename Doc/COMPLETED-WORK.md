@@ -1411,3 +1411,30 @@ that produced the bug, so it now says the four are always *carried* and two are
 languages); `npm run build` succeeds; `npx eslint src` back to 7 pre-existing
 warnings. Browser check at `/nearby` in Burmese: every card read `၁.၂
 ကီလိုမီတာ`-style distances with Myanmar digits and no card showed a zero.
+
+## SEO tags are a list, and opening the editor no longer erases content — Plan §10 §1, 26 November 2026
+
+Plan §10 §1 listed `seoTags` as a list. The editor held one comma-separated
+text field, so a tag containing a comma could not exist and every read had to
+re-split a string. `AdminPost.seoTags` is now `string[]` and the editor draws
+chips: type a tag, press Add or Enter, press `×` to remove one. A duplicate that
+differs only in case is refused, so `Inle Lake` and `inle lake` cannot both
+exist.
+
+**One parser.** `src/lib/tagList.ts` holds `normalizeTags`, `tagToAdd` and
+`removeTag`. `normalizeTags` takes the array or the old comma-separated string,
+because a row in browser storage outlives the code that wrote it, and drops
+blanks, duplicates and non-strings. `contentStore` uses it on the seed data and
+on every row it loads; `contentReader` uses it for the reader projection.
+
+**Two data-loss bugs fixed on the way.** Opening the editor to edit an existing
+post built its form from `emptyForm` and copied the title, category, author and
+location — but not `excerptEn`, `excerptMm` or `seoTags`. Saving then wrote the
+blank values back, so editing a published post silently erased its excerpt and
+its tags. Both are now carried into the form. Verified in the browser: open the
+Bagan post, the excerpt and its three tags are present, add `Temple sunrise`,
+save, reopen — four tags, excerpt intact.
+
+**Verification.** `npm run typecheck` clean; `npm test` 55 files / 614 tests
+(10 new in `tagList.test.ts`: array, legacy string, blanks, case-insensitive
+duplicates, non-string entries, add, remove, join); `npm run build` succeeds.

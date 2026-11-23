@@ -883,9 +883,16 @@ Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib
   one-language value in both languages (`normalizePost` in `contentStore.ts`),
   and the reader falls back to the language that was written rather than
   showing a blank line. `galleryUrls` is gone; extra photos are image blocks.
-- **Not built:** autosave, server-side `version` checks, `seoTags` as a list
-  rather than one text field, and the reader's coordinates, rating and
-  `read_minutes` from the table (they are derived in `contentReader.ts`).
+- **SEO tags are a list (26 November 2026):** `AdminPost.seoTags` is
+  `string[]`, edited as chips (type, Add or Enter, `×` to remove, a duplicate
+  differing only in case is refused). `src/lib/tagList.ts` is the one place a
+  stored value becomes a list, so a row written before this change — a
+  comma-separated string — still loads and a stray blank or duplicate is
+  dropped. Opening the editor also carries a post's tags and excerpt into the
+  form; before this, saving an edited post erased both.
+- **Not built:** autosave, server-side `version` checks, and the reader's
+  coordinates, rating and `read_minutes` from the table (they are derived in
+  `contentReader.ts`).
 
 Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code wins); the story check needs one non-empty text block in either language, not every paragraph in both. A caption is now MM/EN as decided below.
 
