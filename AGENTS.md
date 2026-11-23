@@ -153,6 +153,16 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   and prices are never translated (`isTranslatable`), and a reviewed row
   (`approved` or `edited`) is what removes the marker. The Admin queue is
   `TranslationReviewPanel` under the `translations` workspace section.
+- A grid or a card reads through `localizedOrFallback()` instead: it returns the
+  reader's language, else the language the text was written in, and never asks
+  the Worker or shows the marker. Use it where the text is a name, an address, a
+  price or a card face — twelve cards must not fire twelve requests — and keep
+  `useLocalizedText()` for the single-item reader (a blog story, a guide) where
+  the marker belongs. Never index `text[language]` directly; a half-written
+  record then renders blank instead of showing the language it was written in.
+- A filter key stays English (`category.en`) while the chip shows the reader's
+  language. Filtering on the translated label drops the selection the moment the
+  reader switches language, and the list looks empty for no reason.
 - Ads rules live in `src/lib/adCampaigns.ts`, not in `AdsManagementPanel.tsx`:
   `canServe`, `campaignServesPlacement`, `pickCampaign` and `serveAd` are the
   §16A.5 serving order, `filterCampaigns` is the campaign filter, and

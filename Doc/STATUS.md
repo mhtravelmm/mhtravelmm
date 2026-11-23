@@ -1,8 +1,11 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 26 November 2026 (the card rule: a rating and a distance are
-hidden when absent, in `src/lib/cardMeta.ts`, with Plan §4 corrected to match
-§10 §8; before that, the Blog bilingual content model: MM/EN
+**Last audited:** 26 November 2026 (the §16B.4 reader pass: every reader — city,
+category, place, restaurant, book shop and the rental labels — now reads
+through `localizedOrFallback()`, so a record written in one language shows that
+language instead of a blank; before that, the card rule: a rating and a distance
+are hidden when absent, in `src/lib/cardMeta.ts`, with Plan §4 corrected to
+match §10 §8; before that, the Blog bilingual content model: MM/EN
 author and location, MM/EN image captions, and `galleryUrls` removed with the
 stored rows migrated; before that, 25 November: the §16A Adsboard — the
 advertiser rows, the campaign filters, the AdSense fallback step in `AdSlot`, the
@@ -59,7 +62,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (446 tests, 38 files) |
+| `npm test` (vitest) | **PASS** (664 tests, 59 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (43 declared routes, all render) |
 

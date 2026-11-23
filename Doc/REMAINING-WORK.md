@@ -260,7 +260,7 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   filled in both `mm` and `en`. The remaining translation work is backend
   content, not UI strings.
 - Add component-level behavioral tests. Route, link, manifest, filter, and
-  domain-rule tests exist and run under `npm test` (291 tests in 23 files);
+  domain-rule tests exist and run under `npm test` (664 tests in 59 files);
   nothing yet renders a page and asserts on it, so interaction regressions
   (filters, tabs, forms) are still caught by hand.
 
