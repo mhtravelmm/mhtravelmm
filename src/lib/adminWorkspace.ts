@@ -15,6 +15,7 @@ export type WorkspaceSection =
   | 'content'
   | 'blogs'
   | 'guides'
+  | 'guideEarnings'
   | 'ads'
   | 'currency'
   | 'rentals'
@@ -30,6 +31,7 @@ const ALL_SECTIONS: WorkspaceSection[] = [
   'content',
   'blogs',
   'guides',
+  'guideEarnings',
   'ads',
   'currency',
   'rentals',
@@ -50,10 +52,10 @@ const ALL_SECTIONS: WorkspaceSection[] = [
 const SECTIONS_BY_ROLE: Record<AdminRole, WorkspaceSection[]> = {
   'Super Admin': ALL_SECTIONS,
   'Ads Admin': ['ads'],
-  Admin: ['users', 'owners', 'bookings', 'content', 'blogs', 'guides', 'rentals', 'rentalOrders', 'rentalReports'],
+  Admin: ['users', 'owners', 'bookings', 'content', 'blogs', 'guides', 'guideEarnings', 'rentals', 'rentalOrders', 'rentalReports'],
   'Rental Admin': ['rentals', 'rentalOrders', 'rentalReports'],
-  'Payment Admin': ['rentalOrders', 'rentalReports', 'currency'],
-  'Travel Guide Content Admin': ['guides'],
+  'Payment Admin': ['rentalOrders', 'rentalReports', 'currency', 'guideEarnings'],
+  'Travel Guide Content Admin': ['guides', 'guideEarnings'],
   'Blog Post Admin': ['blogs'],
   'Owner Admin': [],
 };
@@ -80,4 +82,22 @@ export function canHandleOrders(role: AdminRole | undefined): boolean {
 
 export function canRecordPayment(role: AdminRole | undefined): boolean {
   return canHandleOrders(role) || role === 'Payment Admin';
+}
+
+/**
+ * Plan §16B.1 guide earnings row: `F` for Super Admin and Payment Admin,
+ * `R` for Admin, `O (read)` for Guide Content Admin. Setting the amount and
+ * settling it are the two writes, and Admin has neither.
+ */
+export function canSetEarningAmount(role: AdminRole | undefined): boolean {
+  return role === 'Super Admin' || role === 'Payment Admin';
+}
+
+export function canMarkEarningPaid(role: AdminRole | undefined): boolean {
+  return role === 'Super Admin' || role === 'Payment Admin';
+}
+
+/** Admin reads every author's rows; a Guide Content Admin reads only its own. */
+export function canReadAllEarnings(role: AdminRole | undefined): boolean {
+  return role === 'Super Admin' || role === 'Admin' || role === 'Payment Admin';
 }

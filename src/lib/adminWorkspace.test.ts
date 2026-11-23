@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { ADMIN_ROLES } from './adminRoles';
-import { canHandleOrders, canOpenSection, canRecordPayment, sectionsForRole } from './adminWorkspace';
+import {
+  canHandleOrders,
+  canMarkEarningPaid,
+  canOpenSection,
+  canReadAllEarnings,
+  canRecordPayment,
+  canSetEarningAmount,
+  sectionsForRole,
+} from './adminWorkspace';
 
 describe('the admin workspace (Plan §3, §16B.1)', () => {
   it('gives Super Admin every section', () => {
     expect(sectionsForRole('Super Admin')).toEqual([
       'overview', 'users', 'admins', 'owners', 'bookings', 'content', 'blogs',
-      'guides', 'ads', 'currency', 'rentals', 'rentalOrders', 'rentalReports',
+      'guides', 'guideEarnings', 'ads', 'currency', 'rentals', 'rentalOrders', 'rentalReports',
     ]);
   });
 
@@ -40,7 +48,35 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
 
   it('keeps one editor per content role', () => {
     expect(sectionsForRole('Blog Post Admin')).toEqual(['blogs']);
-    expect(sectionsForRole('Travel Guide Content Admin')).toEqual(['guides']);
+    // A Guide Content Admin reads its own earnings rows but never sets them.
+    expect(sectionsForRole('Travel Guide Content Admin')).toEqual(['guides', 'guideEarnings']);
+    expect(canSetEarningAmount('Travel Guide Content Admin')).toBe(false);
+    expect(canMarkEarningPaid('Travel Guide Content Admin')).toBe(false);
+    expect(canReadAllEarnings('Travel Guide Content Admin')).toBe(false);
+  });
+
+  it('gives guide earnings to Payment Admin, with Admin reading all of it', () => {
+    for (const role of ['Super Admin', 'Payment Admin'] as const) {
+      expect(canOpenSection(role, 'guideEarnings')).toBe(true);
+      expect(canSetEarningAmount(role)).toBe(true);
+      expect(canMarkEarningPaid(role)).toBe(true);
+      expect(canReadAllEarnings(role)).toBe(true);
+    }
+    // Admin reads every author's rows and writes neither field.
+    expect(canOpenSection('Admin', 'guideEarnings')).toBe(true);
+    expect(canReadAllEarnings('Admin')).toBe(true);
+    expect(canSetEarningAmount('Admin')).toBe(false);
+    expect(canMarkEarningPaid('Admin')).toBe(false);
+  });
+
+  it('keeps earnings away from every role its row marks as none', () => {
+    for (const role of ['Ads Admin', 'Rental Admin', 'Blog Post Admin', 'Owner Admin'] as const) {
+      expect(canOpenSection(role, 'guideEarnings')).toBe(false);
+      expect(canSetEarningAmount(role)).toBe(false);
+      expect(canMarkEarningPaid(role)).toBe(false);
+      expect(canReadAllEarnings(role)).toBe(false);
+    }
+    expect(canSetEarningAmount(undefined)).toBe(false);
   });
 
   it('leaves Owner Admin to the shop workspace, and a traveler with nothing', () => {

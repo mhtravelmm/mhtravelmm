@@ -186,9 +186,11 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   that reuses the Super Admin panels, and `src/lib/adminWorkspace.ts` now
   encodes the section 16B.1 matrix for it: Rentals for Rental Admin, Ads for
   Ads Admin, users and support for Admin, orders/reports/currency for Payment
-  Admin. Still open: guide earnings and payouts for Payment Admin (the editor
-  sits inside the Guides panel today), and bookings for Owner Admin, which the
-  separate `/shop-owner` workspace serves. Super Admin keeps all sections.
+  Admin, and guide earnings for Payment Admin (built 2026-11-23 as
+  `GuideEarningsPanel` over `src/lib/guideEarningsStore.ts`, so the rows live
+  outside the Guides editor and the author reads their own). Still open:
+  bookings for Owner Admin, which the separate `/shop-owner` workspace serves.
+  Super Admin keeps all sections.
   Route guards only hide menus; the server must check the role on every write
   (sections 8, 10 and 16A; the permission matrix is in section 16B.1).
 - Role spelling (decided 2026-11-23): `profiles.role` stores a slug
@@ -961,7 +963,7 @@ Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/l
 - **Stop fields:** `time` (HH:MM), `listingId` (a listing that exists in MH Travel, from `LISTING_IDS`), MM/EN title and description, optional photo through the shared WebP pipeline. Stops can be sorted by time and moved up or down.
 - **Publish check** (`guidePublishCheck`): `title_languages`, `excerpt_languages`, `cover`, `author`, `stop_required`, `stop_listing` (a stop whose listing no longer exists), `stop_languages` (every stop needs title and description in both languages), `stop_time_format`, `stop_time_order` (a time earlier than the one before it), `schedule`.
 - **Revisions and audit:** shared with Blog (`contentWorkflow.ts`): 20 revisions per item, audit actions as for Blog.
-- **Earnings** (`guideEarnings.ts`): one row per guide (`guideId`, `author`, `publishedAt`, `amountUsd` null until set, `paid`). `setEarningAmount` ignores negative or non-finite values; `markEarningPaid` works only when an amount exists; `authorTotals` gives each author's payable USD and pending rows.
+- **Earnings** (`guideEarnings.ts`, persisted by `guideEarningsStore.ts`): one row per guide (`guideId`, `guideTitle`, `author`, `publishedAt`, `amountUsd` null until set, `amountSetAt`, `paid`, `paidAt`). `setEarningAmount` ignores negative or non-finite values; `markEarningPaid` works only when an amount exists; `earningsForAuthor` narrows the list for a Guide Content Admin; `authorTotals` gives each author's payable USD, settled USD and pending rows. The section itself is `GuideEarningsPanel` (Plan §16B.1): Payment Admin sets the amount and settles, Admin reads every author, Guide Content Admin reads only its own.
 - **Not built:** persistence, slug or `guideId`, duration, localized author, autosave, handling of a removed listing.
 
 #### 2. Decisions for the system

@@ -57,6 +57,10 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `roleMapping.ts`; never compare a raw profile value to a product name. The admin
   workspace reads `adminRole` (from the profile) through `adminWorkspace.ts`, which
   is the Plan §16B.1 matrix — add a section there before adding it to the nav.
+- Guide earnings are their own section (`GuideEarningsPanel`), not part of the
+  Guides editor, because §16B.1 gives the write to Payment Admin. The rows live
+  in `guideEarningsStore.ts` so a second role can see them; publishing a guide
+  adds a row through `addEarningForGuide()`.
 
 ## Pushing to origin
 

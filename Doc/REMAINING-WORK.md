@@ -33,11 +33,13 @@ the suite instead of reaching a user as "coming soon."
 - Add secure username-to-auth identity resolution without exposing private email addresses.
 - Configure and verify Google and Facebook OAuth credentials and callback URLs in Supabase.
 - Add production `owner_admin`, scoped platform-admin, `main_owner`, and `branch_owner` authorization with server-side checks, invitations, password reset/rotation, and RLS.
-- Two cells of the §16B.1 matrix still have no home. Guide earnings and
-  payouts are `F` for Payment Admin, but the editor sits inside the Guides
-  panel, which that role cannot open, so it needs a section of its own. Owner
-  Admin's `O` rows belong in `/shop-owner`, not the admin workspace, so the
-  matrix's bookings row is not built there at all.
+- Guide earnings now have their own section (`GuideEarningsPanel`, 23 Nov
+  2026), so the §16B.1 row is served for Super Admin, Admin, Payment Admin and
+  Guide Content Admin. What remains is persistence: the rows still live in
+  browser storage through `src/lib/guideEarningsStore.ts` and need the
+  `guide_earnings` table.
+- Owner Admin's `O` rows belong in `/shop-owner`, not the admin workspace, so
+  the matrix's bookings row is not built there at all.
 - Connect Admin and Shop Owner creation forms to Supabase Auth invitations, profile/business records, acceptance flows, and audit history. Plaintext preview passwords must not be used in production.
 
 ## Data persistence and APIs

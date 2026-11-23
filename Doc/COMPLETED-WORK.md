@@ -785,3 +785,39 @@ Admin only Orders, Reports and Currency, Blog Post Admin only Blogs, and a
 session still holding `content_admin` kept the workspace instead of being sent
 to `/account`. On an accepted order the Payment Admin saw the record-payment
 control alone, and the Rental Admin saw the full action set.
+
+## Guide earnings as its own section (Plan §16B.1) — 23 November 2026
+
+The §16B.1 row `| Guide earnings | F | – | R | – | F (set amount, mark paid) | O (read) | – | – |`
+had no home: the earnings table was rendered inside `TravelGuidesPanel`, which
+a Payment Admin cannot open, so the role the matrix gives the write could never
+reach it. The rows also lived in component state, so they vanished on reload and
+a second role could never see them.
+
+- **`src/lib/guideEarningsStore.ts`** (new) owns the rows: `readGuideEarnings()`
+  seeds one row per published guide, `addEarningForGuide()` adds a row when a
+  guide is published and leaves an existing one alone, and `useGuideEarnings()`
+  gives the panel `rows`, `setAmount` and `markPaid`. This is the seam where the
+  `guide_earnings` table replaces browser storage.
+- **`src/lib/guideEarnings.ts`** gained `guideTitle`, `amountSetAt` and `paidAt`,
+  `earningsForAuthor()` to narrow the list for a Guide Content Admin, and a
+  `paidUsd` total in `authorTotals()` so settled money is separate from payable.
+- **`src/lib/adminWorkspace.ts`** adds the `guideEarnings` section to Super
+  Admin, Admin, Payment Admin and Travel Guide Content Admin, plus
+  `canSetEarningAmount()` / `canMarkEarningPaid()` / `canReadAllEarnings()`.
+- **`src/features/superAdmin/GuideEarningsPanel.tsx`** (new) is the section:
+  payable, settled and waiting-for-amount totals, a search box, four state
+  filters, and a table where the amount input and the "mark paid" button appear
+  only for a role that may write. A Guide Content Admin sees its own byline's
+  rows and read-only amounts.
+- **`TravelGuidesPanel.tsx`** no longer keeps earnings in state; publishing calls
+  `addEarningForGuide()` so the row lands in the shared store.
+
+**Verification.** `npx tsc --noEmit` clean; `npx vitest run` 25 files / 320
+tests; `npm run build` succeeds; `npx eslint src` reports the same 7 pre-existing
+warnings. Browser check at `/super-admin` in Burmese: Payment Admin saw only
+Orders, Reports, Guide earnings and Currency, typed 25 into the Bagan row (the
+payable total moved to $25.00 and the row offered "mark paid"), then settled it
+(payable $0.00, settled $25.00); Admin saw the same rows with the amount as text
+and no button; a Travel Guide Content Admin signed in as Min Htet saw only that
+byline's three rows, read-only.

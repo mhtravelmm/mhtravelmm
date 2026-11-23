@@ -3,13 +3,7 @@ import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, ImagePlus, Plus, Sear
 import { LISTING_IDS, LISTING_INDEX, listingTitle } from '../../data/listingIndex';
 import { TRAVEL_GUIDE_STORIES, type GuideCategory } from '../../data/travelGuideData';
 import { uploadBlogCoverImage, type MediaErrorCode } from '../../lib/blogMediaApi';
-import {
-  authorTotals,
-  createEarningRow,
-  markEarningPaid,
-  setEarningAmount,
-  type EarningRow,
-} from '../../lib/guideEarnings';
+import { addEarningForGuide } from '../../lib/guideEarningsStore';
 import {
   actionForSave,
   actionLabelKey,
@@ -116,7 +110,6 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
   const [showEditor, setShowEditor] = useState(false);
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState('');
-  const [earnings, setEarnings] = useState<EarningRow[]>([]);
   const [revisions, setRevisions] = useState<Revision<GuideDraft>[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
 
@@ -186,9 +179,13 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       actor: draft.author || 'Travel Guide Content Admin',
     }));
     if (next.status === 'Published') {
-      setEarnings((current) => {
-        const row = createEarningRow({ guideId: next.id, author: next.author, publishedAt: next.publishedAt, existing: current });
-        return row ? [row, ...current] : current;
+      // Plan §16B.1: the row is created here and owned by Payment Admin, so it
+      // is written to the shared store rather than this panel's state.
+      addEarningForGuide({
+        guideId: next.id,
+        guideTitle: next.titleEn,
+        author: next.author,
+        publishedAt: next.publishedAt,
       });
     }
     setShowEditor(false);
@@ -209,9 +206,11 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       at: new Date().toISOString(),
       actor: guide.author,
     }));
-    setEarnings((current) => {
-      const row = createEarningRow({ guideId: guide.id, author: guide.author, publishedAt: new Date().toISOString().slice(0, 10), existing: current });
-      return row ? [row, ...current] : current;
+    addEarningForGuide({
+      guideId: guide.id,
+      guideTitle: guide.titleEn,
+      author: guide.author,
+      publishedAt: new Date().toISOString().slice(0, 10),
     });
     notify(fill(t('tg_notice_now_published'), { title: guide.titleEn }));
   }
@@ -277,62 +276,6 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
           {filtered.length === 0 && <p className="p-6 text-center text-xs text-slate-500">{t('tg_empty')}</p>}
         </div>
       </section>
-
-      {earnings.length > 0 && (
-        <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
-          <div className="border-b border-[#244668] p-3">
-            <h2 className="text-sm font-extrabold text-white">{t('tg_earnings_title')}</h2>
-            <p className="mt-1 text-[10px] text-slate-400">{t('tg_earnings_note')}</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-[11px]">
-              <thead className="bg-[#091a31] text-slate-300">
-                <tr>
-                  <th className="px-3 py-2.5">{t('tg_col_guide')}</th>
-                  <th className="px-2 py-2.5">{t('tg_col_author')}</th>
-                  <th className="px-2 py-2.5">{t('tg_col_published')}</th>
-                  <th className="px-2 py-2.5">{t('tg_col_amount')}</th>
-                  <th className="px-3 py-2.5">{t('tg_col_state')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {earnings.map((row) => (
-                  <tr key={row.id} className="border-t border-[#1d3a5c] text-slate-200">
-                    <td className="px-3 py-2.5 font-semibold text-white">{guides.find((guide) => guide.id === row.guideId)?.titleEn ?? row.guideId}</td>
-                    <td className="px-2 py-2.5">{row.author}</td>
-                    <td className="px-2 py-2.5 text-slate-400">{row.publishedAt}</td>
-                    <td className="px-2 py-2.5">
-                      <input
-                        type="number"
-                        min={0}
-                        step={1}
-                        value={row.amountUsd ?? ''}
-                        onChange={(event) => setEarnings((current) => setEarningAmount(current, row.id, Number(event.target.value)))}
-                        aria-label={fill(t('tg_aria_amount'), { id: row.guideId })}
-                        className="h-7 w-20 rounded border border-[#2b527d] bg-[#081a31] px-2 text-[11px] text-white outline-none"
-                      />
-                    </td>
-                    <td className="px-3 py-2.5">
-                      {row.paid ? (
-                        <span className="rounded-full bg-green-500/20 px-2 py-1 text-[9px] font-bold text-green-300">{t('tg_state_paid')}</span>
-                      ) : row.amountUsd === null ? (
-                        <span className="rounded-full bg-amber-500/20 px-2 py-1 text-[9px] font-bold text-amber-300">{t('tg_state_needs_amount')}</span>
-                      ) : (
-                        <button type="button" onClick={() => setEarnings((current) => markEarningPaid(current, row.id))} className="rounded border border-cyan-300/40 px-2 py-1 text-[9px] font-bold text-cyan-200">{t('tg_mark_paid')}</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="border-t border-[#244668] p-3 text-[10px] text-slate-400">
-            {authorTotals(earnings).map((total) => (
-              <p key={total.author}>{fill(t('tg_earnings_summary'), { author: total.author, payable: total.payableUsd.toFixed(2), count: total.pendingRows })}</p>
-            ))}
-          </div>
-        </section>
-      )}
 
       {showEditor && (
         <GuideEditor
