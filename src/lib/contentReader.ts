@@ -4,7 +4,10 @@ import type { BlogBlock } from './blogBlocks';
 import type { AdminGuide, AdminPost } from './contentStore';
 import { listingTitle } from '../data/listingIndex';
 import { minutesOfDay } from './guideItinerary';
+import { slugify, uniqueSlug } from './slug';
 import { normalizeTags } from './tagList';
+
+export { slugify, uniqueSlug } from './slug';
 
 /**
  * Plan §10 §4 Publish and §6 Reader contract: the reader shows what Admin
@@ -12,26 +15,6 @@ import { normalizeTags } from './tagList';
  * never reaches here, so "invisible to the public until its time" is one filter
  * rather than a condition spread across the page.
  */
-
-/** Plan §10 §4: lowercase, hyphenated English title, fixed after first publish. */
-export function slugify(title: string): string {
-  const slug = title
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-  return slug || 'story';
-}
-
-/** A taken slug gains a number, so two posts with one title still both have a URL. */
-export function uniqueSlug(base: string, taken: Set<string>): string {
-  if (!taken.has(base)) return base;
-  let suffix = 2;
-  while (taken.has(`${base}-${suffix}`)) suffix += 1;
-  return `${base}-${suffix}`;
-}
 
 /** Plan §10 §4: English words ÷ 200, rounded up, at least 1. */
 export function readMinutesOf(blocks: BlogBlock[]): number {
@@ -202,7 +185,8 @@ export function adminGuideToReader(guide: AdminGuide): TravelGuideStory {
     publishedAt: guide.publishedAt,
     author: { en: guide.authorEn, mm: guide.authorMm },
     duration: durationOf(stops),
-    href: `/travel-guide/${guide.id}`,
+    slug: guide.slug,
+    href: `/travel-guide/${guide.slug || guide.id}`,
     stops,
   };
 }

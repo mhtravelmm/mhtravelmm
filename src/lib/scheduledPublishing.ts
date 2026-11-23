@@ -1,3 +1,4 @@
+import { assignGuideSlugs, guidePath } from './guideSlug';
 import { addEarningForGuide } from './guideEarningsStore';
 import { recordAdminAudit } from './adminAudit';
 import { pushFeedEvent } from './notificationFeed';
@@ -70,8 +71,9 @@ export function publishDueContent(now = new Date()): PublishRun {
   }
   if (postResult.published.length > 0) writeBlogPosts(postResult.items);
 
+  const storedGuides = readGuides();
   const guideResult = publishDueItems(
-    readGuides(),
+    storedGuides,
     now,
     (guide): AdminGuide => ({
       ...guide,
@@ -82,8 +84,13 @@ export function publishDueContent(now = new Date()): PublishRun {
     }),
     (guide) => !guide.deletedAt,
   );
+  // Plan §10 §2: the first publish fixes the slug. It is assigned across the
+  // whole list so two guides released in one run cannot end up sharing one.
+  const sluggedGuides = guideResult.published.length > 0 ? assignGuideSlugs(guideResult.items) : guideResult.items;
+  const sluggedById = new Map(sluggedGuides.map((guide) => [guide.id, guide]));
 
-  for (const guide of guideResult.published) {
+  for (const published of guideResult.published) {
+    const guide = sluggedById.get(published.id) ?? published;
     recordAdminAudit({
       actor: 'system',
       actorRole: 'system',
@@ -103,11 +110,11 @@ export function publishDueContent(now = new Date()): PublishRun {
     pushFeedEvent('guide_published', {
       title: feedText('tg_feed_published_title', 'New travel guide published'),
       message: feedText('tg_feed_published_body', '{title} is ready to read.').replace('{title}', guide.titleEn),
-      href: `/travel-guide/${guide.id}`,
+      href: guidePath(guide),
       at: now,
     });
   }
-  if (guideResult.published.length > 0) writeGuides(guideResult.items);
+  if (guideResult.published.length > 0) writeGuides(sluggedGuides);
 
   return { blog: postResult.published.length, guide: guideResult.published.length };
 }

@@ -236,6 +236,16 @@ describe('an admin guide as a reader story', () => {
     expect(story.author).toEqual({ en: 'Min Htet', mm: 'မင်းထက်' });
   });
 
+  it('links a published guide at its slug (Plan §10 §2)', () => {
+    const story = adminGuideToReader(guide({ slug: 'two-days-in-hpa-an' }));
+    expect(story.href).toBe('/travel-guide/two-days-in-hpa-an');
+  });
+
+  it('falls back to the row id for a guide saved before slugs existed', () => {
+    const story = adminGuideToReader(guide({ slug: '' }));
+    expect(story.href).toBe('/travel-guide/admin-guide');
+  });
+
   it('derives the stop place from the listing, never from typed text', () => {
     const story = adminGuideToReader(guide({
       stops: [{

@@ -19,6 +19,8 @@ export interface GuideStop {
 }
 
 export interface TravelGuideStory extends CardListing {
+  /** Plan §10 §2: the guide's URL slug; a seeded guide has none and uses its id. */
+  slug?: string;
   category: GuideCategory;
   localizedTitle: LocalizedGuideCopy;
   summary: LocalizedGuideCopy;

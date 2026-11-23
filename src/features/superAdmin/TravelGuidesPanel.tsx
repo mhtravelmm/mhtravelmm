@@ -43,6 +43,7 @@ import {
   shouldAutosave,
   type AutosaveState,
 } from '../../lib/draftAutosave';
+import { assignGuideSlug, guidePath } from '../../lib/guideSlug';
 import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuditRecorder } from '../../lib/adminAudit';
@@ -208,6 +209,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
         ...current,
         stops: sortStopsByTime(current.stops),
         id,
+        slug: existing?.slug ?? '',
         status: 'Draft',
         publishedAt: existing?.publishedAt ?? '',
         scheduledFor: null,
@@ -243,10 +245,11 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     if (draft.status === 'Scheduled' && !scheduledFor) return notify(problemMessage(t, { code: 'schedule' }));
 
     const now = new Date().toISOString().slice(0, 10);
-    const next: AdminGuide = {
+    const next: AdminGuide = assignGuideSlug({
       ...draft,
       stops: sortStopsByTime(draft.stops),
       id: editingId ?? `guide-${Date.now()}`,
+      slug: existing?.slug ?? '',
       publishedAt: draft.status === 'Published'
         ? now
         : (existing?.publishedAt ?? ''),
@@ -254,7 +257,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       deletedAt: existing?.deletedAt ?? null,
       version: (existing?.version ?? 0) + 1,
       views: existing?.views ?? 0,
-    };
+    }, guides);
     setGuides((current) => (editingId ? current.map((guide) => (guide.id === editingId ? next : guide)) : [next, ...current]));
     setRevisions((current) => recordRevision(current, {
       id: `rev-${Date.now()}`,
@@ -368,9 +371,10 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     const check = guidePublishCheck({ ...guide, status: 'Published' }, LISTING_IDS);
     const seededWithoutListings = guide.stops.length > 0 && guide.stops.every((stop) => !stop.listingId);
     if (!check.ok && !seededWithoutListings) return notify(problemMessage(t, check.problems[0]));
+    const slugged = assignGuideSlug(guide, guides);
     setGuides((current) => current.map((item) => (item.id === guide.id
       ? {
-          ...item,
+          ...slugged,
           status: 'Published',
           publishedAt: new Date().toISOString().slice(0, 10),
           scheduledFor: null,
@@ -401,7 +405,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     pushFeedEvent('guide_published', {
       title: t('tg_feed_published_title'),
       message: fill(t('tg_feed_published_body'), { title: guide.titleEn }),
-      href: `/travel-guide/${guide.id}`,
+      href: guidePath(slugged),
     });
     notify(fill(t('tg_notice_now_published'), { title: guide.titleEn }));
   }

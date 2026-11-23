@@ -53,6 +53,8 @@ export type AdminPost = {
 /** A guide as the Admin table holds it; the draft fields come from the editor. */
 export type AdminGuide = GuideDraft & {
   id: string;
+  /** Plan §10 §2: fixed after the first publish; empty until then. */
+  slug: string;
   publishedAt: string;
   scheduledFor: string | null;
   deletedAt: string | null;
@@ -132,6 +134,9 @@ function matchListing(place: string, title: string): string {
 export function seedGuides(): AdminGuide[] {
   return TRAVEL_GUIDE_STORIES.map((guide) => ({
     id: guide.id,
+    // A seeded guide is already published under its own id-based URL, so it
+    // keeps that link rather than gaining a second one.
+    slug: '',
     titleEn: guide.localizedTitle.en,
     titleMm: guide.localizedTitle.mm,
     excerptEn: guide.summary.en,
@@ -236,6 +241,7 @@ function normalizeGuide(guide: AdminGuide): AdminGuide {
     ...guide,
     authorEn: guide.authorEn ?? legacy.author ?? '',
     authorMm: guide.authorMm ?? legacy.author ?? '',
+    slug: guide.slug ?? '',
     scheduledDate: guide.scheduledDate ?? '',
     scheduledTime: guide.scheduledTime ?? '',
     scheduledFor: Number.isNaN(new Date(scheduledFor ?? '').getTime()) ? null : scheduledFor,

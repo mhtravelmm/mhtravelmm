@@ -1514,3 +1514,27 @@ Verified in the browser: a new guide typed for one tick appeared as a မူက�
 row with the timestamp in the editor; editing a Published guide for the same
 length wrote nothing and kept its published title. `npm test` 56 files /
 630 tests; typecheck and build clean.
+
+## Guide slug — Plan §10 §2, 26 November 2026
+
+A guide was read at its row id, so the URL said nothing and could not be shared
+with confidence. `AdminGuide.slug` now holds the URL name and
+`src/lib/guideSlug.ts` is the single rule for it: the lowercase hyphenated
+English title, numbered when another guide already holds it, and fixed at the
+first publish so a link keeps working when the title is later edited.
+
+The editor assigns it on Save and on Publish; the scheduled publish job assigns
+it across the whole list in one pass, so two guides released in the same run
+cannot collide. `contentReader.adminGuideToReader` and the guide cards link
+through the slug, and the notification feed row carries
+`/travel-guide/<slug>`.
+
+A guide with no slug still answers on its row id: seeded guides keep their
+existing `tg1`-style URLs, and a row written before slugs existed keeps its
+link. `slugify` and `uniqueSlug` moved to `src/lib/slug.ts`, re-exported from
+`contentReader.ts`, because the guide code must not import the reader.
+
+Verified in the browser: publishing "Slug Check Guide" produced
+`/travel-guide/slug-check-guide`, the feed row pointed at it, the reader
+resolved the slug, and `/travel-guide/tg1` still resolved by id. `npm test`
+57 files / 639 tests; typecheck and build clean.

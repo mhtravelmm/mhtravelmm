@@ -122,10 +122,13 @@ describe('publish_due_content (Plan §16B.7, §10 §4)', () => {
     expect(publishDueContent(now)).toEqual({ blog: 0, guide: 1 });
     expect(publishDueContent(now)).toEqual({ blog: 0, guide: 0 });
 
-    expect(readGuides().find((guide) => guide.id === 'guide-scheduled')?.status).toBe('Published');
+    const published = readGuides().find((guide) => guide.id === 'guide-scheduled');
+    expect(published?.status).toBe('Published');
+    // Plan §10 §2: the first publish fixes the slug, and the feed links through it.
+    expect(published?.slug).toBe('scheduled-route');
     const feed = readFeed().filter((row) => row.event === 'guide_published');
     expect(feed).toHaveLength(1);
-    expect(feed[0].href).toBe('/travel-guide/guide-scheduled');
+    expect(feed[0].href).toBe('/travel-guide/scheduled-route');
   });
 
   it('does not resurrect a deleted post whose schedule came due', () => {

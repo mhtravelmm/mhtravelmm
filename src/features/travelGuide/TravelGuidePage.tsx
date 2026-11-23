@@ -139,11 +139,14 @@ function GuideCard({
 }) {
   const title = guide.localizedTitle[language];
   const summary = guide.summary[language];
+  // Plan §10 §2: a published guide is read at its slug; a seeded one keeps the
+  // href in its data, which is its row id.
+  const guideHref = guide.href || `/travel-guide/${guide.slug || guide.id}`;
 
   return (
     <article className="group flex overflow-hidden rounded-card border border-border bg-bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg md:flex-col">
       <div className="relative min-h-[60px] w-[36%] max-w-[104px] shrink-0 overflow-hidden sm:max-w-[116px] md:h-16 md:w-full md:max-w-none md:min-h-0">
-        <Link to={`/travel-guide/${guide.id}`} className="absolute inset-0" aria-label={title}>
+        <Link to={guideHref} className="absolute inset-0" aria-label={title}>
           <img
             src={guide.imageUrl}
             alt={title}
@@ -171,7 +174,7 @@ function GuideCard({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col p-2">
-        <Link to={`/travel-guide/${guide.id}`} className="line-clamp-2 text-[11px] font-bold leading-snug text-text-primary transition hover:text-brand-blue sm:text-xs md:text-[13px]">
+        <Link to={guideHref} className="line-clamp-2 text-[11px] font-bold leading-snug text-text-primary transition hover:text-brand-blue sm:text-xs md:text-[13px]">
           {title}
         </Link>
         <p className="mt-0.5 line-clamp-1 text-[9px] leading-[1.35] text-text-secondary sm:text-[10px]">
@@ -180,7 +183,7 @@ function GuideCard({
         <div className="mt-auto flex items-center justify-between gap-2 pt-1">
           <GuideMetrics guide={guide} language={language} t={t} compact />
           <Link
-            to={`/travel-guide/${guide.id}`}
+            to={guideHref}
             className="inline-flex shrink-0 items-center gap-1 text-[9px] font-semibold text-brand-blue transition hover:gap-2 sm:text-[10px]"
           >
             {t('guide_view_guide')}
@@ -438,7 +441,11 @@ export function TravelGuidePage() {
     showAll: showAllGuides,
   } = usePagedList(filteredGuides, `${activeCategory}|${searchQuery.trim()}`);
 
-  const selectedGuide = guideId ? allGuides.find((guide) => guide.id === guideId) : undefined;
+  // Plan §10 §2: a published guide is read at its slug; a seeded guide, and a
+  // guide saved before slugs existed, still answer on its row id so old links work.
+  const selectedGuide = guideId
+    ? allGuides.find((guide) => guide.slug === guideId || guide.id === guideId)
+    : undefined;
 
   if (guideId) {
     if (!selectedGuide) {
