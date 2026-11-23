@@ -9,7 +9,9 @@ export type BlogBlock =
       imageUrl: string;
       altEn: string;
       altMm: string;
-      caption: string;
+      /** Plan §10 §2: the reader shows a localized caption, so both are kept. */
+      captionEn: string;
+      captionMm: string;
       credit: string;
     }
   | { id: string; type: 'ad' };
@@ -24,7 +26,16 @@ export function createTextBlock(): BlogBlock {
 }
 
 export function createImageBlock(imageUrl: string): BlogBlock {
-  return { id: `image-${Date.now()}-${Math.random()}`, type: 'image', imageUrl, altEn: '', altMm: '', caption: '', credit: '' };
+  return {
+    id: `image-${Date.now()}-${Math.random()}`,
+    type: 'image',
+    imageUrl,
+    altEn: '',
+    altMm: '',
+    captionEn: '',
+    captionMm: '',
+    credit: '',
+  };
 }
 
 export function createAdBlock(): BlogBlock {

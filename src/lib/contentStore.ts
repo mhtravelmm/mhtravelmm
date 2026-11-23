@@ -27,10 +27,12 @@ export type AdminPost = {
   excerptEn: string;
   excerptMm: string;
   category: string;
-  author: string;
-  location: string;
+  /** Plan §10 §2: author and location are bilingual, as the reader shows them. */
+  authorEn: string;
+  authorMm: string;
+  locationEn: string;
+  locationMm: string;
   imageUrl: string;
-  galleryUrls: string[];
   blocks: BlogBlock[];
   seoTags: string;
   status: BlogPostStatus;
@@ -97,10 +99,11 @@ export function seedPosts(): AdminPost[] {
     excerptEn: post.excerpt.en,
     excerptMm: post.excerpt.mm,
     category: post.category,
-    author: post.author.en,
-    location: post.location.en,
+    authorEn: post.author.en,
+    authorMm: post.author.mm,
+    locationEn: post.location.en,
+    locationMm: post.location.mm,
     imageUrl: post.imageUrl ?? '',
-    galleryUrls: [],
     blocks: [{ id: `${post.id}-text`, type: 'text', textEn: post.excerpt.en, textMm: post.excerpt.mm }],
     seoTags: post.seoTags.join(', '),
     status: 'Published',
@@ -162,17 +165,47 @@ function isPost(value: unknown): value is AdminPost {
 }
 
 /**
+ * Plan §10 §2: author and location used to be one string. A row saved before
+ * they were bilingual keeps its value in both languages rather than losing it,
+ * which is what a reader of the other language saw anyway.
+ */
+function legacyAuthorLocation(post: AdminPost & { author?: string; location?: string }) {
+  return {
+    authorEn: post.authorEn ?? post.author ?? '',
+    authorMm: post.authorMm ?? post.author ?? '',
+    locationEn: post.locationEn ?? post.location ?? '',
+    locationMm: post.locationMm ?? post.location ?? '',
+  };
+}
+
+/** An image block saved before captions were bilingual keeps its caption in both. */
+function normalizeBlock(block: BlogBlock): BlogBlock {
+  if (block.type !== 'image') return block;
+  const legacy = block as BlogBlock & { caption?: string };
+  return {
+    ...block,
+    captionEn: block.captionEn ?? legacy.caption ?? '',
+    captionMm: block.captionMm ?? legacy.caption ?? '',
+  };
+}
+
+/**
  * A row saved before `scheduledFor` existed kept its schedule in `publishedAt`.
  * Moving it across here is what lets an older browser record still publish.
  */
 function normalizePost(post: AdminPost): AdminPost {
   const scheduledFor = post.scheduledFor
     ?? (post.status === 'Scheduled' && post.publishedAt ? new Date(post.publishedAt).toISOString() : null);
+  // Plan §10 §2 removes `galleryUrls`; the spread would carry a stored one
+  // forward, so it is dropped here rather than left for a reader to trip on.
+  const rest: Record<string, unknown> = { ...post };
+  delete rest.galleryUrls;
   return {
-    ...post,
+    ...(rest as unknown as AdminPost),
     excerptEn: post.excerptEn ?? '',
     excerptMm: post.excerptMm ?? '',
-    galleryUrls: Array.isArray(post.galleryUrls) ? post.galleryUrls : [],
+    ...legacyAuthorLocation(post),
+    blocks: post.blocks.map(normalizeBlock),
     seoTags: post.seoTags ?? '',
     scheduledFor: Number.isNaN(new Date(scheduledFor ?? '').getTime()) ? null : scheduledFor,
     deletedAt: post.deletedAt ?? null,

@@ -47,10 +47,11 @@ type FormState = {
   excerptEn: string;
   excerptMm: string;
   category: string;
-  author: string;
-  location: string;
+  authorEn: string;
+  authorMm: string;
+  locationEn: string;
+  locationMm: string;
   imageUrl: string;
-  galleryUrls: string[];
   blocks: BlogBlock[];
   seoTags: string;
   status: BlogPostStatus;
@@ -97,10 +98,11 @@ const emptyForm: FormState = {
   excerptEn: '',
   excerptMm: '',
   category: 'travel_tips',
-  author: 'MH Travel Editorial',
-  location: '',
+  authorEn: 'MH Travel Editorial',
+  authorMm: 'MH Travel Editorial',
+  locationEn: '',
+  locationMm: '',
   imageUrl: '/images/blog/shwedagon-evening.webp',
-  galleryUrls: [],
   blocks: [createTextBlock()],
   seoTags: '',
   status: 'Draft',
@@ -141,7 +143,7 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
 
   const filteredPosts = useMemo(
     () => posts.filter((post) => (statusFilter === 'All' || post.status === statusFilter)
-      && `${post.titleEn} ${post.titleMm} ${post.category} ${post.author}`.toLowerCase().includes(query.toLowerCase())),
+      && `${post.titleEn} ${post.titleMm} ${post.category} ${post.authorEn} ${post.authorMm}`.toLowerCase().includes(query.toLowerCase())),
     [posts, query, statusFilter],
   );
 
@@ -178,10 +180,11 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       titleEn: post.titleEn,
       titleMm: post.titleMm,
       category: post.category,
-      author: post.author,
-      location: post.location,
+      authorEn: post.authorEn,
+      authorMm: post.authorMm,
+      locationEn: post.locationEn,
+      locationMm: post.locationMm,
       imageUrl: post.imageUrl,
-      galleryUrls: post.galleryUrls,
       blocks: post.blocks.length ? post.blocks : [createTextBlock()],
       status: post.status,
       scheduledDate: date,
@@ -255,10 +258,13 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       excerptEn: form.excerptEn.trim(),
       excerptMm: form.excerptMm.trim(),
       category: form.category,
-      author: form.author.trim() || 'MH Travel Editorial',
-      location: form.location.trim() || 'Myanmar',
+      // Plan §10 §2: an empty second language falls back to the one that was
+      // written, so a byline is never blank on the other side of the site.
+      authorEn: form.authorEn.trim() || form.authorMm.trim() || 'MH Travel Editorial',
+      authorMm: form.authorMm.trim() || form.authorEn.trim() || 'MH Travel Editorial',
+      locationEn: form.locationEn.trim() || form.locationMm.trim() || 'Myanmar',
+      locationMm: form.locationMm.trim() || form.locationEn.trim() || 'Myanmar',
       imageUrl: form.imageUrl.trim(),
-      galleryUrls: form.galleryUrls,
       blocks: normalizeAdSlots(form.blocks),
       seoTags: form.seoTags,
       status: form.status,
@@ -473,13 +479,13 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
                       <img src={post.imageUrl} alt="" className="h-9 w-14 rounded object-cover" />
                       <div>
                         <p className="font-semibold text-white">{post.titleEn}</p>
-                        <p className="text-[9px] text-slate-500">{fill(t('bp_gallery_count'), { count: post.galleryUrls.length })}</p>
+                        <p className="text-[9px] text-slate-500">{fill(t('bp_block_photo'), { count: post.blocks.filter((block) => block.type === 'image').length })}</p>
                         {post.deletedAt && <p className="text-[9px] text-red-300">{t('cw_deleted_marker')}</p>}
                       </div>
                     </div>
                   </td>
                   <td className="px-2 py-2.5 text-slate-400">{categoryLabel(post.category)}</td>
-                  <td className="px-2 py-2.5">{post.author}</td>
+                  <td className="px-2 py-2.5">{post.authorEn}</td>
                   <td className="px-2 py-2.5 text-slate-400">{post.blocks.filter((block) => block.type === 'ad').length}</td>
                   <td className="px-2 py-2.5">{post.views.toLocaleString()}</td>
                   <td className="px-2 py-2.5">
@@ -567,7 +573,7 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
     scheduledTime: form.scheduledTime,
   });
 
-  async function upload(file: File | undefined, mode: 'cover' | 'gallery' | 'inline') {
+  async function upload(file: File | undefined, mode: 'cover' | 'inline') {
     if (!file) return;
     setUploading(true);
     setUploadMessage(t('cw_compress'));
@@ -575,7 +581,6 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
     setUploading(false);
     if (!result.ok) return setUploadMessage(t(MEDIA_KEYS[result.code]));
     if (mode === 'cover') update('imageUrl', result.url);
-    if (mode === 'gallery') update('galleryUrls', [...form.galleryUrls, result.url]);
     if (mode === 'inline') update('blocks', [...form.blocks, createImageBlock(result.url)]);
     setUploadMessage(fill(t('cw_upload_ok'), {
       size: Math.max(1, Math.round(result.bytes / 1024)),
@@ -664,9 +669,10 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
                           <input value={block.altEn} onChange={(event) => replaceBlock({ ...block, altEn: event.target.value })} placeholder={t('bp_ph_alt_en')} aria-label={t('bp_ph_alt_en')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
                           <input value={block.altMm} onChange={(event) => replaceBlock({ ...block, altMm: event.target.value })} placeholder={t('bp_ph_alt_mm')} aria-label={t('bp_ph_alt_mm')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
                           <div className="grid grid-cols-2 gap-1.5">
-                            <input value={block.caption} onChange={(event) => replaceBlock({ ...block, caption: event.target.value })} placeholder={t('bp_ph_caption')} aria-label={t('bp_ph_caption')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
-                            <input value={block.credit} onChange={(event) => replaceBlock({ ...block, credit: event.target.value })} placeholder={t('bp_ph_credit')} aria-label={t('bp_ph_credit')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
+                            <input value={block.captionEn} onChange={(event) => replaceBlock({ ...block, captionEn: event.target.value })} placeholder={t('bp_ph_caption_en')} aria-label={t('bp_ph_caption_en')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
+                            <input value={block.captionMm} onChange={(event) => replaceBlock({ ...block, captionMm: event.target.value })} placeholder={t('bp_ph_caption_mm')} aria-label={t('bp_ph_caption_mm')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
                           </div>
+                          <input value={block.credit} onChange={(event) => replaceBlock({ ...block, credit: event.target.value })} placeholder={t('bp_ph_credit')} aria-label={t('bp_ph_credit')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />
                         </div>
                       </div>
                     )}
@@ -698,22 +704,16 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
             </div>
             {newCategory && <p className="text-[9px] text-green-300">{fill(t('bp_category_added'), { name: newCategory })}</p>}
 
-            <Field label={t('cw_field_author')} value={form.author} onChange={(value) => update('author', value)} />
-            <Field label={t('bp_field_location')} value={form.location} onChange={(value) => update('location', value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Field label={t('bp_field_author_en')} value={form.authorEn} onChange={(value) => update('authorEn', value)} />
+              <Field label={t('bp_field_author_mm')} value={form.authorMm} onChange={(value) => update('authorMm', value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label={t('bp_field_location_en')} value={form.locationEn} onChange={(value) => update('locationEn', value)} />
+              <Field label={t('bp_field_location_mm')} value={form.locationMm} onChange={(value) => update('locationMm', value)} />
+            </div>
             <MediaField label={t('cw_field_cover')} multiple={false} disabled={uploading} onChange={(file) => { void upload(file, 'cover'); }} />
-            <MediaField label={t('bp_additional_photos')} multiple disabled={uploading} onChange={(file) => { void upload(file, 'gallery'); }} />
             <p className="-mt-1 text-[9px] text-slate-500">{t('bp_gallery_note')}</p>
-
-            {form.galleryUrls.length > 0 && (
-              <div className="grid grid-cols-5 gap-1.5">
-                {form.galleryUrls.map((url, index) => (
-                  <div key={`${url}-${index}`} className="group relative">
-                    <img src={url} alt="" className="h-10 w-full rounded object-cover" />
-                    <button type="button" onClick={() => update('galleryUrls', form.galleryUrls.filter((_, itemIndex) => itemIndex !== index))} className="absolute right-0.5 top-0.5 rounded bg-black/70 p-0.5 text-white opacity-0 group-hover:opacity-100" aria-label={fill(t('bp_aria_remove_gallery'), { count: index + 1 })}><X size={10} /></button>
-                  </div>
-                ))}
-              </div>
-            )}
             {uploadMessage && <p className="text-[9px] text-cyan-200">{uploadMessage}</p>}
 
             <Field label={t('bp_seo_tags')} value={form.seoTags} onChange={(value) => update('seoTags', value)} />

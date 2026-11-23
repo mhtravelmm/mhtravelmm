@@ -65,6 +65,14 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   pages render (`publishedBlogPosts`, `publishedGuides`) — readers never read the
   admin store directly, so a Draft or Scheduled row cannot leak. A seed the
   editor takes over keeps its slug, rating and distance.
+- **Blog text that a reader sees in both languages is stored twice.** A post
+  holds `authorEn`/`authorMm` and `locationEn`/`locationMm`; an image block holds
+  `captionEn`/`captionMm`. Never add a single-string field for text the reader
+  localizes — the fallback for an empty side belongs in the reader
+  (`contentReader.ts`), not in the editor. There is no `galleryUrls`: an extra
+  photo is an image block, so it keeps its place in the story and its alt text.
+  `normalizePost` migrates a row saved in the single-language era; do not add a
+  database migration for data that only exists in browser storage.
 - **A schedule is Myanmar Time in, UTC stored.** `src/lib/scheduleRules.ts` is
   the only converter (`myanmarWallClockToUtc`, `utcToMyanmarWallClock`,
   `isDue`). `scheduledFor` carries the instant and `publishedAt` is set only once

@@ -863,7 +863,7 @@ Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib
 #### 1. As built (PARTIAL: editor works on local state)
 
 - **Access:** Super Admin and Blog Post Admin (`canManageBlogs`). Posts, revisions and the audit log live in `src/lib/contentStore.ts` (browser storage), so a row survives a reload and a published one reaches the reader through `src/lib/contentReader.ts`. Two browsers still do not share a row; that is the table work in §3.
-- **Blocks, in reading order:** `text` (`textEn`, `textMm`), `image` (`imageUrl`, `altEn`, `altMm`, `caption`, `credit`), `ad` (no content). Blocks can be inserted, moved up or down (`moveBlock`) and removed.
+- **Blocks, in reading order:** `text` (`textEn`, `textMm`), `image` (`imageUrl`, `altEn`, `altMm`, `captionEn`, `captionMm`, `credit`), `ad` (no content). Blocks can be inserted, moved up or down (`moveBlock`) and removed.
 - **Ad rules in code:** at most 3 ad blocks per post (`MAX_AD_SLOTS_PER_POST`), not first, not next to another ad. `normalizeAdSlots` removes slots that break the rules after an edit.
 - **Statuses:** Draft, Scheduled, Published, with a schedule date and time.
 - **Publish check** (`blogPublishCheck`, stable codes): `title_languages`, `excerpt_languages`, `category`, `cover`, `story_text` (at least one text block with text in either language), `alt_missing` (every image needs alt text in both languages), `schedule`; ad codes `ad_first`, `ad_adjacent`, `ad_max`.
@@ -871,9 +871,17 @@ Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib
 - **Media:** the source image may be up to 12 MB; the browser resizes it to at most 1600 px, converts to WebP trying quality 0.82, 0.68, 0.54, 0.4 until it is at most 450 KB. With `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT` set it posts to the endpoint; without it, it keeps a preview data URL. Failures return codes that the editor translates.
 - **Reader projection** (`contentReader.ts`): the slug is the lowercase hyphenated English title, fixed after first publish and numbered if taken; read time is English words ÷ 200 rounded up; blocks become paragraphs, images and ad slots in order. A seeded post the editor takes over keeps its seed slug and its sample rating and distance, which the editor does not collect.
 - **Scheduling** (24 November 2026): the editor takes Myanmar Time and stores the UTC instant (`scheduleRules.ts`); `publish_due_content` is wired in `jobs.ts` and runs through `scheduledPublishing.ts`, publishing due posts and guides with the actor `system`. Both readers hide a rating or distance the post does not have (§8).
-- **Not built:** MM/EN author and location (both are plain strings), autosave, bilingual captions, server-side `version` checks. `galleryUrls` still exists with no reader field. `seoTags` is one text field.
+- **Bilingual author, location and captions (20 November 2026):** `AdminPost`
+  holds `authorEn`/`authorMm` and `locationEn`/`locationMm`, and an image block
+  holds `captionEn`/`captionMm`. A stored row from before this change keeps its
+  one-language value in both languages (`normalizePost` in `contentStore.ts`),
+  and the reader falls back to the language that was written rather than
+  showing a blank line. `galleryUrls` is gone; extra photos are image blocks.
+- **Not built:** autosave, server-side `version` checks, `seoTags` as a list
+  rather than one text field, and the reader's coordinates, rating and
+  `read_minutes` from the table (they are derived in `contentReader.ts`).
 
-Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code wins); a caption is one string, not MM/EN; the story check needs one non-empty text block in either language, not every paragraph in both.
+Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code wins); the story check needs one non-empty text block in either language, not every paragraph in both. A caption is now MM/EN as decided below.
 
 #### 2. Decisions for the system
 

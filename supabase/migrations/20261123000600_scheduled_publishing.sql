@@ -20,7 +20,11 @@ create table if not exists public.blog_posts (
   excerpt_en text not null default '',
   excerpt_mm text not null default '',
   author_name text not null,
+  -- Plan §10 §2: the byline and the place are bilingual, so the reader shows
+  -- one language rather than repeating the English on both sides.
+  author_name_mm text not null default '',
   location text not null default 'Myanmar',
+  location_mm text not null default '',
   cover_key text,
   cover_url text not null default '',
   seo_tags text not null default '',
@@ -57,7 +61,8 @@ create table if not exists public.blog_blocks (
   image_url text not null default '',
   alt_en text not null default '',
   alt_mm text not null default '',
-  caption text not null default '',
+  caption_en text not null default '',
+  caption_mm text not null default '',
   credit text not null default '',
   unique (post_id, position)
 );

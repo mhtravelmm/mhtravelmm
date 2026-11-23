@@ -1327,3 +1327,51 @@ fill rate in the panel title and the per-slot health. On `/`, `/cities`,
 `/nearby`, `/account` and `/travel-plans/tp4` the ad slots rendered with the
 `ကြော်ငြာ` label, and `/ad/click/cr-home-hero?p=home_hero&s=test-session-1`
 recorded the click and then redirected to `/travel-plans`.
+
+## Blog content in both languages, and no more gallery list — Plan §10 §2, 26 November 2026
+
+Plan §10 §2 decided three things about the Blog model that the code had not
+taken up: the byline and the place are bilingual, a photo caption is bilingual,
+and `galleryUrls` is removed because an extra photo is an image block. All three
+are now in the code, with the stored browser rows migrated on read.
+
+**The model.** `AdminPost` carries `authorEn`/`authorMm` and
+`locationEn`/`locationMm` instead of `author` and `location`, and `galleryUrls`
+is gone. An image block carries `captionEn`/`captionMm` instead of `caption`.
+The reader already spoke this language — `BlogPost.author`, `location` and
+`BlogBlock.caption` are `LocalizedText` — so the editor was the only side that
+had to change; `contentReader.ts` now passes the two sides through instead of
+copying one string into both.
+
+**The migration.** These rows live in browser storage, so there is no database
+to migrate. `normalizePost` in `contentStore.ts` reads a row saved in the
+single-language era and fills both languages from the one value that was
+written, and `normalizeBlock` does the same for a caption. A gallery list is
+dropped rather than carried forward. That is deliberately the only place the old
+shape is understood.
+
+**The empty side.** A byline or caption written in one language only is not
+blank on the other side of the site: the editor fills the second language on
+save, and the reader falls back to the language that was written. A caption that
+is whitespace in both is treated as absent, so a photo does not render an empty
+`figcaption`.
+
+**The editor.** Author and location are two fields each, side by side; a caption
+is two inputs under the photo, with `credit` on its own row. The gallery picker
+and its thumbnail strip are gone, and the table's second line now counts image
+blocks instead of gallery photos, so a post's photo count still reads at a
+glance. Five translation keys were replaced by the pairs they need, and four
+keys that only the gallery used were deleted.
+
+**The tables.** `20261123000600_scheduled_publishing.sql` gains
+`author_name_mm`, `location_mm` and `caption_en`/`caption_mm`, so the committed
+schema still mirrors the client shape it will be swapped for.
+
+**Verification.** `npm run typecheck` clean; `npm test` 53 files / 597 tests
+(5 new in `contentStore.test.ts`, 3 new and 2 updated in
+`contentReader.test.ts`); `npm run build` succeeds; `npx eslint src` back to 7
+pre-existing warnings. Browser check at `/super-admin` in Burmese: the Blogs
+table listed the four posts with the image-block count, and the editor showed
+အမျိုးအစား, the four `ရေးသားသူ`/`တည်နေရာ` fields in two columns each, the
+cover picker, the new note about adding extra photos as image blocks, and no
+gallery strip.

@@ -58,6 +58,14 @@ function excerptOf(post: AdminPost): { en: string; mm: string } {
   return { en: cut(first?.textEn ?? ''), mm: cut(first?.textMm ?? '') };
 }
 
+/** A caption in either language, with the other language standing in when empty. */
+function captionOf(block: Extract<BlogBlock, { type: 'image' }>): { en: string; mm: string } | null {
+  const writtenEn = block.captionEn.trim() ? block.captionEn : '';
+  const writtenMm = block.captionMm.trim() ? block.captionMm : '';
+  if (!writtenEn && !writtenMm) return null;
+  return { en: writtenEn || writtenMm, mm: writtenMm || writtenEn };
+}
+
 /** Admin blocks become reader blocks: the editor's two languages, in order. */
 function toReaderBlocks(blocks: BlogBlock[]): ReaderBlock[] {
   const reader: ReaderBlock[] = [];
@@ -69,7 +77,9 @@ function toReaderBlocks(blocks: BlogBlock[]): ReaderBlock[] {
         type: 'image',
         imageUrl: block.imageUrl,
         alt: { en: block.altEn, mm: block.altMm },
-        ...(block.caption.trim() ? { caption: { en: block.caption, mm: block.caption } } : {}),
+        // Plan §10 §2: each language keeps its own caption; a caption written
+        // in one language only falls back to the other rather than going blank.
+        ...(captionOf(block) ? { caption: captionOf(block)! } : {}),
       });
     } else {
       reader.push({ type: 'ad' });
@@ -97,10 +107,10 @@ export function adminPostToReader(post: AdminPost, taken: Set<string>): BlogPost
     category: asBlogCategory(post.category),
     favoriteCount: 0,
     imageUrl: post.imageUrl,
-    location: { en: post.location, mm: post.location },
+    location: { en: post.locationEn, mm: post.locationMm },
     publishedAt: post.publishedAt,
     readMinutes: readMinutesOf(post.blocks),
-    author: { en: post.author, mm: post.author },
+    author: { en: post.authorEn, mm: post.authorMm },
     title: { en: post.titleEn, mm: post.titleMm },
     excerpt: excerptOf(post),
     blocks: toReaderBlocks(post.blocks),

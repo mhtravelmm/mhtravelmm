@@ -219,7 +219,13 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   still a URL and no byte count is measured. Until the Worker exists, `bytes` is
   0 and the limit is not applied.
 - Add Blog Post, localized block, category, revision, SEO metadata, status, schedule, and audit tables. The block schema, revision cap, and audit actions already exist in `src/lib/blogBlocks.ts` and `src/lib/contentWorkflow.ts`, so the tables mirror that shape.
-- Persist cover, gallery, and inline story media transactionally with ordered blocks, alt text, captions, and R2 keys. The reader already renders ordered text, photo, and ad blocks with alt text and captions from local data.
+- Persist cover and inline story media transactionally with ordered blocks, alt
+  text, captions, and R2 keys. The reader already renders ordered text, photo,
+  and ad blocks with bilingual alt text and captions from local data. The model
+  matches the reader: `authorEn`/`authorMm`, `locationEn`/`locationMm`, and
+  `captionEn`/`captionMm` (20 November 2026), and `galleryUrls` is gone — extra
+  photos are image blocks — so a stored row from the single-language era is
+  migrated in `normalizePost` rather than in the database.
 - Scheduled publishing execution and timezone handling are in place on the client (§10 §4): `src/lib/scheduleRules.ts` converts Myanmar Time to UTC, `src/lib/scheduledPublishing.ts` runs on the one-minute tick, and the reader reads the result. Unpublish, soft delete, restore and the stale-save refusal are also done (§10 §4, §7 acceptance 5–6): `src/lib/contentLifecycle.ts` holds the rules and `20261124000100_content_lifecycle.sql` puts the same version guard on the server. What is left is the server wiring and the parts the client cannot do: moderation, the 30-second draft autosave, public cache invalidation, and a `pg_cron` trigger. Revisions and the audit log live in browser storage today, so they still need the tables above to be shared between two editors.
 - Add Travel Guide and Guide Stop tables with the listing reference, then persist the itinerary, revisions, audit entries, and earning rows that `src/lib/guideEarnings.ts` defines. The per-post earning rate is still undecided, so the amount stays an Admin-entered value.
 

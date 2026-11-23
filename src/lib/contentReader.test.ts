@@ -150,7 +150,7 @@ describe('an admin post as a reader story', () => {
     const story = adminPostToReader(post({
       blocks: [
         { id: '1', type: 'text', textEn: 'First line.', textMm: 'ပထမ' },
-        { id: '2', type: 'image', imageUrl: '/a.webp', altEn: 'Alt', altMm: 'အယ်လ်', caption: 'A caption', credit: 'A credit' },
+        { id: '2', type: 'image', imageUrl: '/a.webp', altEn: 'Alt', altMm: 'အယ်လ်', captionEn: 'A caption', captionMm: 'ဖော်ပြချက်', credit: 'A credit' },
         { id: '3', type: 'ad' },
       ],
     }), new Set());
@@ -161,10 +161,40 @@ describe('an admin post as a reader story', () => {
 
   it('omits an empty caption rather than rendering a blank line', () => {
     const story = adminPostToReader(post({
-      blocks: [{ id: '2', type: 'image', imageUrl: '/a.webp', altEn: 'Alt', altMm: '', caption: '  ', credit: '' }],
+      blocks: [{ id: '2', type: 'image', imageUrl: '/a.webp', altEn: 'Alt', altMm: '', captionEn: '  ', captionMm: '', credit: '' }],
     }), new Set());
     const image = story.blocks[0];
     expect(image.type === 'image' && image.caption).toBeFalsy();
+  });
+
+  it('keeps each language its own caption (Plan §10 §2)', () => {
+    const story = adminPostToReader(post({
+      blocks: [{
+        id: '2', type: 'image', imageUrl: '/a.webp', altEn: 'Alt', altMm: 'အယ်လ်',
+        captionEn: 'Sunrise over Bagan', captionMm: 'ပုဂံ အရုဏ်တက်', credit: 'MH Travel',
+      }],
+    }), new Set());
+    const image = story.blocks[0];
+    expect(image.type === 'image' && image.caption).toEqual({ en: 'Sunrise over Bagan', mm: 'ပုဂံ အရုဏ်တက်' });
+  });
+
+  it('stands the other language in when only one caption was written', () => {
+    const story = adminPostToReader(post({
+      blocks: [{
+        id: '2', type: 'image', imageUrl: '/a.webp', altEn: 'Alt', altMm: 'အယ်လ်',
+        captionEn: 'Only English', captionMm: '', credit: '',
+      }],
+    }), new Set());
+    const image = story.blocks[0];
+    expect(image.type === 'image' && image.caption).toEqual({ en: 'Only English', mm: 'Only English' });
+  });
+
+  it('carries the bilingual byline and location through to the reader', () => {
+    const story = adminPostToReader(post({
+      authorEn: 'Su Myat', authorMm: 'စုမြတ်', locationEn: 'Bagan', locationMm: 'ပုဂံ',
+    }), new Set());
+    expect(story.author).toEqual({ en: 'Su Myat', mm: 'စုမြတ်' });
+    expect(story.location).toEqual({ en: 'Bagan', mm: 'ပုဂံ' });
   });
 
   it('keeps an unknown category readable instead of dropping the post', () => {

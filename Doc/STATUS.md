@@ -1,6 +1,8 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 25 November 2026 (the §16A Adsboard: the seven sections, the
+**Last audited:** 26 November 2026 (the Blog bilingual content model: MM/EN
+author and location, MM/EN image captions, and `galleryUrls` removed with the
+stored rows migrated; before that, 25 November: the §16A Adsboard — the
 advertiser rows, the campaign filters, the AdSense fallback step in `AdSlot`, the
 §16A.8 creative limits and domain block list, and Payment Admin's read-only
 reports; before that, 24 November: admin accounts, audit log, role change,
