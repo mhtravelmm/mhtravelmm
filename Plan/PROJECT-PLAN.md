@@ -136,7 +136,7 @@ The following findings were checked against the source files, not inferred from 
 #### Persistence and backend boundary
 
 - The app contains no `supabase/` migration directory or SQL source. The profile migration and RLS status are recorded in the backend/auth section of `Plan/PROJECT-PLAN.md` as work applied directly to the connected Supabase project; they are not independently reproducible from this checkout.
-- Application Supabase/API calls in source are limited to `src/lib/auth.tsx` (optional Auth/session and `public.profiles` lookup), `src/lib/mainOwnerApi.ts` (branch-account work) and `src/lib/blogMediaApi.ts` (fetch to the R2 upload endpoint). Catalogs, bookings, custom-plan requests, notifications, reviews, views, Favorites, Ticketing inventory, payments, and admin metrics do not call Supabase or another application API.
+- Application Supabase/API calls in source are limited to `src/lib/auth.tsx` (optional Auth/session and `public.profiles` lookup), `src/lib/mainOwnerApi.ts` (branch-account work) and `src/lib/mediaApi.ts` (fetch to the R2 upload endpoint). Catalogs, bookings, custom-plan requests, notifications, reviews, views, Favorites, Ticketing inventory, payments, and admin metrics do not call Supabase or another application API.
 - Home, City, Nearby, Travel Plan, Blog, Restaurant, Book Shop, Rental, Travel Guide, and Ticketing records are compiled TypeScript data or page-local arrays. Search deliberately searches only the imported Travel Plans, Travel Guides, Blogs, and Popular arrays.
 - Favorites are shared and synchronized, but only through the browser `localStorage` key `mh-travel-favorite-overrides` and same-tab/storage events in `src/lib/favorites.tsx`. They are not user-scoped and remain after logout or when another local user uses the same browser.
 - Custom Plan submission, Rental submission, and Ticketing order confirmation change local React state only. They do not create request IDs, persist payloads, notify MH Travel, reserve inventory, lock seats, take payment, or send contact requests.
@@ -858,7 +858,7 @@ Blog:
 
 ### Blog: system specification (2026-11-22)
 
-Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib/publishProblems.ts`, `src/lib/blogMediaApi.ts`, `src/lib/contentAdminAccess.ts` and `src/features/superAdmin/BlogPostsPanel.tsx` (main @ `74b80fa`).
+Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib/publishProblems.ts`, `src/lib/mediaRules.ts`, `src/lib/mediaApi.ts`, `src/lib/contentAdminAccess.ts` and `src/features/superAdmin/BlogPostsPanel.tsx` (main @ `74b80fa`).
 
 #### 1. As built (PARTIAL: editor works on local state)
 
@@ -1390,6 +1390,8 @@ Built 2026-11-24 (browser stand-in for `translation_cache`): `src/lib/translatio
 
 All uploads go through the authenticated Worker (type check, size check, role check, rate limit, CORS allowlist). A nightly job removes objects nothing has referenced for 30 days.
 
+Built 2026-11-24 (browser stand-in for the Worker): `src/lib/mediaRules.ts` is the one table for the five folders — `MEDIA_RULES` states prefix, accepted types, stored format, byte ceiling and longest edge, `AD_VIDEO` carries the 3 MB / 15 s MP4 limits, `folderPrefix()` refuses a missing or path-like shop id, and `checkMedia()` answers with a translatable code (`unsupported_type`, `too_large`, `video_too_long`, `shop_required`, `quota_reached`). Its `stage` option separates a source image (held only to the 12 MB ceiling, because it is compressed next) from the stored file (held to the folder ceiling). `src/lib/mediaApi.ts` replaces `blogMediaApi.ts`: it converts to WebP, steps the quality down and then halves the longest edge twice before refusing, and both content editors name their folder — `blog-posts` in Blog Post Management, `guide-stops` in Travel Guide Management. `supabase/migrations/20261123000500_media_objects.sql` adds `media_objects` (one row per object, `last_referenced_at`, the `shops/<id>/` and size checks), `register_media_object()`, `touch_media_object()`, `shop_media_count()`, `orphan_media_objects(days)` and `delete_media_object()`, with no client insert or delete policy. Still open: the Worker (which must repeat the same checks and call `register_media_object()`), wiring the nightly job to `orphan_media_objects(30)`, `touch_media_object()` from each content save, and an Ads creative file input.
+
 ### 16B.7 Scheduled jobs
 
 Runs on `pg_cron` or Cloudflare Cron Triggers. Every job is safe to run twice, logs its result, and notifies Super Admin when it fails.
@@ -1582,7 +1584,7 @@ This section records the dashboard work completed from the supplied visual refer
 ### Super Admin Blog category and Cloudflare R2 media update — 2026-11-14
 - Blog Post Editor now lets Super Admin add a new category during post creation. Category names are normalized to safe slugs, duplicate names are rejected, and the new category is selected immediately for the current editor session.
 - Cover images now accept JPEG, PNG, and WebP uploads. The browser validates the file type and original size, resizes the longest edge to at most 1600px, converts the image to WebP, and repeatedly compresses it to a maximum of 450 KB before upload.
-- `src/lib/blogMediaApi.ts` sends the compressed file as multipart form data to `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT`, with `folder=blog-posts`. The expected endpoint returns the durable Cloudflare R2 URL and object key; the editor stores that URL in the Blog Post cover-image field and reports the final KB size.
+- `src/lib/mediaApi.ts` sends the compressed file as multipart form data to `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT`, with the folder the caller names (`blog-posts` from Blog Post Management, `guide-stops` from Travel Guide Management). The expected endpoint returns the durable Cloudflare R2 URL and object key; the editor stores that URL in the cover-image field and reports the final KB size.
 - When the upload endpoint is not configured, the editor uses a local data-URL preview fallback so design testing remains usable. Production still requires the Cloudflare Worker/Pages Function endpoint, R2 binding, authenticated Super Admin authorization, object-key sanitization, content-type/size validation, and the public URL/CDN policy.
 
 ### Blog post cover and gallery photo support — 2026-11-14

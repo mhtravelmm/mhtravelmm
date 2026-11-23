@@ -50,7 +50,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (416 tests, 37 files) |
+| `npm test` (vitest) | **PASS** (446 tests, 38 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (43 declared routes, all render) |
 
@@ -203,7 +203,7 @@ places rather than advice.
 | Exchange rate | **PARTIAL** | Plan §16B.5 rows are in place client-side: `src/lib/exchangeRates.ts` appends `{mmkPerUsd, effectiveFrom, setBy, note}` and the rate in force is the latest row that has taken effect, with the Plan's 4,500 as the fallback. Super Admin → Currency shows the history table and takes a note per change; every change writes an audit row. One formatter (`src/lib/moneyFormat.ts`) does USD 2 decimals and MMK to the nearest 100. Still browser storage, not `exchange_rates` |
 | Rental order rules (§8.7) | **PREVIEW** | All fifteen checks mirrored in `src/lib/rentalOrderRules.ts`; the migration holds the authoritative copy |
 | Translation fallback (§16B.4) | **PARTIAL** | `src/lib/translationCache.ts` holds the rules (a name, an address and a price are never translated; one row per text and direction; a reviewed row is never overwritten), `src/lib/translationApi.ts` calls the Worker named by `VITE_TRANSLATION_ENDPOINT`, `useLocalizedText()` + `AutoTranslatedMark` are the reader seam and marker, and `TranslationReviewPanel` is the Admin queue in the `translations` section, busiest first, with one audit row per approval. Blogs and Travel Guide read through it; the rows are browser storage until `translation_cache` is applied and the Worker exists |
-| Blog media (Cloudflare R2) | **PARTIAL** | Adapter exists, no deployed Worker |
+| Media and storage (§16B.6) | **PARTIAL** | `src/lib/mediaRules.ts` states the five folders and their limits (`blog-posts/`, `guide-stops/`, `rentals/` 450 KB WebP; `ads/` 300 KB image or 3 MB / 15 s MP4; `shops/<shop-id>/` 450 KB within an Admin-set quota), refuses a path-like shop id, and answers with a translatable code. `src/lib/mediaApi.ts` compresses to WebP, halving the longest edge twice before it gives up, and both content editors name their folder. `media_objects` with `last_referenced_at`, `shop_media_count()`, `orphan_media_objects()` and `delete_media_object()` are committed. No deployed Worker yet, so an upload still falls back to a data URL, and the nightly orphan job stays `wired: false` |
 
 `localStorage` is used across 9 files with 15 distinct keys. Every one of them
 is a production replacement target, listed in `REMAINING-WORK.md`. The Favorites

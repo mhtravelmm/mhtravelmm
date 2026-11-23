@@ -1481,7 +1481,7 @@ const translations = {
   cw_ready_publish: { mm: "ထုတ်ဝေရန် အသင့်ဖြစ်ပါပြီ။", en: "Ready to publish." },
   cw_compress: { mm: "ဓာတ်ပုံကို ချုံ့နေသည်…", en: "Compressing photo…" },
   cw_upload_ok: { mm: "{size} KB · {target}", en: "{size} KB · {target}" },
-  cw_upload_target_r2: { mm: "R2/blog-posts", en: "R2/blog-posts" },
+  cw_upload_target_r2: { mm: "R2/{folder}", en: "R2/{folder}" },
   cw_upload_target_preview: { mm: "ကြိုတင်ကြည့်ရှုမှု အရန်", en: "preview fallback" },
   cw_editor_close: { mm: "တည်းဖြတ်ခန်း ပိတ်ရန်", en: "Close editor" },
   cw_field_title_en: { mm: "ခေါင်းစဉ် · အင်္ဂလိပ် *", en: "Title · English *" },
@@ -1519,6 +1519,11 @@ const translations = {
   cw_media_still_large: { mm: "ချုံ့ပြီးနောက်လည်း ၄၅၀ KB ထက် ကြီးနေသည်။ ပိုငယ်သော ဓာတ်ပုံ ရွေးပါ။", en: "Image is still larger than 450 KB after compression. Choose a smaller image." },
   cw_media_r2_failed: { mm: "Cloudflare R2 သို့ တင်၍ မရပါ။ media API ကို စစ်ပါ။", en: "Cloudflare R2 upload failed. Check the media API." },
   cw_media_generic: { mm: "ဓာတ်ပုံ ချုံ့ခြင်း/တင်ခြင်း မအောင်မြင်ပါ။", en: "Image compression/upload failed." },
+  cw_media_unsupported_type: { mm: "ဤဖိုင်အမျိုးအစားကို ဤ folder တွင် ခွင့်မပြုပါ။", en: "That file type is not allowed in this folder." },
+  cw_media_too_large: { mm: "ဖိုင်သည် ဤ folder ၏ သတ်မှတ်အရွယ်ထက် ကြီးနေသည်။", en: "The file is larger than this folder allows." },
+  cw_media_video_too_long: { mm: "ဗီဒီယိုသည် ၁၅ စက္ကန့် သို့မဟုတ် ထို့ထက် တိုရမည်။", en: "The video must be 15 seconds or shorter." },
+  cw_media_shop_required: { mm: "ဆိုင်ဓာတ်ပုံ တင်ရန် ဆိုင် id လိုအပ်သည်။", en: "A shop id is required to upload a shop photo." },
+  cw_media_quota_reached: { mm: "ဤဆိုင်၏ ဓာတ်ပုံကန့်သတ်ချက် ပြည့်နေပြီ။", en: "This shop has reached its photo quota." },
 
   // Blog Post Management editor
   bp_kicker: { mm: "Content Admin · ဘလော့များ", en: "Content Admin · Blogs" },

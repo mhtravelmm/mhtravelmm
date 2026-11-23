@@ -188,11 +188,28 @@ table with its RLS and functions. What remains:
 
 ## Blog, media, and Cloudflare R2
 
-- Deploy an authenticated Cloudflare Worker/Pages Function with an R2 binding for the blog media endpoint.
-- Enforce `blog-posts/` object keys, WebP content validation, 450 KB size limits, authorization, CORS, rate limits, and durable URL/key responses.
+The client side of Plan §16B.6 is built: `src/lib/mediaRules.ts` holds the five
+folder rules, `src/lib/mediaApi.ts` compresses and posts, and
+`supabase/migrations/20261123000500_media_objects.sql` records every object with
+`last_referenced_at` and lists the orphans. What remains:
+
+- Deploy an authenticated Cloudflare Worker/Pages Function with an R2 binding for
+  the media endpoint, and have it repeat the `mediaRules.ts` checks server-side:
+  folder, type, byte ceiling, `shops/<id>/` key, the 15-second ad video and the
+  shop quota from `shop_media_count()`. Then call `register_media_object()` after
+  each successful put, so the row and the file appear together.
+- Wire the `orphan_media_cleanup` job to `orphan_media_objects(30)`: delete the R2
+  object first, then the row with `delete_media_object()`, so a failed delete is
+  retried the next night instead of losing the file. Until the Worker exists the
+  job stays `wired: false` in `src/lib/jobs.ts`.
+- Call `touch_media_object()` from every content save that still shows an object,
+  otherwise a cover edited after 30 days looks like an orphan. The blog and guide
+  editors do not save to a table yet, so this lands with those tables.
+- Add an Ads creative upload path: `mediaRules.ts` already allows a 300 KB image
+  and a 3 MB / 15 s MP4 in `ads/`, but the Ads Management panel has no file input
+  yet, so a creative is still a name and an advertiser.
 - Add Blog Post, localized block, category, revision, SEO metadata, status, schedule, and audit tables. The block schema, revision cap, and audit actions already exist in `src/lib/blogBlocks.ts` and `src/lib/contentWorkflow.ts`, so the tables mirror that shape.
 - Persist cover, gallery, and inline story media transactionally with ordered blocks, alt text, captions, and R2 keys. The reader already renders ordered text, photo, and ad blocks with alt text and captions from local data.
-- Remove replaced/orphaned R2 objects safely.
 - Add scheduled publishing execution, timezone handling, moderation, draft autosave, optimistic concurrency, and public cache invalidation. Revisions and the audit log are recorded in the editor's local state today and need the tables above to survive a reload.
 - Add Travel Guide and Guide Stop tables with the listing reference, then persist the itinerary, revisions, audit entries, and earning rows that `src/lib/guideEarnings.ts` defines. The per-post earning rate is still undecided, so the amount stays an Admin-entered value.
 

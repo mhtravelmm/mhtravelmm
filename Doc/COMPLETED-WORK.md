@@ -223,8 +223,8 @@ voucher v2. Yangon's selector showed no motorbike or scooter.
   (`{ code, count? }`) defined in `src/lib/publishProblems.ts`, and the editor
   resolves it through `PUBLISH_PROBLEM_KEYS`. A code is stable for tests and
   for the server-side check that will mirror these rules.
-- `blogMediaApi.ts` failures carry a `MediaErrorCode` instead of a message, so
-  an upload error reads in the active language.
+- `mediaApi.ts` (then `blogMediaApi.ts`) failures carry a `MediaErrorCode`
+  instead of a message, so an upload error reads in the active language.
 - `describeAction` became `actionLabelKey`, returning a `TranslationKey` for
   the audit line instead of English text.
 - `fill()` in `src/lib/fill.ts` replaces `{count}`/`{title}`-style
@@ -972,6 +972,55 @@ succeeds; `npx eslint src` unchanged at 7 pre-existing warnings. Browser check a
 all eight jobs, the rental expiry job reads `16:03 · 2026-11-23` with next due
 `16:08` and the result "ပြောင်းလဲမှု မရှိပါ", the other seven read "မချိတ်ရသေး",
 and the run log shows the same row.
+
+## Media and storage rules for the five R2 folders — Plan §16B.6, 24 November 2026
+
+The Plan names five folders — `blog-posts/`, `guide-stops/`, `ads/`,
+`rentals/`, `shops/<shop-id>/` — and gives each a type, a size and, for an ad
+video, a length. Only the blog cover had a rule, hard-coded inside the upload
+call, so a guide photo and an ad creative were measured by a blog rule.
+
+`src/lib/mediaRules.ts` is now the one table. `MEDIA_RULES` states each folder's
+prefix, accepted types, stored format, byte ceiling and longest edge;
+`AD_VIDEO` carries the §16A.8 video limits (MP4, 3 MB, 15 s);
+`folderPrefix()` builds the path and refuses a missing or path-like shop id, so
+`shops/../admin` cannot escape the folder. `checkMedia()` returns one answer for
+every upload and names the reason with a code the editor already translates
+(`unsupported_type`, `too_large`, `video_too_long`, `shop_required`,
+`quota_reached`). It takes a `stage`: an `original` image is only held to the
+12 MB source ceiling because it is compressed next, and the folder's own ceiling
+is applied a second time to the compressed result.
+
+`src/lib/mediaApi.ts` replaces `blogMediaApi.ts`. It converts an image to WebP
+and walks the quality down; when a detailed photo still misses 450 KB at full
+size the longest edge is halved twice more before the upload is refused, which
+is what turned a 5.6 MB test photo into a 447 KB cover. An ad video is sent as
+MP4 unchanged, with its measured length in the request, because re-encoding it
+in the browser would take seconds and lose quality. The editors name their
+folder: `uploadContentImage(file, 'blog-posts')` in Blog Post Management and
+`uploadContentImage(file, 'guide-stops')` in Travel Guide Management, and the
+success message now reports the real folder instead of a fixed `R2/blog-posts`.
+
+`supabase/migrations/20261123000500_media_objects.sql` adds `media_objects`, one
+row per object, with the five folder values, the `shops/<id>/` key check, the
+size checks that repeat the client table, and `last_referenced_at` — the cleanup
+reads that column rather than `created_at`, so an old file still in use is kept.
+It also adds `register_media_object()`, `touch_media_object()`,
+`shop_media_count()` (the server-side count behind a shop's quota),
+`orphan_media_objects(days)` for the §16B.7 nightly job, and
+`delete_media_object()`. There is no client insert or delete policy: the
+authenticated Worker writes and the cleanup deletes, so a browser cannot claim an
+object it did not upload.
+
+**Verification.** `npm run typecheck` clean; `npm test` 38 files / 446 tests
+(new: `mediaRules`, 30 tests); `npm run build` succeeds; `npx eslint src`
+unchanged at 7 pre-existing warnings. Browser check: the rules answered inside
+the running app (`blog-posts` 450 KB, `ads` image 300 KB, `ads` video 3 MB / 15 s,
+`shops` needs an id); a 1 KB PNG uploaded as a blog cover and a guide cover and
+showed in both editors; a 5.6 MB 1600×1200 PNG compressed to 447 KB and was
+accepted; a 16-second ad video was refused with `video_too_long`; a shop photo
+without an id was refused with `shop_required`. No page errors on any of the
+routes checked.
 
 ## Translation fallback with an Admin review queue — Plan §16B.4, 24 November 2026
 

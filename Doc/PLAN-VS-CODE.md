@@ -65,10 +65,10 @@ work.
 `public.profiles` lookup in `src/lib/auth.tsx`.
 
 **Code says**: `src/lib/mainOwnerApi.ts` also imports `supabase` and
-`isSupabaseConfigured`, and performs branch-account work. `blogMediaApi.ts`
+`isSupabaseConfigured`, and performs branch-account work. `mediaApi.ts`
 performs a `fetch` to the R2 endpoint. The claim is now too narrow.
 
-**Fix**: name `auth.tsx`, `mainOwnerApi.ts`, and `blogMediaApi.ts`.
+**Fix**: name `auth.tsx`, `mainOwnerApi.ts`, and `mediaApi.ts`.
 
 ### 3.3 Route manifest "matches the concrete routes"
 

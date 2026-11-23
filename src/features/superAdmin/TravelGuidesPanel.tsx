@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, ImagePlus, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { LISTING_IDS, LISTING_INDEX, listingTitle } from '../../data/listingIndex';
 import { TRAVEL_GUIDE_STORIES, type GuideCategory } from '../../data/travelGuideData';
-import { uploadBlogCoverImage, type MediaErrorCode } from '../../lib/blogMediaApi';
+import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
 import { addEarningForGuide } from '../../lib/guideEarningsStore';
 import {
   actionForSave,
@@ -53,6 +53,11 @@ const MEDIA_KEYS: Record<MediaErrorCode, TranslationKey> = {
   still_large: 'cw_media_still_large',
   r2_failed: 'cw_media_r2_failed',
   generic: 'cw_media_generic',
+  unsupported_type: 'cw_media_unsupported_type',
+  too_large: 'cw_media_too_large',
+  video_too_long: 'cw_media_video_too_long',
+  shop_required: 'cw_media_shop_required',
+  quota_reached: 'cw_media_quota_reached',
 };
 
 type AdminGuide = GuideDraft & { id: string; publishedAt: string; views: number };
@@ -338,14 +343,14 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
     if (!file) return;
     setUploading(true);
     setUploadMessage(t('cw_compress'));
-    const result = await uploadBlogCoverImage(file);
+    const result = await uploadContentImage(file, 'guide-stops');
     setUploading(false);
     if (!result.ok) return setUploadMessage(t(MEDIA_KEYS[result.code]));
     if (stopId) onStops(draft.stops.map((stop) => (stop.id === stopId ? { ...stop, imageUrl: result.url } : stop)));
     else onChange('coverUrl', result.url);
     setUploadMessage(fill(t('cw_upload_ok'), {
       size: Math.max(1, Math.round(result.bytes / 1024)),
-      target: t(result.source === 'r2' ? 'cw_upload_target_r2' : 'cw_upload_target_preview'),
+      target: result.source === 'r2' ? fill(t('cw_upload_target_r2'), { folder: 'guide-stops' }) : t('cw_upload_target_preview'),
     }));
   }
 

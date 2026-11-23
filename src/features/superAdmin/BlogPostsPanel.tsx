@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, CalendarDays, Edit3, Eye, ImagePlus, Megaphone, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { BLOG_POSTS } from '../../data/blogsData';
-import { uploadBlogCoverImage, type MediaErrorCode } from '../../lib/blogMediaApi';
+import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
 import {
   actionForSave,
   actionLabelKey,
@@ -88,6 +88,11 @@ const MEDIA_KEYS: Record<MediaErrorCode, TranslationKey> = {
   still_large: 'cw_media_still_large',
   r2_failed: 'cw_media_r2_failed',
   generic: 'cw_media_generic',
+  unsupported_type: 'cw_media_unsupported_type',
+  too_large: 'cw_media_too_large',
+  video_too_long: 'cw_media_video_too_long',
+  shop_required: 'cw_media_shop_required',
+  quota_reached: 'cw_media_quota_reached',
 };
 
 const emptyForm: FormState = {
@@ -447,7 +452,7 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
     if (!file) return;
     setUploading(true);
     setUploadMessage(t('cw_compress'));
-    const result = await uploadBlogCoverImage(file);
+    const result = await uploadContentImage(file, 'blog-posts');
     setUploading(false);
     if (!result.ok) return setUploadMessage(t(MEDIA_KEYS[result.code]));
     if (mode === 'cover') update('imageUrl', result.url);
@@ -455,7 +460,7 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
     if (mode === 'inline') update('blocks', [...form.blocks, createImageBlock(result.url)]);
     setUploadMessage(fill(t('cw_upload_ok'), {
       size: Math.max(1, Math.round(result.bytes / 1024)),
-      target: t(result.source === 'r2' ? 'cw_upload_target_r2' : 'cw_upload_target_preview'),
+      target: result.source === 'r2' ? fill(t('cw_upload_target_r2'), { folder: 'blog-posts' }) : t('cw_upload_target_preview'),
     }));
   }
 

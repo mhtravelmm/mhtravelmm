@@ -103,6 +103,15 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   and prices are never translated (`isTranslatable`), and a reviewed row
   (`approved` or `edited`) is what removes the marker. The Admin queue is
   `TranslationReviewPanel` under the `translations` workspace section.
+- Every upload goes through `checkMedia()` in `mediaRules.ts` before the file is
+  read, and the folder is named by the caller: `uploadContentImage(file,
+  'blog-posts')` or `'guide-stops'`. Never hard-code a byte limit at the call
+  site — the folder table is the only place a limit lives, and
+  `mediaRules.test.ts` compares it against the SQL check. An image is checked
+  twice: `stage: 'original'` allows up to 12 MB because it is compressed next,
+  and `stage: 'final'` holds the compressed result to the folder ceiling, so do
+  not "simplify" that into one pass or a 5 MB photo is refused before it is
+  shrunk. The success message reads `cw_upload_target_r2` with `{folder}`.
 
 ## Pushing to origin
 
