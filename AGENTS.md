@@ -61,6 +61,14 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   Guides editor, because §16B.1 gives the write to Payment Admin. The rows live
   in `guideEarningsStore.ts` so a second role can see them; publishing a guide
   adds a row through `addEarningForGuide()`.
+- The Admin Management table never holds rows in `useState`. It reads
+  `mergeAdminRows(seeded, adminAccounts)` from `adminAccounts.ts`, where
+  `adminAccounts` comes from `useAuth()`, so a created admin survives a reload.
+- Every admin write appends one row through `recordAdminAudit()` from
+  `adminAudit.ts` (actor, actor role, action, object type, object id, summary,
+  UTC time, source) and the log is read in `AuditLogPanel`. Add the call at the
+  write site, not in the panel, and add the `audit` section to
+  `adminWorkspace.ts` before touching the nav.
 
 ## Pushing to origin
 

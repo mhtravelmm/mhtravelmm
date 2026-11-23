@@ -40,6 +40,14 @@ the suite instead of reaching a user as "coming soon."
   `guide_earnings` table.
 - Owner Admin's `O` rows belong in `/shop-owner`, not the admin workspace, so
   the matrix's bookings row is not built there at all.
+- Admin Management now lists the stored accounts (`src/lib/adminAccounts.ts`)
+  rather than component state, so a created admin survives a reload. The rows
+  are still browser storage, not `public.profiles`.
+- Audit rows for admin-account creation, guide-earning amount and settlement are
+  written by `src/lib/adminAudit.ts` and read in `AuditLogPanel`. What remains:
+  write the same row from every other write path (owners, ads approval, blog and
+  guide publish, rental order status, currency, roles), and move the store to
+  `admin_audit_logs` so rows are append-only in the database and kept 24 months.
 - Connect Admin and Shop Owner creation forms to Supabase Auth invitations, profile/business records, acceptance flows, and audit history. Plaintext preview passwords must not be used in production.
 
 ## Data persistence and APIs

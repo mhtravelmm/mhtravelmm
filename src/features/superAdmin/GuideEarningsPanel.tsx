@@ -10,6 +10,7 @@ import {
 } from '../../lib/adminWorkspace';
 import { authorTotals, earningsForAuthor } from '../../lib/guideEarnings';
 import { useGuideEarnings } from '../../lib/guideEarningsStore';
+import { recordAdminAudit } from '../../lib/adminAudit';
 
 /**
  * Plan §16B.1: guide earnings belong to Payment Admin (`F`), with Admin on `R`
@@ -51,6 +52,35 @@ export function GuideEarningsPanel() {
   const payable = totals.reduce((sum, total) => sum + total.payableUsd, 0);
   const settled = totals.reduce((sum, total) => sum + total.paidUsd, 0);
   const waiting = totals.reduce((sum, total) => sum + total.pendingRows, 0);
+
+  // Plan §16B.2: setting the amount and settling it are both writes, so each
+  // one appends an audit row naming the actor and the guide.
+  function commitAmount(rowId: string, amountUsd: number, guideTitle: string) {
+    setAmount(rowId, amountUsd);
+    if (!Number.isFinite(amountUsd) || amountUsd < 0) return;
+    recordAdminAudit({
+      actor: user?.name ?? '',
+      actorRole: adminRole ?? 'system',
+      action: 'updated',
+      objectType: 'guide_earning',
+      objectId: guideTitle || rowId,
+      summary: `amount ${amountUsd} USD`,
+      source: 'earnings',
+    });
+  }
+
+  function commitPaid(rowId: string, guideTitle: string, amountUsd: number | null) {
+    markPaid(rowId);
+    recordAdminAudit({
+      actor: user?.name ?? '',
+      actorRole: adminRole ?? 'system',
+      action: 'payment',
+      objectType: 'guide_earning',
+      objectId: guideTitle || rowId,
+      summary: `paid ${amountUsd ?? 0} USD`,
+      source: 'earnings',
+    });
+  }
 
   const stateKey = {
     needs_amount: 'ge_state_needs_amount',
@@ -121,7 +151,7 @@ export function GuideEarningsPanel() {
                         min={0}
                         step={1}
                         value={row.amountUsd ?? ''}
-                        onChange={(event) => setAmount(row.id, Number(event.target.value))}
+                        onChange={(event) => commitAmount(row.id, Number(event.target.value), row.guideTitle)}
                         aria-label={t('tg_aria_amount').replace('{id}', row.guideId)}
                         className="h-7 w-20 rounded border border-[#2b527d] bg-[#081a31] px-2 text-[11px] text-white outline-none"
                       />
@@ -139,7 +169,7 @@ export function GuideEarningsPanel() {
                     ) : mayMarkPaid ? (
                       <button
                         type="button"
-                        onClick={() => markPaid(row.id)}
+                        onClick={() => commitPaid(row.id, row.guideTitle, row.amountUsd)}
                         className="rounded border border-cyan-300/40 px-2 py-1 text-[9px] font-bold text-cyan-200 hover:bg-cyan-400/10"
                       >
                         {t('tg_mark_paid')}

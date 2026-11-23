@@ -5,6 +5,7 @@ import {
   canMarkEarningPaid,
   canOpenSection,
   canReadAllEarnings,
+  canReadAuditLog,
   canRecordPayment,
   canSetEarningAmount,
   sectionsForRole,
@@ -14,7 +15,7 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
   it('gives Super Admin every section', () => {
     expect(sectionsForRole('Super Admin')).toEqual([
       'overview', 'users', 'admins', 'owners', 'bookings', 'content', 'blogs',
-      'guides', 'guideEarnings', 'ads', 'currency', 'rentals', 'rentalOrders', 'rentalReports',
+      'guides', 'guideEarnings', 'ads', 'currency', 'rentals', 'rentalOrders', 'rentalReports', 'audit',
     ]);
   });
 
@@ -99,6 +100,16 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
       if (role === 'Owner Admin') continue;
       expect(sectionsForRole(role).length).toBeGreaterThan(0);
     }
+  });
+
+  it('keeps the audit log with Super Admin, the only role its row grants', () => {
+    expect(canOpenSection('Super Admin', 'audit')).toBe(true);
+    expect(canReadAuditLog('Super Admin')).toBe(true);
+    for (const role of ADMIN_ROLES.filter((candidate) => candidate !== 'Super Admin')) {
+      expect(canOpenSection(role, 'audit')).toBe(false);
+      expect(canReadAuditLog(role)).toBe(false);
+    }
+    expect(canReadAuditLog(undefined)).toBe(false);
   });
 
   it('separates handling an order from recording its payment', () => {

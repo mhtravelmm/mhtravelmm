@@ -28,6 +28,8 @@ interface AuthContextValue {
   isShopOwner: boolean;
   isAdminStaff: boolean;
   adminRole: AdminRole | undefined;
+  /** Admin accounts on record, so Admin Management lists what was created. */
+  adminAccounts: AuthUser[];
   createAdminAccount: (input: { name: string; email: string; role: AdminRole; password: string }) => Promise<AuthResult>;
   login: (identifier: string, password: string) => Promise<AuthResult>;
   loginAdmin: (identifier: string, password: string) => Promise<AuthResult>;
@@ -140,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isShopOwner: user?.role === 'owner_admin',
     isAdminStaff: user?.role === 'admin_staff',
     adminRole: user?.adminRole,
+    adminAccounts: isSupabaseConfigured ? [] : readUsers().filter((candidate) => candidate.role === 'admin_staff').map(publicUser),
     async login(identifier, password) {
       const normalizedIdentifier = identifier.trim().toLowerCase();
       if (isSupabaseConfigured && supabase && normalizedIdentifier.includes('@')) {
@@ -157,8 +160,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const users = readUsers();
       if (users.some((candidate) => candidate.email === email)) return { ok: false, message: 'auth_email_exists' };
       const created: StoredUser = {
-        id: `content-admin-${Date.now()}`,
-        name: input.name.trim() || 'MH Travel Content Admin',
+        id: `admin-${Date.now()}`,
+        name: input.name.trim() || 'MH Travel Admin',
         username: email.split('@')[0],
         email,
         password: input.password,
@@ -168,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       users.push(created);
       saveUsers(users);
+      emitAuthChange();
       return { ok: true, role: 'admin_staff' };
     },
     async loginAdmin(identifier, password) {

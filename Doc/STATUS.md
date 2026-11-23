@@ -1,6 +1,6 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 23 November 2026
+**Last audited:** 23 November 2026 (admin accounts + audit log added)
 **Audited against:** `main` plus the rental order rules in
 `src/lib/rentalOrderRules.ts`, the Rental catalog data module, the Rental Admin
 panel, the per-account Favorites/notification/review wiring, and the earlier
@@ -177,11 +177,12 @@ places rather than advice.
 | Super Admin metrics/users/content | **PARTIAL** | Seeded metrics; body localized through `useLanguage` |
 | Super Admin Ads Management | **PREVIEW** | Page-oriented placements, local state |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |
-| Admin Management | **PARTIAL** | Local state; form offers the eight Plan §3 roles and creates a real local admin account with the chosen role |
+| Admin Management | **PARTIAL** | Form offers the eight Plan §3 roles and creates a real local admin account with the chosen role. The table merges the seeded rows with the stored accounts (`src/lib/adminAccounts.ts`), so a created admin survives a reload; the rows themselves are still browser storage, not `public.profiles` |
 | Blog Post Management | **PARTIAL** | Ordered blocks with text, photo (alt/caption/credit) and ad slots, reorder, publish checks, revisions and audit log; upload falls back locally. Localized through `useLanguage` |
 | Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows in their own `GuideEarningsPanel` section (Payment Admin sets the amount and settles, the author reads its own rows); content is still local state. Localized through `useLanguage` |
 | Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
 | Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
+| Audit log | **PARTIAL** | `src/lib/adminAudit.ts` + `AuditLogPanel` implement Plan §16B.2: one append-only row per decision (actor, actor role, action, object type, object id, summary, UTC time, source), searchable and filterable, Super Admin only per the §16B.1 settings row. Recorded today for admin-account creation, guide-earning amount and settlement; the store is browser storage until `admin_audit_logs` is wired |
 | Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected. Plan §3 and §16B.1 now scope one admin workspace per role: `src/lib/adminWorkspace.ts` lists the sections each role may open, and the Super Admin page filters its navigation through it, so Ads Admin sees only Ads, Payment Admin only orders/reports/currency/guide earnings, Blog Post Admin only Blogs, and Travel Guide Content Admin only Guides and its own earnings. `src/lib/roleMapping.ts` maps every one of the eight `profiles.role` slugs to a product role, and `auth.tsx` hydrates `adminRole` from the profile row, which is what the workspace reads |
 
 ---

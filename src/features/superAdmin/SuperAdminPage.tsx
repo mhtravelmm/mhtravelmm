@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Activity,
@@ -45,6 +45,7 @@ import { RentalAdminPanel } from './RentalAdminPanel';
 import { RentalOrdersPanel } from './RentalOrdersPanel';
 import { RentalReportsPanel } from './RentalReportsPanel';
 import { GuideEarningsPanel } from './GuideEarningsPanel';
+import { AuditLogPanel } from './AuditLogPanel';
 import {
   STAFF_NOTIFICATIONS_EVENT,
   STAFF_NOTIFICATIONS_KEY,
@@ -53,10 +54,19 @@ import {
 } from '../../lib/rentalNotifications';
 import { CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS } from '../../lib/adminRoles';
 import { sectionsForRole } from '../../lib/adminWorkspace';
+import { adminSummary, mergeAdminRows, type AdminRow } from '../../lib/adminAccounts';
+import { recordAdminAudit } from '../../lib/adminAudit';
 
-type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports';
+type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports' | 'audit';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
 type AdminNotification = StaffNotification;
+
+/** Accounts the platform ships with; created accounts are merged in front. */
+const SEEDED_ADMINS: AdminRow[] = [
+  { name: 'MH Travel Super Admin', email: 'superadmin@mhtravel.com', role: 'Super Admin', permissions: 'All permissions', status: 'Active' },
+  { name: 'Thazin Win', email: 'thazin@mhtravel.com', role: 'Blog Post Admin', permissions: 'Content, Blogs', status: 'Active' },
+  { name: 'Aung Ko', email: 'aung.ko@mhtravel.com', role: 'Admin', permissions: 'Users, Support', status: 'Active' },
+];
 
 const ADMIN_NOTIFICATIONS_KEY = STAFF_NOTIFICATIONS_KEY;
 const readAdminNotifications = readStaffNotifications;
@@ -87,6 +97,7 @@ const navItems: NavItem[] = [
   { id: 'bookings', labelKey: 'sa_nav_payments', icon: WalletCards },
   { id: 'overview', labelKey: 'sa_nav_reports', icon: TrendingUp },
   { id: 'currency', labelKey: 'sa_nav_currency', icon: CircleDollarSign },
+  { id: 'audit', labelKey: 'sa_nav_audit', icon: ShieldCheck },
 ];
 
 const statCards: { labelKey: TranslationKey; value: string; change: string; icon: LucideIcon; accent: Accent; points: string }[] = [
@@ -246,7 +257,7 @@ export function SuperAdminPage() {
 
           <main className="p-1.5 sm:p-2 lg:p-3">
             {notice && <div role="status" className="fixed right-4 top-20 z-50 rounded-lg border border-cyan-300/30 bg-[#102e51] px-3 py-2 text-xs text-cyan-100 shadow-2xl">{notice}</div>}
-            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'guideEarnings' ? <GuideEarningsPanel /> : activeView === 'ads' ? <AdsManagementPanel runAction={runAction} /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : activeView === 'rentals' ? <RentalAdminPanel runAction={runAction} /> : activeView === 'rentalOrders' ? <RentalOrdersPanel /> : activeView === 'rentalReports' ? <RentalReportsPanel /> : <AdminSection view={activeView} runAction={runAction} />}
+            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'guideEarnings' ? <GuideEarningsPanel /> : activeView === 'audit' ? <AuditLogPanel /> : activeView === 'ads' ? <AdsManagementPanel runAction={runAction} /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : activeView === 'rentals' ? <RentalAdminPanel runAction={runAction} /> : activeView === 'rentalOrders' ? <RentalOrdersPanel /> : activeView === 'rentalReports' ? <RentalReportsPanel /> : <AdminSection view={activeView} runAction={runAction} />}
           </main>
           <footer className="mt-auto flex flex-col gap-1 border-t border-[#214263] bg-[#071a32] px-3 py-2 text-center text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:text-left"><div><p className="text-base font-bold text-[#27c2ff]">MH Travel</p><p className="mt-1">{t('sa_footer_tagline')}</p></div><p>{t('sa_copyright')}</p><div className="flex justify-center gap-2 text-cyan-300 sm:justify-end"><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">f</span><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">▶</span></div></footer>
         </div>
@@ -364,13 +375,12 @@ const EMPTY_ADMIN_FORM: AdminForm = {
 function AdminManagementPanel({ runAction }: { runAction: (label: string) => void }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { createAdminAccount } = useAuth();
+  const { createAdminAccount, adminAccounts, user, adminRole } = useAuth();
   const [showForm, setShowForm] = useState(false);
-  const [admins, setAdmins] = useState(() => [
-    { name: 'MH Travel Super Admin', email: 'superadmin@mhtravel.com', role: 'Super Admin', permissions: t('sa_all_permissions'), status: 'Active' },
-    { name: 'Thazin Win', email: 'thazin@mhtravel.com', role: 'Blog Post Admin', permissions: 'Content, Blogs', status: 'Active' },
-    { name: 'Aung Ko', email: 'aung.ko@mhtravel.com', role: 'Admin', permissions: 'Users, Support', status: 'Active' },
-  ]);
+  // Plan §16B.1: the table lists the accounts that exist, so a created admin
+  // stays listed after a reload instead of living in this component's state.
+  const admins = useMemo(() => mergeAdminRows(SEEDED_ADMINS, adminAccounts), [adminAccounts]);
+  const summary = useMemo(() => adminSummary(admins), [admins]);
   const [form, setForm] = useState<AdminForm>(EMPTY_ADMIN_FORM);
   const [formError, setFormError] = useState('');
 
@@ -389,7 +399,15 @@ function AdminManagementPanel({ runAction }: { runAction: (label: string) => voi
       setFormError(result.message === 'auth_email_exists' ? t('sa_err_email_exists') : t('sa_err_invalid'));
       return;
     }
-    setAdmins((current) => [{ name: form.name, email: form.email, role: form.role, permissions: form.permissions, status: 'Pending invite' }, ...current]);
+    recordAdminAudit({
+      actor: user?.name ?? '',
+      actorRole: adminRole ?? 'system',
+      action: 'created',
+      objectType: 'admin_account',
+      objectId: form.email.trim().toLowerCase(),
+      summary: `${form.name.trim()} · ${form.role} · ${form.permissions}`,
+      source: 'admin_workspace',
+    });
     setForm(EMPTY_ADMIN_FORM);
     setFormError('');
     setShowForm(false);
@@ -398,7 +416,7 @@ function AdminManagementPanel({ runAction }: { runAction: (label: string) => voi
 
   return <div className="mx-auto max-w-[1200px] space-y-3">
     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">{t('sa_admins_kicker')}</p><h1 className="mt-1 text-lg font-extrabold sm:text-3xl">{t('sa_nav_admins')}</h1><p className="mt-1 text-sm text-slate-400">{t('sa_admins_intro')}</p></div><button type="button" onClick={() => setShowForm((open) => !open)} className="inline-flex w-fit items-center gap-2 rounded-lg bg-[#168df4] px-3 py-2 text-[10px] font-bold hover:bg-[#2aa6ff]"><UserPlus size={16} /> {t('sa_action_create_admin')}</button></div>
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><AdSummary icon={ShieldCheck} label={t('sa_admins_total')} value="8" detail={t('sa_admins_total_detail')} tone="cyan" /><AdSummary icon={Users} label={t('sa_admins_active')} value="7" detail={t('sa_admins_active_detail')} tone="green" /><AdSummary icon={UserPlus} label={t('sa_admins_pending')} value="2" detail={t('sa_admins_pending_detail')} tone="purple" /><AdSummary icon={Settings} label={t('sa_admins_groups')} value="5" detail={t('sa_admins_groups_detail')} tone="blue" /></div>
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><AdSummary icon={ShieldCheck} label={t('sa_admins_total')} value={String(summary.total)} detail={t('sa_admins_total_detail')} tone="cyan" /><AdSummary icon={Users} label={t('sa_admins_active')} value={String(summary.active)} detail={t('sa_admins_active_detail')} tone="green" /><AdSummary icon={UserPlus} label={t('sa_admins_pending')} value={String(summary.pending)} detail={t('sa_admins_pending_detail')} tone="purple" /><AdSummary icon={Settings} label={t('sa_admins_groups')} value={String(summary.groups)} detail={t('sa_admins_groups_detail')} tone="blue" /></div>
     {showForm && <Panel><PanelTitle icon={UserPlus} title={t('sa_admins_form_title')} /><form onSubmit={createAdmin} className="grid gap-1.5 p-2 sm:grid-cols-2 lg:grid-cols-3"><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_name')}</span><input required value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder={t('sa_admins_name_placeholder')} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_email')}</span><input required type="email" value={form.email} onChange={(event) => updateForm('email', event.target.value)} placeholder="admin@mhtravel.com" className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_phone')}</span><input value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} placeholder="+95 9 ..." className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_password')}</span><input required minLength={8} type="password" value={form.password} onChange={(event) => updateForm('password', event.target.value)} placeholder={t('sa_admins_password_hint')} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300" /></label><label className="block"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_role')}</span><select value={form.role} onChange={(event) => selectRole(event.target.value as AdminForm['role'])} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{CREATABLE_ADMIN_ROLES.map((role) => <option key={role}>{role}</option>)}</select></label><label className="block sm:col-span-2"><span className="mb-1 block text-[10px] font-semibold text-slate-300">{t('sa_admins_permissions')}</span><select value={form.permissions} onChange={(event) => updateForm('permissions', event.target.value)} className="w-full rounded-lg border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[11px] text-white outline-none focus:border-cyan-300">{PERMISSION_GROUPS.map((group) => <option key={group}>{group}</option>)}</select></label>{formError && <p role="alert" className="sm:col-span-2 lg:col-span-3 rounded-lg border border-red-400/40 bg-red-500/10 px-2 py-1.5 text-[10px] text-red-200">{formError}</p>}<div className="flex items-center gap-2 sm:col-span-2 lg:col-span-3"><button type="submit" className="rounded-lg bg-cyan-400 px-3 py-2 text-[10px] font-bold text-[#061426] hover:bg-cyan-300">{t('sa_admins_create')}</button><button type="button" onClick={() => setShowForm(false)} className="rounded-lg border border-[#2b527d] px-3 py-2 text-[10px] font-semibold text-slate-300 hover:bg-white/10">{t('sa_cancel')}</button><span className="text-[10px] text-slate-500">{t('sa_admins_note')}</span></div></form></Panel>}
     <Panel><PanelTitle icon={ShieldCheck} title={t('sa_admins_table_title')} action={t('sa_admins_audit')} onAction={() => runAction(t('sa_admins_audit_action'))} /><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-[11px]"><thead className="bg-[#091a31] text-slate-300"><tr><th className="px-4 py-3">{t('sa_col_admin')}</th><th className="px-2 py-3">{t('sa_col_email')}</th><th className="px-2 py-3">{t('sa_col_role')}</th><th className="px-2 py-3">{t('sa_col_permissions')}</th><th className="px-2 py-3">{t('sa_col_status')}</th><th className="px-4 py-3">{t('sa_col_action')}</th></tr></thead><tbody>{admins.map((admin) => <tr key={admin.email} className="border-t border-[#1d3a5c] text-slate-200"><td className="px-2 py-1.5 font-semibold">{admin.name}</td><td className="px-2 py-3 text-slate-400">{admin.email}</td><td className="px-2 py-3">{admin.role}</td><td className="px-2 py-3 text-slate-400">{admin.permissions}</td><td className="px-2 py-3"><span className={`rounded-full px-2 py-1 text-[9px] font-bold ${admin.status === 'Active' ? 'bg-green-500/25 text-green-300' : 'bg-amber-400/20 text-amber-300'}`}>{admin.status === 'Active' ? t('sa_status_active') : t('sa_status_pending_invite')}</span></td><td className="px-2 py-1.5"><button type="button" onClick={() => runAction(`${t('sa_review')} ${admin.name}`)} className="rounded-md border border-[#2f6192] px-2.5 py-1.5 text-[10px] font-semibold text-cyan-300 hover:bg-white/10">{t('sa_review')}</button></td></tr>)}</tbody></table></div></Panel>
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-400/20 bg-[#0d2f57] p-3 text-xs text-blue-100"><p><strong className="text-white">{t('sa_admins_staff_title')}</strong> {t('sa_admins_staff_note')}</p><button type="button" onClick={() => navigate('/super-admin')} className="font-bold text-cyan-300 hover:text-white">{t('sa_back_dashboard')} <ChevronRight size={14} className="inline" /></button></div>

@@ -821,3 +821,44 @@ payable total moved to $25.00 and the row offered "mark paid"), then settled it
 (payable $0.00, settled $25.00); Admin saw the same rows with the amount as text
 and no button; a Travel Guide Content Admin signed in as Min Htet saw only that
 byline's three rows, read-only.
+
+## Admin accounts persist, and every admin decision writes an audit row (Plan §16B.1, §16B.2) — 23 November 2026
+
+Two gaps sat behind the Admin Management table. A created admin lived in
+`useState`, so the row disappeared on reload while the account it created
+stayed in `localStorage` — the list and the login disagreed. And §16B.2 asks
+for one audit row per create, role change, payment and publish, with no table
+to write them to yet.
+
+- **`src/lib/adminAccounts.ts`** (new) turns a stored auth user into a table row
+  (`adminRowFromUser()`), derives the counters (`adminSummary()`) and merges the
+  seeded rows with the live ones (`mergeAdminRows()`), so a stored account
+  appears once and keeps its own role. `permissionsForRole()` maps a role to the
+  §16B.1 permission label.
+- **`src/lib/auth.tsx`** exposes `adminAccounts`, the stored users with an admin
+  role, which is what the table now reads.
+- **`AdminManagementPanel`** computes its rows with `useMemo` over
+  `mergeAdminRows(seeded, adminAccounts)` instead of holding them in state, so a
+  created admin survives a reload and cannot be created twice.
+- **`src/lib/adminAudit.ts`** (new) is the §16B.2 store: one append-only row with
+  actor, actor role, action, object type, object id, a one-line summary, UTC time
+  and source; 500 rows kept, and `useAdminAudit()` re-reads on a change event and
+  on a `storage` event so a second tab sees the same log. This is the seam where
+  `admin_audit_logs` replaces browser storage.
+- **`src/features/superAdmin/AuditLogPanel.tsx`** (new) is the reader: totals for
+  rows, today's rows, actors and object types, a search box, an action filter and
+  the table. §16B.1 keeps "Settings and roles" with Super Admin, so
+  `canReadAuditLog()` and the `audit` section are Super Admin only.
+- Writes are recorded at the three sites that exist today: creating an admin
+  account (`created`), setting a guide earning amount (`updated`) and marking it
+  paid (`payment`).
+
+**Verification.** `npx tsc --noEmit` clean; `npx vitest run` 27 files / 335
+tests (including `src/lib/adminAudit.test.ts` and the new
+`canReadAuditLog` cases); `npm run build` succeeds; `npx eslint src` reports the
+same 7 pre-existing warnings. Browser check at `/super-admin` in Burmese: after
+creating "May Myat Noe" the row was still in the table after a reload; a second
+account ("Khin Su") appeared at once with the Ads Admin permission label; the
+new "စစ်ဆေးမှု မှတ်တမ်း" section showed 1 row — actor `MH Travel Super Admin`,
+role Super Admin, action ဖန်တီးပြီး, object Admin အကောင့် `khin.su@mhtravel.com`,
+summary `Khin Su · Ads Admin · Ads Management`, source Admin လုပ်ငန်းခွင်.

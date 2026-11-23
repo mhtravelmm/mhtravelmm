@@ -188,7 +188,10 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   Ads Admin, users and support for Admin, orders/reports/currency for Payment
   Admin, and guide earnings for Payment Admin (built 2026-11-23 as
   `GuideEarningsPanel` over `src/lib/guideEarningsStore.ts`, so the rows live
-  outside the Guides editor and the author reads their own). Still open:
+  outside the Guides editor and the author reads their own). Super Admin also
+  gained the audit-log section on 2026-11-23, and the Admin Management table now
+  reads the stored accounts (`src/lib/adminAccounts.ts`) so a created admin
+  survives a reload. Still open:
   bookings for Owner Admin, which the separate `/shop-owner` workspace serves.
   Super Admin keeps all sections.
   Route guards only hide menus; the server must check the role on every write
@@ -1344,6 +1347,8 @@ Super Admin creates every other admin account. Traveler accounts are separate fr
 ### 16B.2 Audit log
 
 Every create, update, delete, publish, approve, payment and role change writes one row: actor, role, action, object type, object id, a short before/after summary, time (UTC), and the request source. Rows are append-only and kept 24 months. Content actions use the `ContentAction` names already in `contentWorkflow.ts`. Reuse `admin_audit_logs` after checking its columns.
+
+Partly built 2026-11-23: `src/lib/adminAudit.ts` writes exactly this row shape (`AdminAuditEntry`: `at` in UTC, `actor`, `actorRole`, `action`, `objectType`, `objectId`, `summary`, `source`), append-only with a 500-row cap, and `src/features/superAdmin/AuditLogPanel.tsx` is the reader — totals, search, action filter, Super Admin only, because the section 16B.1 "Settings and roles" row is Super Admin's. Recorded today at the three write sites that exist: admin-account creation (`created`), guide-earning amount (`updated`) and settlement (`payment`). Still open: the remaining write paths (owners, ad approval, blog and guide publish, rental order status, currency, role changes), and the move to `admin_audit_logs` so rows are append-only in the database and kept 24 months.
 
 ### 16B.3 Notifications
 

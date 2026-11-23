@@ -20,7 +20,8 @@ export type WorkspaceSection =
   | 'currency'
   | 'rentals'
   | 'rentalOrders'
-  | 'rentalReports';
+  | 'rentalReports'
+  | 'audit';
 
 const ALL_SECTIONS: WorkspaceSection[] = [
   'overview',
@@ -37,6 +38,7 @@ const ALL_SECTIONS: WorkspaceSection[] = [
   'rentals',
   'rentalOrders',
   'rentalReports',
+  'audit',
 ];
 
 /**
@@ -100,4 +102,14 @@ export function canMarkEarningPaid(role: AdminRole | undefined): boolean {
 /** Admin reads every author's rows; a Guide Content Admin reads only its own. */
 export function canReadAllEarnings(role: AdminRole | undefined): boolean {
   return role === 'Super Admin' || role === 'Admin' || role === 'Payment Admin';
+}
+
+/**
+ * Plan §16B.1: the "Settings and roles" row is `F` for Super Admin and `–` for
+ * everyone else, so the audit log it writes is Super Admin only. §16B.2 rows
+ * name actors from every role, which is why the reader must not be scoped the
+ * way the earnings list is.
+ */
+export function canReadAuditLog(role: AdminRole | undefined): boolean {
+  return role === 'Super Admin';
 }
