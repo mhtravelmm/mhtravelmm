@@ -1,6 +1,6 @@
 # MH Travel — Remaining Work Record
 
-**Last updated:** 23 November 2026
+**Last updated:** 24 November 2026
 **Verified against:** `main` plus the rental order rules
 (`src/lib/rentalOrderRules.ts`), the full Rental Admin panel (catalog,
 availability, rates, branches, terms, settings, orders) built to Plan §8.8, the
@@ -156,6 +156,35 @@ Still open on this track:
   in Plan §12.
 - Reviews are read-only in the UI. The "verified booking or visit" rule from
   Plan §11 and the Owner-rating adjustment still need an authoring path.
+
+## Translation fallback — production work remaining
+
+Plan §16B.4 is now wired end to end in the browser: `translationCache.ts` holds
+the rules, `translationApi.ts` calls the Worker, `useLocalizedText()` is the
+reader seam, `AutoTranslatedMark` is the marker, `TranslationReviewPanel` is the
+Admin queue and `supabase/migrations/20261123000400_translation_cache.sql` is the
+table with its RLS and functions. What remains:
+
+- **Deploy the Worker.** `VITE_TRANSLATION_ENDPOINT` points at it; until the
+  Worker exists the client reports `not_configured` and every reader falls back
+  to the source language. The provider key, the language-pair check and the rate
+  limit belong in that Worker, never in the repo or a `VITE_` variable.
+- **Move the queue off browser storage.** The rows live in `localStorage` through
+  `translationCache.ts`, so a reviewed row is only permanent on the browser that
+  reviewed it. `cache_translation`, `record_translation_view`,
+  `review_translation` and `translation_review_queue` are committed and unused
+  until the client reads the table.
+- **Finish the readers.** Blogs and Travel Guide resolve through
+  `useLocalizedText()`; the city, listing, restaurant, book-shop and rental copy
+  still index `text[language]` directly, so a half-translated record there shows
+  an empty string instead of the source text.
+- **Feed the queue.** Nothing creates an `auto` row except a reader who hit a
+  missing language. The content editors should record which field was written in
+  one language only, so the queue reflects what actually needs a decision rather
+  than only what someone happened to open.
+- **Decide the review role.** The panel sits in the `translations` section for
+  Admin and Super Admin. If Guide Content Admin and Blog Post Admin are meant to
+  review their own copy, the §16B.1 matrix needs the row first.
 
 ## Blog, media, and Cloudflare R2
 

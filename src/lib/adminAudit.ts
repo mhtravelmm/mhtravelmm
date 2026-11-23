@@ -25,7 +25,8 @@ export type AdminAuditObject =
   | 'blog'
   | 'ad'
   | 'rental_order'
-  | 'currency_rate';
+  | 'currency_rate'
+  | 'translation';
 
 export interface AdminAuditEntry {
   id: string;

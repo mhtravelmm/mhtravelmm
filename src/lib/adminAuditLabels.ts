@@ -27,6 +27,7 @@ export const OBJECT_KEYS: Record<AdminAuditObject, TranslationKey> = {
   ad: 'sa_audit_object_ad',
   rental_order: 'sa_audit_object_rental_order',
   currency_rate: 'sa_audit_object_currency_rate',
+  translation: 'sa_audit_object_translation',
 };
 
 export const SOURCE_KEYS: Record<AdminAuditEntry['source'], TranslationKey> = {

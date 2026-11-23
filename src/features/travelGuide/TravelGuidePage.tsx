@@ -21,13 +21,15 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import type { TranslationKey } from '../../lib/i18n';
+import { AutoTranslatedMark } from '../../components/ui/AutoTranslatedMark';
+import { useLocalizedText } from '../../lib/useLocalizedText';
 import { useLanguage } from '../../lib/i18n';
 import { followStep, stepIndex } from '../../lib/guideFollow';
 import { mapSearchUrl } from '../../lib/placeActions';
 import { usePagedList } from '../../lib/usePagedList';
 import type { Language } from '../../types';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
-import { TRAVEL_GUIDE_STORIES, type GuideCategory, type TravelGuideStory } from '../../data/travelGuideData';
+import { TRAVEL_GUIDE_STORIES, type GuideCategory, type GuideStop, type TravelGuideStory } from '../../data/travelGuideData';
 import { POPULAR_CAFES, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } from '../../data/cityPageData';
 import { ListingGridSection } from '../home/sections/ListingGridSection';
 
@@ -98,6 +100,26 @@ function GuideMetrics({ guide, language, t, compact = false }: {
         <span>{formatCompactCount(guide.views, language)} {t('guide_views')}</span>
       </span>
     </div>
+  );
+}
+
+/**
+ * Plan §16B.4: a stop title and its description go through the same seam as
+ * every other bilingual field, so a stop written in one language only still
+ * reads in the other and says it was translated.
+ */
+function StopTitle({ stop, language, className }: { stop: GuideStop; language: Language; className: string }) {
+  const title = useLocalizedText(stop.title, language);
+  return <h3 className={className}>{title.value}</h3>;
+}
+
+function StopDescription({ stop, language, className }: { stop: GuideStop; language: Language; className: string }) {
+  const description = useLocalizedText(stop.description, language);
+  return (
+    <p className={className}>
+      {description.value}
+      <AutoTranslatedMark show={description.autoTranslated} className="ml-1.5 align-middle" />
+    </p>
   );
 }
 
@@ -179,6 +201,8 @@ function GuideDetail({
   onToggleFavorite: () => void;
 }) {
   const title = guide.localizedTitle[language];
+  const localizedTitle = useLocalizedText(guide.localizedTitle, language);
+  const localizedSummary = useLocalizedText(guide.summary, language);
   const [followIndex, setFollowIndex] = useState<number | null>(null);
   const follow = followIndex === null ? null : followStep(followIndex, guide.stops.length);
   const activeStop = follow ? guide.stops[follow.index] : undefined;
@@ -198,8 +222,11 @@ function GuideDetail({
             <span className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[10px] font-semibold backdrop-blur sm:text-xs">
               {categoryLabel(guide, t)}
             </span>
-            <h1 className="mt-3 text-2xl font-extrabold leading-tight sm:text-3xl md:text-4xl">{title}</h1>
-            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/85 sm:text-sm md:text-base">{guide.summary[language]}</p>
+            <h1 className="mt-3 text-2xl font-extrabold leading-tight sm:text-3xl md:text-4xl">{localizedTitle.value}</h1>
+            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-white/85 sm:text-sm md:text-base">
+              {localizedSummary.value}
+              <AutoTranslatedMark show={localizedSummary.autoTranslated} className="ml-1.5 align-middle" />
+            </p>
           </div>
           <button
             type="button"
@@ -244,12 +271,12 @@ function GuideDetail({
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
                     <span className="text-sm font-bold tabular-nums text-brand-blue sm:text-base">{activeStop.time}</span>
-                    <h3 className="text-sm font-semibold text-text-primary sm:text-base">{activeStop.title[language]}</h3>
+                    <StopTitle stop={activeStop} language={language} className="text-sm font-semibold text-text-primary sm:text-base" />
                   </div>
                   {activeStop.imageUrl && (
                     <img src={activeStop.imageUrl} alt={activeStop.title[language]} loading="lazy" className="mt-2 h-36 w-full rounded-lg object-cover sm:h-48" />
                   )}
-                  <p className="mt-2 text-xs leading-relaxed text-text-secondary sm:text-sm">{activeStop.description[language]}</p>
+                  <StopDescription stop={activeStop} language={language} className="mt-2 text-xs leading-relaxed text-text-secondary sm:text-sm" />
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <a
                       href={mapSearchUrl(activeStop.place)}
@@ -300,11 +327,11 @@ function GuideDetail({
                   {index < guide.stops.length - 1 && <span className="absolute bottom-0 top-4 w-px bg-border" />}
                 </div>
                 <div className={`pb-5 ${index === guide.stops.length - 1 ? 'pb-0' : ''}`}>
-                  <h3 className="text-sm font-semibold leading-snug text-text-primary sm:text-base">{stop.title[language]}</h3>
+                  <StopTitle stop={stop} language={language} className="text-sm font-semibold leading-snug text-text-primary sm:text-base" />
                   {stop.imageUrl && (
                     <img src={stop.imageUrl} alt={stop.title[language]} loading="lazy" className="mt-2 h-32 w-full rounded-lg object-cover sm:h-40" />
                   )}
-                  <p className="mt-1 text-xs leading-relaxed text-text-secondary sm:text-sm">{stop.description[language]}</p>
+                  <StopDescription stop={stop} language={language} className="mt-1 text-xs leading-relaxed text-text-secondary sm:text-sm" />
                   <a
                     href={mapSearchUrl(stop.place)}
                     target="_blank"

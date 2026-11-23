@@ -1,8 +1,8 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 23 November 2026 (admin accounts, audit log, role change,
-exchange-rate history, the shared money formatter, the §16B.7 jobs runner and
-the §16B.3 notification feed added)
+**Last audited:** 24 November 2026 (admin accounts, audit log, role change,
+exchange-rate history, the shared money formatter, the §16B.7 jobs runner, the
+§16B.3 notification feed and the §16B.4 translation fallback added)
 **Audited against:** `main` plus the rental order rules in
 `src/lib/rentalOrderRules.ts`, the Rental catalog data module, the Rental Admin
 panel, the per-account Favorites/notification/review wiring, and the earlier
@@ -199,9 +199,10 @@ places rather than advice.
 | Email/password + OAuth calls | **PARTIAL** | Provider secrets and redirect URLs still needed |
 | Favorites persistence | **PARTIAL** | Per-account scope + `public.favorites` write-through; anon access still local |
 | Bookings / plan requests | **PREVIEW** | UI only, no insert |
-| Notifications | **PARTIAL** | Read state per account, synced to `public.notifications`; feed rows still seeded |
+| Notifications | **PARTIAL** | One feed with named recipients (§16B.3, 23 Nov 2026): `src/lib/notificationFeed.ts` states the event table, `canSee()` scopes a row to a role, an account, an author byline or `everyone`, and the bell, the traveler page and every writer use it. Read state per account, synced to `public.notifications`; `notification_feed` is committed but delivery is still in-browser |
 | Exchange rate | **PARTIAL** | Plan §16B.5 rows are in place client-side: `src/lib/exchangeRates.ts` appends `{mmkPerUsd, effectiveFrom, setBy, note}` and the rate in force is the latest row that has taken effect, with the Plan's 4,500 as the fallback. Super Admin → Currency shows the history table and takes a note per change; every change writes an audit row. One formatter (`src/lib/moneyFormat.ts`) does USD 2 decimals and MMK to the nearest 100. Still browser storage, not `exchange_rates` |
 | Rental order rules (§8.7) | **PREVIEW** | All fifteen checks mirrored in `src/lib/rentalOrderRules.ts`; the migration holds the authoritative copy |
+| Translation fallback (§16B.4) | **PARTIAL** | `src/lib/translationCache.ts` holds the rules (a name, an address and a price are never translated; one row per text and direction; a reviewed row is never overwritten), `src/lib/translationApi.ts` calls the Worker named by `VITE_TRANSLATION_ENDPOINT`, `useLocalizedText()` + `AutoTranslatedMark` are the reader seam and marker, and `TranslationReviewPanel` is the Admin queue in the `translations` section, busiest first, with one audit row per approval. Blogs and Travel Guide read through it; the rows are browser storage until `translation_cache` is applied and the Worker exists |
 | Blog media (Cloudflare R2) | **PARTIAL** | Adapter exists, no deployed Worker |
 
 `localStorage` is used across 9 files with 15 distinct keys. Every one of them

@@ -95,6 +95,14 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `pushAdminNotice()` from `adminNotices.ts`. Both calls go at the write site,
   not in the panel, and the `audit` section goes into `adminWorkspace.ts` before
   the nav is touched. The log is read in `AuditLogPanel`.
+- Bilingual copy that exists in one language only goes through
+  `useLocalizedText()` (`useLocalizedText.ts`), never `text[language]` directly.
+  It resolves the cached translation from `translationCache.ts`, asks the Worker
+  through `translationApi.ts` when nothing is stored, and reports
+  `autoTranslated` so the reader renders `AutoTranslatedMark`. Names, addresses
+  and prices are never translated (`isTranslatable`), and a reviewed row
+  (`approved` or `edited`) is what removes the marker. The Admin queue is
+  `TranslationReviewPanel` under the `translations` workspace section.
 
 ## Pushing to origin
 

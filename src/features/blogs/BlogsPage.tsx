@@ -29,7 +29,9 @@ import { POPULAR_CAFES, POPULAR_HOTELS, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } f
 import { ListingGridSection } from '../home/sections/ListingGridSection';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useFavorites } from '../../lib/favorites';
+import { AutoTranslatedMark } from '../../components/ui/AutoTranslatedMark';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { useLocalizedText } from '../../lib/useLocalizedText';
 import { usePagedList } from '../../lib/usePagedList';
 import type { Language } from '../../types';
 
@@ -228,11 +230,18 @@ function StoryCard({
   );
 }
 
-function renderBlock(block: BlogBlock, index: number, post: BlogPost, language: Language) {
+/**
+ * Plan §16B.4: a paragraph the story was not written in is filled through the
+ * translation cache and marked, so a reader never mistakes it for the original.
+ */
+function StoryBlock({ block, index, post, language }: { block: BlogBlock; index: number; post: BlogPost; language: Language }) {
+  const text = useLocalizedText(block.type === 'paragraph' ? block.text : block.type === 'image' ? block.alt : undefined, language);
+
   if (block.type === 'paragraph') {
     return (
       <p key={`${post.id}-paragraph-${index}`} className="text-[15px] leading-8 text-text-secondary sm:text-base">
-        {block.text[language]}
+        {text.value}
+        <AutoTranslatedMark show={text.autoTranslated} className="ml-1.5 align-middle" />
       </p>
     );
   }
@@ -240,7 +249,7 @@ function renderBlock(block: BlogBlock, index: number, post: BlogPost, language: 
   if (block.type === 'image') {
     return (
       <figure key={`${post.id}-image-${index}`} className="overflow-hidden rounded-xl border border-border bg-bg-cardAlt">
-        <img src={block.imageUrl} alt={block.alt[language]} loading="lazy" className="max-h-[480px] w-full object-cover" />
+        <img src={block.imageUrl} alt={text.value} loading="lazy" className="max-h-[480px] w-full object-cover" />
         {block.caption && (
           <figcaption className="px-4 py-3 text-xs leading-5 text-text-faint">{block.caption[language]}</figcaption>
         )}
@@ -277,6 +286,8 @@ function StoryReader({
   showDistance: boolean;
 }) {
   const copy = getLocalizedCopy(post, language);
+  const title = useLocalizedText(post.title, language);
+  const excerpt = useLocalizedText(post.excerpt, language);
 
   return (
     <section className="w-full max-w-none overflow-hidden">
@@ -321,8 +332,9 @@ function StoryReader({
               <MapPin size={12} /> {post.location[language]}
             </span>
             <h2 id="blog-reader-title" className="w-full max-w-none font-serif text-2xl leading-tight text-white sm:text-3xl md:text-4xl">
-              {copy.title}
+              {title.value}
             </h2>
+            <AutoTranslatedMark show={title.autoTranslated} className="mt-2" />
           </div>
         </div>
 
@@ -340,13 +352,16 @@ function StoryReader({
             </div>
 
             <p className="mb-7 border-l-2 border-brand-blue pl-4 text-base leading-7 text-text-secondary sm:text-lg">
-              {copy.excerpt}
+              {excerpt.value}
+              <AutoTranslatedMark show={excerpt.autoTranslated} className="ml-1.5 align-middle" />
             </p>
             <div className="mb-6">
               <AdSlot placement="blog_post_top" fetchAd={fetchMockAd} />
             </div>
             <div className="space-y-6">
-              {post.blocks.map((block, index) => renderBlock(block, index, post, language))}
+              {post.blocks.map((block, index) => (
+                <StoryBlock key={`${post.id}-${block.type}-${index}`} block={block} index={index} post={post} language={language} />
+              ))}
             </div>
             <div className="mt-8">
               <AdSlot placement="blog_post_bottom" fetchAd={fetchMockAd} />

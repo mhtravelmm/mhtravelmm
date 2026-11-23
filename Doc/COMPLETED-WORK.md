@@ -1,6 +1,6 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 23 November 2026
+**Last updated:** 24 November 2026
 **Verified against:** `main` plus the Rental catalog data module and Rental Admin
 panel, and the per-account Favorites, notification, and review wiring; earlier baseline `ecb231f` covers the Blog and Travel Guide admin
 editors, admin-role accounts, the rental-category work of 20–22 November 2026,
@@ -972,6 +972,53 @@ succeeds; `npx eslint src` unchanged at 7 pre-existing warnings. Browser check a
 all eight jobs, the rental expiry job reads `16:03 · 2026-11-23` with next due
 `16:08` and the result "ပြောင်းလဲမှု မရှိပါ", the other seven read "မချိတ်ရသေး",
 and the run log shows the same row.
+
+## Translation fallback with an Admin review queue — Plan §16B.4, 24 November 2026
+
+The Plan asks for one behaviour when a text exists in only one language: the
+reader asks for a translation, the answer is cached in `translation_cache`, and
+the text carries an "Auto-translated" marker until an Admin approves or edits it.
+Names, addresses and prices are never translated.
+
+`src/lib/translationCache.ts` holds the rules with no browser or network in
+them, so they can be tested: `isTranslatable()` refuses `name`, `address` and
+`price`; `sourceHash()` keys one text per direction, so two readers asking for
+the same paragraph share a row; `resolveLocalized()` returns the reader's own
+text first, then a cached translation, then the source language with `needs` set
+so the caller can ask the provider; `reviewTranslation()` turns an `auto` row
+into `approved` (text kept) or `edited` (text replaced) and `reviewQueue()` ranks
+the automatic rows by views, busiest first. A reviewed row is never overwritten
+by a later machine one, which is why `rememberTranslation()` returns the existing
+row instead of adding a second.
+
+`src/lib/translationApi.ts` posts to the Cloudflare Worker named by
+`VITE_TRANSLATION_ENDPOINT` and stores what comes back. Without the endpoint it
+returns `not_configured` rather than inventing text, so a preview build shows the
+source language. `useLocalizedText()` is the single reader seam and
+`AutoTranslatedMark` is the marker. The blog reader uses it for the title, the
+excerpt, every paragraph and every image `alt`; the travel guide reader uses it
+for the title, the summary, and each stop's title and description.
+
+`TranslationReviewPanel` is the Admin queue, reachable from the new
+`translations` workspace section (Super Admin and Admin, per the §16B.1 content
+rows). Each approval or edit writes one `adminAudit` row with object type
+`translation`.
+
+`supabase/migrations/20261123000400_translation_cache.sql` commits the table with
+its status check and one unique index per text and direction, RLS (public read,
+automatic insert by a signed-in reader, review by Admin and Super Admin only,
+no delete), and the functions `cache_translation`, `record_translation_view`,
+`review_translation` and `translation_review_queue`.
+
+**Verification.** `npm run typecheck` clean; `npm test` 37 files / 416 tests
+(new: `translationCache`, `translationApi`); `npm run build` succeeds; `npx
+eslint src` unchanged at 7 pre-existing warnings. Browser check at
+`/super-admin` with one automatic and one approved row seeded: the nav entry
+appeared, the queue showed the automatic row with "Seen 7 times" and hid the
+approved one, and Approve flipped the row to `approved` with reviewer
+`MH Travel Super Admin`, emptied the queue and wrote one `translation` audit
+row. `/blogs?story=bagan-first-light` and `/travel-guide` both rendered with no
+page errors.
 
 ## Notification service with named recipients — Plan §16B.3, 23 November 2026
 
