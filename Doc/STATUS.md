@@ -182,7 +182,7 @@ places rather than advice.
 | Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows; content is still local state. Localized through `useLanguage` |
 | Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
 | Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
-| Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected. Plan §3 and §16B.1 now scope one admin workspace per role: `src/lib/adminWorkspace.ts` lists the sections each role may open, and the Super Admin page filters its navigation through it, so Ads Admin sees only Ads, Payment Admin only orders/reports/currency, Blog Post Admin only Blogs, and Travel Guide Content Admin only Guides. `src/lib/roleMapping.ts` maps every one of the nine `profiles.role` slugs to a product role, and `auth.tsx` hydrates `adminRole` from the profile row, which is what the workspace reads |
+| Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected. Plan §3 and §16B.1 now scope one admin workspace per role: `src/lib/adminWorkspace.ts` lists the sections each role may open, and the Super Admin page filters its navigation through it, so Ads Admin sees only Ads, Payment Admin only orders/reports/currency, Blog Post Admin only Blogs, and Travel Guide Content Admin only Guides. `src/lib/roleMapping.ts` maps every one of the eight `profiles.role` slugs to a product role, and `auth.tsx` hydrates `adminRole` from the profile row, which is what the workspace reads |
 
 ---
 

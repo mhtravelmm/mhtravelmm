@@ -180,14 +180,22 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   Manager → Admin; Operations Admin → Admin, or Rental Admin for rentals;
   Finance Admin → Payment Admin; Ads Manager → Ads Admin. Permission groups
   stay as the way to scope each role.
-- Admin workspace (decided 2026-11-22): Blog Post Admin and Travel Guide
-  Content Admin already reach only their own editor
-  (`src/lib/contentAdminAccess.ts`). Still to build, in one role-guarded
-  workspace that reuses the Super Admin panels: Rentals for Rental Admin, Ads
-  for Ads Admin, earnings and payouts for Payment Admin, users and support for
-  Admin, and bookings for Owner Admin. Super Admin keeps all sections. Route
-  guards only hide menus; the server must check the role on every write
+- Admin workspace (decided 2026-11-22, partly built 2026-11-23): Blog Post
+  Admin and Travel Guide Content Admin already reach only their own editor
+  (`src/lib/contentAdminAccess.ts`). The rest is one role-guarded workspace
+  that reuses the Super Admin panels, and `src/lib/adminWorkspace.ts` now
+  encodes the section 16B.1 matrix for it: Rentals for Rental Admin, Ads for
+  Ads Admin, users and support for Admin, orders/reports/currency for Payment
+  Admin. Still open: guide earnings and payouts for Payment Admin (the editor
+  sits inside the Guides panel today), and bookings for Owner Admin, which the
+  separate `/shop-owner` workspace serves. Super Admin keeps all sections.
+  Route guards only hide menus; the server must check the role on every write
   (sections 8, 10 and 16A; the permission matrix is in section 16B.1).
+- Role spelling (decided 2026-11-23): `profiles.role` stores a slug
+  (`rental_admin`); the UI, this Plan and the permission matrix use the product
+  name (`Rental Admin`). `src/lib/roleMapping.ts` and the server's
+  `current_role_name()` resolve either spelling, so a new role must be added to
+  both or it signs in as a traveler and fails every write.
 
 ---
 
