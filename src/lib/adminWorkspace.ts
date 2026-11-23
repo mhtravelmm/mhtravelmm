@@ -21,7 +21,8 @@ export type WorkspaceSection =
   | 'rentals'
   | 'rentalOrders'
   | 'rentalReports'
-  | 'audit';
+  | 'audit'
+  | 'jobs';
 
 const ALL_SECTIONS: WorkspaceSection[] = [
   'overview',
@@ -39,6 +40,7 @@ const ALL_SECTIONS: WorkspaceSection[] = [
   'rentalOrders',
   'rentalReports',
   'audit',
+  'jobs',
 ];
 
 /**

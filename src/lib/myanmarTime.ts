@@ -38,3 +38,9 @@ export function inclusiveDaysBetween(startDay: string, endDay: string): number {
   const end = new Date(`${endDay}T12:00:00Z`).getTime();
   return Math.max(1, Math.round((end - start) / 86400000) + 1);
 }
+
+/** The Myanmar wall-clock time of an instant, as `HH:MM`. */
+export function myanmarClock(iso: string): string {
+  const shifted = new Date(new Date(iso).getTime() + MYANMAR_OFFSET_MINUTES * 60000);
+  return shifted.toISOString().slice(11, 16);
+}

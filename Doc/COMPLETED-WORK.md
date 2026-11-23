@@ -932,3 +932,44 @@ to the history, and wrote the audit row `4,500 → 3,800 MMK per USD · CBM
 reference rate`; changing Nilar Win from Ads Admin to Payment Admin updated the
 row and its permission label to `Payments, Reports` and wrote the
 `role_change` audit row; selecting the role a row already has shows no error.
+
+## Scheduled jobs runner — Plan §16B.7, 23 November 2026
+
+The §16D Phase 0 gate asks for a jobs runner whose failure alerts Super Admin.
+`src/lib/jobs.ts` now holds the whole schedule as data: the eight Plan jobs, each
+with its cadence (an interval, or a daily wall-clock time in Myanmar Time) and a
+`wired` flag. `nextDailyRun` shifts into Myanmar Time, floors to the day and
+shifts back, so the answer needs no timezone database and does not move when the
+viewer's own zone changes for DST. `dueJobs` compares each job against its own
+last run, so one job's row can never delay another.
+
+`runDueJobs` executes what is due, appends one row per attempt to `job_runs`
+(`id`, `job`, `at`, `outcome`, `detail`), and returns the failures.
+`alertJobFailures` turns each failure into a bell notice in the same list the
+rental staff notices use, so the Super Admin sees it without a second inbox. A
+job that throws becomes a `failed` row instead of stopping the tick, and an
+unwired job is skipped rather than logged, so seven unbuilt jobs cannot bury the
+real runs.
+
+`src/lib/platformJobs.ts` binds the handlers and `src/App.tsx` ticks the schedule
+once a minute; the rental payment expiry inside it keeps its §8.9 five-minute
+cadence, and `useRentalExpiryJob` was removed now that the runner owns the timer.
+
+Super Admin → Scheduled jobs (`JobsPanel`) lists every job with its cadence, last
+run, next due time, state and result, plus the recent run log. An unwired job
+reads "Not wired" rather than "Ready", so the page states how much of the
+schedule is real (`1/8` today) instead of implying the work is finished.
+
+`supabase/migrations/20261123000200_job_runs.sql` commits the `job_runs` table,
+its Super Admin-only read policy, a `run_platform_job(job, work)` wrapper that
+logs the outcome and re-raises on failure, and a `pg_cron` entry for the rental
+expiry job that is created only when the extension exists.
+
+**Verification.** `npm run typecheck` clean; `npm test` 34 files / 379 tests
+(new: `jobs`, `jobLabels`, and `myanmarClock` in `myanmarTime`); `npm run build`
+succeeds; `npx eslint src` unchanged at 7 pre-existing warnings. Browser check at
+`/super-admin` in Burmese: the nav shows "အလိုအလျောက် အလုပ်များ", the table lists
+all eight jobs, the rental expiry job reads `16:03 · 2026-11-23` with next due
+`16:08` and the result "ပြောင်းလဲမှု မရှိပါ", the other seven read "မချိတ်ရသေး",
+and the run log shows the same row.
+

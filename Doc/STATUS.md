@@ -1,7 +1,8 @@
 # MH Travel — Work Status Record
 
 **Last audited:** 23 November 2026 (admin accounts, audit log, role change,
-exchange-rate history and the shared money formatter added)
+exchange-rate history, the shared money formatter and the §16B.7 jobs runner
+added)
 **Audited against:** `main` plus the rental order rules in
 `src/lib/rentalOrderRules.ts`, the Rental catalog data module, the Rental Admin
 panel, the per-account Favorites/notification/review wiring, and the earlier

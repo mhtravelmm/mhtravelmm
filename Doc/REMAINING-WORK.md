@@ -92,17 +92,26 @@ the suite instead of reaching a user as "coming soon."
   to the Rental Admin, Accepted/Paid/Expired/Cancelled to the traveler, a
   reschedule back to staff. Both bells read browser storage, so they move to the
   `notifications` table with the rest.
-- **The rental expiry job** runs in the tab (`useRentalExpiryJob`, every five
-  minutes plus once on load). A closed browser cannot expire anything, so the
-  schedule moves to a Supabase cron function when the order tables go live.
+- **The rental expiry job** is one entry in the §16B.7 schedule
+  (`src/lib/jobs.ts`) and runs through the shared runner every five minutes
+  plus once on load. A closed browser cannot expire anything, so the schedule
+  moves to `pg_cron` (`supabase/migrations/20261123000200_job_runs.sql`) when
+  the order tables go live.
 - **The rental audit log** (`mh-travel-rental-audit`) records catalog diffs and
   order status changes in browser storage; it moves to the admin audit table.
 - **Guide costs (Plan §16)** are stored on the order as `extras` in browser
   storage. The `rental_order_extras` table is committed but not applied, so the
   rows move with the rest of the order data. Collecting the added amount still
   goes through the same staff-recorded payment as the daily rate.
-- Schedule the rental expiry job (Plan §16B.7, every 5 minutes). The function is
-  committed; the `pg_cron` entry and the job-failure notification are not.
+- Seven of the eight §16B.7 jobs are registered but unwired: publishing due
+  content, ad campaign windows, subscription expiry, renewal reminders, the ad
+  statistics roll-up, orphan media cleanup and the raw ad event purge. Each
+  needs the table it reads (blogs, ad campaigns, subscriptions, media, ad
+  events) before it can do any work, and the Super Admin jobs page shows them
+  as "not wired" until then.
+- `job_runs` is committed with the `pg_cron` entry for the rental expiry job but
+  not applied. Until it is, the run log and the failure bell live in browser
+  storage through `src/lib/jobs.ts`.
 - Send the rental notifications (Plan §16B.3): requested to Rental Admin;
   accepted, paid, expired and cancelled to the traveler; rescheduled to Rental
   Admin. The order timeline records each change; nothing is delivered yet.

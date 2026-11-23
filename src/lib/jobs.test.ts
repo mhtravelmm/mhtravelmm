@@ -1,0 +1,154 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { JOBS, alertJobFailures, dueJobs, lastRunsById, nextDailyRun, nextRunAt, readJobRuns, runDueJobs, type JobRun } from './jobs';
+import { readStaffNotifications } from './rentalNotifications';
+
+function fakeWindow() {
+  const map = new Map<string, string>();
+  (globalThis as { window?: unknown }).window = {
+    localStorage: {
+      getItem: (key: string) => map.get(key) ?? null,
+      setItem: (key: string, value: string) => { map.set(key, value); },
+      removeItem: (key: string) => { map.delete(key); },
+      clear: () => map.clear(),
+      key: () => null,
+      get length() { return map.size; },
+    },
+    dispatchEvent: () => true,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  };
+}
+
+beforeEach(() => { fakeWindow(); });
+
+const MINUTE = 60 * 1000;
+const at = (iso: string) => new Date(iso);
+
+describe('the §16B.7 schedule', () => {
+  it('lists the eight jobs with the cadence the Plan gives', () => {
+    expect(JOBS).toHaveLength(8);
+    expect(JOBS.find((job) => job.id === 'rental_payment_expiry')?.schedule).toEqual({ everyMs: 5 * MINUTE });
+    expect(JOBS.find((job) => job.id === 'renewal_reminders')?.schedule).toEqual({ dailyAt: '09:00' });
+  });
+
+  it('runs a daily job at its Myanmar wall-clock time, not the viewer zone', () => {
+    // 09:00 Myanmar Time is 02:30 UTC.
+    const next = nextDailyRun('09:00', at('2026-11-23T00:00:00Z'));
+    expect(new Date(next).toISOString()).toBe('2026-11-23T02:30:00.000Z');
+  });
+
+  it('moves a daily job to tomorrow once its time has passed', () => {
+    const next = nextDailyRun('09:00', at('2026-11-23T03:00:00Z'));
+    expect(new Date(next).toISOString()).toBe('2026-11-24T02:30:00.000Z');
+  });
+
+  it('treats a never-run interval job as due now, so a fresh tab catches up', () => {
+    expect(nextRunAt({ everyMs: MINUTE }, undefined, at('2026-11-23T00:00:00Z'))).toBe(0);
+  });
+
+  it('waits out the interval after a run', () => {
+    const now = at('2026-11-23T00:10:00Z');
+    expect(nextRunAt({ everyMs: 5 * MINUTE }, '2026-11-23T00:07:00Z', now)).toBe(now.getTime() + 2 * MINUTE);
+  });
+
+  it('does not run a never-run daily job before its time', () => {
+    const now = at('2026-11-23T00:00:00Z');
+    expect(nextRunAt({ dailyAt: '09:00' }, undefined, now)).toBeGreaterThan(now.getTime());
+  });
+
+  it('reports only the jobs whose time has come', () => {
+    const now = at('2026-11-23T00:10:00Z');
+    expect(dueJobs(now, { rental_payment_expiry: '2026-11-23T00:00:00Z' })).toContain('rental_payment_expiry');
+    // Ran three minutes ago, so the next run is two minutes away.
+    expect(dueJobs(now, { rental_payment_expiry: '2026-11-23T00:07:00Z' })).not.toContain('rental_payment_expiry');
+    expect(dueJobs(now, {})).not.toContain('renewal_reminders');
+  });
+
+  it('reads the newest row per job', () => {
+    const runs: JobRun[] = [
+      { id: 'rental_payment_expiry', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0' },
+      { id: 'rental_payment_expiry', at: '2026-11-23T00:05:00Z', outcome: 'ok', detail: '1' },
+    ];
+    expect(lastRunsById(runs)).toEqual({ rental_payment_expiry: '2026-11-23T00:05:00Z' });
+  });
+});
+
+describe('runDueJobs', () => {
+  const now = at('2026-11-23T00:10:00Z');
+  const lastRun = { rental_payment_expiry: '2026-11-23T00:00:00Z' };
+
+  it('logs one row per run and reports nothing when the job succeeds', () => {
+    const { runs, failures } = runDueJobs(now, { rental_payment_expiry: () => 2 }, [
+      { id: 'rental_payment_expiry', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0' },
+    ]);
+    expect(failures).toEqual([]);
+    expect(runs).toEqual([{ id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'ok', detail: '2' }]);
+  });
+
+  it('turns a throw into a failed row, which is what alerts Super Admin', () => {
+    const { failures } = runDueJobs(now, { rental_payment_expiry: () => { throw new Error('expire_failed'); } }, [
+      { id: 'rental_payment_expiry', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0' },
+    ]);
+    expect(failures).toEqual([
+      { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'failed', detail: 'expire_failed' },
+    ]);
+  });
+
+  it('is safe to run twice: a job that just ran is not due again', () => {
+    const handler = vi.fn(() => 0);
+    const first = runDueJobs(now, { rental_payment_expiry: handler }, []);
+    const second = runDueJobs(now, { rental_payment_expiry: handler }, first.runs);
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(second.runs).toEqual([]);
+  });
+
+  it('skips an unwired job without writing a row for it', () => {
+    const { runs } = runDueJobs(now, {}, []);
+    // Only the wired job is reported, so the seven unbuilt jobs never fill the log.
+    expect(runs.map((run) => run.id)).toEqual(['rental_payment_expiry']);
+  });
+
+  it('records a wired job that has no handler, so the gap is visible', () => {
+    const { runs } = runDueJobs(now, {}, [
+      { id: 'rental_payment_expiry', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0' },
+    ]);
+    expect(runs).toEqual([{ id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'not_wired', detail: '' }]);
+  });
+
+  it('keys off the last run per job, not the newest row overall', () => {
+    // A row for one job cannot delay another job that has not run yet.
+    const due = dueJobs(now, { ...lastRun, renewal_reminders: '2026-11-23T00:09:00Z' });
+    expect(due).toContain('rental_payment_expiry');
+    expect(due).not.toContain('renewal_reminders');
+  });
+});
+
+describe('a failed job alerts Super Admin (Plan §16D Phase 0 gate)', () => {
+  const now = at('2026-11-23T00:10:00Z');
+
+  it('puts one bell notice per failure, naming the job and the error', () => {
+    alertJobFailures(
+      [{ id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'failed', detail: 'expire_failed' }],
+      'Scheduled job failed',
+    );
+    const rows = readStaffNotifications();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].title).toBe('Scheduled job failed');
+    expect(rows[0].message).toBe('rental_payment_expiry · expire_failed');
+    expect(rows[0].read).toBe(false);
+  });
+
+  it('raises nothing when every job succeeded', () => {
+    alertJobFailures([], 'Scheduled job failed');
+    expect(readStaffNotifications()).toEqual([]);
+  });
+
+  it('persists the run so a reload does not repeat it', () => {
+    runDueJobs(now, { rental_payment_expiry: () => 0 }, []);
+    expect(readJobRuns()).toEqual([
+      { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'ok', detail: '0' },
+    ]);
+    // The stored row is what stops the next tick from running it again.
+    expect(runDueJobs(now, { rental_payment_expiry: () => 0 }, readJobRuns()).runs).toEqual([]);
+  });
+});

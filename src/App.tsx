@@ -26,7 +26,7 @@ import { CategoryIndexPage, CategoryPage } from './features/category/CategoryPag
 import { PlaceDetailPage } from './features/place/PlaceDetailPage';
 import { CATEGORY_SLUGS, PLACE_SLUGS } from './routes';
 import { useAuth } from './lib/auth';
-import { useRentalExpiryJob } from './lib/rentalOrders';
+import { usePlatformJobs } from './lib/platformJobs';
 
 function Shell({ children, showFooter = false, fullWidth = false, dashboardFooter = false }: { children: React.ReactNode; showFooter?: boolean; fullWidth?: boolean; dashboardFooter?: boolean }) {
   const headerSpacing = fullWidth ? 'px-2 sm:px-3 md:px-4' : 'px-4 md:px-8';
@@ -98,8 +98,9 @@ function RequireMainOwner() {
 }
 
 function AppRoutes() {
-  // Plan §8.9: unpaid Accepted orders expire on a 5-minute cadence.
-  useRentalExpiryJob();
+  // Plan §16B.7: one ticker drives the whole job schedule; the rental payment
+  // expiry inside it keeps the §8.9 five-minute cadence.
+  usePlatformJobs();
   return <Routes>
     <Route path="/" element={<Shell showFooter><HomePage /></Shell>} />
     <Route path="/cities" element={<Shell><CityPage /></Shell>} />

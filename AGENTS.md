@@ -46,6 +46,12 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
 - **Exchange rates are append-only rows** (`src/lib/exchangeRates.ts`): the rate in
   force is the latest row whose `effectiveFrom` has passed, 4,500 is the fallback.
   Never overwrite a rate; append one.
+- **Scheduled jobs are data, not timers.** `src/lib/jobs.ts` holds the §16B.7
+  registry (cadence + `wired` flag) and the runner; `src/lib/platformJobs.ts` binds the
+  handlers and `src/App.tsx` ticks once a minute. A job must be safe to run twice —
+  `dueJobs()` compares each job with its own last run in `job_runs`, and a handler that
+  throws becomes a `failed` row plus a Super Admin bell notice, never a stopped tick.
+  Mark a job `wired: true` only when its handler does real work.
 - **Rental order rules live in `src/lib/rentalOrderRules.ts`**, one function per
   §8.7 check in the order `submit_rental_order` runs them, returning a stable
   `rental_error_*` code. `quoteRentalOrder()` is the only quote; `buildRentalOrder()`

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addDaysToDay,
   inclusiveDaysBetween,
+  myanmarClock,
   myanmarDay,
   myanmarDayStartMs,
   myanmarToday,
@@ -55,5 +56,14 @@ describe('inclusiveDaysBetween', () => {
 
   it('never reports less than one day', () => {
     expect(inclusiveDaysBetween('2026-12-02', '2026-12-01')).toBe(1);
+  });
+});
+
+describe('myanmarClock', () => {
+  it('reads an instant as Myanmar wall-clock time', () => {
+    // 02:30 UTC is 09:00 in Myanmar.
+    expect(myanmarClock('2026-11-23T02:30:00.000Z')).toBe('09:00');
+    // The day rolls over at 17:30 UTC.
+    expect(myanmarClock('2026-11-23T17:30:00.000Z')).toBe('00:00');
   });
 });

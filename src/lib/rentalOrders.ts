@@ -449,22 +449,6 @@ export function expireOverdueNow(now = new Date()): number {
   return expired;
 }
 
-export const RENTAL_EXPIRY_INTERVAL_MS = 5 * 60 * 1000;
-
-/**
- * Runs the expiry check on the Plan's 5-minute cadence while the app is open,
- * and once on mount so a tab left overnight catches up as soon as it loads.
- * A browser cannot wake itself up, so the real schedule belongs to the server
- * job once orders move into the tables.
- */
-export function useRentalExpiryJob(intervalMs = RENTAL_EXPIRY_INTERVAL_MS): void {
-  useEffect(() => {
-    expireOverdueNow();
-    const timer = window.setInterval(() => expireOverdueNow(), intervalMs);
-    return () => window.clearInterval(timer);
-  }, [intervalMs]);
-}
-
 /**
  * Plan §8.7: the client's total is ignored. The draft is re-checked against the
  * same rules the server runs, and the stored total is recomputed from the

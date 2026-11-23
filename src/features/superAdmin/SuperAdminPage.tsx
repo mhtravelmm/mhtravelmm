@@ -47,6 +47,7 @@ import { RentalOrdersPanel } from './RentalOrdersPanel';
 import { RentalReportsPanel } from './RentalReportsPanel';
 import { GuideEarningsPanel } from './GuideEarningsPanel';
 import { AuditLogPanel } from './AuditLogPanel';
+import { JobsPanel } from './JobsPanel';
 import {
   STAFF_NOTIFICATIONS_EVENT,
   STAFF_NOTIFICATIONS_KEY,
@@ -61,7 +62,7 @@ import { planRoleChange, roleChangeSummary, type RoleChangeRefusal } from '../..
 import { EXCHANGE_RATES_EVENT, readExchangeRates } from '../../lib/exchangeRates';
 import { pushAdminNotice } from '../../lib/adminNotices';
 
-type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports' | 'audit';
+type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports' | 'audit' | 'jobs';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
 type AdminNotification = StaffNotification;
 
@@ -102,6 +103,7 @@ const navItems: NavItem[] = [
   { id: 'overview', labelKey: 'sa_nav_reports', icon: TrendingUp },
   { id: 'currency', labelKey: 'sa_nav_currency', icon: CircleDollarSign },
   { id: 'audit', labelKey: 'sa_nav_audit', icon: ShieldCheck },
+  { id: 'jobs', labelKey: 'sa_nav_jobs', icon: Clock },
 ];
 
 const statCards: { labelKey: TranslationKey; value: string; change: string; icon: LucideIcon; accent: Accent; points: string }[] = [
@@ -261,7 +263,7 @@ export function SuperAdminPage() {
 
           <main className="p-1.5 sm:p-2 lg:p-3">
             {notice && <div role="status" className="fixed right-4 top-20 z-50 rounded-lg border border-cyan-300/30 bg-[#102e51] px-3 py-2 text-xs text-cyan-100 shadow-2xl">{notice}</div>}
-            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} onOpenAudit={() => setView('audit')} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'guideEarnings' ? <GuideEarningsPanel /> : activeView === 'audit' ? <AuditLogPanel /> : activeView === 'ads' ? <AdsManagementPanel runAction={runAction} /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : activeView === 'rentals' ? <RentalAdminPanel runAction={runAction} /> : activeView === 'rentalOrders' ? <RentalOrdersPanel /> : activeView === 'rentalReports' ? <RentalReportsPanel /> : <AdminSection view={activeView} runAction={runAction} />}
+            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} onOpenAudit={() => setView('audit')} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'guideEarnings' ? <GuideEarningsPanel /> : activeView === 'audit' ? <AuditLogPanel /> : activeView === 'jobs' ? <JobsPanel /> : activeView === 'ads' ? <AdsManagementPanel runAction={runAction} /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : activeView === 'rentals' ? <RentalAdminPanel runAction={runAction} /> : activeView === 'rentalOrders' ? <RentalOrdersPanel /> : activeView === 'rentalReports' ? <RentalReportsPanel /> : <AdminSection view={activeView} runAction={runAction} />}
           </main>
           <footer className="mt-auto flex flex-col gap-1 border-t border-[#214263] bg-[#071a32] px-3 py-2 text-center text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:text-left"><div><p className="text-base font-bold text-[#27c2ff]">MH Travel</p><p className="mt-1">{t('sa_footer_tagline')}</p></div><p>{t('sa_copyright')}</p><div className="flex justify-center gap-2 text-cyan-300 sm:justify-end"><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">f</span><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">▶</span></div></footer>
         </div>
