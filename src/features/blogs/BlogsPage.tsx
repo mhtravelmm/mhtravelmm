@@ -25,6 +25,8 @@ import { ListingCard } from '../../components/ui/ListingCard';
 import { fetchMockAd } from '../../data/ads';
 import { BLOG_POSTS, type BlogBlock, type BlogCategory, type BlogPost } from '../../data/blogsData';
 import { ADDITIONAL_BLOG_POSTS } from '../../data/additionalBlogPosts';
+import { useBlogPosts } from '../../lib/contentStore';
+import { publishedBlogPosts } from '../../lib/contentReader';
 import { POPULAR_CAFES, POPULAR_HOTELS, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } from '../../data/cityPageData';
 import { ListingGridSection } from '../home/sections/ListingGridSection';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
@@ -41,7 +43,7 @@ type SortMode = 'latest' | 'popular';
 type CategoryFilter = 'all' | BlogCategory;
 type Translate = (key: TranslationKey) => string;
 
-const ALL_BLOG_POSTS = [...BLOG_POSTS, ...ADDITIONAL_BLOG_POSTS];
+const SEEDED_BLOG_POSTS = [...BLOG_POSTS, ...ADDITIONAL_BLOG_POSTS];
 
 const CATEGORY_FILTERS: { id: CategoryFilter; labelKey: TranslationKey; icon: LucideIcon; tone: string; activeTone: string }[] = [
   { id: 'all', labelKey: 'blog_category_all', icon: LayoutGrid, tone: 'text-sky-300', activeTone: 'bg-sky-500' },
@@ -110,11 +112,12 @@ function StoryMetrics({
 }) {
   return (
     <div className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 text-text-muted ${compact ? 'text-[9px] sm:text-[10px]' : 'text-[11px]'}`}>
-      <span className="inline-flex items-center gap-1 text-status-rating" aria-label={`${t('blog_rating')}: ${formatNumber(post.rating, language, 1)}`}>
+      {/* Plan §10 §8: a post with no rating yet shows no rating, not a zero. */}
+      {post.rating > 0 && <span className="inline-flex items-center gap-1 text-status-rating" aria-label={`${t('blog_rating')}: ${formatNumber(post.rating, language, 1)}`}>
         <Star size={compact ? 10 : 13} fill="currentColor" />
         <span>{formatNumber(post.rating, language, 1)}</span>
-      </span>
-      {showDistance && <span className="inline-flex items-center gap-1">
+      </span>}
+      {showDistance && post.distanceKm > 0 && <span className="inline-flex items-center gap-1">
         <MapPin size={compact ? 10 : 13} />
         <span>
           {formatNumber(post.distanceKm, language, 1)} km {t('blog_away')}
@@ -395,7 +398,12 @@ export function BlogsPage() {
   const { language, t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const storySlug = searchParams.get('story');
-  const selectedPost = ALL_BLOG_POSTS.find((post) => post.slug === storySlug) ?? null;
+  // Plan §10 §4: the reader shows what Admin published, and a post the job
+  // publishes appears here without a reload because both read the same store.
+  const [adminPosts] = useBlogPosts();
+  const allPosts = useMemo(() => publishedBlogPosts(adminPosts, SEEDED_BLOG_POSTS), [adminPosts]);
+  // A link may carry the slug or the id, so an older link still opens its story.
+  const selectedPost = allPosts.find((post) => post.slug === storySlug || post.id === storySlug) ?? null;
   const countedStoryRef = useRef<string | null>(null);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
@@ -433,7 +441,7 @@ export function BlogsPage() {
       return;
     }
 
-    const post = ALL_BLOG_POSTS.find((item) => item.slug === storySlug);
+    const post = allPosts.find((item) => item.slug === storySlug || item.id === storySlug);
     if (!post) {
       setSearchParams((current) => {
         const next = new URLSearchParams(current);
@@ -448,7 +456,7 @@ export function BlogsPage() {
       countedStoryRef.current = storySlug;
       setViewIncrements((current) => ({ ...current, [post.id]: (current[post.id] ?? 0) + 1 }));
     }
-  }, [storySlug, setSearchParams]);
+  }, [allPosts, storySlug, setSearchParams]);
 
   useEffect(() => {
     if (!selectedPost) return undefined;
@@ -513,7 +521,7 @@ export function BlogsPage() {
 
   const visiblePosts = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase(language === 'mm' ? 'my-MM' : 'en-US');
-    return ALL_BLOG_POSTS
+    return allPosts
       .filter((post) => {
         if (activeCategory !== 'all' && post.category !== activeCategory) return false;
         if (!normalizedQuery) return true;
@@ -524,7 +532,7 @@ export function BlogsPage() {
       .sort((a, b) => sortMode === 'popular'
         ? (b.views + (viewIncrements[b.id] ?? 0)) - (a.views + (viewIncrements[a.id] ?? 0))
         : b.publishedAt.localeCompare(a.publishedAt));
-  }, [activeCategory, language, query, sortMode, viewIncrements]);
+  }, [activeCategory, allPosts, language, query, sortMode, viewIncrements]);
   const { visibleItems: displayedPosts, hasMore: hasMorePosts, loadMore: loadMorePosts } =
     usePagedList(visiblePosts, `${activeCategory}|${sortMode}|${query.trim()}`);
 
@@ -710,8 +718,8 @@ export function BlogsPage() {
           <section className="mt-10 border-t border-border pt-6" aria-labelledby="related-stories-title">
             <h2 id="related-stories-title" className="mb-3 text-base font-medium text-text-primary">{t('blog_related_stories')}</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {ALL_BLOG_POSTS.filter((post) => post.id !== selectedPost.id && post.location[language] === selectedPost.location[language]).concat(
-                ALL_BLOG_POSTS.filter((post) => post.id !== selectedPost.id && post.location[language] !== selectedPost.location[language]),
+              {allPosts.filter((post) => post.id !== selectedPost.id && post.location[language] === selectedPost.location[language]).concat(
+                allPosts.filter((post) => post.id !== selectedPost.id && post.location[language] !== selectedPost.location[language]),
               ).slice(0, 3).map((post) => (
                 <StoryCard
                   key={post.id}

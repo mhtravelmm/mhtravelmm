@@ -32,7 +32,7 @@ const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 
 export const JOBS: JobDefinition[] = [
-  { id: 'publish_due_content', schedule: { everyMs: MINUTE }, wired: false },
+  { id: 'publish_due_content', schedule: { everyMs: MINUTE }, wired: true },
   { id: 'ad_campaign_window', schedule: { everyMs: MINUTE }, wired: false },
   { id: 'rental_payment_expiry', schedule: { everyMs: 5 * MINUTE }, wired: true },
   { id: 'subscription_expiry', schedule: { everyMs: HOUR }, wired: false },

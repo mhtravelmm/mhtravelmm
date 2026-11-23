@@ -30,6 +30,8 @@ import { usePagedList } from '../../lib/usePagedList';
 import type { Language } from '../../types';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { TRAVEL_GUIDE_STORIES, type GuideCategory, type GuideStop, type TravelGuideStory } from '../../data/travelGuideData';
+import { useGuides } from '../../lib/contentStore';
+import { publishedGuides } from '../../lib/contentReader';
 import { POPULAR_CAFES, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } from '../../data/cityPageData';
 import { ListingGridSection } from '../home/sections/ListingGridSection';
 
@@ -87,14 +89,15 @@ function GuideMetrics({ guide, language, t, compact = false }: {
   const iconSize = compact ? 11 : 14;
   return (
     <div className={`flex flex-wrap items-center gap-x-2.5 gap-y-1 text-text-muted ${compact ? 'text-[9px] sm:text-[10px]' : 'text-xs'}`}>
-      <span className="inline-flex items-center gap-1 text-status-rating" aria-label={`${formatNumber(guide.rating, language, 1)} rating`}>
+      {/* Plan §10 §8: a guide with no rating or distance yet shows neither. */}
+      {guide.rating > 0 && <span className="inline-flex items-center gap-1 text-status-rating" aria-label={`${formatNumber(guide.rating, language, 1)} rating`}>
         <Star size={iconSize} fill="currentColor" />
         <span>{formatNumber(guide.rating, language, 1)}</span>
-      </span>
-      <span className="inline-flex items-center gap-1">
+      </span>}
+      {guide.distanceKm > 0 && <span className="inline-flex items-center gap-1">
         <MapPin size={iconSize} />
         <span>{formatNumber(guide.distanceKm, language, 1)} {t('guide_km_away')}</span>
-      </span>
+      </span>}
       <span className="inline-flex items-center gap-1">
         <Eye size={iconSize} />
         <span>{formatCompactCount(guide.views, language)} {t('guide_views')}</span>
@@ -360,7 +363,7 @@ function GuideDetail({
               <span className="text-[10px] text-text-muted">{t('blog_rating')}</span>
               <span className="mt-1 flex items-center gap-1 text-sm font-bold text-text-primary">
                 <Star size={14} className="text-status-rating" fill="currentColor" />
-                {formatNumber(guide.rating, language, 1)}
+                {guide.rating > 0 ? formatNumber(guide.rating, language, 1) : '—'}
               </span>
             </div>
             <div className="rounded-xl bg-bg-cardAlt p-3">
@@ -378,13 +381,13 @@ function GuideDetail({
               <p className="mt-0.5 text-sm font-semibold text-text-primary">{guide.author[language]}</p>
             </div>
           </div>
-          <div className="mt-4 flex items-start gap-2">
+          {guide.distanceKm > 0 && <div className="mt-4 flex items-start gap-2">
             <MapPin size={15} className="mt-0.5 shrink-0 text-brand-blue" />
             <div>
               <p className="text-[10px] text-text-muted">{t('guide_directions')}</p>
               <p className="mt-0.5 text-sm font-semibold text-text-primary">{formatNumber(guide.distanceKm, language, 1)} {t('guide_km_away')}</p>
             </div>
-          </div>
+          </div>}
         </aside>
       </div>
     </div>
@@ -396,7 +399,10 @@ export function TravelGuidePage() {
   const { language, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<GuideFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const favoriteState = useToggleFavorite(TRAVEL_GUIDE_STORIES);
+  // Plan §10 §4: a guide the publishing job releases shows up here at once.
+  const [adminGuides] = useGuides();
+  const allGuides = useMemo(() => publishedGuides(adminGuides, TRAVEL_GUIDE_STORIES), [adminGuides]);
+  const favoriteState = useToggleFavorite(allGuides);
   const topAttractions = useToggleFavorite(TOP_ATTRACTIONS);
   const restaurants = useToggleFavorite(POPULAR_RESTAURANTS);
   const cafes = useToggleFavorite(POPULAR_CAFES);
@@ -409,7 +415,7 @@ export function TravelGuidePage() {
 
   const filteredGuides = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
-    return TRAVEL_GUIDE_STORIES.filter((guide) => {
+    return allGuides.filter((guide) => {
       const matchesCategory = activeCategory === 'all'
         || activeCategory === 'myanmar'
         || guide.category === activeCategory;
@@ -423,7 +429,7 @@ export function TravelGuidePage() {
       ].join(' ').toLocaleLowerCase().includes(normalizedQuery);
       return matchesCategory && matchesQuery;
     });
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, allGuides, searchQuery]);
 
   const {
     visibleItems: visibleGuides,
@@ -432,7 +438,7 @@ export function TravelGuidePage() {
     showAll: showAllGuides,
   } = usePagedList(filteredGuides, `${activeCategory}|${searchQuery.trim()}`);
 
-  const selectedGuide = guideId ? TRAVEL_GUIDE_STORIES.find((guide) => guide.id === guideId) : undefined;
+  const selectedGuide = guideId ? allGuides.find((guide) => guide.id === guideId) : undefined;
 
   if (guideId) {
     if (!selectedGuide) {

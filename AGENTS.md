@@ -58,6 +58,19 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `dueJobs()` compares each job with its own last run in `job_runs`, and a handler that
   throws becomes a `failed` row plus a Super Admin bell notice, never a stopped tick.
   Mark a job `wired: true` only when its handler does real work.
+- **Blog and Guide content has one store and one reader projection.**
+  `src/lib/contentStore.ts` holds the admin rows (`useBlogPosts`, `useGuides`,
+  `useRevisions`, `useContentAudit`); the panels write it, never `useState`.
+  `src/lib/contentReader.ts` turns a `Published` row into the card shape the
+  pages render (`publishedBlogPosts`, `publishedGuides`) — readers never read the
+  admin store directly, so a Draft or Scheduled row cannot leak. A seed the
+  editor takes over keeps its slug, rating and distance.
+- **A schedule is Myanmar Time in, UTC stored.** `src/lib/scheduleRules.ts` is
+  the only converter (`myanmarWallClockToUtc`, `utcToMyanmarWallClock`,
+  `isDue`). `scheduledFor` carries the instant and `publishedAt` is set only once
+  the item is live, so a scheduled row never shows a publish date it does not
+  have. `publish_due_content` (`scheduledPublishing.ts`) must stay idempotent: a
+  published row has left `Scheduled`, and that is what stops a second publish.
 - **Rental order rules live in `src/lib/rentalOrderRules.ts`**, one function per
   §8.7 check in the order `submit_rental_order` runs them, returning a stable
   `rental_error_*` code. `quoteRentalOrder()` is the only quote; `buildRentalOrder()`

@@ -1,6 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, CalendarDays, Edit3, Eye, ImagePlus, Megaphone, Plus, Search, Send, Trash2, X } from 'lucide-react';
-import { BLOG_POSTS } from '../../data/blogsData';
 import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
 import {
   actionForSave,
@@ -12,6 +11,13 @@ import {
   type AuditEntry,
   type Revision,
 } from '../../lib/contentWorkflow';
+import {
+  useBlogPosts,
+  useContentAudit,
+  useRevisions,
+  type AdminPost,
+} from '../../lib/contentStore';
+import { formatScheduleLabel, myanmarWallClockToUtc, utcToMyanmarWallClock } from '../../lib/scheduleRules';
 import {
   adSlotProblem,
   blogPublishCheck,
@@ -28,22 +34,6 @@ import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuditRecorder } from '../../lib/adminAudit';
 import { problemMessage } from './publishProblemText';
 import { pushFeedEvent } from '../../lib/notificationFeed';
-
-type AdminPost = {
-  id: string;
-  titleEn: string;
-  titleMm: string;
-  category: string;
-  author: string;
-  location: string;
-  imageUrl: string;
-  galleryUrls: string[];
-  blocks: BlogBlock[];
-  status: BlogPostStatus;
-  publishedAt: string;
-  views: number;
-  updatedAt: string;
-};
 
 type FormState = {
   titleEn: string;
@@ -112,22 +102,6 @@ const emptyForm: FormState = {
   scheduledTime: '',
 };
 
-const seedPosts: AdminPost[] = BLOG_POSTS.slice(0, 5).map((post) => ({
-  id: post.id,
-  titleEn: post.title.en,
-  titleMm: post.title.mm,
-  category: post.category,
-  author: post.author.en,
-  location: post.location.en,
-  imageUrl: post.imageUrl ?? '',
-  galleryUrls: [],
-  blocks: [{ id: `${post.id}-text`, type: 'text', textEn: post.excerpt.en, textMm: post.excerpt.mm }],
-  status: 'Published',
-  publishedAt: post.publishedAt,
-  views: post.views,
-  updatedAt: post.publishedAt,
-}));
-
 function Panel({ children }: { children: React.ReactNode }) {
   return <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">{children}</section>;
 }
@@ -143,9 +117,9 @@ function Summary({ label, value, tone }: { label: string; value: number; tone: '
 }
 
 export function BlogPostsPanel({ runAction }: { runAction: (label: string) => void }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const recordAdminAction = useAuditRecorder();
-  const [posts, setPosts] = useState<AdminPost[]>(seedPosts);
+  const [posts, setPosts] = useBlogPosts();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [showEditor, setShowEditor] = useState(false);
   const [query, setQuery] = useState('');
@@ -153,8 +127,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
   const [notice, setNotice] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
-  const [revisions, setRevisions] = useState<Revision<FormState>[]>([]);
-  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [revisions, setRevisions] = useRevisions<FormState>('blog');
+  const [audit, setAudit] = useContentAudit('blog');
 
   const filteredPosts = useMemo(
     () => posts.filter((post) => (statusFilter === 'All' || post.status === statusFilter)
@@ -178,8 +152,11 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
   }
 
   function openEdit(post: AdminPost) {
-    const date = post.status === 'Scheduled' ? post.publishedAt.split('T')[0] : '';
-    const time = post.status === 'Scheduled' ? post.publishedAt.split('T')[1]?.slice(0, 5) || '' : '';
+    const wall = post.status === 'Scheduled' && post.scheduledFor
+      ? utcToMyanmarWallClock(post.scheduledFor)
+      : null;
+    const date = wall?.date ?? '';
+    const time = wall?.time ?? '';
     setEditingId(post.id);
     setForm({
       ...emptyForm,
@@ -225,20 +202,36 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
     });
     if (!check.ok) return notify(problemMessage(t, check.problems[0]));
 
+    // Plan §10 §4: the editor collects Myanmar Time and the row stores UTC.
+    // A date or time that is not a real instant is refused here rather than
+    // stored, so the publishing job never sees a schedule it cannot read.
+    const scheduledFor = form.status === 'Scheduled'
+      ? myanmarWallClockToUtc(form.scheduledDate, form.scheduledTime)
+      : null;
+    if (form.status === 'Scheduled' && !scheduledFor) return notify(problemMessage(t, { code: 'schedule' }));
+
     const now = new Date().toISOString().slice(0, 10);
     const id = editingId ?? `admin-blog-${Date.now()}`;
     const next: AdminPost = {
       id,
       titleEn: form.titleEn.trim(),
       titleMm: form.titleMm.trim(),
+      excerptEn: form.excerptEn.trim(),
+      excerptMm: form.excerptMm.trim(),
       category: form.category,
       author: form.author.trim() || 'MH Travel Editorial',
       location: form.location.trim() || 'Myanmar',
       imageUrl: form.imageUrl.trim(),
       galleryUrls: form.galleryUrls,
       blocks: normalizeAdSlots(form.blocks),
+      seoTags: form.seoTags,
       status: form.status,
-      publishedAt: form.status === 'Scheduled' ? `${form.scheduledDate}T${form.scheduledTime}` : now,
+      // A Scheduled post has no publish date yet; the job sets it when the
+      // time arrives, so the table never shows a future post as published.
+      publishedAt: form.status === 'Published'
+        ? now
+        : (posts.find((post) => post.id === editingId)?.publishedAt ?? ''),
+      scheduledFor,
       views: editingId ? (posts.find((post) => post.id === editingId)?.views ?? 0) : 0,
       updatedAt: now,
     };
@@ -263,7 +256,7 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       objectType: 'blog',
       objectId: id,
       summary: next.status === 'Scheduled'
-        ? `${next.titleEn} · scheduled ${next.publishedAt}`
+        ? `${next.titleEn} · scheduled ${form.scheduledDate} ${form.scheduledTime} (MMT)`
         : `${next.titleEn} · ${next.status}`,
       source: 'content',
     });
@@ -276,8 +269,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       status: 'Published',
       titleEn: post.titleEn,
       titleMm: post.titleMm,
-      excerptEn: 'ok',
-      excerptMm: 'ok',
+      excerptEn: post.excerptEn,
+      excerptMm: post.excerptMm,
       category: post.category,
       coverUrl: post.imageUrl,
       blocks: post.blocks,
@@ -286,7 +279,13 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
     });
     if (!check.ok) return notify(problemMessage(t, check.problems[0]));
     setPosts((current) => current.map((item) => (item.id === post.id
-      ? { ...item, status: 'Published', publishedAt: new Date().toISOString().slice(0, 10), updatedAt: new Date().toISOString().slice(0, 10) }
+      ? {
+          ...item,
+          status: 'Published',
+          publishedAt: new Date().toISOString().slice(0, 10),
+          scheduledFor: null,
+          updatedAt: new Date().toISOString().slice(0, 10),
+        }
       : item)));
     setAudit((current) => appendAudit(current, {
       id: `audit-${Date.now()}`,
@@ -379,6 +378,9 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
                   <td className="px-2 py-2.5">{post.views.toLocaleString()}</td>
                   <td className="px-2 py-2.5">
                     <span className={`rounded-full px-2 py-1 text-[9px] font-bold ${post.status === 'Published' ? 'bg-green-500/20 text-green-300' : post.status === 'Scheduled' ? 'bg-purple-500/20 text-purple-300' : 'bg-amber-500/20 text-amber-300'}`}>{t(STATUS_KEYS[post.status])}</span>
+                    {post.status === 'Scheduled' && post.scheduledFor && (
+                      <p className="mt-1 text-[9px] text-slate-500">{formatScheduleLabel(post.scheduledFor, language)}</p>
+                    )}
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">

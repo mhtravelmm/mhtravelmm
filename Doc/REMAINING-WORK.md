@@ -4,7 +4,9 @@
 **Verified against:** `main` plus the rental order rules
 (`src/lib/rentalOrderRules.ts`), the full Rental Admin panel (catalog,
 availability, rates, branches, terms, settings, orders) built to Plan §8.8, the
-per-account Favorites/notification/review wiring, and the 22 November work on the
+per-account Favorites/notification/review wiring, the client-side scheduled
+publishing seam (`src/lib/contentStore.ts`, `scheduleRules.ts`,
+`scheduledPublishing.ts`, `contentReader.ts`), and the 22 November work on the
 guide route follower, the two owner dashboards, and the Foreign Tourist section;
 detail in [`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
 
@@ -103,12 +105,16 @@ the suite instead of reaching a user as "coming soon."
   storage. The `rental_order_extras` table is committed but not applied, so the
   rows move with the rest of the order data. Collecting the added amount still
   goes through the same staff-recorded payment as the daily rate.
-- Seven of the eight §16B.7 jobs are registered but unwired: publishing due
-  content, ad campaign windows, subscription expiry, renewal reminders, the ad
-  statistics roll-up, orphan media cleanup and the raw ad event purge. Each
-  needs the table it reads (blogs, ad campaigns, subscriptions, media, ad
-  events) before it can do any work, and the Super Admin jobs page shows them
-  as "not wired" until then.
+- Six of the eight §16B.7 jobs are registered but unwired: ad campaign windows,
+  subscription expiry, renewal reminders, the ad statistics roll-up, orphan
+  media cleanup and the raw ad event purge. Each needs the table it reads (ad
+  campaigns, subscriptions, media, ad events) before it can do any work, and
+  the Super Admin jobs page shows them as "not wired" until then.
+- Publishing due content is wired, but against browser storage: the job reads
+  the rows in `src/lib/contentStore.ts`, so it only runs while a Super Admin has
+  the app open. `blog_posts` and `travel_guides` are committed in
+  `supabase/migrations/20261123000600_scheduled_publishing.sql` but not applied,
+  so the move is to point the store at those tables and the job at `pg_cron`.
 - `job_runs` is committed with the `pg_cron` entry for the rental expiry job but
   not applied. Until it is, the run log and the failure bell live in browser
   storage through `src/lib/jobs.ts`.
@@ -210,7 +216,7 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   yet, so a creative is still a name and an advertiser.
 - Add Blog Post, localized block, category, revision, SEO metadata, status, schedule, and audit tables. The block schema, revision cap, and audit actions already exist in `src/lib/blogBlocks.ts` and `src/lib/contentWorkflow.ts`, so the tables mirror that shape.
 - Persist cover, gallery, and inline story media transactionally with ordered blocks, alt text, captions, and R2 keys. The reader already renders ordered text, photo, and ad blocks with alt text and captions from local data.
-- Add scheduled publishing execution, timezone handling, moderation, draft autosave, optimistic concurrency, and public cache invalidation. Revisions and the audit log are recorded in the editor's local state today and need the tables above to survive a reload.
+- Scheduled publishing execution and timezone handling are in place on the client (§10 §4): `src/lib/scheduleRules.ts` converts Myanmar Time to UTC, `src/lib/scheduledPublishing.ts` runs on the one-minute tick, and the reader reads the result. What is left is the server: moderation, draft autosave, optimistic concurrency, public cache invalidation, and a `pg_cron` trigger. Revisions and the audit log live in browser storage today, so they still need the tables above to be shared between two editors.
 - Add Travel Guide and Guide Stop tables with the listing reference, then persist the itinerary, revisions, audit entries, and earning rows that `src/lib/guideEarnings.ts` defines. The per-post earning rate is still undecided, so the amount stays an Admin-entered value.
 
 ## Dashboard and business operations

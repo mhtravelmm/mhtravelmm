@@ -862,14 +862,16 @@ Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib
 
 #### 1. As built (PARTIAL: editor works on local state)
 
-- **Access:** Super Admin and Blog Post Admin (`canManageBlogs`). Posts, revisions and the audit log are component state, so nothing survives a reload and nothing reaches the public reader.
+- **Access:** Super Admin and Blog Post Admin (`canManageBlogs`). Posts, revisions and the audit log live in `src/lib/contentStore.ts` (browser storage), so a row survives a reload and a published one reaches the reader through `src/lib/contentReader.ts`. Two browsers still do not share a row; that is the table work in §3.
 - **Blocks, in reading order:** `text` (`textEn`, `textMm`), `image` (`imageUrl`, `altEn`, `altMm`, `caption`, `credit`), `ad` (no content). Blocks can be inserted, moved up or down (`moveBlock`) and removed.
 - **Ad rules in code:** at most 3 ad blocks per post (`MAX_AD_SLOTS_PER_POST`), not first, not next to another ad. `normalizeAdSlots` removes slots that break the rules after an edit.
 - **Statuses:** Draft, Scheduled, Published, with a schedule date and time.
 - **Publish check** (`blogPublishCheck`, stable codes): `title_languages`, `excerpt_languages`, `category`, `cover`, `story_text` (at least one text block with text in either language), `alt_missing` (every image needs alt text in both languages), `schedule`; ad codes `ad_first`, `ad_adjacent`, `ad_max`.
 - **Revisions and audit** (`contentWorkflow.ts`): a revision on every save, at most 20 per post, with a Restore button; audit actions `created`, `saved`, `published`, `scheduled`, `restored`, each with the actor and time.
 - **Media:** the source image may be up to 12 MB; the browser resizes it to at most 1600 px, converts to WebP trying quality 0.82, 0.68, 0.54, 0.4 until it is at most 450 KB. With `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT` set it posts to the endpoint; without it, it keeps a preview data URL. Failures return codes that the editor translates.
-- **Not built:** slug, read time, MM/EN author and location (both are plain strings), autosave, bilingual captions. `galleryUrls` still exists with no reader field. `seoTags` is one text field.
+- **Reader projection** (`contentReader.ts`): the slug is the lowercase hyphenated English title, fixed after first publish and numbered if taken; read time is English words ÷ 200 rounded up; blocks become paragraphs, images and ad slots in order. A seeded post the editor takes over keeps its seed slug and its sample rating and distance, which the editor does not collect.
+- **Scheduling** (24 November 2026): the editor takes Myanmar Time and stores the UTC instant (`scheduleRules.ts`); `publish_due_content` is wired in `jobs.ts` and runs through `scheduledPublishing.ts`, publishing due posts and guides with the actor `system`. Both readers hide a rating or distance the post does not have (§8).
+- **Not built:** MM/EN author and location (both are plain strings), autosave, bilingual captions, server-side `version` checks. `galleryUrls` still exists with no reader field. `seoTags` is one text field.
 
 Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code wins); a caption is one string, not MM/EN; the story check needs one non-empty text block in either language, not every paragraph in both.
 
@@ -967,7 +969,9 @@ Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/l
 - **Publish check** (`guidePublishCheck`): `title_languages`, `excerpt_languages`, `cover`, `author`, `stop_required`, `stop_listing` (a stop whose listing no longer exists), `stop_languages` (every stop needs title and description in both languages), `stop_time_format`, `stop_time_order` (a time earlier than the one before it), `schedule`.
 - **Revisions and audit:** shared with Blog (`contentWorkflow.ts`): 20 revisions per item, audit actions as for Blog.
 - **Earnings** (`guideEarnings.ts`, persisted by `guideEarningsStore.ts`): one row per guide (`guideId`, `guideTitle`, `author`, `publishedAt`, `amountUsd` null until set, `amountSetAt`, `paid`, `paidAt`). `setEarningAmount` ignores negative or non-finite values; `markEarningPaid` works only when an amount exists; `earningsForAuthor` narrows the list for a Guide Content Admin; `authorTotals` gives each author's payable USD, settled USD and pending rows. The section itself is `GuideEarningsPanel` (Plan §16B.1): Payment Admin sets the amount and settles, Admin reads every author, Guide Content Admin reads only its own.
-- **Not built:** persistence, slug or `guideId`, duration, localized author, autosave, handling of a removed listing.
+- **Reader projection** (`contentReader.ts`): stops are sorted by time, `place` comes from the linked listing rather than the typed text, and duration is the span between the first and last stop, at least one hour. The reader accepts the guide by id.
+- **Scheduling and earnings** (24 November 2026): a scheduled guide publishes through the same job as a blog post, and the first publish writes its earning row, so a republish cannot create a second one.
+- **Not built:** a `guideId` slug separate from the row id, localized author, autosave, server-side `version` checks, and handling of a removed listing.
 
 #### 2. Decisions for the system
 

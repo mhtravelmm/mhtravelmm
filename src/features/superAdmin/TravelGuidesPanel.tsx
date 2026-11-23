@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, ImagePlus, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { LISTING_IDS, LISTING_INDEX, listingTitle } from '../../data/listingIndex';
-import { TRAVEL_GUIDE_STORIES, type GuideCategory } from '../../data/travelGuideData';
+import type { GuideCategory } from '../../data/travelGuideData';
 import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
 import { addEarningForGuide } from '../../lib/guideEarningsStore';
 import {
@@ -14,6 +14,13 @@ import {
   type AuditEntry,
   type Revision,
 } from '../../lib/contentWorkflow';
+import {
+  useContentAudit,
+  useGuides,
+  useRevisions,
+  type AdminGuide,
+} from '../../lib/contentStore';
+import { formatScheduleLabel, myanmarWallClockToUtc, utcToMyanmarWallClock } from '../../lib/scheduleRules';
 import {
   createStop,
   guidePublishCheck,
@@ -60,8 +67,6 @@ const MEDIA_KEYS: Record<MediaErrorCode, TranslationKey> = {
   quota_reached: 'cw_media_quota_reached',
 };
 
-type AdminGuide = GuideDraft & { id: string; publishedAt: string; views: number };
-
 const emptyDraft: GuideDraft = {
   titleEn: '',
   titleMm: '',
@@ -76,50 +81,17 @@ const emptyDraft: GuideDraft = {
   scheduledTime: '',
 };
 
-/** Seed stops predate the editor, so a stop is linked only when its place names a real listing. */
-function matchListing(place: string, title: string): string {
-  const needle = (place || title).trim().toLowerCase();
-  if (!needle) return '';
-  return LISTING_INDEX.find((listing) => listing.title.trim().toLowerCase() === needle)?.id ?? '';
-}
-
-const seedGuides: AdminGuide[] = TRAVEL_GUIDE_STORIES.map((guide) => ({
-  id: guide.id,
-  titleEn: guide.localizedTitle.en,
-  titleMm: guide.localizedTitle.mm,
-  excerptEn: guide.summary.en,
-  excerptMm: guide.summary.mm,
-  category: guide.category,
-  coverUrl: guide.imageUrl ?? '',
-  author: guide.author.en,
-  stops: guide.stops.map((stop) => ({
-    ...createStop(),
-    time: stop.time,
-    listingId: stop.listingId ?? matchListing(stop.place, stop.title.en),
-    titleEn: stop.title.en,
-    titleMm: stop.title.mm,
-    descriptionEn: stop.description.en,
-    descriptionMm: stop.description.mm,
-    imageUrl: stop.imageUrl ?? '',
-  })),
-  status: 'Published',
-  scheduledDate: '',
-  scheduledTime: '',
-  publishedAt: guide.publishedAt,
-  views: guide.views,
-}));
-
 export function TravelGuidesPanel({ runAction }: { runAction: (label: string) => void }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const recordAdminAction = useAuditRecorder();
-  const [guides, setGuides] = useState<AdminGuide[]>(seedGuides);
+  const [guides, setGuides] = useGuides();
   const [draft, setDraft] = useState<GuideDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState('');
-  const [revisions, setRevisions] = useState<Revision<GuideDraft>[]>([]);
-  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [revisions, setRevisions] = useRevisions<GuideDraft>('guide');
+  const [audit, setAudit] = useContentAudit('guide');
 
   const filtered = useMemo(
     () => guides.filter((guide) => `${guide.titleEn} ${guide.titleMm} ${guide.author}`.toLowerCase().includes(query.toLowerCase())),
@@ -142,6 +114,9 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
   }
 
   function openEdit(guide: AdminGuide) {
+    const wall = guide.status === 'Scheduled' && guide.scheduledFor
+      ? utcToMyanmarWallClock(guide.scheduledFor)
+      : null;
     setEditingId(guide.id);
     setDraft({
       titleEn: guide.titleEn,
@@ -153,8 +128,8 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       author: guide.author,
       stops: guide.stops,
       status: guide.status,
-      scheduledDate: guide.scheduledDate,
-      scheduledTime: guide.scheduledTime,
+      scheduledDate: wall?.date ?? '',
+      scheduledTime: wall?.time ?? '',
     });
     setShowEditor(true);
   }
@@ -163,12 +138,21 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     event.preventDefault();
     const check = guidePublishCheck(draft, LISTING_IDS);
     if (draft.status !== 'Draft' && !check.ok) return notify(problemMessage(t, check.problems[0]));
+    // Plan §10 §4: Myanmar Time in, UTC stored, same rule as Blog.
+    const scheduledFor = draft.status === 'Scheduled'
+      ? myanmarWallClockToUtc(draft.scheduledDate, draft.scheduledTime)
+      : null;
+    if (draft.status === 'Scheduled' && !scheduledFor) return notify(problemMessage(t, { code: 'schedule' }));
+
     const now = new Date().toISOString().slice(0, 10);
     const next: AdminGuide = {
       ...draft,
       stops: sortStopsByTime(draft.stops),
       id: editingId ?? `guide-${Date.now()}`,
-      publishedAt: draft.status === 'Scheduled' ? `${draft.scheduledDate}T${draft.scheduledTime}` : now,
+      publishedAt: draft.status === 'Published'
+        ? now
+        : (guides.find((guide) => guide.id === editingId)?.publishedAt ?? ''),
+      scheduledFor,
       views: editingId ? (guides.find((guide) => guide.id === editingId)?.views ?? 0) : 0,
     };
     setGuides((current) => (editingId ? current.map((guide) => (guide.id === editingId ? next : guide)) : [next, ...current]));
@@ -191,7 +175,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       objectType: 'guide',
       objectId: next.id,
       summary: next.status === 'Scheduled'
-        ? `${next.titleEn} · scheduled ${next.publishedAt}`
+        ? `${next.titleEn} · scheduled ${next.scheduledDate} ${next.scheduledTime} (MMT)`
         : `${next.titleEn} · ${next.status}`,
       source: 'content',
     });
@@ -214,7 +198,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     const seededWithoutListings = guide.stops.length > 0 && guide.stops.every((stop) => !stop.listingId);
     if (!check.ok && !seededWithoutListings) return notify(problemMessage(t, check.problems[0]));
     setGuides((current) => current.map((item) => (item.id === guide.id
-      ? { ...item, status: 'Published', publishedAt: new Date().toISOString().slice(0, 10) }
+      ? { ...item, status: 'Published', publishedAt: new Date().toISOString().slice(0, 10), scheduledFor: null }
       : item)));
     setAudit((current) => appendAudit(current, {
       id: `audit-${Date.now()}`,
@@ -290,6 +274,9 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
                   <td className="px-2 py-2.5">{guide.author}</td>
                   <td className="px-2 py-2.5">
                     <span className={`rounded-full px-2 py-1 text-[9px] font-bold ${guide.status === 'Published' ? 'bg-green-500/20 text-green-300' : guide.status === 'Scheduled' ? 'bg-purple-500/20 text-purple-300' : 'bg-amber-500/20 text-amber-300'}`}>{t(STATUS_KEYS[guide.status])}</span>
+                    {guide.status === 'Scheduled' && guide.scheduledFor && (
+                      <p className="mt-1 text-[9px] text-slate-500">{formatScheduleLabel(guide.scheduledFor, language)}</p>
+                    )}
                   </td>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">

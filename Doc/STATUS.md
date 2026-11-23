@@ -1,8 +1,9 @@
 # MH Travel — Work Status Record
 
 **Last audited:** 24 November 2026 (admin accounts, audit log, role change,
-exchange-rate history, the shared money formatter, the §16B.7 jobs runner, the
-§16B.3 notification feed and the §16B.4 translation fallback added)
+exchange-rate history, the shared money formatter, the §16B.7 jobs runner,
+scheduled publishing for Blog and Travel Guide, the §16B.3 notification feed and
+the §16B.4 translation fallback added)
 **Audited against:** `main` plus the rental order rules in
 `src/lib/rentalOrderRules.ts`, the Rental catalog data module, the Rental Admin
 panel, the per-account Favorites/notification/review wiring, and the earlier
@@ -106,9 +107,9 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/ticketing` | **PREVIEW** | Bus/train/events/cinema flows, seat selection |
 | `/travel-plans` | **PREVIEW** | Search, filters, custom-plan builder |
 | `/travel-plans/:planId` | **PREVIEW** | Generated itinerary, pricing, CTA |
-| `/travel-guide` | **PREVIEW** | Category + search filters |
+| `/travel-guide` | **PREVIEW** | Category + search filters; shows Admin-authored guides through the same reader projection, hiding a rating or distance the editor does not collect (Plan §10 §8) |
 | `/travel-guide/:guideId` | **DONE** | Guide reader with itinerary timeline and a stop-by-stop "Follow this route" stepper |
-| `/blogs` | **PREVIEW** | Listing + in-page reader via `?story=` |
+| `/blogs` | **PREVIEW** | Listing + in-page reader via `?story=`; reads what Admin published through `src/lib/contentReader.ts`, so a post the `publish_due_content` job releases appears without a reload |
 | `/blogs/:storyId` | **DONE** | Legacy path redirects to `/blogs?story=:id` |
 | `/foreign-tourist` | **DONE** | Post-arrival help: emergency numbers, SIM, etiquette, money (Plan §13) |
 | `/search` | **PREVIEW** | City/category/combined query modes |
@@ -203,6 +204,7 @@ places rather than advice.
 | Exchange rate | **PARTIAL** | Plan §16B.5 rows are in place client-side: `src/lib/exchangeRates.ts` appends `{mmkPerUsd, effectiveFrom, setBy, note}` and the rate in force is the latest row that has taken effect, with the Plan's 4,500 as the fallback. Super Admin → Currency shows the history table and takes a note per change; every change writes an audit row. One formatter (`src/lib/moneyFormat.ts`) does USD 2 decimals and MMK to the nearest 100. Still browser storage, not `exchange_rates` |
 | Rental order rules (§8.7) | **PREVIEW** | All fifteen checks mirrored in `src/lib/rentalOrderRules.ts`; the migration holds the authoritative copy |
 | Translation fallback (§16B.4) | **PARTIAL** | `src/lib/translationCache.ts` holds the rules (a name, an address and a price are never translated; one row per text and direction; a reviewed row is never overwritten), `src/lib/translationApi.ts` calls the Worker named by `VITE_TRANSLATION_ENDPOINT`, `useLocalizedText()` + `AutoTranslatedMark` are the reader seam and marker, and `TranslationReviewPanel` is the Admin queue in the `translations` section, busiest first, with one audit row per approval. Blogs and Travel Guide read through it; the rows are browser storage until `translation_cache` is applied and the Worker exists |
+| Scheduled publishing (§10 §4, §16B.7) | **PARTIAL** | Myanmar Time in, UTC stored (`src/lib/scheduleRules.ts`); `publish_due_content` is `wired: true` and runs on the one-minute tick through `src/lib/scheduledPublishing.ts`, publishing due posts and guides with the actor `system`, one audit row, one feed row and a guide's first earning row. It is idempotent because a published row has left `Scheduled`. `blog_posts` and `travel_guides` are committed in `supabase/migrations/20261123000600_scheduled_publishing.sql` but not applied, so the job reads browser storage and only runs while the app is open |
 | Media and storage (§16B.6) | **PARTIAL** | `src/lib/mediaRules.ts` states the five folders and their limits (`blog-posts/`, `guide-stops/`, `rentals/` 450 KB WebP; `ads/` 300 KB image or 3 MB / 15 s MP4; `shops/<shop-id>/` 450 KB within an Admin-set quota), refuses a path-like shop id, and answers with a translatable code. `src/lib/mediaApi.ts` compresses to WebP, halving the longest edge twice before it gives up, and both content editors name their folder. `media_objects` with `last_referenced_at`, `shop_media_count()`, `orphan_media_objects()` and `delete_media_object()` are committed. No deployed Worker yet, so an upload still falls back to a data URL, and the nightly orphan job stays `wired: false` |
 
 `localStorage` is used across 9 files with 15 distinct keys. Every one of them

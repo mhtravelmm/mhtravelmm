@@ -31,13 +31,19 @@ const OUTCOME_KEYS: Record<JobRun['outcome'], TranslationKey> = {
 
 /**
  * The result cell. A run that changed nothing says so rather than reporting
- * "0 expired", which reads like a failure to anyone scanning the table.
+ * "0 expired", which reads like a failure to anyone scanning the table. Each
+ * job reports its own counts, so the wording follows the job rather than
+ * assuming every handler expires orders.
  */
 function detailLabel(run: JobRun | undefined, t: (key: TranslationKey) => string): string {
   if (!run) return '—';
   if (run.outcome === 'failed') return run.detail || t('sa_jobs_state_failed');
   if (run.outcome !== 'ok') return '—';
-  if (!run.detail || run.detail === '0') return t('sa_jobs_detail_none');
+  if (!run.detail || run.detail === '0' || run.detail === '0/0') return t('sa_jobs_detail_none');
+  if (run.id === 'publish_due_content') {
+    const [blog = '0', guide = '0'] = run.detail.split('/');
+    return fill(t('sa_jobs_detail_published'), { blog, guide });
+  }
   return fill(t('sa_jobs_detail_expired'), { count: run.detail });
 }
 

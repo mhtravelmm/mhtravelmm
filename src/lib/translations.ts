@@ -1135,6 +1135,7 @@ const translations = {
   sa_jobs_every_hour: { mm: 'တစ်နာရီတစ်ခါ', en: 'Every hour' },
   sa_jobs_daily_at: { mm: 'နေ့စဉ် {time} (မြန်မာစံတော်ချိန်)', en: 'Daily at {time} Myanmar Time' },
   sa_jobs_detail_expired: { mm: 'သက်တမ်းကုန် Order {count} ခု', en: '{count} order(s) expired' },
+  sa_jobs_detail_published: { mm: 'ဘလော့ {blog} ပုဒ်၊ လမ်းညွှန် {guide} ခု ထုတ်ဝေပြီး', en: 'Published {blog} blog post(s) and {guide} guide(s)' },
   sa_jobs_detail_none: { mm: 'ပြောင်းလဲမှု မရှိပါ', en: 'Nothing to change' },
   sa_jobs_job_publish_due_content: { mm: 'အချိန်ရောက် အကြောင်းအရာ ထုတ်ဝေခြင်း', en: 'Publish due content' },
   sa_jobs_job_ad_campaign_window: { mm: 'ကြော်ငြာ ကမ်ပိန်း စတင်/ပြီးဆုံး', en: 'Ad campaign start and end' },

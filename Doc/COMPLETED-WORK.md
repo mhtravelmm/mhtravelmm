@@ -2,10 +2,12 @@
 
 **Last updated:** 24 November 2026
 **Verified against:** `main` plus the Rental catalog data module and Rental Admin
-panel, and the per-account Favorites, notification, and review wiring; earlier baseline `ecb231f` covers the Blog and Travel Guide admin
-editors, admin-role accounts, the rental-category work of 20–22 November 2026,
-and the same-day work on the guide route follower, the two owner dashboards,
-and the Foreign Tourist section.
+panel, the per-account Favorites, notification, and review wiring, and the
+scheduled publishing seam that now sits between the Blog/Travel Guide editors
+and their readers; earlier baseline `ecb231f` covers the Blog and Travel Guide
+admin editors, admin-role accounts, the rental-category work of 20–22 November
+2026, and the same-day work on the guide route follower, the two owner
+dashboards, and the Foreign Tourist section.
 
 This document records the frontend features, preview workflows, backend preparation, and documentation work completed so far. Production/backend boundaries remain explicitly listed in [`REMAINING-WORK.md`](./REMAINING-WORK.md).
 
@@ -958,7 +960,8 @@ cadence, and `useRentalExpiryJob` was removed now that the runner owns the timer
 Super Admin → Scheduled jobs (`JobsPanel`) lists every job with its cadence, last
 run, next due time, state and result, plus the recent run log. An unwired job
 reads "Not wired" rather than "Ready", so the page states how much of the
-schedule is real (`1/8` today) instead of implying the work is finished.
+schedule is real (`2/8` today, after scheduled publishing was wired on
+24 November) instead of implying the work is finished.
 
 `supabase/migrations/20261123000200_job_runs.sql` commits the `job_runs` table,
 its Super Admin-only read policy, a `run_platform_job(job, work)` wrapper that
@@ -1109,3 +1112,77 @@ published post but not the Rental Admin row; a Rental Admin session showed the
 rental request and the published post but neither the job failure nor the ad
 approval; an Ads Admin session showed the published post only.
 
+
+## Scheduled publishing, and a reader that reads what Admin wrote — Plan §10 §4, §16B.7, 24 November 2026
+
+The Blog and Travel Guide editors held their rows in component state, so a
+scheduled post was thrown away by the first reload and `publish_due_content` had
+nothing to read. The §16D Phase 0 gate asks for that job end to end, so this
+change puts a store behind both panels, a projection in front of both readers,
+and the job between them.
+
+`src/lib/contentStore.ts` is the seam: `blog_posts` and `travel_guides` are one
+record each, read through `useBlogPosts()` / `useGuides()` and written through
+`setPosts` / `setGuides`, with revisions and the content audit log beside them
+(`useRevisions(kind)`, `useContentAudit(kind)`). A row saved before
+`scheduledFor` existed is migrated on read, so an older browser record still
+publishes instead of sitting in `Scheduled` forever. `AdminPost` gained the
+required `excerptEn` / `excerptMm` the editor already collected but never saved.
+
+`src/lib/scheduleRules.ts` owns the clock. `myanmarWallClockToUtc()` turns the
+Myanmar Time the editor types into the UTC instant the row stores, and rejects a
+date that does not exist (`2026-02-31` rolls into March, so the round trip is
+what refuses it) rather than shifting a half-typed schedule into the wrong hour.
+`utcToMyanmarWallClock()` fills the editor again, `isDue()` treats an empty or
+unreadable schedule as never due, and `formatScheduleLabel()` renders the
+Admin table's schedule in `Asia/Yangon`. The panels show that label under the
+`Scheduled` pill, which is what makes a scheduled row legible at a glance.
+
+`src/lib/scheduledPublishing.ts` is the job body. It publishes every due post,
+then every due guide, writing one audit row with the actor `system`, one
+notification feed row, and — for a guide — its first earning row. It is safe to
+run twice because a published item has left `Scheduled`, so the second pass
+finds nothing due. `publish_due_content` is now `wired: true` in
+`src/lib/jobs.ts` and bound in `src/lib/platformJobs.ts`, so it runs on the
+one-minute tick and reports `<blog>/<guide>` in the run log; the jobs page now
+reads `2/8` instead of `1/8`. That run detail needed its own wording — the Result
+column said "1 order(s) expired" for every job, so `sa_jobs_detail_published`
+now reads "Published 1 blog post(s) and 0 guide(s)", and a `0/0` run still says
+"Nothing to change".
+
+`src/lib/contentReader.ts` is the projection the readers use. `adminPostToReader`
+and `adminGuideToReader` turn an Admin row into the card shape the pages already
+render: blocks become paragraphs, images and ad slots in order, read time is
+English words ÷ 200 rounded up, and the slug is created from the English title
+on first publish and then fixed. `publishedBlogPosts` / `publishedGuides` keep
+only `Published` rows, replace a seeded story the editor has taken over instead
+of duplicating it (keeping its slug, so a shared link survives, and its sample
+rating and distance, which the editor does not collect), and append the
+untouched seeds. `BlogsPage` and `TravelGuidePage` read through it, and both
+accept a link by slug or by id.
+
+Per Plan §10 §8 a post with no rating and no coordinates hides those two
+metrics instead of printing `0`, on the listing card and on the guide detail
+panel. The publish check in `BlogPostsPanel` now passes the post's real excerpt
+rather than the `'ok'` placeholder it used to.
+
+`supabase/migrations/20261123000600_scheduled_publishing.sql` commits
+`blog_posts` and `travel_guides` with the lifecycle columns the editor and the
+job share: `scheduled_for` (the UTC instant), `published_at` (only once live),
+`version` for optimistic concurrency, and check constraints that refuse a
+`Scheduled` row without an instant or a `Published` row without a date. The
+role check accepts `Super Admin` and `Blog Post Admin` for blog rows and adds
+`Travel Guide Content Admin` for guides.
+
+**Verification.** `npm run typecheck` clean; `npm test` 41 files / 487 tests
+(new: `contentReader`, `scheduledPublishing`, `scheduleRules`; `jobs` updated
+for the second wired job); `npm run build` succeeds; `npx eslint src` unchanged
+at 7 pre-existing warnings. Browser check at `/super-admin` with a post seeded
+as `Scheduled` for a past instant: the table showed the schedule label
+`1 Dec 2026, 09:00` for a future row, the tick moved the past one to
+`Published` with run detail `1/0`, the audit log showed the actor `system`, the
+feed gained one row, and `/blogs?story=admin-blog-e2e` opened the story with its
+image, location and author. A second reload published nothing and wrote no
+duplicate feed row. A future-dated post stayed invisible to the reader, and an
+Admin-authored guide appeared in `/travel-guide` and at
+`/travel-guide/<id>` with its stops in time order and a computed duration.
