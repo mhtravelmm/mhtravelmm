@@ -70,6 +70,54 @@ Admin rate change reached `/rentals` in the same session, unticking Yangon's car
 made the page offer Bagan instead, the car flow billed 2 days at the family-car
 rate (378,000 Ks), and the page had no horizontal overflow at 390px or 1440px.
 
+## Rental orders, voucher, and Rental Admin Orders (Plan §8, 22 November 2026)
+
+Plan §8.2 settled the open conflicts, §8.5 defined the order lifecycle, §8.6 the
+voucher, and §8.7 the server rules. This pass implements all four on the client
+and writes the migrations that make the server the authority.
+
+- **Catalog decisions applied.** `src/data/rentalCatalog.ts` drops motorbike and
+  scooter from Yangon, seeds `self_drive_car` inactive, and makes car types,
+  bicycle types and boat types data (`RentalVariant`) with the category rate as
+  the default. `flow` is `simple` or `driver_vehicle`, `active` and `sortOrder`
+  order the list, and `availableTypes(catalog, cityId)` answers what a city
+  offers. `/rentals` now lists only those, so Yangon shows five categories, not
+  eleven. `activeVariants()` and `findVariant()` drive the picker.
+- **`src/lib/rentalOrders.ts`** is the order module: the record (all §8.3
+  columns), the status machine (`requested → accepted → paid/completed`,
+  `expired`, `cancelled`), `paymentDeadlineFor()` for the 12-hour window,
+  `markPaid()` which issues voucher version 1, `rescheduleOrder()` (once, 24
+  hours ahead, same day count, version + 1), `expireOverdueOrders()` which is
+  safe to run twice, and an append-only event log with an actor. A traveler sees
+  only their own orders; staff see all.
+- **Submission.** The form gained the guest name and special-requests fields the
+  §6 voucher needs, and submitting requires a signed-in traveler. The order gets
+  `RNT-YYMMDD-####`, appears under Account → My Bookings, and links straight to
+  the voucher. The client total stays a preview; the migrations recompute it.
+- **`RentalVoucherPage.tsx`** at `/account/bookings/:requestCode` prints the 17
+  §6 fields, shows the QR code (the encoder is imported on demand, so the main
+  bundle does not carry it), the payment countdown, the voucher version, and the
+  one-date reschedule for a paid order.
+- **`RentalOrdersPanel.tsx`** is the Rental Admin → Orders section: status
+  filters with counts, search, an expandable row with the timeline and an
+  internal note, the payment countdown on an accepted order, and the actions
+  Accept, Record payment (with the method), Complete, Expire and Cancel. The
+  `expireOverdue()` job is also exposed there as a manual run.
+- **Migrations** under `supabase/migrations`: role helpers
+  (`is_rental_staff`, `is_rental_editor`), the catalog tables with RLS, the
+  order, event and extras tables with a `my_bookings` view, and the functions
+  `submit_rental_order`, `set_rental_order_status`,
+  `reschedule_rental_order`, `expire_overdue_rental_orders`. `rental_rate_for`
+  ranks city + variant above the default rows, and every error is a stable code
+  the page can translate.
+
+Verified: typecheck PASS, ESLint PASS (0 errors, 7 pre-existing warnings),
+`npm test` PASS (158 tests, 17 files), build PASS. In a headless browser a
+traveler submitted a bicycle order (`RNT-261123-0001`), saw it under My
+Bookings, printed the voucher with its QR, and after staff accepted and recorded
+payment the reschedule moved the start date, kept the two-day span, and issued
+voucher v2. Yangon's selector showed no motorbike or scooter.
+
 ## Per-account Favorites, notifications, and reviews (22 November 2026)
 
 - `src/lib/userScope.ts` gives every browser-stored row an account-scoped key.
