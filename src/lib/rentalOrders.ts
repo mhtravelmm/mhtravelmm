@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import { isSupabaseConfigured, supabase } from './supabase';
+import {
+  appendStaffNotifications,
+  appendTravelerNotices,
+  noticesForChange,
+  staffNotificationFor,
+  writeStaffNotifications,
+  type RentalNotice,
+} from './rentalNotifications';
 
 /**
  * Plan §8.5: a rental order is a record with a lifecycle, not a one-off form
@@ -301,6 +309,22 @@ export function writeAllOrders(orders: RentalOrder[]): void {
   window.dispatchEvent(new Event(CHANGED_EVENT));
 }
 
+/**
+ * Plan §8.9: hands one change to the people who need it. Staff notices go to
+ * the admin bell, traveler notices to the traveler's own scope, so one
+ * account's notices never show up under the next account's badge.
+ */
+export function deliverRentalNotices(order: RentalOrder, kind: RentalNotice['kind'], at: Date): void {
+  if (typeof window === 'undefined') return;
+  const notices = noticesForChange(order, kind, at);
+  const staffNotices = notices.filter((notice) => notice.audience === 'staff');
+  if (staffNotices.length > 0) {
+    writeStaffNotifications(appendStaffNotifications(staffNotices.map((notice) => staffNotificationFor(notice, order))));
+  }
+  const travelerNotices = notices.filter((notice) => notice.audience === 'traveler');
+  if (travelerNotices.length > 0) appendTravelerNotices(order.userId, travelerNotices);
+}
+
 export function useRentalOrders() {
   const { user } = useAuth();
   const owner = user?.id ?? null;
@@ -342,6 +366,7 @@ export function useRentalOrders() {
     };
     write([...current, order]);
     if (owner) void persistRemote(order);
+    deliverRentalNotices(order, 'requested', now);
     return order;
   }, [owner, write]);
 
@@ -362,6 +387,7 @@ export function useRentalOrders() {
       events: [...target.events, { at: now.toISOString(), from: target.status, to, actor, note }],
     };
     write(current.map((order) => (order.id === orderId ? updated : order)));
+    deliverRentalNotices(updated, to, now);
     return updated;
   }, [write]);
 
@@ -369,9 +395,11 @@ export function useRentalOrders() {
     const current = readAllOrders();
     const target = current.find((order) => order.id === orderId);
     if (!target) return null;
-    const updated = markPaid(target, method, new Date(), note);
+    const now = new Date();
+    const updated = markPaid(target, method, now, note);
     if (!updated) return null;
     write(current.map((order) => (order.id === orderId ? updated : order)));
+    deliverRentalNotices(updated, 'paid', now);
     return updated;
   }, [write]);
 
@@ -379,9 +407,11 @@ export function useRentalOrders() {
     const current = readAllOrders();
     const target = current.find((order) => order.id === orderId);
     if (!target) return { ok: false, reason: 'order_missing' };
-    const result = rescheduleOrder(target, nextStartDate, new Date());
+    const now = new Date();
+    const result = rescheduleOrder(target, nextStartDate, now);
     if (!result.ok) return result;
     write(current.map((order) => (order.id === orderId ? result.order : order)));
+    deliverRentalNotices(result.order, 'rescheduled', now);
     return result;
   }, [write]);
 
@@ -392,8 +422,16 @@ export function useRentalOrders() {
 
   const expireOverdue = useCallback(() => {
     const current = readAllOrders();
-    const next = expireOverdueOrders(current, new Date());
-    if (next !== current) write(next);
+    const now = new Date();
+    const next = expireOverdueOrders(current, now);
+    if (next === current) return;
+    write(next);
+    for (const order of next) {
+      const before = current.find((item) => item.id === order.id);
+      if (before && before.status !== 'expired' && order.status === 'expired') {
+        deliverRentalNotices(order, 'expired', now);
+      }
+    }
   }, [write]);
 
   return {

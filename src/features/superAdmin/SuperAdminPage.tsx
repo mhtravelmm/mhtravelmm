@@ -43,23 +43,20 @@ import { TravelGuidesPanel } from './TravelGuidesPanel';
 import { RentalAdminPanel } from './RentalAdminPanel';
 import { RentalOrdersPanel } from './RentalOrdersPanel';
 import { RentalReportsPanel } from './RentalReportsPanel';
+import {
+  STAFF_NOTIFICATIONS_EVENT,
+  STAFF_NOTIFICATIONS_KEY,
+  readStaffNotifications,
+  type StaffNotification,
+} from '../../lib/rentalNotifications';
 import { CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS } from '../../lib/adminRoles';
 
 type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
-type AdminNotification = { id: string; title: string; message: string; createdAt: string; read: boolean };
+type AdminNotification = StaffNotification;
 
-const ADMIN_NOTIFICATIONS_KEY = 'mh-travel-admin-notifications';
-
-function readAdminNotifications(): AdminNotification[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(ADMIN_NOTIFICATIONS_KEY) || '[]');
-    return Array.isArray(stored) ? stored : [];
-  } catch {
-    return [];
-  }
-}
+const ADMIN_NOTIFICATIONS_KEY = STAFF_NOTIFICATIONS_KEY;
+const readAdminNotifications = readStaffNotifications;
 
 type NavItem = {
   id: AdminView;
@@ -148,8 +145,13 @@ export function SuperAdminPage() {
     function syncNotifications(event: StorageEvent) {
       if (event.key === ADMIN_NOTIFICATIONS_KEY) setNotifications(readAdminNotifications());
     }
+    const syncLocal = () => setNotifications(readAdminNotifications());
     window.addEventListener('storage', syncNotifications);
-    return () => window.removeEventListener('storage', syncNotifications);
+    window.addEventListener(STAFF_NOTIFICATIONS_EVENT, syncLocal);
+    return () => {
+      window.removeEventListener('storage', syncNotifications);
+      window.removeEventListener(STAFF_NOTIFICATIONS_EVENT, syncLocal);
+    };
   }, []);
 
   function signOut() {

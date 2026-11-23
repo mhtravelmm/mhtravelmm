@@ -64,6 +64,10 @@ the suite instead of reaching a user as "coming soon."
   is in place too: status, city, type and day tallies, paid conversion, median
   accept time, settled value in USD and MMK, and a CSV export. Still open: the
   report reads the browser order list, so it moves to the tables with the rest.
+- **Rental notifications (§8.9)** are written on every status change: Requested
+  to the Rental Admin, Accepted/Paid/Expired/Cancelled to the traveler, a
+  reschedule back to staff. Both bells read browser storage, so they move to the
+  `notifications` table with the rest.
 - Schedule the rental expiry job (Plan §16B.7, every 5 minutes). The function is
   committed; the `pg_cron` entry and the job-failure notification are not.
 - Send the rental notifications (Plan §16B.3): requested to Rental Admin;

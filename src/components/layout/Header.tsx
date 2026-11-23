@@ -7,6 +7,7 @@ import { useCurrency } from '../../lib/currency';
 import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
 import { useNotificationFeed } from '../../lib/notifications';
+import { useRentalNoticeItems } from '../../lib/rentalNotifications';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { MobileMenu } from './MobileMenu';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -37,7 +38,8 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed(NOTIFICATIONS);
+  const rentalNotices = useRentalNoticeItems(language);
+  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed([...rentalNotices, ...NOTIFICATIONS]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(56);

@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom';
 import { NOTIFICATIONS, type NotificationItem } from '../../data/notifications';
 import { useLanguage } from '../../lib/i18n';
 import { useNotificationFeed } from '../../lib/notifications';
+import { useRentalNoticeItems } from '../../lib/rentalNotifications';
 
 type Filter = 'all' | 'unread' | 'read';
 
 export function NotificationsPage() {
-  const { t } = useLanguage();
-  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed(NOTIFICATIONS);
+  const { language, t } = useLanguage();
+  const rentalNotices = useRentalNoticeItems(language);
+  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed([...rentalNotices, ...NOTIFICATIONS]);
   const [filter, setFilter] = useState<Filter>('all');
 
   const visible = useMemo(() => notifications.filter((item) => filter === 'all' || (filter === 'unread' ? !item.isRead : item.isRead)), [filter, notifications]);

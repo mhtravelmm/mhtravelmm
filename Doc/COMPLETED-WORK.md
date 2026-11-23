@@ -575,3 +575,32 @@ Myanmar day boundary, the tallies, conversion, median accept time, settled value
 and CSV quoting); `npm run build` succeeds. Browser check with two seeded orders:
 2 orders, 50% conversion, 2h median accept, $16.00 / 72,000 Ks settled, and the
 city, type and day tables matching the seeded rows.
+
+## Rental notifications (Plan §8.9) — 22 November 2026
+
+`src/lib/rentalNotifications.ts` decides who hears about a change and writes the
+row. Requested goes to the Rental Admin, Accepted, Paid, Expired and Cancelled go
+to the traveler, a reschedule goes back to the Rental Admin, and Completed goes
+to nobody because the traveler just lived through it.
+
+`deliverRentalNotices` in `src/lib/rentalOrders.ts` is called from `createOrder`,
+`setStatus`, `recordPayment`, `reschedule` and `expireOverdue`, so a notice is
+written wherever the status actually moves rather than in the panel that happened
+to click the button. Staff rows share the admin bell's existing record shape and
+key, so the Super Admin page needed no second list. Traveler rows are stored per
+account through `userScope`, so one traveler's notices never appear under the next
+account's badge, and both bells cap at 50 rows.
+
+The traveler bell merges these notices ahead of the seeded feed items, so a paid
+voucher sits at the top of `/notifications` and the header dropdown. Titles are
+translated in both languages and carry the request code, and the row links to the
+traveler's own voucher.
+
+**Verification.** `npx tsc --noEmit -p tsconfig.app.json` clean; `npx vitest run`
+19 files / 195 tests (13 new in `src/lib/rentalNotifications.test.ts` covering the
+audience per status, the reschedule notice, deduplication, the 50-row cap, per-
+account isolation and the age labels); `npm run build` succeeds. Browser check:
+accepting order `RNT-261120-0002` as Super Admin wrote a traveler notice that
+appears at the top of `/notifications` for `traveler-2` and links to the voucher,
+and a staff row renders in the Super Admin bell with the traveler's name, phone
+and request code.
