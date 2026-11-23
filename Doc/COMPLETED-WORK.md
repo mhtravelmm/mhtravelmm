@@ -1438,3 +1438,40 @@ save, reopen — four tags, excerpt intact.
 **Verification.** `npm run typecheck` clean; `npm test` 55 files / 614 tests
 (10 new in `tagList.test.ts`: array, legacy string, blanks, case-insensitive
 duplicates, non-string entries, add, remove, join); `npm run build` succeeds.
+
+## Blog draft autosave — Plan §10 §4 "Draft save", 26 November 2026
+
+The Plan's draft-save rule is now in the editor: a draft is written every 30
+seconds with no revision and no audit row, and an explicit Save adds both.
+
+**The rule lives in `src/lib/draftAutosave.ts`, not in a timer.** It states the
+interval (`AUTOSAVE_INTERVAL_MS`), `formFingerprint` (a stable digest of the
+editable fields), `shouldAutosave` (nothing changed, or the interval has not
+elapsed, means no write) and `isWritableDraft` (an untouched editor creates no
+nameless row). Twelve unit tests cover the interval boundary, an unchanged
+form, a tab that slept for hours writing once on wake rather than in a burst,
+and the empty editor.
+
+**Only a Draft is autosaved.** A Published or Scheduled post changes through
+the explicit Save, because that path runs `blogPublishCheck` and the version
+guard; an autosave that skipped them could put an unchecked post in front of
+readers.
+
+**Two details that decide whether it works at all.** The panel reads the form
+through a ref, so the timer is not restarted on every keystroke — with the form
+in the dependency list a continuous typist would never reach the 30-second
+mark. And a write advances `editingVersion`, otherwise the Save that follows
+would be refused as stale against the autosave's own write.
+
+**Shared row builder.** `composeRow` builds the row for both paths, so an
+autosaved draft and a saved one cannot disagree about a field.
+
+**Verified in the browser.** A new post with a title typed and nothing else
+appeared in the table as a Draft within the interval, the editor showed
+"မူကြမ်းကို 03:21 PM တွင် အလိုအလျောက် သိမ်းထားသည်။", and the explicit Save
+afterwards reached the publish check instead of raising `version_conflict`.
+Opening a Published post showed no autosave line, which is the draft-only rule
+holding.
+
+`npm run typecheck` clean; `npm test` 56 files / 626 tests; `npm run build`
+succeeds.

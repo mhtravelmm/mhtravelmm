@@ -890,8 +890,15 @@ Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib
   comma-separated string — still loads and a stray blank or duplicate is
   dropped. Opening the editor also carries a post's tags and excerpt into the
   form; before this, saving an edited post erased both.
-- **Not built:** autosave, server-side `version` checks, and the reader's
-  coordinates, rating and `read_minutes` from the table (they are derived in
+- **Draft autosave (26 November 2026):** the 30-second draft save of §4 is in
+  place. `src/lib/draftAutosave.ts` holds the interval, the "has anything
+  changed" fingerprint and the write test, so the rule is unit-tested rather
+  than buried in a timer. It writes the row only — no revision, no audit row —
+  and only for a `Draft`; a Published or Scheduled post still changes through
+  the explicit Save, which runs the publish checks. The first write of a new
+  post creates its row, so a long draft is never held only in the editor.
+- **Not built:** server-side `version` checks, and the reader's coordinates,
+  rating and `read_minutes` from the table (they are derived in
   `contentReader.ts`).
 
 Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code wins); the story check needs one non-empty text block in either language, not every paragraph in both. A caption is now MM/EN as decided below.

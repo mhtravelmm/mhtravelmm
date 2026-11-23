@@ -100,6 +100,13 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   form is built from `emptyForm`, so a field left out there is silently blanked
   on save.
 
+- **Autosave rule lives in `src/lib/draftAutosave.ts`, not in the panel.** It
+  writes the draft row only — no revision, no audit row — and only while the
+  post is a `Draft`; publishing always goes through the explicit Save so the
+  publish checks run. Read the form through a ref in the timer: putting `form`
+  in the effect's dependency list restarts the timer on every keystroke and the
+  write never comes due.
+
 ## Conventions
 
 - One feature per folder under `src/features/<name>/`; page-level components end in `Page`.

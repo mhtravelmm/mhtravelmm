@@ -1567,6 +1567,7 @@ const translations = {
   bp_notice_scheduled: { mm: "ဘလော့ပို့စ် အချိန်စီစဉ်ပြီးပါပြီ။", en: "Blog post scheduled." },
   bp_notice_draft: { mm: "မူကြမ်း သိမ်းပြီးပါပြီ။", en: "Draft saved." },
   bp_notice_now_published: { mm: "{title} ကို ယခု ထုတ်ဝေလိုက်ပါပြီ။", en: "{title} is now published." },
+  bp_autosaved_at: { mm: "မူကြမ်းကို {time} တွင် အလိုအလျောက် သိမ်းထားသည်။", en: "Draft autosaved at {time}." },
   bp_feed_published_title: { mm: 'ဘလော့ဂ် အသစ် ထုတ်ဝေပြီး', en: 'New blog post published' },
   bp_feed_published_body: { mm: '{title} ကို ဖတ်ရှုနိုင်ပါပြီ။', en: '{title} is ready to read.' },
   bp_editor_kicker: { mm: "ဘလော့ တည်းဖြတ်ခန်း", en: "Blog editor" },

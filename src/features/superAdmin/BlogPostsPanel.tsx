@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowUp, CalendarDays, Edit3, Eye, EyeOff, ImagePlus, Megaphone, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
 import {
@@ -37,6 +37,14 @@ import {
 } from '../../lib/blogBlocks';
 import { fill } from '../../lib/fill';
 import { normalizeTags, removeTag, tagToAdd } from '../../lib/tagList';
+import {
+  EMPTY_AUTOSAVE,
+  afterAutosave,
+  formFingerprint,
+  isWritableDraft,
+  shouldAutosave,
+  type AutosaveState,
+} from '../../lib/draftAutosave';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuditRecorder } from '../../lib/adminAudit';
 import { problemMessage } from './publishProblemText';
@@ -114,6 +122,13 @@ const emptyForm: FormState = {
   scheduledTime: '',
 };
 
+const EMPTY_FORM_FINGERPRINT = formFingerprint([
+  emptyForm.titleEn, emptyForm.titleMm, emptyForm.excerptEn, emptyForm.excerptMm, emptyForm.category,
+  emptyForm.authorEn, emptyForm.authorMm, emptyForm.locationEn, emptyForm.locationMm, emptyForm.imageUrl,
+  emptyForm.blocks, emptyForm.seoTags, emptyForm.seoTagDraft,
+]);
+
+
 function Panel({ children }: { children: React.ReactNode }) {
   return <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">{children}</section>;
 }
@@ -144,6 +159,14 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [revisions, setRevisions] = useRevisions<FormState>('blog');
   const [audit, setAudit] = useContentAudit('blog');
+  const [autosavedAt, setAutosavedAt] = useState<number | null>(null);
+  const autosave = useRef<AutosaveState>(EMPTY_AUTOSAVE);
+  const formRef = useRef(form);
+  formRef.current = form;
+  const postsRef = useRef(posts);
+  postsRef.current = posts;
+  const editingIdRef = useRef(editingId);
+  editingIdRef.current = editingId;
 
   const filteredPosts = useMemo(
     () => posts.filter((post) => (statusFilter === 'All' || post.status === statusFilter)
@@ -161,6 +184,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
   }
 
   function openNew() {
+    autosave.current = EMPTY_AUTOSAVE;
+    setAutosavedAt(null);
     setEditingId(null);
     setEditingVersion(0);
     setRestoredFrom(null);
@@ -175,6 +200,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       : null;
     const date = wall?.date ?? '';
     const time = wall?.time ?? '';
+    autosave.current = EMPTY_AUTOSAVE;
+    setAutosavedAt(null);
     setEditingId(post.id);
     setEditingVersion(post.version);
     setRestoredFrom(null);
@@ -224,6 +251,89 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
     notify(fill(t('bp_category_added'), { name: label.trim() }));
   }
 
+  /**
+   * The row a save writes. Autosave and the explicit Save share it, so a draft
+   * that was autosaved and one that was saved cannot disagree about a field.
+   * `status` is a parameter because autosave never changes it: publishing is an
+   * explicit act, and it runs the checks in `submit`.
+   */
+  const composeRow = useCallback((id: string, status: BlogPostStatus, existing: AdminPost | undefined, version: number): AdminPost => {
+    const form = formRef.current;
+    const now = new Date().toISOString().slice(0, 10);
+    return {
+      id,
+      titleEn: form.titleEn.trim(),
+      titleMm: form.titleMm.trim(),
+      excerptEn: form.excerptEn.trim(),
+      excerptMm: form.excerptMm.trim(),
+      category: form.category,
+      // Plan §10 §2: an empty second language falls back to the one that was
+      // written, so a byline is never blank on the other side of the site.
+      authorEn: form.authorEn.trim() || form.authorMm.trim() || 'MH Travel Editorial',
+      authorMm: form.authorMm.trim() || form.authorEn.trim() || 'MH Travel Editorial',
+      locationEn: form.locationEn.trim() || form.locationMm.trim() || 'Myanmar',
+      locationMm: form.locationMm.trim() || form.locationEn.trim() || 'Myanmar',
+      imageUrl: form.imageUrl.trim(),
+      blocks: normalizeAdSlots(form.blocks),
+      seoTags: normalizeTags([...form.seoTags, form.seoTagDraft]),
+      status,
+      // A Scheduled post has no publish date yet; the job sets it when the
+      // time arrives, so the table never shows a future post as published.
+      publishedAt: status === 'Published' ? now : (existing?.publishedAt ?? ''),
+      scheduledFor: status === 'Scheduled'
+        ? myanmarWallClockToUtc(form.scheduledDate, form.scheduledTime)
+        : null,
+      deletedAt: existing?.deletedAt ?? null,
+      version,
+      views: existing?.views ?? 0,
+      updatedAt: now,
+    };
+    // Reads the form through the ref so the identity stays stable: a new
+    // identity per keystroke would restart the autosave timer on every
+    // keystroke and the write would never come due.
+  }, []);
+
+  /**
+   * Plan §10 §4 "Draft save": the draft row is written every 30 seconds with no
+   * revision and no audit row — both belong to an explicit Save. Only a Draft is
+   * autosaved; a Published or Scheduled post changes through `submit`, which
+   * runs the publish checks and the version guard.
+   *
+   * The form is read through a ref so continuous typing does not restart the
+   * timer and postpone the write forever. The first write of a new post creates
+   * its row, so a long draft is never held only in the editor. A write advances
+   * `editingVersion`, otherwise the explicit Save that follows would be refused
+   * as stale against our own write.
+   */
+  useEffect(() => {
+    if (!showEditor || conflict) return;
+    const tick = window.setInterval(() => {
+      const current = formRef.current;
+      const fingerprint = formFingerprint([
+        current.titleEn, current.titleMm, current.excerptEn, current.excerptMm, current.category,
+        current.authorEn, current.authorMm, current.locationEn, current.locationMm, current.imageUrl,
+        current.blocks, current.seoTags, current.seoTagDraft,
+      ]);
+      if (!isWritableDraft(EMPTY_FORM_FINGERPRINT, fingerprint)) return;
+      const now = Date.now();
+      if (!shouldAutosave(autosave.current, fingerprint, now)) return;
+
+      const id = editingIdRef.current ?? `admin-blog-${now}`;
+      const existing = postsRef.current.find((post) => post.id === id);
+      if (existing && existing.status !== 'Draft') return;
+
+      const version = (existing?.version ?? 0) + 1;
+      autosave.current = afterAutosave(fingerprint, now);
+      setAutosavedAt(now);
+      setEditingId(id);
+      setEditingVersion(version);
+      setPosts((rows) => (existing
+        ? rows.map((row) => (row.id === id ? composeRow(id, row.status, row, version) : row))
+        : [composeRow(id, 'Draft', undefined, version), ...rows]));
+    }, 5000);
+    return () => window.clearInterval(tick);
+  }, [showEditor, conflict, composeRow, setPosts]);
+
   function submit(event: FormEvent) {
     event.preventDefault();
     const existing = editingId ? posts.find((post) => post.id === editingId) : undefined;
@@ -257,36 +367,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       : null;
     if (form.status === 'Scheduled' && !scheduledFor) return notify(problemMessage(t, { code: 'schedule' }));
 
-    const now = new Date().toISOString().slice(0, 10);
     const id = editingId ?? `admin-blog-${Date.now()}`;
-    const next: AdminPost = {
-      id,
-      titleEn: form.titleEn.trim(),
-      titleMm: form.titleMm.trim(),
-      excerptEn: form.excerptEn.trim(),
-      excerptMm: form.excerptMm.trim(),
-      category: form.category,
-      // Plan §10 §2: an empty second language falls back to the one that was
-      // written, so a byline is never blank on the other side of the site.
-      authorEn: form.authorEn.trim() || form.authorMm.trim() || 'MH Travel Editorial',
-      authorMm: form.authorMm.trim() || form.authorEn.trim() || 'MH Travel Editorial',
-      locationEn: form.locationEn.trim() || form.locationMm.trim() || 'Myanmar',
-      locationMm: form.locationMm.trim() || form.locationEn.trim() || 'Myanmar',
-      imageUrl: form.imageUrl.trim(),
-      blocks: normalizeAdSlots(form.blocks),
-      seoTags: normalizeTags([...form.seoTags, form.seoTagDraft]),
-      status: form.status,
-      // A Scheduled post has no publish date yet; the job sets it when the
-      // time arrives, so the table never shows a future post as published.
-      publishedAt: form.status === 'Published'
-        ? now
-        : (existing?.publishedAt ?? ''),
-      scheduledFor,
-      deletedAt: existing?.deletedAt ?? null,
-      version: (existing?.version ?? 0) + 1,
-      views: existing?.views ?? 0,
-      updatedAt: now,
-    };
+    const next = composeRow(id, form.status, existing, (existing?.version ?? 0) + 1);
 
     setPosts((current) => (editingId ? current.map((post) => (post.id === editingId ? next : post)) : [next, ...current]));
     setRevisions((current) => recordRevision(current, {
@@ -541,13 +623,14 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
           }}
           conflict={conflict}
           onReload={reloadAfterConflict}
+          autosavedAt={autosavedAt}
         />
       )}
     </div>
   );
 }
 
-function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClose, onSubmit, update, history, auditTrail, onRestore, conflict, onReload }: {
+function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClose, onSubmit, update, history, auditTrail, onRestore, conflict, onReload, autosavedAt }: {
   form: FormState;
   editing: boolean;
   categories: string[];
@@ -561,8 +644,10 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
   onRestore: (snapshot: FormState, revisionId: string) => void;
   conflict: boolean;
   onReload: () => void;
+  /** When the draft row was last written automatically; null before the first. */
+  autosavedAt: number | null;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState('');
   const [newCategory, setNewCategory] = useState('');
@@ -618,6 +703,11 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-300">{t('bp_editor_kicker')}</p>
             <h2 className="mt-0.5 text-base font-extrabold text-white">{editing ? t('bp_editor_edit') : t('bp_editor_new')}</h2>
+            {autosavedAt !== null && (
+              <p className="mt-0.5 text-[9px] text-slate-400" role="status">
+                {fill(t('bp_autosaved_at'), { time: new Date(autosavedAt).toLocaleTimeString(language === 'mm' ? 'my-MM' : 'en-GB', { hour: '2-digit', minute: '2-digit' }) })}
+              </p>
+            )}
           </div>
           <button type="button" onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white" aria-label={t('cw_editor_close')}><X size={17} /></button>
         </div>
