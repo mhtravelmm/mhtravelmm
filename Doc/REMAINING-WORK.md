@@ -151,11 +151,11 @@ Still open on this track:
   `tel:` link from seed data.
 - ~~Complete remaining bilingual localization.~~ **Done.** Every dashboard
   shell and body is localized, including `BlogPostsPanel.tsx` and
-  `TravelGuidesPanel.tsx` inside Super Admin; the provider holds 1,605 keys, all
+  `TravelGuidesPanel.tsx` inside Super Admin; the dictionary (`src/lib/translations.ts`) holds 1,610 keys, all
   filled in both `mm` and `en`. The remaining translation work is backend
   content, not UI strings.
 - Add component-level behavioral tests. Route, link, manifest, filter, and
-  domain-rule tests exist and run under `npm test` (248 tests in 21 files);
+  domain-rule tests exist and run under `npm test` (291 tests in 23 files);
   nothing yet renders a page and asserts on it, so interaction regressions
   (filters, tabs, forms) are still caught by hand.
 

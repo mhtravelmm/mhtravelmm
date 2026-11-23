@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { fill } from '../../lib/fill';
+import { myanmarToday } from '../../lib/myanmarTime';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { auditChangedEvent, readRentalAudit, recordRentalAudit, type RentalAuditEntry } from '../../lib/rentalAudit';
@@ -238,7 +239,7 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
       cityId: null,
       rateLocalUsd: type?.rateUsd ?? 10,
       rateForeignUsd: type?.foreignRateUsd ?? 12,
-      effectiveFrom: new Date().toISOString().slice(0, 10),
+      effectiveFrom: myanmarToday(),
       effectiveTo: null,
     };
   }
@@ -299,7 +300,8 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
    * its traveler accepted.
    */
   function publishTerms() {
-    const nextVersion = new Date().toISOString().slice(0, 10);
+    // Terms versions are dated in Myanmar Time, like every other rental day.
+    const nextVersion = myanmarToday();
     setDraft((current) => {
       const history = current.termsHistory.some((entry) => entry.version === current.termsVersion)
         ? current.termsHistory

@@ -204,6 +204,17 @@ instead of owning the data, and `estimateRental()` is the one pricing function
 behind both the estimate panel and the submitted amount. The remaining gap is
 storage: the record is browser-local until the catalog tables exist.
 
+A fifth row is closed: Plan §8.12 lists ten acceptance criteria for Rental and
+four of them were unenforced. Criteria 1, 5, 9 and 10 are now checked in the
+client preview — one order per submit, a voucher lookup scoped to the viewer
+(staff read all, a traveller reads their own, a signed-out visitor reads none),
+the 24-hour reschedule notice counted from Yangon midnight rather than a
+browser-local one, and all 23 `rental_error_*` codes the migrations raise
+carrying both an MM and an EN string, with `src/lib/rentalErrorMessages.test.ts`
+reading the codes out of `supabase/migrations` so a new one cannot land
+untranslated. Criteria 6–8 stay open until the migrations are applied, because
+they describe what the server does.
+
 The three gap rows this section used to carry are closed:
 
 | Was | Now |

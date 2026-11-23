@@ -131,7 +131,10 @@ export function RentalsPage() {
   );
   const locationReady = fulfillment === 'branch' ? Boolean(branch) : address.trim().length >= 3;
   const nameReady = customerName.trim().length >= 2;
-  const canSubmit = Boolean(selected && nameReady && phone.trim().length >= 7 && locationReady && termsAccepted);
+  // Plan §8.12 acceptance 1: exactly one order per submission. Once the code is
+  // shown the button is spent until a field changes, so a second click cannot
+  // create a duplicate request.
+  const canSubmit = Boolean(selected && nameReady && phone.trim().length >= 7 && locationReady && termsAccepted && !submittedCode);
   const cityTypes = useMemo(() => availableTypes(catalog, city.id), [catalog, city.id]);
   const driverTypes = useMemo(() => activeTypes(catalog).filter((type) => type.driverRequired), [catalog]);
   // Plan §8.2: the page only offers what the chosen city actually has, so

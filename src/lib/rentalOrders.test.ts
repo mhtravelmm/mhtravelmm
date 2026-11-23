@@ -10,6 +10,8 @@ import {
   writeAllOrders,
   markPaid,
   nextStatuses,
+  canReadAllOrders,
+  orderForViewer,
   ordersForUser,
   PAYMENT_WINDOW_HOURS,
   paymentDeadlineFor,
@@ -75,6 +77,12 @@ describe('request code', () => {
 
   it('never drops below sequence 1', () => {
     expect(rentalRequestCode(new Date(2026, 10, 20), 0)).toBe('RNT-261120-0001');
+  });
+
+  it('stamps the Myanmar day, not the UTC day', () => {
+    // 18:00Z on the 20th is 00:30 on the 21st in Yangon, so the code is 261121.
+    expect(rentalRequestCode(new Date('2026-11-20T18:00:00.000Z'), 1)).toBe('RNT-261121-0001');
+    expect(rentalRequestCode(new Date('2026-11-20T17:00:00.000Z'), 1)).toBe('RNT-261120-0001');
   });
 });
 
@@ -170,6 +178,63 @@ describe('reschedule', () => {
   it('refuses a start date that has not changed', () => {
     const order = baseOrder({ status: 'paid', startDate: '2026-12-01' });
     expect(rescheduleOrder(order, '2026-12-01', now)).toEqual({ ok: false, reason: 'reschedule_unchanged' });
+  });
+
+  it('counts the 24-hour notice from the Myanmar day boundary', () => {
+    const order = baseOrder({ status: 'paid', originalStartDate: '2026-11-22', startDate: '2026-11-22', endDate: '2026-11-23' });
+    // 2026-11-22 00:00 in Yangon is 2026-11-21T17:30Z. Twenty-three hours
+    // before that is 2026-11-20T18:30Z, inside the notice.
+    expect(rescheduleOrder(order, '2026-11-25', new Date('2026-11-20T18:30:00.000Z'))).toEqual({ ok: false, reason: 'reschedule_too_late' });
+    // 24 hours and a minute earlier is outside it, so the change is allowed.
+    expect(rescheduleOrder(order, '2026-11-25', new Date('2026-11-20T17:29:00.000Z')).ok).toBe(true);
+  });
+
+  it('takes "tomorrow" from the Myanmar day', () => {
+    const order = baseOrder({ status: 'paid', originalStartDate: '2026-12-20', startDate: '2026-12-20', endDate: '2026-12-21' });
+    // 18:30Z on 20 November is already the 21st in Yangon, so 21 November is
+    // today there and only the 22nd is a valid new start.
+    const lateNight = new Date('2026-11-20T18:30:00.000Z');
+    expect(rescheduleOrder(order, '2026-11-21', lateNight)).toEqual({ ok: false, reason: 'reschedule_too_soon' });
+    expect(rescheduleOrder(order, '2026-11-22', lateNight).ok).toBe(true);
+  });
+
+  it('keeps the same number of days across a month end', () => {
+    const order = baseOrder({ status: 'paid', originalStartDate: '2026-12-01', startDate: '2026-12-01', endDate: '2026-12-04', days: 4 });
+    const result = rescheduleOrder(order, '2026-12-30', now);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.order.endDate).toBe('2027-01-02');
+  });
+});
+
+describe('voucher access', () => {
+  const mine = baseOrder({ id: 'a', userId: 'traveler-1', requestCode: 'RNT-261120-0001' });
+  const theirs = baseOrder({ id: 'b', userId: 'traveler-2', requestCode: 'RNT-261120-0002' });
+
+  it('shows a traveler their own voucher', () => {
+    expect(orderForViewer([mine, theirs], { userId: 'traveler-1', isStaff: false }, 'RNT-261120-0001')).toBe(mine);
+  });
+
+  it('hides another traveler’s voucher even with the right code', () => {
+    expect(orderForViewer([mine, theirs], { userId: 'traveler-1', isStaff: false }, 'RNT-261120-0002')).toBeUndefined();
+  });
+
+  it('shows a signed-out visitor nothing', () => {
+    expect(orderForViewer([mine, theirs], { userId: null, isStaff: false }, 'RNT-261120-0001')).toBeUndefined();
+  });
+
+  it('lets staff open any voucher', () => {
+    expect(orderForViewer([mine, theirs], { userId: 'super-admin-001', isStaff: true }, 'RNT-261120-0002')).toBe(theirs);
+  });
+
+  it('treats the order-handling roles as staff and the content roles as not', () => {
+    expect(canReadAllOrders('Rental Admin', false)).toBe(true);
+    expect(canReadAllOrders('Admin', false)).toBe(true);
+    expect(canReadAllOrders('Payment Admin', false)).toBe(true);
+    expect(canReadAllOrders('Super Admin', true)).toBe(true);
+    expect(canReadAllOrders('Blog Post Admin', false)).toBe(false);
+    expect(canReadAllOrders('Travel Guide Content Admin', false)).toBe(false);
+    expect(canReadAllOrders(undefined, false)).toBe(false);
   });
 });
 

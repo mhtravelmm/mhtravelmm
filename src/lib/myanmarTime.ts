@@ -23,6 +23,15 @@ export function addDaysToDay(day: string, amount: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+/**
+ * The instant a Myanmar calendar day begins, as epoch milliseconds. The notice
+ * rules are counted from the start of the rental day, so they need the same
+ * boundary the server uses (`original_start_date` in `Asia/Yangon`).
+ */
+export function myanmarDayStartMs(day: string): number {
+  return new Date(`${day}T00:00:00+06:30`).getTime();
+}
+
 /** Both endpoints count, so a same-day rental is one day. */
 export function inclusiveDaysBetween(startDay: string, endDay: string): number {
   const start = new Date(`${startDay}T12:00:00Z`).getTime();

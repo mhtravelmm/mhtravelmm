@@ -5,7 +5,7 @@ import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useCurrency } from '../../lib/currency';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { findRentalType, findVariant, localized } from '../../data/rentalCatalog';
-import { extrasTotalUsd, findOrderByCode, orderTotalUsd, paymentTimeLeft, useRentalOrders, type RentalOrder } from '../../lib/rentalOrders';
+import { canReadAllOrders, extrasTotalUsd, orderForViewer, orderTotalUsd, paymentTimeLeft, useRentalOrders, type RentalOrder } from '../../lib/rentalOrders';
 import { useAuth } from '../../lib/auth';
 
 /**
@@ -52,9 +52,9 @@ export function RentalVoucherPage() {
   const { requestCode = '' } = useParams<{ requestCode: string }>();
   const { language, t } = useLanguage();
   const { formatPrice, currency, exchangeRate } = useCurrency();
-  const { allOrders, orders, expireOverdue, reschedule } = useRentalOrders();
+  const { allOrders, expireOverdue, reschedule } = useRentalOrders();
   const { catalog } = useRentalCatalog();
-  const { user } = useAuth();
+  const { user, isSuperAdmin, adminRole } = useAuth();
   const [qr, setQr] = useState<string | null>(null);
   const [nextStart, setNextStart] = useState('');
   const [rescheduleNote, setRescheduleNote] = useState<TranslationKey | null>(null);
@@ -63,10 +63,13 @@ export function RentalVoucherPage() {
     expireOverdue();
   }, [expireOverdue]);
 
-  // Staff and the traveler both land here; a traveler sees only their own order.
+  // Plan §8.12 acceptance 5: staff read every order, a traveler reads only
+  // their own. A guessed `/account/bookings/<code>` URL must not reveal
+  // somebody else's order, so the lookup is scoped to the viewer.
+  const staff = canReadAllOrders(adminRole, isSuperAdmin);
   const order: RentalOrder | undefined = useMemo(
-    () => findOrderByCode(allOrders, requestCode) ?? findOrderByCode(orders, requestCode),
-    [allOrders, orders, requestCode],
+    () => orderForViewer(allOrders, { userId: user?.id ?? null, isStaff: staff }, requestCode),
+    [allOrders, requestCode, staff, user?.id],
   );
 
   useEffect(() => {

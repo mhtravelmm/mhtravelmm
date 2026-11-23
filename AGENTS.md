@@ -19,8 +19,13 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   *and* to `App.tsx`, or the test fails.
 - **`public/manus-routes.json` must match `allPaths()`.** Insert the new entry in place;
   do not re-sort the file.
-- **Every UI string goes through `t()`** in `src/lib/i18n.tsx`, and both `mm` and `en` must
-  be filled. `TranslationKey` is derived from the dictionary, so a typo is a type error.
+- **Every UI string goes through `t()`**, and both `mm` and `en` must be filled. The
+  dictionary lives in `src/lib/translations.ts`; `src/lib/i18n.tsx` is only the provider.
+  `TranslationKey` is derived from the dictionary, so a typo is a type error.
+- **Every `rental_error_*` the SQL functions raise needs MM and EN.** `translate()` takes a
+  plain string so a code newer than this build reads as missing, and
+  `src/lib/rentalErrorMessages.test.ts` reads the codes out of `supabase/migrations` and
+  fails on any without both texts.
 - **`CardListing` requires rating, distance, favourite, and views** (`src/types/index.ts`).
   Cards show all four; there are exactly five card sizes.
 - **Rental types, rules, rates, and availability are data.** `src/data/rentalCatalog.ts` is

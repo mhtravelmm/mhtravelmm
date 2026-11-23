@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './auth';
+import type { AdminRole } from './adminRoles';
 import { isSupabaseConfigured, supabase } from './supabase';
 import type { RentalCatalog } from '../data/rentalCatalog';
 import { readRentalCatalog } from './rentalCatalogStore';
@@ -10,6 +11,7 @@ import {
   type RentalOrderErrorCode,
 } from './rentalOrderRules';
 import { recordOrderAudit } from './rentalAudit';
+import { addDaysToDay, myanmarDay, myanmarDayStartMs, myanmarToday } from './myanmarTime';
 import {
   appendStaffNotifications,
   appendTravelerNotices,
@@ -154,9 +156,9 @@ function pad(value: number, length: number): string {
   return String(value).padStart(length, '0');
 }
 
-/** Plan §8.12 acceptance 1: `RNT-YYMMDD-####`. */
+/** Plan §8.12 acceptance 1: `RNT-YYMMDD-####`, stamped in Myanmar Time. */
 export function rentalRequestCode(at: Date, sequence: number): string {
-  const stamp = `${pad(at.getFullYear() % 100, 2)}${pad(at.getMonth() + 1, 2)}${pad(at.getDate(), 2)}`;
+  const stamp = myanmarDay(at.toISOString()).replace(/-/g, '').slice(2);
   return `RNT-${stamp}-${pad(Math.max(1, sequence), 4)}`;
 }
 
@@ -220,23 +222,24 @@ export type RescheduleResult = { ok: true; order: RentalOrder } | { ok: false; r
 export function rescheduleOrder(order: RentalOrder, nextStartDate: string, now: Date): RescheduleResult {
   if (order.status !== 'paid') return { ok: false, reason: 'reschedule_not_paid' };
   if (order.rescheduledCount >= RESCHEDULE_LIMIT) return { ok: false, reason: 'reschedule_limit' };
+  // Plan §8.5: the notice is counted to the start of the rental day in Myanmar
+  // Time, which is what `original_start_date - interval '24 hours'` means on
+  // the server. A local-midnight parse would move the boundary with the browser.
   const noticeMs = RESCHEDULE_NOTICE_HOURS * 3600000;
-  if (new Date(`${order.originalStartDate}T00:00:00`).getTime() - now.getTime() < noticeMs) {
+  if (myanmarDayStartMs(order.originalStartDate) - now.getTime() < noticeMs) {
     return { ok: false, reason: 'reschedule_too_late' };
   }
-  const tomorrow = new Date(now.getTime() + 86400000).toISOString().slice(0, 10);
+  const tomorrow = addDaysToDay(myanmarToday(now), 1);
   if (nextStartDate < tomorrow) return { ok: false, reason: 'reschedule_too_soon' };
   if (nextStartDate === order.startDate) return { ok: false, reason: 'reschedule_unchanged' };
 
-  const span = order.days - 1;
-  const nextEnd = new Date(`${nextStartDate}T12:00:00`);
-  nextEnd.setDate(nextEnd.getDate() + span);
+  const nextEnd = addDaysToDay(nextStartDate, order.days - 1);
   return {
     ok: true,
     order: {
       ...order,
       startDate: nextStartDate,
-      endDate: nextEnd.toISOString().slice(0, 10),
+      endDate: nextEnd,
       rescheduledCount: order.rescheduledCount + 1,
       voucherVersion: Math.max(1, order.voucherVersion) + 1,
       updatedAt: now.toISOString(),
@@ -320,6 +323,29 @@ export function addRentalExtra(
 
 export function findOrderByCode(orders: RentalOrder[], requestCode: string): RentalOrder | undefined {
   return orders.find((order) => order.requestCode === requestCode);
+}
+
+/**
+ * Plan §8.6: "staff open the same page to print it". Rental Admin, Admin and
+ * Payment Admin handle orders, so they read every voucher; a traveler reads
+ * only their own, and a signed-out visitor reads none.
+ */
+export function canReadAllOrders(role: AdminRole | undefined, isSuperAdmin: boolean): boolean {
+  return isSuperAdmin || role === 'Rental Admin' || role === 'Admin' || role === 'Payment Admin';
+}
+
+/**
+ * Plan §8.12 acceptance 5: the voucher lookup. Staff read every order, a
+ * traveler reads only their own, so a guessed `/account/bookings/<code>` URL
+ * cannot reveal somebody else's booking.
+ */
+export function orderForViewer(
+  allOrders: RentalOrder[],
+  viewer: { userId: string | null; isStaff: boolean },
+  requestCode: string,
+): RentalOrder | undefined {
+  const scoped = viewer.isStaff ? allOrders : ordersForUser(allOrders, viewer.userId);
+  return findOrderByCode(scoped, requestCode);
 }
 
 async function persistRemote(order: RentalOrder) {
@@ -477,7 +503,9 @@ export function buildRentalOrder(
   );
   if (!check.ok) return check;
   const quote = quoteRentalOrder(input, catalog);
-  const day = now.toISOString().slice(0, 10);
+  // The sequence counts today's orders in Myanmar Time, the same day the code
+  // is stamped with, so the two never disagree near midnight UTC.
+  const day = myanmarToday(now);
   return {
     ok: true,
     order: {
@@ -486,7 +514,10 @@ export function buildRentalOrder(
       totalUsd: quote.totalUsd,
       days: quote.days,
       id: `${now.getTime()}-${existing.length + 1}`,
-      requestCode: rentalRequestCode(now, existing.filter((order) => order.createdAt.slice(0, 10) === day).length + 1),
+      requestCode: rentalRequestCode(
+        now,
+        existing.filter((order) => myanmarDay(order.createdAt) === day).length + 1,
+      ),
       status: 'requested',
       acceptedAt: null,
       paymentDeadline: null,

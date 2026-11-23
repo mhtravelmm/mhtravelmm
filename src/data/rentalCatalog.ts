@@ -1,4 +1,4 @@
-import { addDaysToDay, inclusiveDaysBetween } from '../lib/myanmarTime';
+import { addDaysToDay, inclusiveDaysBetween, myanmarToday } from '../lib/myanmarTime';
 import type { Language } from '../types';
 
 /**
@@ -510,7 +510,7 @@ export function findRate(
   cityId: string,
   categoryId: string,
   variantId: string | null,
-  on = new Date().toISOString().slice(0, 10),
+  on = myanmarToday(),
 ): RentalRate | undefined {
   const rows = catalog.rates.filter((rate) => rate.categoryId === categoryId);
   return newestRate(rows, cityId, variantId, on)

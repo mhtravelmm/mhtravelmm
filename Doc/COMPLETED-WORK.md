@@ -696,3 +696,49 @@ hourly limit; `npm run build` succeeds; `npx eslint .` reports 0 errors.
 Browser check: a Yangon bicycle order submitted and produced
 `RNT-261123-0001` at 36,000 Ks on `/account/bookings/RNT-261123-0001`, and a
 forced `rental_error_city_availability` rendered in Burmese above the button.
+
+## Rental acceptance items 1, 5, 9 and 10 (Plan §8.12) — 23 November 2026
+
+The rule mirror above covered criteria 2–4. This pass closes the four that were
+still open, and moves the dictionary out of the provider so a missing string is
+visible to a test instead of hidden behind a cast.
+
+- **Acceptance 10 — every server error reads in MM and EN.** The migrations
+  raise 23 distinct `rental_error_*` codes; the dictionary had 15. The eight
+  missing ones (rate missing, participants, terms version, the staff-action
+  codes and the reschedule codes) are now filled in both languages.
+  `translate(key: string, language)` accepts a plain string and returns
+  `undefined` for a code this build does not know, so a newer server code reads
+  as missing rather than as a type error or a crash. `t()` falls back to the key
+  itself. `src/lib/rentalErrorMessages.test.ts` reads the codes straight out of
+  `supabase/migrations`, so a migration that adds a code fails the suite until
+  the text exists.
+- **The dictionary moved to `src/lib/translations.ts`.** `i18n.tsx` was 1,727
+  lines and exported both the dictionary and the provider, which the
+  `react-refresh/only-export-components` rule flags. `translations.ts` now holds
+  the 1,610 keys, `TranslationKey` and `translate()`; `i18n.tsx` is 47 lines of
+  provider and re-exports the type, so no import site changed.
+- **Acceptance 1 — exactly one order per submit.** `canSubmit` on `/rentals`
+  requires `!submittedCode`, so a second click cannot create a duplicate before
+  the traveller edits a field.
+- **Acceptance 5 — the voucher lookup is scoped to the viewer.** `canReadAllOrders()`
+  and `orderForViewer()` in `src/lib/rentalOrders.ts` decide who may read an
+  order: Super Admin and the order-handling roles (Rental Admin, Admin, Payment
+  Admin) read every voucher, a traveller reads only their own, and a signed-out
+  visitor reads none. `/account/bookings/<code>` used to union the two lists, so
+  a guessed code reached another traveller's booking.
+- **Acceptance 9 — the notice is counted in Myanmar Time.** `rescheduleOrder()`
+  measured the 24-hour notice from a browser-local midnight and took "tomorrow"
+  from UTC. `myanmarDayStartMs()` (new in `src/lib/myanmarTime.ts`) gives the
+  Yangon midnight the server uses, and the new start date comes from
+  `myanmarToday()`, so the boundary no longer moves with the browser's timezone.
+- **Request codes are stamped in Myanmar Time.** `rentalRequestCode()` sliced
+  the UTC date, so an order placed after 17:30 UTC carried yesterday's day.
+  `findRate()`, the Rental Admin terms version and the report window and CSV
+  filename use the same helper.
+
+**Verification.** `npx tsc --noEmit -p tsconfig.app.json` clean; `npx vitest run`
+23 files / 291 tests; `npm run build` succeeds; `npx eslint .` reports 0 errors
+and the same 7 pre-existing warnings. Browser check in Burmese and English: the
+`RNT-261120-0001` voucher rendered all 17 fields in both languages, and the
+reschedule panel rejected a past date with its translated message.

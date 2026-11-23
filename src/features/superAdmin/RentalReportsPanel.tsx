@@ -6,6 +6,7 @@ import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { localized } from '../../data/rentalCatalog';
 import { useRentalOrders } from '../../lib/rentalOrders';
 import { buildRentalReport, ordersToCsv } from '../../lib/rentalReports';
+import { addDaysToDay, myanmarToday } from '../../lib/myanmarTime';
 
 /** Plan §8.9: orders by status, city, category and day, plus the CSV export. */
 const STATUS_KEY = {
@@ -24,11 +25,9 @@ export function RentalReportsPanel() {
   const { allOrders } = useRentalOrders();
   const [days, setDays] = useState(30);
 
-  const from = useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - days);
-    return date.toISOString().slice(0, 10);
-  }, [days]);
+  // The window is counted in Myanmar Time, so it matches the days the report
+  // groups by and does not shift by a day for a browser west of UTC.
+  const from = useMemo(() => addDaysToDay(myanmarToday(), -days), [days]);
 
   // The window compares against the order's own start date, which is what the
   // founder asks about ("what is booked in the next month").
@@ -51,7 +50,7 @@ export function RentalReportsPanel() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `rental-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `rental-orders-${myanmarToday()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }

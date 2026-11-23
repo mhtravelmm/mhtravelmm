@@ -48,7 +48,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (248 tests, 21 files) |
+| `npm test` (vitest) | **PASS** (291 tests, 23 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (43 declared routes, all render) |
 
@@ -67,7 +67,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **DONE** | 1,605 keys; every traveler page, dashboard shell, both content editors and the Rental Admin panel are localized |
+| Bilingual MM/EN provider | **DONE** | 1,610 keys in `src/lib/translations.ts`; every traveler page, dashboard shell, both content editors and the Rental Admin panel are localized |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -93,7 +93,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/cities` | **PREVIEW** | City grid + category explorer |
 | `/cities/:cityId` | **PREVIEW** | Hero, facts, recommendations, category explorer |
 | `/nearby` | **PREVIEW** | Geolocation with Yangon fallback, 13 categories |
-| `/rentals` | **PARTIAL** | Categories come from `src/data/rentalCatalog.ts` with the Plan §8.2 decisions applied: Yangon offers no motorbike or scooter, self-drive car is retired, car types and bicycle types are data. The selector lists only what the chosen city offers. A signed-in traveler submits an order with a `RNT-YYMMDD-####` code and opens `/account/bookings/<code>` for the printable voucher. Rental Admin → Orders drives the lifecycle (accept, record payment, complete, expire, cancel), filters by status/city/type/date, searches code, name and phone, and requires a reason to cancel. The Rental Admin panel covers all seven Plan §8.8 sections: catalog, availability, rates by city × type × variant with effective dates and history, branches with address and phone, published terms versions, and settings. Rental notifications fire on every status change: Requested to staff, Accepted/Paid/Expired/Cancelled to the traveler, reschedules back to staff. Rental Admin → Rental reports adds status, city, type and day tallies, paid conversion, median accept time, settled value and a CSV export. Every catalog save and every order status change writes an audit-log row, the five-minute expiry job moves unpaid Accepted orders to Expired, and a travel guide's lodging, food and travel costs are added as lines on the order (§16). Order submission now mirrors the §8.7 server rules on the client: `src/lib/rentalOrderRules.ts` validates city availability, variant, branch, the Myanmar Time start, minimum days, name, phone, address, participants, terms version and the per-account hourly limit, and recomputes the total from the catalog so a tampered form cannot create a cheap order. Every rejection returns a `rental_error_*` code that the page shows in MM and EN. Still browser storage rather than the catalog and order tables; migrations are committed but not applied |
+| `/rentals` | **PARTIAL** | Categories come from `src/data/rentalCatalog.ts` with the Plan §8.2 decisions applied: Yangon offers no motorbike or scooter, self-drive car is retired, car types and bicycle types are data. The selector lists only what the chosen city offers. A signed-in traveler submits an order with a `RNT-YYMMDD-####` code and opens `/account/bookings/<code>` for the printable voucher. Rental Admin → Orders drives the lifecycle (accept, record payment, complete, expire, cancel), filters by status/city/type/date, searches code, name and phone, and requires a reason to cancel. The Rental Admin panel covers all seven Plan §8.8 sections: catalog, availability, rates by city × type × variant with effective dates and history, branches with address and phone, published terms versions, and settings. Rental notifications fire on every status change: Requested to staff, Accepted/Paid/Expired/Cancelled to the traveler, reschedules back to staff. Rental Admin → Rental reports adds status, city, type and day tallies, paid conversion, median accept time, settled value and a CSV export. Every catalog save and every order status change writes an audit-log row, the five-minute expiry job moves unpaid Accepted orders to Expired, and a travel guide's lodging, food and travel costs are added as lines on the order (§16). Order submission now mirrors the §8.7 server rules on the client: `src/lib/rentalOrderRules.ts` validates city availability, variant, branch, the Myanmar Time start, minimum days, name, phone, address, participants, terms version and the per-account hourly limit, and recomputes the total from the catalog so a tampered form cannot create a cheap order. Every rejection returns a `rental_error_*` code that the page shows in MM and EN — all 23 codes the migrations raise now have both texts, guarded by `src/lib/rentalErrorMessages.test.ts`. The voucher lookup is scoped to the viewer, so a guessed `/account/bookings/<code>` no longer reveals another traveller's order, and the reschedule notice and the request-code day are counted in Myanmar Time. Still browser storage rather than the catalog and order tables; migrations are committed but not applied |
 | `/restaurants` | **PREVIEW** | Menu, category filter, reviews, photos, CTA links |
 | `/restaurants/:id` | **PREVIEW** | Resolves the record from `:id` |
 | `/book-shops` | **PREVIEW** | Books, stationery, gifts, reviews, CTA links |
@@ -309,6 +309,18 @@ Steps 1 and 2 are now done, so the list starts where the frontend stops:
    renders it in MM and EN. `quoteRentalOrder()` is the only quote, so the
    estimate panel and the stored total cannot disagree, and `buildRentalOrder()`
    ignores the client total entirely (§8.12 acceptance 2–4).
+
+   **§8.12 acceptance 1, 5, 9 and 10, 23 November 2026.** Submitting is spent
+   once the code is shown, so one click makes one order. `orderForViewer()` and
+   `canReadAllOrders()` scope the voucher to the viewer: staff (Rental Admin,
+   Admin, Payment Admin, Super Admin) read every order, a traveller reads their
+   own, a signed-out visitor reads none. `myanmarDayStartMs()` counts the
+   reschedule notice from Yangon midnight, and `rentalRequestCode()` stamps the
+   Myanmar day. The dictionary moved to `src/lib/translations.ts` and holds all
+   23 `rental_error_*` codes in MM and EN; `translate()` returns `undefined` for
+   a code this build does not know, so a newer server code reads as missing
+   instead of crashing, and the test reads the codes out of the migrations.
+
 6. ~~Connect the Custom Plan, Rental, and Ticketing submissions to request
    records with an ID and a confirmation.~~ **Done 22 November 2026.** Each
    submission now writes a request record with a reference such as
