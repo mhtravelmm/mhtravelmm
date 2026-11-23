@@ -158,9 +158,11 @@ Still open on this track:
 - Anonymous visitors get the local scope, not a server row, so a guest's
   favorites do not survive a device change. That needs a decision on whether
   guests may hold server rows before a policy is written.
-- Notification feed rows are still seeded; nothing creates them yet. Admin
-  publish, owner publish, and booking-status events are the triggers described
-  in Plan §12.
+- Notification feed rows are written now — Admin publish, the scheduled
+  publishing job, the rental status changes and the guide earning rows all call
+  `pushFeedEvent()` — but the four seeded preview rows in
+  `src/data/notifications.ts` are still the only rows a traveler who has done
+  nothing yet will see. Production should drop them once real content exists.
 - Reviews are read-only in the UI. The "verified booking or visit" rule from
   Plan §11 and the Owner-rating adjustment still need an authoring path.
 

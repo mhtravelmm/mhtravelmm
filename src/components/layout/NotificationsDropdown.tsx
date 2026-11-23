@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import type { NotificationItem } from '../../data/notifications';
 import { useLanguage } from '../../lib/i18n';
+import { timeAgoLabel } from '../../lib/timeAgo';
+import { localizedOrFallback } from '../../lib/translationCache';
 
 interface NotificationsDropdownProps {
   notifications: NotificationItem[];
@@ -16,7 +18,7 @@ export function NotificationsDropdown({
   onMarkAllRead,
   onOpenItem,
 }: NotificationsDropdownProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,9 +79,9 @@ export function NotificationsDropdown({
                     n.isRead ? 'text-text-muted' : 'text-text-primary'
                   }`}
                 >
-                  {n.title}
+                  {localizedOrFallback(n.title, language)}
                 </p>
-                <p className="mt-0.5 text-[9px] text-text-faint">{n.timeAgo}</p>
+                <p className="mt-0.5 text-[9px] text-text-faint">{timeAgoLabel(n.createdAt, new Date(), language)}</p>
               </div>
               {!n.isRead && <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-blue" />}
             </Link>

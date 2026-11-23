@@ -3,6 +3,7 @@ import { addEarningForGuide } from './guideEarningsStore';
 import { recordAdminAudit } from './adminAudit';
 import { pushFeedEvent } from './notificationFeed';
 import { publishDueItems } from './scheduleRules';
+import { fill } from './fill';
 import { translate } from './translations';
 import {
   readBlogPosts,
@@ -18,13 +19,18 @@ import {
  * whose `scheduledFor` has passed goes live here, with the actor `system`, and
  * the run is idempotent — the second pass finds nothing left in `Scheduled`.
  *
- * The job runs without a React tree, so it resolves its own English copy rather
- * than calling `t()` from a hook. The feed row and the audit row have the same
- * shape the editor writes when an Admin publishes by hand.
+ * The job runs without a React tree, so it resolves both languages directly
+ * rather than calling `t()` from a hook. The feed row and the audit row have
+ * the same shape the editor writes when an Admin publishes by hand.
  */
 
-function feedText(key: string, fallback: string): string {
-  return translate(key, 'en') ?? fallback;
+/** Both languages, because a published post is a row every traveler reads. */
+function feedText(key: string, fallback: string): { mm: string; en: string } {
+  return { mm: translate(key, 'mm') ?? fallback, en: translate(key, 'en') ?? fallback };
+}
+
+function fillBoth(text: { mm: string; en: string }, values: Record<string, string>): { mm: string; en: string } {
+  return { mm: fill(text.mm, values), en: fill(text.en, values) };
 }
 
 function today(now: Date): string {
@@ -64,7 +70,7 @@ export function publishDueContent(now = new Date()): PublishRun {
     }, now);
     pushFeedEvent('blog_published', {
       title: feedText('bp_feed_published_title', 'New blog post published'),
-      message: feedText('bp_feed_published_body', '{title} is ready to read.').replace('{title}', post.titleEn),
+      message: fillBoth(feedText('bp_feed_published_body', '{title} is ready to read.'), { title: post.titleEn }),
       href: `/blogs/${post.id}`,
       at: now,
     });
@@ -109,7 +115,7 @@ export function publishDueContent(now = new Date()): PublishRun {
     });
     pushFeedEvent('guide_published', {
       title: feedText('tg_feed_published_title', 'New travel guide published'),
-      message: feedText('tg_feed_published_body', '{title} is ready to read.').replace('{title}', guide.titleEn),
+      message: fillBoth(feedText('tg_feed_published_body', '{title} is ready to read.'), { title: guide.titleEn }),
       href: guidePath(guide),
       at: now,
     });

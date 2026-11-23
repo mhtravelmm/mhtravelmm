@@ -6,6 +6,7 @@ import { useTheme } from '../../lib/theme';
 import { useCurrency } from '../../lib/currency';
 import { useAuth } from '../../lib/auth';
 import { NOTIFICATIONS } from '../../data/notifications';
+import { useFeedItems } from '../../lib/notificationFeed';
 import { useNotificationFeed } from '../../lib/notifications';
 import { useRentalNoticeItems } from '../../lib/rentalNotifications';
 import { NotificationsDropdown } from './NotificationsDropdown';
@@ -29,7 +30,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { currency, toggleCurrency } = useCurrency();
-  const { isAuthenticated, isSuperAdmin } = useAuth();
+  const { user, isAuthenticated, isSuperAdmin } = useAuth();
   const navItems = NAV_ITEMS_HOOK();
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,8 +39,11 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const rentalNotices = useRentalNoticeItems(language);
-  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed([...rentalNotices, ...NOTIFICATIONS]);
+  // Plan §16B.3: the bell and the inbox read the same three sources, so a
+  // published post shows in both or in neither.
+  const rentalNotices = useRentalNoticeItems();
+  const feedItems = useFeedItems({ userId: user?.id ?? null, name: user?.name });
+  const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed([...rentalNotices, ...feedItems, ...NOTIFICATIONS]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(56);

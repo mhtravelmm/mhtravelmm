@@ -1,6 +1,10 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 26 November 2026 (the §16B.4 reader pass: every reader — city,
+**Last audited:** 26 November 2026 (the notification readers: a bell row, an
+inbox row and a rental notice are stored in both languages and read through
+`localizedOrFallback()`, the age comes from `src/lib/timeAgo.ts` and is
+translated rather than stored, and the inbox groups by Myanmar calendar day
+instead of by a word in the English label; before that, the §16B.4 reader pass: every reader — city,
 category, place, restaurant, book shop and the rental labels — now reads
 through `localizedOrFallback()`, so a record written in one language shows that
 language instead of a blank; before that, the card rule: a rating and a distance

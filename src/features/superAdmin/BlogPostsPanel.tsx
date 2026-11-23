@@ -47,6 +47,7 @@ import {
   type AutosaveState,
 } from '../../lib/draftAutosave';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { fillPair, translatePair } from '../../lib/translations';
 import { useAuditRecorder } from '../../lib/adminAudit';
 import { problemMessage } from './publishProblemText';
 import { pushFeedEvent } from '../../lib/notificationFeed';
@@ -509,8 +510,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
     // Plan §16B.3: a published post is a feed row for every reader, so the bell
     // shows it without each traveler being written to one by one.
     pushFeedEvent('blog_published', {
-      title: t('bp_feed_published_title'),
-      message: fill(t('bp_feed_published_body'), { title: post.titleEn }),
+      title: translatePair('bp_feed_published_title'),
+      message: fillPair('bp_feed_published_body', { title: post.titleEn }),
       href: `/blogs/${post.id}`,
     });
     notify(fill(t('bp_notice_now_published'), { title: post.titleEn }));

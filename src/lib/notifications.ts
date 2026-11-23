@@ -72,10 +72,18 @@ export function useNotificationFeed(seed: NotificationItem[]): NotificationFeed 
     await supabase.from(TABLE).update({ is_read: isRead }).eq('user_id', owner).in('id', ids);
   }, [owner]);
 
-  const notifications = useMemo(
-    () => seed.map((item) => ({ ...item, isRead: readMap[item.id] ?? item.isRead })),
-    [readMap, seed],
-  );
+  // Plan §16B.3: one event can reach the reader through two sources — the feed
+  // row and the notice the order flow wrote — and both carry the same id. The
+  // first source wins, so a status change shows once, not twice.
+  const notifications = useMemo(() => {
+    const seen = new Set<string>();
+    const unique = seed.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+    return unique.map((item) => ({ ...item, isRead: readMap[item.id] ?? item.isRead }));
+  }, [readMap, seed]);
 
   const markAllRead = useCallback(() => {
     const next: ReadMap = { ...readMap };

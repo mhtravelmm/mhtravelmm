@@ -38,6 +38,8 @@ import { useRentalOrders, type RentalOrder } from '../../lib/rentalOrders';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { findRentalType, findVariant, localized } from '../../data/rentalCatalog';
 import { NOTIFICATIONS } from '../../data/notifications';
+import { localizedOrFallback } from '../../lib/translationCache';
+import { timeAgoLabel } from '../../lib/timeAgo';
 import { AdSlot } from '../../components/ui/AdSlot';
 import { TRAVEL_PLANS, BLOGS, POPULARS } from '../../data/homeData';
 import { TRAVEL_GUIDE_STORIES } from '../../data/travelGuideData';
@@ -379,7 +381,7 @@ function QuickActions({ onNavigate }: { onNavigate: (path: string) => void }) {
 }
 
 function ActivityFeed() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const activity = NOTIFICATIONS.slice(0, 3);
   return (
@@ -394,8 +396,8 @@ function ActivityFeed() {
                 <Icon size={16} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[11px] leading-5 text-text-secondary sm:text-xs">{item.title}</span>
-                <span className="mt-0.5 block text-[10px] text-text-faint">{item.timeAgo}</span>
+                <span className="block text-[11px] leading-5 text-text-secondary sm:text-xs">{localizedOrFallback(item.title, language)}</span>
+                <span className="mt-0.5 block text-[10px] text-text-faint">{timeAgoLabel(item.createdAt, new Date(), language)}</span>
               </span>
               {!item.isRead && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-account-accent" />}
             </div>

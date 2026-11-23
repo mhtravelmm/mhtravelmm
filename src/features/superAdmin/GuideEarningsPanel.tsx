@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { BadgeCheck, Coins, Search, Wallet } from 'lucide-react';
 import { useLanguage } from '../../lib/i18n';
+import { fillPair, translatePair } from '../../lib/translations';
 import { useAuth } from '../../lib/auth';
 import { useCurrency } from '../../lib/currency';
 import {
@@ -77,7 +78,14 @@ export function GuideEarningsPanel() {
     // Plan §16B.3: the author is the recipient, so the row names them rather
     // than every admin.
     const author = rows.find((row) => row.id === rowId)?.author ?? '';
-    if (author) pushFeedEvent('guide_earning', { title, message, recipients: [{ kind: 'author', value: author }] });
+    // The author is a traveler, so the row carries both languages (§16B.4).
+    if (author) {
+      pushFeedEvent('guide_earning', {
+        title: translatePair('sa_notice_earning_amount_title'),
+        message: fillPair('sa_notice_earning_amount_body', { guide: guideTitle || rowId, amount: `${amountUsd} USD` }),
+        recipients: [{ kind: 'author', value: author }],
+      });
+    }
   }
 
   function commitPaid(rowId: string, guideTitle: string, amountUsd: number | null) {
@@ -97,7 +105,13 @@ export function GuideEarningsPanel() {
       .replace('{amount}', `${amountUsd ?? 0} USD`);
     pushAdminNotice({ title, message });
     const author = rows.find((row) => row.id === rowId)?.author ?? '';
-    if (author) pushFeedEvent('guide_earning', { title, message, recipients: [{ kind: 'author', value: author }] });
+    if (author) {
+      pushFeedEvent('guide_earning', {
+        title: translatePair('sa_notice_earning_paid_title'),
+        message: fillPair('sa_notice_earning_paid_body', { guide: guideTitle || rowId, amount: `${amountUsd ?? 0} USD` }),
+        recipients: [{ kind: 'author', value: author }],
+      });
+    }
   }
 
   const stateKey = {

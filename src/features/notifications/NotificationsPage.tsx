@@ -4,29 +4,54 @@ import { Link } from 'react-router-dom';
 import { NOTIFICATIONS, type NotificationItem } from '../../data/notifications';
 import { useLanguage } from '../../lib/i18n';
 import { useNotificationFeed } from '../../lib/notifications';
-import { useRentalNoticeItems, timeAgoLabel } from '../../lib/rentalNotifications';
+import { useRentalNoticeItems } from '../../lib/rentalNotifications';
 import { useFeedItems } from '../../lib/notificationFeed';
 import { useAuth } from '../../lib/auth';
+import { ageBucket, timeAgoLabel, type AgeBucket } from '../../lib/timeAgo';
+import { localizedOrFallback } from '../../lib/translationCache';
+import type { Language } from '../../types';
 
 type Filter = 'all' | 'unread' | 'read';
+
+const BUCKET_KEYS: Record<AgeBucket, 'notifications_today' | 'notifications_yesterday' | 'notifications_earlier'> = {
+  today: 'notifications_today',
+  yesterday: 'notifications_yesterday',
+  earlier: 'notifications_earlier',
+};
 
 export function NotificationsPage() {
   const { language, t } = useLanguage();
   const { user } = useAuth();
-  const rentalNotices = useRentalNoticeItems(language);
+  const rentalNotices = useRentalNoticeItems();
   // Plan §16B.3: the shared feed rows this account may see, beside the rental
   // notices the order flow writes directly.
-  const feedItems = useFeedItems({ userId: user?.id ?? null, name: user?.name }, timeAgoLabel);
+  const feedItems = useFeedItems({ userId: user?.id ?? null, name: user?.name });
+  // The rental notice comes first because it is the copy this page owns the
+  // read flag for; the feed row for the same change collapses into it.
   const { notifications, unreadCount, markAllRead, markRead } = useNotificationFeed([
-    ...feedItems,
     ...rentalNotices,
+    ...feedItems,
     ...NOTIFICATIONS,
   ]);
   const [filter, setFilter] = useState<Filter>('all');
 
-  const visible = useMemo(() => notifications.filter((item) => filter === 'all' || (filter === 'unread' ? !item.isRead : item.isRead)), [filter, notifications]);
-  const today = visible.filter((item) => item.timeAgo.includes('hour'));
-  const earlier = visible.filter((item) => !item.timeAgo.includes('hour'));
+  const visible = useMemo(
+    () => notifications.filter((item) => filter === 'all' || (filter === 'unread' ? !item.isRead : item.isRead)),
+    [filter, notifications],
+  );
+  // Plan §16B.4: the grouping is a calendar day, not a word in the label, so it
+  // still holds when the page is read in Burmese.
+  const groups = useMemo(() => {
+    const now = new Date();
+    const byBucket = new Map<AgeBucket, NotificationItem[]>();
+    for (const item of visible) {
+      const bucket = ageBucket(item.createdAt, now);
+      byBucket.set(bucket, [...(byBucket.get(bucket) ?? []), item]);
+    }
+    return (['today', 'yesterday', 'earlier'] as AgeBucket[])
+      .filter((bucket) => byBucket.has(bucket))
+      .map((bucket) => ({ bucket, items: byBucket.get(bucket) ?? [] }));
+  }, [visible]);
 
   return (
     <div className="mx-auto max-w-4xl pb-8 pt-2 sm:pt-5">
@@ -35,14 +60,16 @@ export function NotificationsPage() {
         <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"><div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue"><Bell size={20} /></div><div><h1 className="text-lg font-medium text-text-primary">{t('notifications_title')}</h1><p className="mt-1 text-[11px] text-text-muted">{t('notifications_page_intro')}</p></div></div><button type="button" onClick={markAllRead} disabled={unreadCount === 0} className="inline-flex items-center gap-1.5 self-start rounded-md border border-border px-3 py-2 text-[10px] text-brand-blue disabled:cursor-not-allowed disabled:text-text-faint"><CheckCheck size={13} />{t('notifications_mark_all_read')}</button></div>
         <div className="flex items-center justify-between border-b border-border px-4 py-2.5 sm:px-5"><div className="flex gap-1">{(['all', 'unread', 'read'] as Filter[]).map((item) => <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-full px-3 py-1.5 text-[10px] ${filter === item ? 'bg-brand-blue text-white' : 'text-text-secondary hover:bg-bg-cardAlt'}`}>{t(`notifications_filter_${item}` as 'notifications_filter_all' | 'notifications_filter_unread' | 'notifications_filter_read')}</button>)}</div><span className="text-[10px] text-text-faint">{unreadCount} {t('notifications_unread_count')}</span></div>
 
-        <div className="p-3 sm:p-5">{visible.length === 0 ? <EmptyNotifications /> : <div className="space-y-5">{today.length > 0 && <NotificationGroup title={t('notifications_today')} items={today} onRead={markRead} />}{earlier.length > 0 && <NotificationGroup title={t('notifications_earlier')} items={earlier} onRead={markRead} />}</div>}</div>
+        <div className="p-3 sm:p-5">{visible.length === 0 ? <EmptyNotifications /> : <div className="space-y-5">{groups.map((group) => <NotificationGroup key={group.bucket} title={t(BUCKET_KEYS[group.bucket])} items={group.items} language={language} onRead={markRead} />)}</div>}</div>
       </section>
     </div>
   );
 }
 
-function NotificationGroup({ title, items, onRead }: { title: string; items: NotificationItem[]; onRead: (id: string) => void }) {
-  return <section><h2 className="mb-2 flex items-center gap-2 text-xs font-medium text-text-secondary"><span className="h-1.5 w-1.5 rounded-full bg-brand-blue" />{title}</h2><div className="divide-y divide-border rounded-md border border-border">{items.map((item) => <Link key={item.id} to={item.href} onClick={() => onRead(item.id)} className={`flex items-start gap-3 p-3 transition hover:bg-bg-cardAlt sm:p-4 ${item.isRead ? '' : 'bg-brand-blue/5'}`}><div className="h-11 w-11 shrink-0 rounded-full" style={{ background: `linear-gradient(135deg, ${item.thumbnailFrom}, ${item.thumbnailTo})` }} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className={`text-xs leading-5 ${item.isRead ? 'text-text-muted' : 'font-medium text-text-primary'}`}>{item.title}</p>{!item.isRead && <span className="inline-flex items-center gap-1 rounded-full bg-brand-blue/10 px-1.5 py-0.5 text-[9px] text-brand-blue"><CircleDot size={8} />New</span>}</div><p className="mt-1 text-[10px] text-text-faint">{item.timeAgo}</p></div><ShieldCheck size={14} className="mt-1 shrink-0 text-text-faint" /></Link>)}</div></section>;
+function NotificationGroup({ title, items, language, onRead }: { title: string; items: NotificationItem[]; language: Language; onRead: (id: string) => void }) {
+  const { t } = useLanguage();
+  const now = new Date();
+  return <section><h2 className="mb-2 flex items-center gap-2 text-xs font-medium text-text-secondary"><span className="h-1.5 w-1.5 rounded-full bg-brand-blue" />{title}</h2><div className="divide-y divide-border rounded-md border border-border">{items.map((item) => <Link key={item.id} to={item.href} onClick={() => onRead(item.id)} className={`flex items-start gap-3 p-3 transition hover:bg-bg-cardAlt sm:p-4 ${item.isRead ? '' : 'bg-brand-blue/5'}`}><div className="h-11 w-11 shrink-0 rounded-full" style={{ background: `linear-gradient(135deg, ${item.thumbnailFrom}, ${item.thumbnailTo})` }} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className={`text-xs leading-5 ${item.isRead ? 'text-text-muted' : 'font-medium text-text-primary'}`}>{localizedOrFallback(item.title, language)}</p>{!item.isRead && <span className="inline-flex items-center gap-1 rounded-full bg-brand-blue/10 px-1.5 py-0.5 text-[9px] text-brand-blue"><CircleDot size={8} />{t('notifications_new')}</span>}</div><p className="mt-1 text-[10px] text-text-faint">{timeAgoLabel(item.createdAt, now, language)}</p></div><ShieldCheck size={14} className="mt-1 shrink-0 text-text-faint" /></Link>)}</div></section>;
 }
 
 function EmptyNotifications() { const { t } = useLanguage(); return <div className="flex min-h-56 flex-col items-center justify-center text-center text-text-muted"><Inbox size={28} className="mb-2 text-text-faint" /><p className="text-xs">{t('notifications_empty')}</p><p className="mt-1 text-[10px] text-text-faint">{t('notifications_empty_detail')}</p></div>; }

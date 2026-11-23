@@ -48,6 +48,7 @@ import { assignGuideSlug, guidePath } from '../../lib/guideSlug';
 import { guideNeedsReview, missingListingStops, stopListingMissing } from '../../lib/guideListingHealth';
 import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { fillPair, translatePair } from '../../lib/translations';
 import { useAuditRecorder } from '../../lib/adminAudit';
 import { problemMessage } from './publishProblemText';
 import { pushFeedEvent } from '../../lib/notificationFeed';
@@ -416,8 +417,8 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       publishedAt: new Date().toISOString().slice(0, 10),
     });
     pushFeedEvent('guide_published', {
-      title: t('tg_feed_published_title'),
-      message: fill(t('tg_feed_published_body'), { title: guide.titleEn }),
+      title: translatePair('tg_feed_published_title'),
+      message: fillPair('tg_feed_published_body', { title: guide.titleEn }),
       href: guidePath(slugged),
     });
     notify(fill(t('tg_notice_now_published'), { title: guide.titleEn }));

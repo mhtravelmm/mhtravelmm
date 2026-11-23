@@ -136,6 +136,18 @@ describe('writing and reading', () => {
     expect(readFeed()).toEqual([]);
   });
 
+  // Plan §16B.4: a row is read in the reader's language, so a row written by an
+  // older build with one string is lifted to both rather than read as blank.
+  it('lifts a row stored as one string into both languages', () => {
+    window.localStorage.setItem('mh-travel-notification-feed', JSON.stringify([{
+      id: 'feed-legacy', event: 'blog_published', title: 'Old post', message: 'Written once',
+      href: '/blogs/old', recipients: [{ kind: 'everyone' }], createdAt: at.toISOString(),
+    }]));
+    const [row] = readFeed();
+    expect(row.title).toEqual({ mm: 'Old post', en: 'Old post' });
+    expect(row.message).toEqual({ mm: 'Written once', en: 'Written once' });
+  });
+
   it('survives a corrupted store instead of throwing', () => {
     window.localStorage.setItem('mh-travel-notification-feed', '{not json');
     expect(readFeed()).toEqual([]);
@@ -152,7 +164,7 @@ describe('writing and reading', () => {
 
 describe('one viewer feed', () => {
   function row(id: string, createdAt: string, recipients: FeedRow['recipients']): FeedRow {
-    return { id, event: 'job_failed', title: id, message: '', href: '/super-admin', recipients, createdAt };
+    return { id, event: 'job_failed', title: { mm: id, en: id }, message: { mm: '', en: '' }, href: '/super-admin', recipients, createdAt };
   }
 
   it('keeps only the rows the viewer may see, newest first', () => {
@@ -163,5 +175,21 @@ describe('one viewer feed', () => {
     ];
     expect(feedFor(rows, { role: 'Super Admin' }, at).map((item) => item.id)).toEqual(['newer', 'older']);
     expect(feedFor(rows, { role: 'Rental Admin' }, at).map((item) => item.id)).toEqual(['rental']);
+  });
+});
+
+describe('one event, one row', () => {
+  // A rental status change writes a traveler notice and a feed row. Both carry
+  // the same id, so the reader collapses them instead of showing the change
+  // twice.
+  it('keeps the id the caller supplies, so a second source can collapse into it', () => {
+    const row = buildFeedRow('rental_status', { id: 'rental-o1-paid-2026-11-20', title: 't', message: 'm' }, at);
+    expect(row.id).toBe('rental-o1-paid-2026-11-20');
+  });
+
+  it('still generates a unique id when the caller names none', () => {
+    const first = buildFeedRow('blog_published', { title: 't', message: 'm' }, at);
+    const second = buildFeedRow('blog_published', { title: 't', message: 'm' }, at);
+    expect(first.id).not.toBe(second.id);
   });
 });

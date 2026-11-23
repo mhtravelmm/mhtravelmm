@@ -169,26 +169,20 @@ const TRAVELER_TITLE: Record<RentalNotice['kind'], { mm: string; en: string }> =
   extra: { mm: 'ငှားရမ်းမှု ကုန်ကျစရိတ် ထပ်တိုးပါပြီ', en: 'Rental costs were added' },
 };
 
-/** Minutes, hours, then days — the same shape the seeded feed uses. */
-export function timeAgoLabel(iso: string, now: Date): string {
-  const minutes = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 60000));
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-  const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
+/** The same title as a bilingual pair, for a feed row (§16B.4). */
+export function travelerNoticeTitle(notice: RentalNotice): { mm: string; en: string } {
+  const title = TRAVELER_TITLE[notice.kind];
+  return { mm: `${title.mm} · ${notice.requestCode}`, en: `${title.en} · ${notice.requestCode}` };
 }
 
 /** Turns a stored notice into a bell row, so the shared feed can show it. */
-export function travelerNoticeItem(notice: RentalNotice, language: 'mm' | 'en', now: Date): NotificationItem {
-  const title = TRAVELER_TITLE[notice.kind];
+export function travelerNoticeItem(notice: RentalNotice): NotificationItem {
   return {
     id: notice.id,
-    title: `${title[language]} · ${notice.requestCode}`,
+    title: travelerNoticeTitle(notice),
     thumbnailFrom: '#1d6fa5',
     thumbnailTo: '#0b2b45',
-    timeAgo: timeAgoLabel(notice.createdAt, now),
+    createdAt: notice.createdAt,
     isRead: false,
     href: notice.href,
   };
@@ -198,7 +192,7 @@ export function travelerNoticeItem(notice: RentalNotice, language: 'mm' | 'en', 
  * The traveler's rental notices as bell rows. Read-state is left to the shared
  * feed, which owns the per-account read map for every notification id.
  */
-export function useRentalNoticeItems(language: 'mm' | 'en'): NotificationItem[] {
+export function useRentalNoticeItems(): NotificationItem[] {
   const { user } = useAuth();
   const owner = user?.id ?? null;
   const [notices, setNotices] = useState<RentalNotice[]>(() => readTravelerNotices(owner));
@@ -214,6 +208,5 @@ export function useRentalNoticeItems(language: 'mm' | 'en'): NotificationItem[] 
     };
   }, [owner]);
 
-  const now = new Date();
-  return notices.map((notice) => travelerNoticeItem(notice, language, now));
+  return notices.map(travelerNoticeItem);
 }

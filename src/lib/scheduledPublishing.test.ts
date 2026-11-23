@@ -100,7 +100,9 @@ describe('publish_due_content (Plan §16B.7, §10 §4)', () => {
 
     const feed = readFeed().filter((row) => row.event === 'blog_published');
     expect(feed).toHaveLength(1);
-    expect(feed[0].message).toContain('System published story');
+    // §16B.4: the row is written in both languages, because the reader picks.
+    expect(feed[0].message.en).toContain('System published story');
+    expect(feed[0].message.mm).toContain('System published story');
     expect(feed[0].href).toBe('/blogs/scheduled-4');
   });
 

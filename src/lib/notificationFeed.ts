@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { NotificationItem } from '../data/notifications';
 import type { AdminRole } from './adminRoles';
+import type { LocalizedTextLike } from './translationCache';
 import { readScoped, writeScoped } from './userScope';
 
 /**
@@ -69,8 +70,8 @@ const CHANGED_EVENT = 'mh-travel-notification-feed-changed';
 export type FeedRow = {
   id: string;
   event: FeedEventId;
-  title: string;
-  message: string;
+  title: LocalizedTextLike;
+  message: LocalizedTextLike;
   href: string;
   recipients: FeedRecipient[];
   createdAt: string;
@@ -103,10 +104,25 @@ export function fillTemplate(template: string, values: Record<string, string | u
   return template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 }
 
+/**
+ * Plan §16B.4: a row a traveler reads is written in both languages. A caller
+ * that only has one string (the admin bell, a system job) passes it as a
+ * string and it is stored in both, so no reader ever gets a blank.
+ */
+function asLocalized(value: LocalizedTextLike | string): LocalizedTextLike {
+  return typeof value === 'string' ? { mm: value, en: value } : value;
+}
+
 /** Everything a caller can override for one occurrence of an event. */
 export type FeedInput = {
-  title: string;
-  message: string;
+  /**
+   * The id of the record this row describes. Passing it lets a second source
+   * for the same event (the traveler's rental notice) collapse into this row
+   * instead of showing beside it.
+   */
+  id?: string;
+  title: LocalizedTextLike | string;
+  message: LocalizedTextLike | string;
   /** Replaces the event's default recipients when given. */
   recipients?: FeedRecipient[];
   /** Values for the event's href template. */
@@ -127,10 +143,14 @@ export function readFeed(): FeedRow[] {
   try {
     const parsed: unknown = JSON.parse(window.localStorage.getItem(FEED_KEY) || '[]');
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (row): row is FeedRow =>
-        Boolean(row) && typeof (row as FeedRow).id === 'string' && Array.isArray((row as FeedRow).recipients),
-    );
+    return parsed
+      .filter(
+        (row): row is FeedRow =>
+          Boolean(row) && typeof (row as FeedRow).id === 'string' && Array.isArray((row as FeedRow).recipients),
+      )
+      // Rows written before §16B.4 hold one string; lift them so every read
+      // path sees the same shape.
+      .map((row) => ({ ...row, title: asLocalized(row.title), message: asLocalized(row.message) }));
   } catch {
     return [];
   }
@@ -147,10 +167,10 @@ export function buildFeedRow(event: FeedEventId, input: FeedInput, now = new Dat
   const definition = FEED_EVENTS[event];
   const href = input.href ?? fillTemplate(definition.href, input.link ?? {});
   return {
-    id: `feed-${event}-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: input.id ?? `feed-${event}-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
     event,
-    title: input.title,
-    message: input.message,
+    title: asLocalized(input.title),
+    message: asLocalized(input.message),
     href,
     recipients: input.recipients ?? definition.recipients,
     createdAt: now.toISOString(),
@@ -222,15 +242,14 @@ export function useFeedRows(viewer: FeedViewer): {
 }
 
 /** Feed rows as traveler bell items, so one page can show both sources. */
-export function useFeedItems(viewer: FeedViewer, timeAgo: (iso: string, now: Date) => string): NotificationItem[] {
+export function useFeedItems(viewer: FeedViewer): NotificationItem[] {
   const { rows } = useFeedRows(viewer);
-  const now = new Date();
   return rows.map((row) => ({
     id: row.id,
     title: row.title,
     thumbnailFrom: '#1d6fa5',
     thumbnailTo: '#0b2b45',
-    timeAgo: timeAgo(row.createdAt, now),
+    createdAt: row.createdAt,
     isRead: row.read,
     href: row.href,
   }));

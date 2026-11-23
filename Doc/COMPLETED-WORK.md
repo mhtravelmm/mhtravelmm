@@ -16,6 +16,32 @@ For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
 
+## Notification readers — 26 November 2026
+
+A notification is written once and read later, in whatever language the reader
+has chosen by then, so every row now stores both languages:
+
+- `FeedRow.title` and `FeedRow.message` are `LocalizedTextLike` and
+  `NotificationItem.title` is too. `useFeedItems()` no longer takes a `timeAgo`
+  callback — it passes `createdAt` through, and the reader labels the age.
+- `localizedOrFallback()` is the read, so the bell (`NotificationsDropdown`),
+  the inbox (`NotificationsPage`), the account activity list (`ActivityFeed`)
+  and the Admin bell all show the reader's language and fall back to the one the
+  row was written in rather than a blank.
+- `src/lib/timeAgo.ts` holds the age rule: `timeAgoSince()` returns a unit and a
+  count, `timeAgoText()` translates it through `time_just_now` /
+  `time_*_ago`, and `ageBucket()` groups the inbox by Myanmar calendar day.
+  Before this the page grouped by whether the English label contained "hour",
+  which broke the moment the page was read in Burmese.
+- Every writer now stores both languages: the publish buttons in
+  `BlogPostsPanel` and `TravelGuidesPanel` (`translatePair` / `fillPair`), the
+  scheduled publishing job, the rental status feed row, and the guide earning
+  rows. A writer that only has one string still passes a string and it is
+  stored in both.
+- The seed rows in `src/data/notifications.ts` are bilingual and carry
+  `createdAt` instead of a hardcoded English `timeAgo`. A row written by an
+  older build with a single string is lifted to both on read.
+
 ## Product foundation and shared UI
 
 - Vite + React + TypeScript + Tailwind CSS, React Router, Lucide icons, dark-first theme tokens, light mode, currency formatting, and Burmese/English translation support are in place.

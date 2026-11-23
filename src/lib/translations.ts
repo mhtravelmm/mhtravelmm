@@ -1,4 +1,5 @@
 import type { Language } from '../types';
+import { fill } from './fill';
 
 /**
  * Translation dictionary. Keys are grouped by where they're used.
@@ -77,8 +78,19 @@ const translations = {
   notifications_filter_read: { mm: 'ဖတ်ပြီးသော', en: 'Read' },
   notifications_unread_count: { mm: 'မဖတ်ရသေးပါ', en: 'unread' },
   notifications_today: { mm: 'ယနေ့', en: 'Today' },
+  notifications_yesterday: { mm: 'မနေ့က', en: 'Yesterday' },
   notifications_earlier: { mm: 'ယခင်အသိပေးချက်များ', en: 'Earlier' },
+  notifications_new: { mm: 'အသစ်', en: 'New' },
   notifications_empty_detail: { mm: 'အသစ်ထပ်ရောက်လာတဲ့အခါ ဒီနေရာမှာ ပြပေးပါမယ်။', en: 'New updates will appear here when they arrive.' },
+
+  // An age is reader copy, so it is translated at render time (§16B.4).
+  time_just_now: { mm: 'ယခုလေးတင်', en: 'just now' },
+  time_minute_ago: { mm: '{count} မိနစ်က', en: '{count} minute ago' },
+  time_minutes_ago: { mm: '{count} မိနစ်က', en: '{count} minutes ago' },
+  time_hour_ago: { mm: '{count} နာရီက', en: '{count} hour ago' },
+  time_hours_ago: { mm: '{count} နာရီက', en: '{count} hours ago' },
+  time_day_ago: { mm: '{count} ရက်က', en: '{count} day ago' },
+  time_days_ago: { mm: '{count} ရက်က', en: '{count} days ago' },
 
   footer_tagline: {
     mm: 'မြန်မာနိုင်ငံရဲ့ အလှတရားကို ရှာဖွေဖို့ သင့်ယုံကြည်ရတဲ့ ခရီးဖော်။ ၂၄/၇ အသင့်ရှိပါတယ်။',
@@ -2067,4 +2079,23 @@ export type TranslationKey = keyof typeof translations;
 export function translate(key: string, language: Language): string | undefined {
   const pair = (translations as Record<string, { mm: string; en: string }>)[key];
   return pair?.[language];
+}
+
+/**
+ * Both languages of one key. A notification row is read later, in whatever
+ * language the reader has chosen by then, so it is stored in both rather than
+ * in the writer's language (§16B.4).
+ */
+export function translatePair(key: string): { mm: string; en: string } {
+  const pair = (translations as Record<string, { mm: string; en: string }>)[key];
+  return { mm: pair?.mm ?? key, en: pair?.en ?? key };
+}
+
+/**
+ * A key in both languages with `{name}` values filled, for a row that is
+ * stored now and read later in the reader's own language (§16B.4).
+ */
+export function fillPair(key: string, values: Record<string, string | number>): { mm: string; en: string } {
+  const pair = translatePair(key);
+  return { mm: fill(pair.mm, values), en: fill(pair.en, values) };
 }

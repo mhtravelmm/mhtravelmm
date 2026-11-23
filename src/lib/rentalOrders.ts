@@ -17,6 +17,7 @@ import {
   appendTravelerNotices,
   noticesForChange,
   staffNotificationFor,
+  travelerNoticeTitle,
   writeStaffNotifications,
   type RentalNotice,
 } from './rentalNotifications';
@@ -436,7 +437,11 @@ export function deliverRentalNotices(order: RentalOrder, kind: RentalNotice['kin
       });
     } else {
       pushFeedEvent('rental_status', {
-        title: item.title,
+        // The same id the traveler's own notice carries, so the bell shows the
+        // change once. The traveler reads this one, so it carries both
+        // languages (§16B.4).
+        id: notice.id,
+        title: travelerNoticeTitle(notice),
         message: item.message,
         recipients: [{ kind: 'user', value: order.userId }],
         link: { code: order.requestCode },

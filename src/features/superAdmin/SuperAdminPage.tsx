@@ -64,6 +64,7 @@ import { planRoleChange, roleChangeSummary, type RoleChangeRefusal } from '../..
 import { EXCHANGE_RATES_EVENT, readExchangeRates } from '../../lib/exchangeRates';
 import { pushAdminNotice } from '../../lib/adminNotices';
 import { pushFeedEvent, useFeedRows } from '../../lib/notificationFeed';
+import { localizedOrFallback } from '../../lib/translationCache';
 
 type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports' | 'audit' | 'jobs' | 'translations';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
@@ -200,8 +201,8 @@ export function SuperAdminPage() {
   const { rows: feedRows, markAllRead: markFeedRead } = useFeedRows(viewer);
   const notifications: AdminNotification[] = [...feedRows.map((row) => ({
     id: row.id,
-    title: row.title,
-    message: row.message,
+    title: localizedOrFallback(row.title, language),
+    message: localizedOrFallback(row.message, language),
     createdAt: new Date(row.createdAt).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }),
     read: row.read,
   })), ...staffNotifications];

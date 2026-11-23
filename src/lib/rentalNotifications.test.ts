@@ -7,7 +7,6 @@ import {
   readStaffNotifications,
   readTravelerNotices,
   staffNotificationFor,
-  timeAgoLabel,
   travelerNoticeItem,
   writeStaffNotifications,
 } from './rentalNotifications';
@@ -173,16 +172,17 @@ describe('traveler notices', () => {
 });
 
 describe('feed rows', () => {
-  it('renders the notice in the chosen language with the request code', () => {
+  it('carries the notice in both languages with the request code', () => {
     const notice = noticesForChange(order({ status: 'accepted' }), 'accepted', at)[0];
-    expect(travelerNoticeItem(notice, 'en', at).title).toContain('pay within 12 hours');
-    expect(travelerNoticeItem(notice, 'mm', at).title).toContain('RNT-261120-0001');
+    const item = travelerNoticeItem(notice);
+    expect(item.title.en).toContain('pay within 12 hours');
+    expect(item.title.mm).toContain('၁၂ နာရီ');
+    expect(item.title.en).toContain('RNT-261120-0001');
+    expect(item.title.mm).toContain('RNT-261120-0001');
   });
 
-  it('labels the age in minutes, hours and days', () => {
-    expect(timeAgoLabel('2026-11-20T04:59:40.000Z', at)).toBe('just now');
-    expect(timeAgoLabel('2026-11-20T04:58:00.000Z', at)).toBe('2 minutes ago');
-    expect(timeAgoLabel('2026-11-20T03:00:00.000Z', at)).toBe('2 hours ago');
-    expect(timeAgoLabel('2026-11-18T05:00:00.000Z', at)).toBe('2 days ago');
+  it('keeps the moment it happened, so the reader can label the age', () => {
+    const notice = noticesForChange(order({ status: 'paid' }), 'paid', at)[0];
+    expect(travelerNoticeItem(notice).createdAt).toBe(at.toISOString());
   });
 });
