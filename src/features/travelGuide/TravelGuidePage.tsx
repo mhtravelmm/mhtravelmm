@@ -284,15 +284,22 @@ function GuideDetail({
                   )}
                   <StopDescription stop={activeStop} language={language} className="mt-2 text-xs leading-relaxed text-text-secondary sm:text-sm" />
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <a
-                      href={mapSearchUrl(activeStop.place)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-brand-blue px-3 py-1.5 text-[11px] font-bold text-white sm:text-xs"
-                    >
-                      <MapPin size={13} />
-                      {t('guide_directions')}
-                    </a>
+                    {activeStop.listingMissing ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[11px] font-semibold text-text-muted sm:text-xs">
+                        <MapPin size={13} />
+                        {t('guide_directions_unavailable')}
+                      </span>
+                    ) : (
+                      <a
+                        href={mapSearchUrl(activeStop.place)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-brand-blue px-3 py-1.5 text-[11px] font-bold text-white sm:text-xs"
+                      >
+                        <MapPin size={13} />
+                        {t('guide_directions')}
+                      </a>
+                    )}
                     <button
                       type="button"
                       onClick={() => setFollowIndex(stepIndex(follow.index, follow.total, -1))}
@@ -338,15 +345,22 @@ function GuideDetail({
                     <img src={stop.imageUrl} alt={stop.title[language]} loading="lazy" className="mt-2 h-32 w-full rounded-lg object-cover sm:h-40" />
                   )}
                   <StopDescription stop={stop} language={language} className="mt-1 text-xs leading-relaxed text-text-secondary sm:text-sm" />
-                  <a
-                    href={mapSearchUrl(stop.place)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-semibold text-brand-blue hover:underline sm:text-xs"
-                  >
-                    <MapPin size={13} />
-                    {t('guide_directions')}
-                  </a>
+                  {stop.listingMissing ? (
+                    <span className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-semibold text-text-muted sm:text-xs">
+                      <MapPin size={13} />
+                      {t('guide_directions_unavailable')}
+                    </span>
+                  ) : (
+                    <a
+                      href={mapSearchUrl(stop.place)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-semibold text-brand-blue hover:underline sm:text-xs"
+                    >
+                      <MapPin size={13} />
+                      {t('guide_directions')}
+                    </a>
+                  )}
                 </div>
               </div>
             ))}

@@ -44,6 +44,7 @@ import {
   type AutosaveState,
 } from '../../lib/draftAutosave';
 import { assignGuideSlug, guidePath } from '../../lib/guideSlug';
+import { guideNeedsReview, missingListingStops, stopListingMissing } from '../../lib/guideListingHealth';
 import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useAuditRecorder } from '../../lib/adminAudit';
@@ -129,6 +130,14 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
   const filtered = useMemo(
     () => guides.filter((guide) => `${guide.titleEn} ${guide.titleMm} ${guide.authorEn} ${guide.authorMm}`.toLowerCase().includes(query.toLowerCase())),
     [guides, query],
+  );
+
+  // Plan §10 §5 acceptance 7: a guide whose stop lost its listing is listed
+  // here, not hidden. The flag is derived from the catalog, so it clears itself
+  // when the listing comes back.
+  const needsReview = useMemo(
+    () => guides.filter((guide) => !guide.deletedAt && guideNeedsReview(guide)),
+    [guides],
   );
 
   function notify(message: string) {
@@ -423,6 +432,25 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
 
       {notice && <div role="status" className="rounded-md border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-[11px] text-cyan-100">{notice}</div>}
 
+      {needsReview.length > 0 && (
+        <section role="status" className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3">
+          <p className="text-[11px] font-bold text-amber-200">
+            {fill(t('tg_needs_review_badge'), { count: String(needsReview.length) })}
+          </p>
+          <p className="mt-1 text-[10px] text-amber-100/80">{t('tg_needs_review_hint')}</p>
+          <ul className="mt-2 space-y-1">
+            {needsReview.map((guide) => (
+              <li key={guide.id} className="text-[10px] text-amber-100/90">
+                <button type="button" onClick={() => openEdit(guide)} className="font-semibold underline hover:text-white">{guide.titleEn}</button>
+                <span className="ml-1.5 text-amber-100/60">
+                  {missingListingStops(guide).map((stopId) => guide.stops.find((stop) => stop.id === stopId)?.titleEn ?? stopId).join(' · ')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
         <div className="flex items-center gap-2 border-b border-[#244668] p-3">
           <div className="flex flex-1 items-center gap-2 rounded-md border border-[#2b527d] bg-[#081a31] px-2.5 py-1.5">
@@ -589,7 +617,8 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
                         {LISTING_INDEX.map((listing) => <option key={listing.id} value={listing.id}>{listing.title}</option>)}
                       </select>
                     </div>
-                    {stop.listingId && <p className="mt-1 text-[9px] text-slate-500">{fill(t('tg_directions_uses'), { title: listingTitle(stop.listingId) })}</p>}
+                    {stop.listingId && !stopListingMissing(stop.listingId) && <p className="mt-1 text-[9px] text-slate-500">{fill(t('tg_directions_uses'), { title: listingTitle(stop.listingId) })}</p>}
+                    {stopListingMissing(stop.listingId) && <p className="mt-1 text-[9px] font-semibold text-amber-300">{t('tg_stop_listing_gone')}</p>}
 
                     <div className="mt-1.5 grid gap-1.5">
                       <input value={stop.titleEn} onChange={(event) => replaceStop({ ...stop, titleEn: event.target.value })} placeholder={t('tg_ph_stop_title_en')} aria-label={t('tg_ph_stop_title_en')} className="rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none placeholder:text-slate-600" />

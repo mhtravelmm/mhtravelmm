@@ -1538,3 +1538,32 @@ Verified in the browser: publishing "Slug Check Guide" produced
 `/travel-guide/slug-check-guide`, the feed row pointed at it, the reader
 resolved the slug, and `/travel-guide/tg1` still resolved by id. `npm test`
 57 files / 639 tests; typecheck and build clean.
+
+## A removed listing flags a guide, never hides it — Plan §10 §5 acceptance 7, 26 November 2026
+
+A guide stop points at a listing that already exists in MH Travel. When that
+listing leaves the catalog, the guide must not disappear and must not show the
+dead id as a place name.
+
+`src/lib/guideListingHealth.ts` holds the rule: `stopListingMissing()` checks a
+stop's `listingId` against `LISTING_IDS`, `missingListingStops()` names the stops
+that fail, and `guideNeedsReview()` answers for a whole guide. The flag is
+derived on read rather than stored on the row, so a listing that comes back
+clears the flag without anyone opening the guide — the opposite of a column that
+would need a cleanup pass.
+
+What each surface does with it:
+
+- Travel Guide panel: a "Needs review N" section above the table lists each
+  affected guide and the titles of the stops that lost their listing, and each
+  row links straight into the editor. The stop editor says the listing was
+  removed and asks for a current one.
+- Reader: the guide stays published. `contentReader.adminGuideToReader` keeps
+  the stop's own stored title as `place` instead of the missing id, and marks the
+  stop `listingMissing`. The page then shows "Directions unavailable" in place
+  of the map link, in both the itinerary rows and follow mode.
+
+Verified in the browser: pointing "3 Days in Bagan" at a removed listing raised
+the panel banner with the guide and stop name, and `/travel-guide/tg1` still
+rendered the guide with one stop's Directions replaced. `npm test` 58 files /
+648 tests; typecheck, lint and build clean.

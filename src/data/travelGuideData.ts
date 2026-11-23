@@ -10,6 +10,11 @@ export interface LocalizedGuideCopy {
 export interface GuideStop {
   time: string;
   place: string;
+  /**
+   * Plan §10 §5 acceptance 7: the stop's listing is gone from the catalog, so
+   * the reader keeps the stored title and turns Directions off.
+   */
+  listingMissing?: boolean;
   /** Listing the stop points at, when the guide was built in the Admin editor. */
   listingId?: string;
   /** Stop photo, set from the Admin editor. */

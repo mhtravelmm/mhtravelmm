@@ -3,6 +3,7 @@ import type { GuideCategory, TravelGuideStory, GuideStop } from '../data/travelG
 import type { BlogBlock } from './blogBlocks';
 import type { AdminGuide, AdminPost } from './contentStore';
 import { listingTitle } from '../data/listingIndex';
+import { stopListingMissing } from './guideListingHealth';
 import { minutesOfDay } from './guideItinerary';
 import { slugify, uniqueSlug } from './slug';
 import { normalizeTags } from './tagList';
@@ -162,9 +163,11 @@ export function adminGuideToReader(guide: AdminGuide): TravelGuideStory {
     .sort((a, b) => (minutesOfDay(a.time) ?? 0) - (minutesOfDay(b.time) ?? 0))
     .map((stop) => ({
       time: stop.time,
-      // The reader's place text is derived from the listing, never typed.
-      place: stop.listingId ? listingTitle(stop.listingId) : stop.titleEn,
+      // The reader's place text is derived from the listing, never typed. A
+      // removed listing keeps the stop's own title rather than showing its id.
+      place: stop.listingId && !stopListingMissing(stop.listingId) ? listingTitle(stop.listingId) : stop.titleEn,
       ...(stop.listingId ? { listingId: stop.listingId } : {}),
+      ...(stopListingMissing(stop.listingId) ? { listingMissing: true } : {}),
       ...(stop.imageUrl ? { imageUrl: stop.imageUrl } : {}),
       title: { en: stop.titleEn, mm: stop.titleMm },
       description: { en: stop.descriptionEn, mm: stop.descriptionMm },
