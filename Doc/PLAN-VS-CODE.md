@@ -194,6 +194,16 @@ readable reference, shows it on the confirmation screen, and lists it under the
 account's Bookings or Travel Plans (see `COMPLETED-WORK.md`). Reading those
 records back from `public.bookings` is still open.
 
+A fourth gap row is closed: Plan §8 asked for per-type rental rules and a Rental
+Admin who can change them, and the rentals page used to hardcode both. The
+catalog now lives in `src/data/rentalCatalog.ts` (types, driver rule, minimum
+days, vehicle options, local/foreign rates, city × type availability, branches,
+terms) and is edited from the Super Admin **Rentals** view, with
+`rentalCatalogProblems()` blocking an invalid save. `RentalsPage.tsx` reads it
+instead of owning the data, and `estimateRental()` is the one pricing function
+behind both the estimate panel and the submitted amount. The remaining gap is
+storage: the record is browser-local until the catalog tables exist.
+
 The three gap rows this section used to carry are closed:
 
 | Was | Now |

@@ -1,9 +1,10 @@
 # MH Travel — Work Status Record
 
 **Last audited:** 22 November 2026
-**Audited against:** `main` @ `ecb231f` plus the 22 November work on the guide
-route follower, the two owner dashboards, the Foreign Tourist section, and the
-Super Admin localization pass.
+**Audited against:** `main` plus the Rental catalog data module, the Rental Admin
+panel, the per-account Favorites/notification/review wiring, and the earlier
+22 November work on the guide route follower, the two owner dashboards, the
+Foreign Tourist section, and the Super Admin localization pass.
 
 This file is the single status view for the project. It replaces guesswork about
 what is finished: every item below was checked against the actual source tree,
@@ -46,7 +47,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (96 tests, 14 files) |
+| `npm test` (vitest) | **PASS** (130 tests, 16 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (43 declared routes, all render) |
 
@@ -65,7 +66,7 @@ app declares.
 | Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **DONE** | 1,388 keys; every traveler page, dashboard shell and both content editors are localized |
+| Bilingual MM/EN provider | **DONE** | 1,436 keys; every traveler page, dashboard shell, both content editors and the Rental Admin panel are localized |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -91,7 +92,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/cities` | **PREVIEW** | City grid + category explorer |
 | `/cities/:cityId` | **PREVIEW** | Hero, facts, recommendations, category explorer |
 | `/nearby` | **PREVIEW** | Geolocation with Yangon fallback, 13 categories |
-| `/rentals` | **PREVIEW** | 11 rental records (E-Bike, Scooter, Tricycle included), booking form is local state |
+| `/rentals` | **PARTIAL** | 11 rental types (E-Bike, Scooter, Tricycle included) read from `src/data/rentalCatalog.ts`, with per-type driver/minimum-day rules, city × type availability and one shared pricing function. Editable from Super Admin → Rentals. Still local storage rather than catalog tables, and the submitted request is not read back |
 | `/restaurants` | **PREVIEW** | Menu, category filter, reviews, photos, CTA links |
 | `/restaurants/:id` | **PREVIEW** | Resolves the record from `:id` |
 | `/book-shops` | **PREVIEW** | Books, stationery, gifts, reviews, CTA links |
@@ -280,14 +281,20 @@ Steps 1 and 2 are now done, so the list starts where the frontend stops:
    `public.notifications`; the platform reviews section reads
    `public.reviews`. Feed rows and the seeded review copy still come from
    local data, so the remaining work there is Admin authoring, not plumbing.
-5. ~~Connect the Custom Plan, Rental, and Ticketing submissions to request
+5. ~~Turn the rental catalog into data with a Rental Admin panel.~~ **Done 22
+   November 2026.** Types, per-type rules, city × type availability, branches,
+   local and foreign rates and terms live in `src/data/rentalCatalog.ts` and are
+   edited from the Super Admin **Rentals** view. Pricing is one function shared
+   by the estimate panel and the request. Moving the record from browser storage
+   to catalog tables is the remaining step.
+6. ~~Connect the Custom Plan, Rental, and Ticketing submissions to request
    records with an ID and a confirmation.~~ **Done 22 November 2026.** Each
    submission now writes a request record with a reference such as
    `MHR-20261122-001`, shows it on the confirmation screen, and lists it under
    the account's Bookings or Travel Plans. The record is account-scoped browser
    storage with a best-effort `public.bookings` insert; reading requests back
    from the table is still open.
-6. Replace seeded catalog data with city-scoped Supabase queries.
+7. Replace seeded catalog data with city-scoped Supabase queries.
 
-Steps 1, 3, and 4 are frontend work with no new infrastructure. Step 6 needs
+Steps 1, 3, 4 and 5 are frontend work with no new infrastructure. Step 7 needs
 the backend push.

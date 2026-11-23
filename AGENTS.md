@@ -23,6 +23,11 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   be filled. `TranslationKey` is derived from the dictionary, so a typo is a type error.
 - **`CardListing` requires rating, distance, favourite, and views** (`src/types/index.ts`).
   Cards show all four; there are exactly five card sizes.
+- **Rental types, rules, rates, and availability are data.** `src/data/rentalCatalog.ts` is
+  the only record; `/rentals` reads it and Super Admin → Rentals edits it through
+  `src/lib/rentalCatalogStore.ts`. Do not add a rental type as page code, and price with
+  `estimateRental()` so the estimate panel and the submitted amount cannot disagree.
+  `rentalCatalogProblems()` must stay empty for a save to be allowed.
 
 ## Conventions
 

@@ -1,0 +1,406 @@
+import type { Language } from '../types';
+
+/**
+ * Plan §8: rentals are MH Travel's own product and the first priority module,
+ * so every rule that used to live in the page's JSX is data here. A new type
+ * (an e-bike, a tricycle, a boat) is a new record in this file or an edit in
+ * the Rental Admin panel — never new page code.
+ */
+
+export type Bilingual = { mm: string; en: string };
+
+/** Icon names the rentals page resolves to a lucide component. */
+export type RentalIconName = 'bike' | 'bolt' | 'car' | 'compass' | 'tent' | 'boat' | 'person' | 'tricycle';
+
+export type RentalCustomerType = 'citizen' | 'foreigner';
+
+/** A vehicle choice inside a type, e.g. the three car sizes. */
+export type RentalVehicleOption = {
+  id: string;
+  label: Bilingual;
+  seats: number;
+  rateUsd: number;
+  foreignRateUsd: number;
+};
+
+export type RentalType = {
+  id: string;
+  label: Bilingual;
+  detail: Bilingual;
+  image: string;
+  icon: RentalIconName;
+  /** Listing whose rating, distance, views and heart the card reuses. */
+  listingId?: string;
+  driverRequired: boolean;
+  /** Charged days never drop below this; car types count the return leg. */
+  minDays: number;
+  rateUsd: number;
+  foreignRateUsd: number;
+  vehicleOptions: RentalVehicleOption[];
+  terms: Bilingual;
+};
+
+export type RentalBranch = { id: string; name: Bilingual };
+
+export type RentalCity = { id: string; name: Bilingual; branches: RentalBranch[] };
+
+/** `availability[cityId][typeId]` — the city × type matrix the Admin edits. */
+export type RentalAvailability = Record<string, Record<string, boolean>>;
+
+export type RentalCatalog = {
+  types: RentalType[];
+  cities: RentalCity[];
+  availability: RentalAvailability;
+  terms: Bilingual;
+};
+
+export function localized(value: Bilingual, language: Language): string {
+  return language === 'mm' ? value.mm : value.en;
+}
+
+const CAR_TERMS: Bilingual = {
+  mm: 'ကားငှားရမ်းခြင်းတွင် ယာဉ်မောင်း ပါဝင်ပါသည်။ ခရီးစဉ်အတွက် ပြန်လာသည့်ရက်ကို ထည့်တွက်ပါသည်။',
+  en: 'Car rental includes a driver. The return leg counts toward the charged days.',
+};
+
+const SELF_DRIVE_TERMS: Bilingual = {
+  mm: 'ကိုယ်တိုင်မောင်းနှင်ပါက တရားဝင် ယာဉ်မောင်းလိုင်စင် ပြသရန် လိုအပ်ပါသည်။',
+  en: 'Self-drive rentals require a valid driving licence at pickup.',
+};
+
+const GUIDE_TERMS: Bilingual = {
+  mm: 'လမ်းညွှန်ခအပြင် လမ်းညွှန်၏ တည်းခိုစရိတ်၊ စားစရိတ်နှင့် ခရီးစရိတ်ကို အသုံးပြုသူက ကျခံရပါမည်။',
+  en: 'Beyond the daily rate, the traveler covers the guide’s lodging, food, and travel costs.',
+};
+
+const GEAR_TERMS: Bilingual = {
+  mm: 'ငှားရမ်းချိန်အတွင်း ပျက်စီးမှုအတွက် တာဝန်ယူရပါမည်။ ပြန်အပ်သည့်အခါ အခြေအနေ စစ်ဆေးပါမည်။',
+  en: 'You are responsible for damage during the rental; condition is checked at return.',
+};
+
+export const DEFAULT_RENTAL_CATALOG: RentalCatalog = {
+  terms: {
+    mm: 'ငှားရမ်းမှု တောင်းဆိုချက်ကို MH Travel မှ ရရှိနိုင်မှု စစ်ဆေးပြီး အတည်ပြုပါမည်။ ငှားရမ်းချိန်အတွင်း ထိခိုက်မှုအတွက် တာဝန်ယူရပါမည်။',
+    en: 'MH Travel checks availability and confirms each request. You are responsible for the vehicle while it is with you.',
+  },
+  types: [
+    {
+      id: 'bicycle',
+      label: { mm: 'စက်ဘီး', en: 'Bicycle' },
+      detail: { mm: 'မြို့တွင်းကို သက်တောင့်သက်သာ စီးနင်းလည်ပတ်ရန်', en: 'Explore the city at your own pace.' },
+      image: '/images/blog/ubein-evening.webp',
+      icon: 'bike',
+      listingId: 'pre3',
+      driverRequired: false,
+      minDays: 1,
+      rateUsd: 8,
+      foreignRateUsd: 10,
+      vehicleOptions: [],
+      terms: GEAR_TERMS,
+    },
+    {
+      id: 'ebike',
+      label: { mm: 'လျှပ်စစ်စက်ဘီး', en: 'E-Bike' },
+      detail: { mm: 'လျှပ်စစ်အကူအညီဖြင့် ပိုမိုလွယ်ကူစွာ စီးနင်းရန်', en: 'Cover more ground with pedal assist.' },
+      image: '/images/blog/shwedagon-evening.webp',
+      icon: 'bolt',
+      listingId: 'pre6',
+      driverRequired: false,
+      minDays: 1,
+      rateUsd: 12,
+      foreignRateUsd: 15,
+      vehicleOptions: [],
+      terms: GEAR_TERMS,
+    },
+    {
+      id: 'motorbike',
+      label: { mm: 'ဆိုင်ကယ်', en: 'Motorbike' },
+      detail: { mm: 'ကိုယ်တိုင်မောင်းပြီး မြို့နှင့် ပတ်ဝန်းကျင်ကို လည်ပတ်ရန်', en: 'A simple self-drive ride for local trips.' },
+      image: '/images/blog/bagan-sunrise.webp',
+      icon: 'bike',
+      listingId: 'pre2',
+      driverRequired: false,
+      minDays: 1,
+      rateUsd: 18,
+      foreignRateUsd: 22,
+      vehicleOptions: [],
+      terms: SELF_DRIVE_TERMS,
+    },
+    {
+      id: 'scooter',
+      label: { mm: 'စကူတာ', en: 'Scooter' },
+      detail: { mm: 'မြို့တွင်း အမြန်သွားလာရန်', en: 'A convenient ride around town.' },
+      image: '/images/blog/inle-stilt-houses.webp',
+      icon: 'bike',
+      listingId: 'pre7',
+      driverRequired: false,
+      minDays: 1,
+      rateUsd: 10,
+      foreignRateUsd: 13,
+      vehicleOptions: [],
+      terms: SELF_DRIVE_TERMS,
+    },
+    {
+      id: 'tricycle',
+      label: { mm: 'သုံးဘီး', en: 'Tricycle' },
+      detail: { mm: 'မြို့တွင်း တိုတောင်းသော ခရီးများအတွက်', en: 'Short hops around town with a driver.' },
+      image: '/images/blog/ubein-evening.webp',
+      icon: 'tricycle',
+      listingId: 'pre11',
+      driverRequired: true,
+      minDays: 1,
+      rateUsd: 14,
+      foreignRateUsd: 18,
+      vehicleOptions: [],
+      terms: GEAR_TERMS,
+    },
+    {
+      id: 'car',
+      label: { mm: 'ယာဉ်မောင်းပါကား', en: 'Car with Driver' },
+      detail: { mm: 'မိသားစုနှင့် အဖွဲ့လိုက်ခရီးများအတွက် ယာဉ်မောင်းပါဝင်သည်', en: 'Comfortable full-day trips with a driver.' },
+      image: '/images/blog/shwedagon-evening.webp',
+      icon: 'car',
+      listingId: 'pre1',
+      driverRequired: true,
+      minDays: 2,
+      rateUsd: 42,
+      foreignRateUsd: 55,
+      vehicleOptions: [
+        { id: 'family_car', label: { mm: 'အိမ်စီးကား (၄–၅ ယောက်စီး)', en: 'Family car (4–5 seats)' }, seats: 5, rateUsd: 42, foreignRateUsd: 55 },
+        { id: 'minibus_35', label: { mm: '၃၅ ယောက်စီးကား', en: '35-seat minibus' }, seats: 35, rateUsd: 180, foreignRateUsd: 225 },
+        { id: 'bus_45', label: { mm: '၄၅ ယောက်စီးကား', en: '45-seat bus' }, seats: 45, rateUsd: 240, foreignRateUsd: 295 },
+      ],
+      terms: CAR_TERMS,
+    },
+    {
+      id: 'self_drive_car',
+      label: { mm: 'ကိုယ်တိုင်မောင်းကား', en: 'Self-drive Car' },
+      detail: { mm: 'လွတ်လပ်စွာ လမ်းကြောင်းရွေး၍ ကိုယ်တိုင်မောင်းနှင်ရန်', en: 'Choose your route and drive yourself.' },
+      image: '/images/blog/ubein-evening.webp',
+      icon: 'car',
+      listingId: 'pre8',
+      driverRequired: false,
+      minDays: 2,
+      rateUsd: 32,
+      foreignRateUsd: 42,
+      vehicleOptions: [],
+      terms: SELF_DRIVE_TERMS,
+    },
+    {
+      id: 'horse_carriage',
+      label: { mm: 'မြင်းလှည်း', en: 'Horse carriage' },
+      detail: { mm: 'ပုဂံဒေသကို ရိုးရာပုံစံဖြင့် လည်ပတ်ရန်', en: 'Explore Bagan in a traditional style.' },
+      image: '/images/blog/bagan-sunrise.webp',
+      icon: 'compass',
+      listingId: 'pre9',
+      driverRequired: true,
+      minDays: 1,
+      rateUsd: 28,
+      foreignRateUsd: 34,
+      vehicleOptions: [],
+      terms: GEAR_TERMS,
+    },
+    {
+      id: 'camping_tent',
+      label: { mm: 'ရွက်ဖျင်တဲ', en: 'Camping Tent' },
+      detail: { mm: 'သဘာဝအနီးတွင် တည်းခိုရန်', en: 'Stay close to nature.' },
+      image: '/images/blog/inle-stilt-houses.webp',
+      icon: 'tent',
+      listingId: 'pre10',
+      driverRequired: false,
+      minDays: 1,
+      rateUsd: 12,
+      foreignRateUsd: 15,
+      vehicleOptions: [],
+      terms: GEAR_TERMS,
+    },
+    {
+      id: 'motorboat',
+      label: { mm: 'လှေ', en: 'Boat' },
+      detail: { mm: 'အင်းလေးကန်နှင့် ရေလမ်းခရီးများအတွက်', en: 'For lake and river trips.' },
+      image: '/images/blog/inle-stilt-houses.webp',
+      icon: 'boat',
+      listingId: 'pre5',
+      driverRequired: true,
+      minDays: 1,
+      rateUsd: 55,
+      foreignRateUsd: 68,
+      vehicleOptions: [],
+      terms: GEAR_TERMS,
+    },
+    {
+      id: 'travel_guide',
+      label: { mm: 'လမ်းညွှန်', en: 'Travel guide' },
+      detail: { mm: 'ဒေသခံလမ်းညွှန်နှင့်အတူ စူးစမ်းလေ့လာရန်', en: 'Explore with a knowledgeable local guide.' },
+      image: '/images/blog/bagan-sunrise.webp',
+      icon: 'person',
+      listingId: 'pre4',
+      driverRequired: true,
+      minDays: 1,
+      rateUsd: 35,
+      foreignRateUsd: 45,
+      vehicleOptions: [],
+      terms: GUIDE_TERMS,
+    },
+  ],
+  cities: [
+    {
+      id: 'yangon',
+      name: { mm: 'ရန်ကုန်', en: 'Yangon' },
+      branches: [{ id: 'yangon-downtown', name: { mm: 'ရန်ကုန် MH Travel ရုံးခွဲ — Downtown', en: 'Yangon MH Travel Branch — Downtown' } }],
+    },
+    {
+      id: 'bagan',
+      name: { mm: 'ပုဂံ', en: 'Bagan' },
+      branches: [{ id: 'bagan-nyaung-u', name: { mm: 'ပုဂံ MH Travel ရုံးခွဲ — Nyaung-U', en: 'Bagan MH Travel Branch — Nyaung-U' } }],
+    },
+    {
+      id: 'mandalay',
+      name: { mm: 'မန္တလေး', en: 'Mandalay' },
+      branches: [{ id: 'mandalay-78', name: { mm: 'မန္တလေး MH Travel ရုံးခွဲ — 78th Street', en: 'Mandalay MH Travel Branch — 78th Street' } }],
+    },
+    {
+      id: 'inle',
+      name: { mm: 'အင်းလေး', en: 'Inle Lake' },
+      branches: [{ id: 'inle-nyaung-shwe', name: { mm: 'ညောင်ရွှေ MH Travel ရုံးခွဲ', en: 'Nyaung Shwe MH Travel Branch' } }],
+    },
+    {
+      id: 'ngapali',
+      name: { mm: 'ငပလီ', en: 'Ngapali' },
+      branches: [{ id: 'ngapali-branch', name: { mm: 'ငပလီ MH Travel ရုံးခွဲ', en: 'Ngapali MH Travel Branch' } }],
+    },
+  ],
+  // Plan §8: availability is per city. The Yangon "no motorbike" restriction is
+  // still unconfirmed, so Yangon keeps the motorbike the page already offered.
+  availability: {
+    yangon: { bicycle: true, ebike: true, motorbike: true, scooter: true, tricycle: true, car: true, self_drive_car: true, travel_guide: true },
+    bagan: { bicycle: true, ebike: true, motorbike: true, scooter: true, car: true, self_drive_car: true, horse_carriage: true, camping_tent: true, travel_guide: true },
+    mandalay: { bicycle: true, ebike: true, motorbike: true, scooter: true, tricycle: true, car: true, self_drive_car: true, travel_guide: true },
+    inle: { bicycle: true, ebike: true, motorbike: true, motorboat: true, camping_tent: true, travel_guide: true },
+    ngapali: { bicycle: true, ebike: true, motorbike: true, scooter: true, motorboat: true, camping_tent: true },
+  },
+};
+
+export function findRentalType(catalog: RentalCatalog, typeId: string | null): RentalType | undefined {
+  if (!typeId) return undefined;
+  return catalog.types.find((type) => type.id === typeId);
+}
+
+export function cityHasType(catalog: RentalCatalog, cityId: string, typeId: string): boolean {
+  return catalog.availability[cityId]?.[typeId] === true;
+}
+
+/** Types the chosen city actually offers, in catalog order. */
+export function availableTypes(catalog: RentalCatalog, cityId: string): RentalType[] {
+  return catalog.types.filter((type) => cityHasType(catalog, cityId, type.id));
+}
+
+/** The first city that offers the type, used when the traveler picks a type the city lacks. */
+export function firstCityForType(catalog: RentalCatalog, typeId: string): RentalCity | undefined {
+  return catalog.cities.find((city) => cityHasType(catalog, city.id, typeId));
+}
+
+export function vehicleOption(type: RentalType, optionId: string | null): RentalVehicleOption | undefined {
+  if (!optionId) return undefined;
+  return type.vehicleOptions.find((option) => option.id === optionId);
+}
+
+/** Local rate unless the traveler is a foreign visitor; a vehicle option overrides the type rate. */
+export function typeRateUsd(type: RentalType, customerType: RentalCustomerType, optionId?: string | null): number {
+  const option = vehicleOption(type, optionId ?? null);
+  if (option) return customerType === 'foreigner' ? option.foreignRateUsd : option.rateUsd;
+  return customerType === 'foreigner' ? type.foreignRateUsd : type.rateUsd;
+}
+
+export function addDays(dateString: string, amount: number): string {
+  const date = new Date(`${dateString}T12:00:00`);
+  date.setDate(date.getDate() + amount);
+  return date.toISOString().slice(0, 10);
+}
+
+/** Both endpoints count, so a same-day rental is one day. */
+export function inclusiveDays(startDate: string, endDate: string): number {
+  const start = new Date(`${startDate}T12:00:00`).getTime();
+  const end = new Date(`${endDate}T12:00:00`).getTime();
+  return Math.max(1, Math.round((end - start) / 86400000) + 1);
+}
+
+export function minimumEndDate(startDate: string, type: RentalType | undefined): string {
+  return addDays(startDate, Math.max(0, (type?.minDays ?? 1) - 1));
+}
+
+export type RentalEstimateInput = {
+  type: RentalType | undefined;
+  customerType: RentalCustomerType;
+  optionId?: string | null;
+  startDate: string;
+  endDate: string;
+};
+
+export type RentalEstimate = { days: number; rateUsd: number; totalUsd: number };
+
+/** Plan §8: daily rate × charged days, with the type's minimum day count enforced. */
+export function estimateRental(input: RentalEstimateInput): RentalEstimate {
+  const { type } = input;
+  if (!type) return { days: 0, rateUsd: 0, totalUsd: 0 };
+  const days = Math.max(type.minDays, inclusiveDays(input.startDate, input.endDate));
+  const rateUsd = typeRateUsd(type, input.customerType, input.optionId);
+  return { days, rateUsd, totalUsd: rateUsd * days };
+}
+
+function idHash(id: string): number {
+  let hash = 0;
+  for (let index = 0; index < id.length; index += 1) hash = (hash * 31 + id.charCodeAt(index)) | 0;
+  return Math.abs(hash);
+}
+
+/**
+ * Plan §4 requires rating, distance, views and favourite on every card. A type
+ * added from the Admin panel has no seed listing, so its metrics come from its
+ * id and stay stable across renders.
+ */
+export function cardMetrics(type: RentalType): { rating: number; distanceKm: number; views: number } {
+  const hash = idHash(type.id);
+  return {
+    rating: Math.round((4.3 + (hash % 7) / 10) * 10) / 10,
+    distanceKm: Math.round((1 + (hash % 25) / 10) * 10) / 10,
+    views: 300 + (hash % 1200),
+  };
+}
+
+/** Problems the Admin panel shows before saving, so a broken catalog never reaches a traveler. */
+export function rentalCatalogProblems(catalog: RentalCatalog): string[] {
+  const problems: string[] = [];
+  if (catalog.types.length === 0) problems.push('no_types');
+  if (catalog.cities.length === 0) problems.push('no_cities');
+  const typeIds = catalog.types.map((type) => type.id);
+  if (new Set(typeIds).size !== typeIds.length) problems.push('duplicate_type');
+
+  for (const type of catalog.types) {
+    if (!type.label.mm.trim() || !type.label.en.trim()) problems.push(`type_label:${type.id}`);
+    if (!(type.rateUsd > 0)) problems.push(`type_rate:${type.id}`);
+    if (!(type.foreignRateUsd > 0)) problems.push(`type_foreign_rate:${type.id}`);
+    if (!Number.isInteger(type.minDays) || type.minDays < 1) problems.push(`type_min_days:${type.id}`);
+    const optionIds = type.vehicleOptions.map((option) => option.id);
+    if (new Set(optionIds).size !== optionIds.length) problems.push(`option_duplicate:${type.id}`);
+    for (const option of type.vehicleOptions) {
+      if (!option.label.mm.trim() || !option.label.en.trim()) problems.push(`option_label:${type.id}:${option.id}`);
+      if (!(option.rateUsd > 0) || !(option.foreignRateUsd > 0)) problems.push(`option_rate:${type.id}:${option.id}`);
+    }
+  }
+
+  const cityIds = catalog.cities.map((city) => city.id);
+  if (new Set(cityIds).size !== cityIds.length) problems.push('duplicate_city');
+  for (const city of catalog.cities) {
+    if (city.branches.length === 0) problems.push(`city_no_branch:${city.id}`);
+    const branchIds = city.branches.map((branch) => branch.id);
+    if (new Set(branchIds).size !== branchIds.length) problems.push(`branch_duplicate:${city.id}`);
+    if (!city.branches.every((branch) => branch.name.mm.trim() && branch.name.en.trim())) problems.push(`branch_label:${city.id}`);
+    const offered = Object.entries(catalog.availability[city.id] ?? {}).filter(([, on]) => on).map(([typeId]) => typeId);
+    if (offered.length === 0) problems.push(`city_no_types:${city.id}`);
+    if (offered.some((typeId) => !typeIds.includes(typeId))) problems.push(`city_unknown_type:${city.id}`);
+  }
+
+  if (!catalog.terms.mm.trim() || !catalog.terms.en.trim()) problems.push('terms');
+  return problems;
+}

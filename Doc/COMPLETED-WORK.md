@@ -1,8 +1,8 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 22 November 2026
-**Verified against:** `main` plus the per-account Favorites, notification, and
-review wiring; earlier baseline `ecb231f` covers the Blog and Travel Guide admin
+**Verified against:** `main` plus the Rental catalog data module and Rental Admin
+panel, and the per-account Favorites, notification, and review wiring; earlier baseline `ecb231f` covers the Blog and Travel Guide admin
 editors, admin-role accounts, the rental-category work of 20–22 November 2026,
 and the same-day work on the guide route follower, the two owner dashboards,
 and the Foreign Tourist section.
@@ -27,8 +27,48 @@ For the one-page view of what is finished versus open, read
 - Travel Plan detail routes include generated itineraries, pricing summaries, request CTAs, and custom-plan builder support.
 - Travel Guide listing/detail routes and aggregated Search are no longer placeholders.
 - Ticketing preview supports Bus, Train, Events, and Cinema flows with route/venue matching, seat selection where applicable, validation, and order-confirmation states.
-- Rentals preview supports city-specific availability, rental type selection, dates, customer type, delivery/branch pickup, pricing estimates, and submission handoff.
+- Rentals supports city-specific availability, rental type selection, dates, customer type, delivery/branch pickup, pricing estimates, and submission handoff.
 - Shared Favorites update immediately after save/unsave, synchronize across same-tab and browser storage events, and are scoped to the signed-in account.
+
+## Rental catalog as data, with Rental Admin controls (Plan §8)
+
+Plan §8 makes rentals the first-priority module and asks for two things the page
+used to hardcode: per-type rules, and a Rental Admin that can change them.
+
+- `src/data/rentalCatalog.ts` is the single record for the whole module: the 11
+  rental types with bilingual label, detail, photo, icon, driver rule, minimum
+  charged days, local and foreign daily rate, vehicle options and terms; the
+  five cities with their branches; the city × type availability matrix; and the
+  general terms text. `DEFAULT_RENTAL_CATALOG` is what ships.
+- `src/lib/rentalCatalogStore.ts` holds the Admin's edits until the catalog
+  tables exist, and broadcasts a change event so `/rentals` updates in the same
+  tab without a reload.
+- `RentalsPage.tsx` no longer owns any of that data. It reads the catalog for
+  the type selector, the card grid, the city list, the branch list, the vehicle
+  options and the policy cards, so adding a type is a data change, not page
+  code. A type with no seed listing still renders a card: `cardMetrics()`
+  derives a stable rating, distance and view count from its id, which keeps the
+  Plan §4 card contract intact.
+- Pricing is one shared function. `estimateRental()` charges the daily rate
+  times inclusive days, enforces the type's `minDays` (so a car never bills a
+  single day), and applies the foreign rate to a foreign visitor, with a vehicle
+  option overriding the type rate. The page's estimate panel and the submitted
+  request amount both call it.
+- `rentalCatalogProblems()` is the guard the panel runs before saving: no types,
+  no cities, duplicate ids, a missing label or rate, a non-positive minimum day
+  count, a duplicate or unpriced vehicle option, a city with no branch, a city
+  with no rentable type, an availability entry pointing at a removed type, or
+  missing terms text. A failing catalog cannot be saved.
+- The new **Rentals** view in the Super Admin dashboard edits all of it: each
+  type's labels, photo, icon, rates, minimum days, driver rule, terms and
+  vehicle options; the city × type availability matrix; the general terms; and
+  a reset back to the shipped catalog.
+
+Verified: typecheck PASS, ESLint PASS (0 errors, 7 pre-existing warnings),
+`npm test` PASS (130 tests, 16 files), build PASS. In a headless browser an
+Admin rate change reached `/rentals` in the same session, unticking Yangon's car
+made the page offer Bagan instead, the car flow billed 2 days at the family-car
+rate (378,000 Ks), and the page had no horizontal overflow at 390px or 1440px.
 
 ## Per-account Favorites, notifications, and reviews (22 November 2026)
 

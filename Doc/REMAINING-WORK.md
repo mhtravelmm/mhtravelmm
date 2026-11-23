@@ -1,9 +1,10 @@
 # MH Travel — Remaining Work Record
 
 **Last updated:** 22 November 2026
-**Verified against:** `main` @ `ecb231f` plus the 22 November work on the guide
-route follower, the two owner dashboards, and the Foreign Tourist section;
-detail in [`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
+**Verified against:** `main` plus the Rental catalog data module and Rental Admin
+panel, the per-account Favorites/notification/review wiring, and the 22 November
+work on the guide route follower, the two owner dashboards, and the Foreign
+Tourist section; detail in [`COMPLETED-WORK.md`](./COMPLETED-WORK.md).
 
 The application currently provides a substantial frontend and local-preview experience. The following work remains before production launch.
 
@@ -41,6 +42,7 @@ the suite instead of reaching a user as "coming soon."
   insert. What remains: read requests back from the table, send the traveler
   notification, persist contact handoff, and connect payment and voucher or
   ticket issuance.
+- Move the rental catalog (`src/data/rentalCatalog.ts`, edited from Super Admin → Rentals) from browser storage to `public.rental_types`, `public.rental_cities`, `public.rental_availability` and a terms row, with RLS so only a Rental Admin or Super Admin can write. The shape and the validation (`rentalCatalogProblems`) already exist; only the table adapter is missing.
 - Add live ticket operator inventory, availability, seat maps, seat locking, payment, and provider/API integration.
 - Replace seeded city/category/business recommendations with city-scoped content tables, real pagination, map distance, open/closed state, availability, and review counts.
 - Add Admin-managed content tables and public API/cache invalidation for blogs, guides, listings, and search indexing.

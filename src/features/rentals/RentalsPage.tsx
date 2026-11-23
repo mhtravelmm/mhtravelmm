@@ -22,76 +22,44 @@ import {
   Zap,
 } from 'lucide-react';
 import { useCurrency } from '../../lib/currency';
-import { useLanguage, type TranslationKey } from '../../lib/i18n';
+import { useLanguage } from '../../lib/i18n';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useTravelRequests } from '../../lib/travelRequests';
+import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { RENTAL_PAGE_LISTINGS } from '../../data/cityPageData';
-import type { RentalCategory } from '../../types';
+import {
+  availableTypes,
+  cardMetrics,
+  cityHasType,
+  estimateRental,
+  findRentalType,
+  firstCityForType,
+  localized,
+  minimumEndDate,
 
-type CustomerType = 'citizen' | 'foreigner';
+  type RentalCustomerType,
+  type RentalIconName,
+  type RentalType,
+} from '../../data/rentalCatalog';
+import type { CardListing } from '../../types';
+
+type CustomerType = RentalCustomerType;
 type Fulfillment = 'delivery' | 'branch';
-type CarTypeId = 'family_car' | 'minibus_35' | 'bus_45';
-type CategoryInfo = {
-  icon: LucideIcon;
-  image: string;
-  title: TranslationKey;
-  detail: TranslationKey;
-  rate: number;
-  foreignRate: number;
+
+const ICONS: Record<RentalIconName, LucideIcon> = {
+  bike: Bike,
+  bolt: Zap,
+  car: Car,
+  compass: Compass,
+  tent: TentTree,
+  boat: ShipWheel,
+  person: UserRound,
+  tricycle: ShipWheel,
 };
 
-type City = {
-  id: string;
-  name: { mm: string; en: string };
-  branches: { mm: string; en: string }[];
-  categories: RentalCategory[];
-};
-
-const cities: City[] = [
-  { id: 'yangon', name: { mm: 'ရန်ကုန်', en: 'Yangon' }, branches: [{ mm: 'ရန်ကုန် MH Travel ရုံးခွဲ — Downtown', en: 'Yangon MH Travel Branch — Downtown' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car', 'self_drive_car', 'travel_guide'] },
-  { id: 'bagan', name: { mm: 'ပုဂံ', en: 'Bagan' }, branches: [{ mm: 'ပုဂံ MH Travel ရုံးခွဲ — Nyaung-U', en: 'Bagan MH Travel Branch — Nyaung-U' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'car', 'self_drive_car', 'horse_carriage', 'camping_tent', 'travel_guide'] },
-  { id: 'mandalay', name: { mm: 'မန္တလေး', en: 'Mandalay' }, branches: [{ mm: 'မန္တလေး MH Travel ရုံးခွဲ — 78th Street', en: 'Mandalay MH Travel Branch — 78th Street' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car', 'self_drive_car', 'travel_guide'] },
-  { id: 'inle', name: { mm: 'အင်းလေး', en: 'Inle Lake' }, branches: [{ mm: 'ညောင်ရွှေ MH Travel ရုံးခွဲ', en: 'Nyaung Shwe MH Travel Branch' }], categories: ['bicycle', 'ebike', 'motorbike', 'motorboat', 'camping_tent', 'travel_guide'] },
-  { id: 'ngapali', name: { mm: 'ငပလီ', en: 'Ngapali' }, branches: [{ mm: 'ငပလီ MH Travel ရုံးခွဲ', en: 'Ngapali MH Travel Branch' }], categories: ['bicycle', 'ebike', 'motorbike', 'scooter', 'motorboat', 'camping_tent'] },
-];
-
-const categoryInfo: Record<RentalCategory, CategoryInfo> = {
-  bicycle: { icon: Bike, image: '/images/blog/ubein-evening.webp', title: 'rentals_city_bicycle', detail: 'rentals_detail_bicycle', rate: 8, foreignRate: 10 },
-  ebike: { icon: Zap, image: '/images/blog/shwedagon-evening.webp', title: 'rental_cat_ebike', detail: 'rentals_detail_ebike', rate: 12, foreignRate: 15 },
-  motorbike: { icon: Bike, image: '/images/blog/bagan-sunrise.webp', title: 'rental_cat_motorbike', detail: 'rentals_detail_motorbike', rate: 18, foreignRate: 22 },
-  scooter: { icon: Bike, image: '/images/blog/inle-stilt-houses.webp', title: 'rental_cat_scooter', detail: 'rentals_detail_scooter', rate: 10, foreignRate: 13 },
-  tricycle: { icon: Bike, image: '/images/blog/ubein-evening.webp', title: 'rental_cat_tricycle', detail: 'rentals_detail_tricycle', rate: 14, foreignRate: 18 },
-  car: { icon: Car, image: '/images/blog/shwedagon-evening.webp', title: 'rental_cat_car_driver', detail: 'rentals_detail_car_driver', rate: 42, foreignRate: 55 },
-  self_drive_car: { icon: Car, image: '/images/blog/ubein-evening.webp', title: 'rental_cat_self_drive_car', detail: 'rentals_detail_self_drive_car', rate: 32, foreignRate: 42 },
-  horse_carriage: { icon: Compass, image: '/images/blog/bagan-sunrise.webp', title: 'rental_cat_horse_carriage', detail: 'rentals_detail_horse_carriage', rate: 28, foreignRate: 34 },
-  camping_tent: { icon: TentTree, image: '/images/blog/inle-stilt-houses.webp', title: 'rental_cat_camping_tent', detail: 'rentals_detail_camping_tent', rate: 12, foreignRate: 15 },
-  motorboat: { icon: ShipWheel, image: '/images/blog/inle-stilt-houses.webp', title: 'rental_cat_motorboat', detail: 'rentals_detail_motorboat', rate: 55, foreignRate: 68 },
-  travel_guide: { icon: UserRound, image: '/images/blog/bagan-sunrise.webp', title: 'rental_cat_travel_guide', detail: 'rentals_detail_travel_guide', rate: 35, foreignRate: 45 },
-};
-
-const primaryCategories: RentalCategory[] = ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car', 'self_drive_car'];
-const additionalCategories: RentalCategory[] = ['horse_carriage', 'camping_tent', 'motorboat', 'travel_guide'];
-const categorySelectorOrder: RentalCategory[] = ['bicycle', 'motorbike', 'car', 'camping_tent', 'motorboat', 'horse_carriage', 'ebike', 'scooter', 'tricycle', 'self_drive_car', 'travel_guide'];
-const allRentalCategories: RentalCategory[] = [...primaryCategories, ...additionalCategories];
-const favoriteIdByCategory: Record<RentalCategory, string> = {
-  bicycle: 'pre3',
-  ebike: 'pre6',
-  motorbike: 'pre2',
-  scooter: 'pre7',
-  tricycle: 'pre11',
-  car: 'pre1',
-  self_drive_car: 'pre8',
-  horse_carriage: 'pre9',
-  camping_tent: 'pre10',
-  motorboat: 'pre5',
-  travel_guide: 'pre4',
-};
-
-const carTypes: Record<CarTypeId, { label: { mm: string; en: string }; rate: number; foreignRate: number }> = {
-  family_car: { label: { mm: 'အိမ်စီးကား (၄–၅ ယောက်စီး)', en: 'Family car (4–5 seats)' }, rate: 42, foreignRate: 55 },
-  minibus_35: { label: { mm: '၃၅ ယောက်စီးကား', en: '35-seat minibus' }, rate: 180, foreignRate: 225 },
-  bus_45: { label: { mm: '၄၅ ယောက်စီးကား', en: '45-seat bus' }, rate: 240, foreignRate: 295 },
-};
+/** Plan §8: types run their own flow, so this is the order the selector offers. */
+const CATEGORY_ORDER = ['bicycle', 'motorbike', 'car', 'camping_tent', 'motorboat', 'horse_carriage', 'ebike', 'scooter', 'tricycle', 'self_drive_car', 'travel_guide'];
+const PRIMARY_TYPES = ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car', 'self_drive_car'];
 
 function tomorrow() {
   const date = new Date();
@@ -99,27 +67,16 @@ function tomorrow() {
   return date.toISOString().slice(0, 10);
 }
 
-function addDays(dateString: string, amount: number) {
-  const date = new Date(`${dateString}T12:00:00`);
-  date.setDate(date.getDate() + amount);
-  return date.toISOString().slice(0, 10);
-}
-
-function inclusiveDays(startDate: string, endDate: string) {
-  const start = new Date(`${startDate}T12:00:00`).getTime();
-  const end = new Date(`${endDate}T12:00:00`).getTime();
-  return Math.max(1, Math.round((end - start) / 86400000) + 1);
-}
-
 export function RentalsPage() {
   const { language, t } = useLanguage();
   const { formatPrice } = useCurrency();
   const { addRequest } = useTravelRequests();
+  const { catalog } = useRentalCatalog();
   const favorites = useToggleFavorite(RENTAL_PAGE_LISTINGS);
   const favoriteListings = new Map(favorites.listings.map((listing) => [listing.id, listing]));
-  const [cityId, setCityId] = useState('yangon');
-  const [category, setCategory] = useState<RentalCategory | null>(null);
-  const [activeFilter, setActiveFilter] = useState<RentalCategory | null>(null);
+  const [cityId, setCityId] = useState(catalog.cities[0]?.id ?? 'yangon');
+  const [typeId, setTypeId] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -132,52 +89,56 @@ export function RentalsPage() {
   const [address, setAddress] = useState('');
   const [branch, setBranch] = useState('');
   const [phone, setPhone] = useState('');
-  const [carTypeId, setCarTypeId] = useState<CarTypeId>('family_car');
+  const [optionId, setOptionId] = useState<string | null>(null);
   const [submittedReference, setSubmittedReference] = useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  const city = cities.find((item) => item.id === cityId) ?? cities[0];
-  const selected = category ? categoryInfo[category] : null;
-  const carType = carTypes[carTypeId];
-  const isCarRental = category === 'car' || category === 'self_drive_car';
-  const minimumEndDate = addDays(date, isCarRental ? 1 : 0);
-  const validEndDate = endDate < minimumEndDate ? minimumEndDate : endDate;
-  const rentalDays = inclusiveDays(date, validEndDate);
-  const rate = selected
-    ? category === 'car'
-      ? customerType === 'foreigner' ? carType.foreignRate : carType.rate
-      : customerType === 'foreigner' ? selected.foreignRate : selected.rate
-    : 0;
-  const total = rate * rentalDays;
+  const city = catalog.cities.find((item) => item.id === cityId) ?? catalog.cities[0];
+  const selected = findRentalType(catalog, typeId);
+  const earliestEnd = minimumEndDate(date, selected);
+  const validEndDate = endDate < earliestEnd ? earliestEnd : endDate;
+  const estimate = estimateRental({ type: selected, customerType, optionId, startDate: date, endDate: validEndDate });
   const locationReady = fulfillment === 'branch' ? Boolean(branch) : address.trim().length >= 3;
-  const canSubmit = Boolean(category && phone.trim().length >= 7 && locationReady && termsAccepted);
-  const availableCategories = useMemo(() => city.categories.map((item) => ({ id: item, ...categoryInfo[item] })), [city]);
-  const visibleCategoryIds = showAll || query.trim() || activeFilter
-    ? allRentalCategories
-    : primaryCategories;
-  const visibleRentals = visibleCategoryIds.filter((id) => {
-    if (activeFilter && activeFilter !== id) return false;
+  const canSubmit = Boolean(selected && phone.trim().length >= 7 && locationReady && termsAccepted);
+  const cityTypes = useMemo(() => availableTypes(catalog, city.id), [catalog, city.id]);
+  const driverTypes = useMemo(() => catalog.types.filter((type) => type.driverRequired), [catalog.types]);
+  const orderedTypes = useMemo(() => {
+    const byId = new Map(catalog.types.map((type) => [type.id, type]));
+    const ordered = CATEGORY_ORDER.flatMap((id) => byId.get(id) ?? []);
+    const rest = catalog.types.filter((type) => !CATEGORY_ORDER.includes(type.id));
+    return [...ordered, ...rest];
+  }, [catalog.types]);
+  const visibleTypes = showAll || query.trim() || activeFilter
+    ? orderedTypes
+    : orderedTypes.filter((type) => PRIMARY_TYPES.includes(type.id));
+  const visibleRentals = visibleTypes.filter((type) => {
+    if (activeFilter && activeFilter !== type.id) return false;
     if (!query.trim()) return true;
-    const listing = favoriteListings.get(favoriteIdByCategory[id]);
-    const searchable = `${t(categoryInfo[id].title)} ${t(categoryInfo[id].detail)} ${listing?.title ?? ''}`.toLowerCase();
+    const listing = type.listingId ? favoriteListings.get(type.listingId) : undefined;
+    const searchable = `${localized(type.label, language)} ${localized(type.detail, language)} ${listing?.title ?? ''}`.toLowerCase();
     return searchable.includes(query.trim().toLowerCase());
   });
 
   function changeCity(value: string) {
     setCityId(value);
-    const nextCity = cities.find((item) => item.id === value) ?? cities[0];
-    if (category && !nextCity.categories.includes(category)) setCategory(null);
+    if (typeId && !cityHasType(catalog, value, typeId)) setTypeId(null);
     setBranch('');
     setSubmittedReference(null);
   }
 
-  function beginRental(nextCategory: RentalCategory) {
-    const currentCityHasType = city.categories.includes(nextCategory);
-    if (!currentCityHasType) {
-      const firstAvailableCity = cities.find((item) => item.categories.includes(nextCategory));
-      if (firstAvailableCity) setCityId(firstAvailableCity.id);
+  function changeType(nextTypeId: string) {
+    setTypeId(nextTypeId);
+    setOptionId(null);
+    setSubmittedReference(null);
+  }
+
+  function beginRental(nextTypeId: string) {
+    if (!cityHasType(catalog, city.id, nextTypeId)) {
+      const nextCity = firstCityForType(catalog, nextTypeId);
+      if (nextCity) setCityId(nextCity.id);
     }
-    setCategory(nextCategory);
+    setTypeId(nextTypeId);
+    setOptionId(null);
     setSubmittedReference(null);
     setTermsAccepted(false);
     setBookingOpen(true);
@@ -187,13 +148,32 @@ export function RentalsPage() {
   function submitOrder() {
     if (!canSubmit || !selected) return;
     const handover = fulfillment === 'branch' ? branch : address.trim();
+    const option = selected.vehicleOptions.find((item) => item.id === optionId);
+    const label = option ? `${localized(selected.label, language)} · ${localized(option.label, language)}` : localized(selected.label, language);
     const request = addRequest({
       kind: 'rental',
-      title: t(selected.title),
-      detail: `${city.name[language]} · ${date} → ${validEndDate} · ${rentalDays} ${t('rentals_day_count')} · ${handover}`,
-      amountUsd: total,
+      title: label,
+      detail: `${localized(city.name, language)} · ${date} → ${validEndDate} · ${estimate.days} ${t('rentals_day_count')} · ${handover}`,
+      amountUsd: estimate.totalUsd,
     });
     setSubmittedReference(request.id);
+  }
+
+  /** A type with no seed listing still needs the four card fields (Plan §4). */
+  function cardListing(type: RentalType): CardListing {
+    const seeded = type.listingId ? favoriteListings.get(type.listingId) : undefined;
+    if (seeded) return seeded;
+    const metrics = cardMetrics(type);
+    return {
+      id: type.id,
+      title: localized(type.label, language),
+      imageUrl: type.image,
+      rating: metrics.rating,
+      distanceKm: metrics.distanceKm,
+      isFavorited: false,
+      views: metrics.views,
+      href: '/rentals',
+    };
   }
 
   return (
@@ -224,19 +204,19 @@ export function RentalsPage() {
       <section className="rounded-2xl border border-border bg-bg-card p-2.5 shadow-sm sm:p-3">
         <p className="mb-2 px-1 text-[10px] font-semibold text-text-secondary">{t('rentals_choose_type')}</p>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-          {categorySelectorOrder.map((id) => {
-            const Icon = categoryInfo[id].icon;
-            const isActive = activeFilter === id;
+          {orderedTypes.map((type) => {
+            const Icon = ICONS[type.icon];
+            const isActive = activeFilter === type.id;
             return (
               <button
-                key={id}
+                key={type.id}
                 type="button"
                 aria-pressed={isActive}
-                onClick={() => setActiveFilter((current) => current === id ? null : id)}
+                onClick={() => setActiveFilter((current) => current === type.id ? null : type.id)}
                 className={`flex min-h-[62px] flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 text-center transition sm:min-h-[66px] ${isActive ? 'border-brand-blue bg-brand-blue text-white shadow-sm' : 'border-transparent bg-bg-cardAlt text-text-secondary hover:border-brand-blue/35 hover:text-brand-blue'}`}
               >
                 <Icon size={18} />
-                <span className="text-[9px] font-medium leading-3 sm:text-[10px]">{t(categoryInfo[id].title)}</span>
+                <span className="text-[9px] font-medium leading-3 sm:text-[10px]">{localized(type.label, language)}</span>
               </button>
             );
           })}
@@ -260,16 +240,14 @@ export function RentalsPage() {
         </div>
         {visibleRentals.length > 0 ? (
           <div className="grid gap-2 sm:gap-2.5 lg:grid-cols-6">
-            {visibleRentals.map((id) => {
-              const info = categoryInfo[id];
-              const Icon = info.icon;
-              const favoriteId = favoriteIdByCategory[id];
-              const listing = favoriteListings.get(favoriteId);
-              if (!listing) return null;
+            {visibleRentals.map((type) => {
+              const Icon = ICONS[type.icon];
+              const listing = cardListing(type);
+              const favoriteId = type.listingId ?? type.id;
               return (
-                <article key={id} className="group flex min-w-0 items-center gap-2.5 rounded-xl border border-border bg-bg-card p-2 transition hover:border-brand-blue/35 hover:shadow-md lg:block lg:overflow-hidden lg:p-0">
+                <article key={type.id} className="group flex min-w-0 items-center gap-2.5 rounded-xl border border-border bg-bg-card p-2 transition hover:border-brand-blue/35 hover:shadow-md lg:block lg:overflow-hidden lg:p-0">
                   <div className="relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-lg bg-bg-cardAlt sm:h-[84px] sm:w-[84px] lg:h-[102px] lg:w-full lg:rounded-none">
-                    <img src={info.image} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    <img src={type.image} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/5 to-slate-950/15" />
                     <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-slate-950/75 px-1.5 py-1 text-[9px] font-bold text-amber-300 backdrop-blur"><Star size={9} fill="currentColor" />{listing.rating.toFixed(1)}</span>
                     <span className="absolute bottom-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-400 text-slate-950"><Icon size={13} /></span>
@@ -279,11 +257,11 @@ export function RentalsPage() {
                   </div>
                   <div className="flex min-w-0 flex-1 items-center justify-between gap-2 lg:block lg:p-2.5">
                     <div className="min-w-0">
-                      <h3 className="truncate text-xs font-semibold text-text-primary lg:text-[11px]">{t(info.title)}</h3>
-                      <p className="hidden truncate text-[9px] text-text-faint lg:mt-0.5 lg:block">{t(info.detail)}</p>
-                      <p className="mt-1 text-[10px] font-semibold text-brand-red">{formatPrice(info.rate)} <span className="font-normal text-text-faint">/ {t('rentals_day')}</span></p>
+                      <h3 className="truncate text-xs font-semibold text-text-primary lg:text-[11px]">{localized(type.label, language)}</h3>
+                      <p className="hidden truncate text-[9px] text-text-faint lg:mt-0.5 lg:block">{localized(type.detail, language)}</p>
+                      <p className="mt-1 text-[10px] font-semibold text-brand-red">{formatPrice(type.rateUsd)} <span className="font-normal text-text-faint">/ {t('rentals_day')}</span></p>
                     </div>
-                    <button type="button" onClick={() => beginRental(id)} className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-brand-blue px-2.5 py-2 text-[9px] font-semibold text-white transition hover:bg-brand-blue/85 sm:px-3 lg:mt-2 lg:w-full lg:justify-center lg:py-2">{t('rentals_rent_now')} <ArrowRight size={11} /></button>
+                    <button type="button" onClick={() => beginRental(type.id)} className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-brand-blue px-2.5 py-2 text-[9px] font-semibold text-white transition hover:bg-brand-blue/85 sm:px-3 lg:mt-2 lg:w-full lg:justify-center lg:py-2">{t('rentals_rent_now')} <ArrowRight size={11} /></button>
                   </div>
                 </article>
               );
@@ -299,8 +277,8 @@ export function RentalsPage() {
           <div className="mb-4 flex items-start justify-between gap-3 border-b border-border pb-3">
             <div>
               <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-brand-blue">{t('rentals_order_title')}</p>
-              <h2 className="mt-1 text-base font-semibold text-text-primary">{selected ? t(selected.title) : t('rentals_select_first')}</h2>
-              <p className="mt-1 text-[10px] text-text-muted">{city.name[language]} · {availableCategories.length} {t('rentals_available_types')}</p>
+              <h2 className="mt-1 text-base font-semibold text-text-primary">{selected ? localized(selected.label, language) : t('rentals_select_first')}</h2>
+              <p className="mt-1 text-[10px] text-text-muted">{localized(city.name, language)} · {cityTypes.length} {t('rentals_available_types')}</p>
             </div>
             <button type="button" aria-label={t('rentals_close_order')} onClick={() => setBookingOpen(false)} className="rounded-lg border border-border p-2 text-text-muted hover:bg-bg-cardAlt hover:text-text-primary"><X size={15} /></button>
           </div>
@@ -310,9 +288,9 @@ export function RentalsPage() {
               <section>
                 <p className="mb-2 text-[10px] font-semibold text-text-secondary">{t('rentals_choose_type')}</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {availableCategories.map((item) => {
-                    const Icon = item.icon;
-                    return <button key={item.id} type="button" onClick={() => { setCategory(item.id); setSubmittedReference(null); }} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[9px] transition ${category === item.id ? 'border-brand-blue bg-brand-blue/10 text-brand-blue' : 'border-border text-text-secondary hover:border-brand-blue/40'}`}><Icon size={13} />{t(item.title)}</button>;
+                  {cityTypes.map((type) => {
+                    const Icon = ICONS[type.icon];
+                    return <button key={type.id} type="button" onClick={() => changeType(type.id)} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-[9px] transition ${typeId === type.id ? 'border-brand-blue bg-brand-blue/10 text-brand-blue' : 'border-border text-text-secondary hover:border-brand-blue/40'}`}><Icon size={13} />{localized(type.label, language)}</button>;
                   })}
                 </div>
               </section>
@@ -320,18 +298,18 @@ export function RentalsPage() {
               <div className="grid gap-2.5 sm:grid-cols-3">
                 <label className="block">
                   <span className="mb-1 block text-[10px] text-text-faint">{t('rentals_choose_city')}</span>
-                  <span className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2.5"><MapPin size={14} className="text-brand-blue" /><select value={cityId} onChange={(event) => changeCity(event.target.value)} className="w-full bg-transparent text-xs text-text-primary outline-none">{cities.map((item) => <option key={item.id} value={item.id}>{item.name[language]}</option>)}</select></span>
+                  <span className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2.5"><MapPin size={14} className="text-brand-blue" /><select value={city.id} onChange={(event) => changeCity(event.target.value)} className="w-full bg-transparent text-xs text-text-primary outline-none">{catalog.cities.map((item) => <option key={item.id} value={item.id}>{localized(item.name, language)}</option>)}</select></span>
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-[10px] text-text-faint">{t('rentals_start_date')}</span>
-                  <input type="date" min={tomorrow()} value={date} onChange={(event) => { const nextDate = event.target.value; setDate(nextDate); if (validEndDate < addDays(nextDate, isCarRental ? 1 : 0)) setEndDate(addDays(nextDate, isCarRental ? 1 : 0)); }} className="w-full rounded-lg border border-border bg-bg px-2.5 py-2.5 text-[11px] text-text-primary outline-none" />
+                  <input type="date" min={tomorrow()} value={date} onChange={(event) => { const nextDate = event.target.value; setDate(nextDate); const nextEarliest = minimumEndDate(nextDate, selected); if (validEndDate < nextEarliest) setEndDate(nextEarliest); }} className="w-full rounded-lg border border-border bg-bg px-2.5 py-2.5 text-[11px] text-text-primary outline-none" />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-[10px] text-text-faint">{t('rentals_end_date')}</span>
-                  <input type="date" min={minimumEndDate} value={validEndDate} onChange={(event) => setEndDate(event.target.value)} className="w-full rounded-lg border border-border bg-bg px-2.5 py-2.5 text-[11px] text-text-primary outline-none" />
+                  <input type="date" min={earliestEnd} value={validEndDate} onChange={(event) => setEndDate(event.target.value)} className="w-full rounded-lg border border-border bg-bg px-2.5 py-2.5 text-[11px] text-text-primary outline-none" />
                 </label>
               </div>
-              <p className="flex items-center gap-1.5 text-[9px] text-brand-blue"><Check size={12} />{isCarRental ? t('rentals_car_minimum_days') : t('rentals_advance_note')}</p>
+              <p className="flex items-center gap-1.5 text-[9px] text-brand-blue"><Check size={12} />{selected && selected.minDays > 1 ? t('rentals_car_minimum_days') : t('rentals_advance_note')}</p>
 
               {selected && (
                 <>
@@ -339,13 +317,13 @@ export function RentalsPage() {
                     <label className="rounded-lg bg-bg-cardAlt p-2.5"><span className="block text-[9px] text-text-faint">{t('rentals_participants')}</span><input type="number" min={1} max={45} value={participants} onChange={(event) => setParticipants(Math.max(1, Number(event.target.value)))} className="mt-1 w-full bg-transparent text-sm text-text-primary outline-none" /></label>
                     <label className="rounded-lg bg-bg-cardAlt p-2.5"><span className="block text-[9px] text-text-faint">{t('rentals_nationality')}</span><select value={customerType} onChange={(event) => setCustomerType(event.target.value as CustomerType)} className="mt-1 w-full bg-transparent text-[11px] text-text-primary outline-none"><option value="citizen">{t('rentals_citizen')}</option><option value="foreigner">{t('rentals_foreigner')}</option></select></label>
                   </div>
-                  {category === 'car' && (
+                  {selected.vehicleOptions.length > 0 && (
                     <>
-                      <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_car_type')}</span><select value={carTypeId} onChange={(event) => setCarTypeId(event.target.value as CarTypeId)} className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-[11px] text-text-primary outline-none">{Object.entries(carTypes).map(([id, item]) => <option key={id} value={id}>{item.label[language]}</option>)}</select></label>
+                      <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_car_type')}</span><select value={optionId ?? selected.vehicleOptions[0].id} onChange={(event) => { setOptionId(event.target.value); setSubmittedReference(null); }} className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-[11px] text-text-primary outline-none">{selected.vehicleOptions.map((option) => <option key={option.id} value={option.id}>{localized(option.label, language)}</option>)}</select></label>
                       <p className="rounded-lg bg-status-warningBg px-3 py-2 text-[10px] leading-4 text-status-warning">{t('rentals_car_note')}</p>
                     </>
                   )}
-                  {category === 'self_drive_car' && <p className="rounded-lg bg-status-warningBg px-3 py-2 text-[10px] leading-4 text-status-warning">{t('rentals_self_drive_note')}</p>}
+                  <p className="rounded-lg bg-status-warningBg px-3 py-2 text-[10px] leading-4 text-status-warning">{localized(selected.terms, language)}</p>
 
                   <div>
                     <span className="mb-1.5 block text-[10px] text-text-faint">{t('rentals_receive_method')}</span>
@@ -357,7 +335,7 @@ export function RentalsPage() {
                   {fulfillment === 'delivery' ? (
                     <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_delivery_address')}</span><textarea value={address} onChange={(event) => setAddress(event.target.value)} rows={2} placeholder={t('rentals_delivery_placeholder')} className="w-full resize-none rounded-lg border border-border bg-bg px-3 py-2 text-[11px] text-text-primary outline-none placeholder:text-text-faint" /></label>
                   ) : (
-                    <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_choose_branch')}</span><select value={branch} onChange={(event) => setBranch(event.target.value)} className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-[11px] text-text-primary outline-none"><option value="">{t('rentals_choose_branch_placeholder')}</option>{city.branches.map((item) => <option key={item.en} value={item.en}>{item[language]}</option>)}</select></label>
+                    <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_choose_branch')}</span><select value={branch} onChange={(event) => setBranch(event.target.value)} className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-[11px] text-text-primary outline-none"><option value="">{t('rentals_choose_branch_placeholder')}</option>{city.branches.map((item) => <option key={item.id} value={item.id}>{localized(item.name, language)}</option>)}</select></label>
                   )}
                   <label className="block"><span className="mb-1 block text-[10px] text-text-faint">{t('rentals_phone')}</span><span className="flex items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2.5"><Phone size={14} className="text-brand-blue" /><input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder={t('rentals_phone_placeholder')} className="w-full bg-transparent text-xs text-text-primary outline-none placeholder:text-text-faint" /></span></label>
                   <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-border bg-bg-cardAlt px-3 py-2.5 text-[10px] leading-4 text-text-secondary">
@@ -375,16 +353,16 @@ export function RentalsPage() {
               <p className="text-[9px] font-semibold uppercase tracking-[0.15em] text-brand-blue">{t('rentals_estimate')}</p>
               {selected ? (
                 <>
-                  <h3 className="mt-1 text-base font-semibold text-text-primary">{t(selected.title)}</h3>
-                  <p className="mt-1 text-[10px] leading-4 text-text-muted">{t(selected.detail)}</p>
+                  <h3 className="mt-1 text-base font-semibold text-text-primary">{localized(selected.label, language)}</h3>
+                  <p className="mt-1 text-[10px] leading-4 text-text-muted">{localized(selected.detail, language)}</p>
                   <div className="my-3 space-y-2 border-y border-border py-3 text-[10px] text-text-muted">
-                    <div className="flex justify-between gap-2"><span>{t('rentals_city_label')}</span><span className="font-medium text-text-primary">{city.name[language]}</span></div>
+                    <div className="flex justify-between gap-2"><span>{t('rentals_city_label')}</span><span className="font-medium text-text-primary">{localized(city.name, language)}</span></div>
                     <div className="flex justify-between gap-2"><span>{t('rentals_start_date')}</span><span className="text-text-primary">{date}</span></div>
                     <div className="flex justify-between gap-2"><span>{t('rentals_end_date')}</span><span className="text-text-primary">{validEndDate}</span></div>
-                    <div className="flex justify-between gap-2"><span>{t('rentals_days')}</span><span className="text-text-primary">{rentalDays} {t('rentals_day_count')}</span></div>
-                    <div className="flex justify-between gap-2"><span>{t('rentals_rate')}</span><span className="text-text-primary">{formatPrice(rate)} / {t('rentals_day')}</span></div>
+                    <div className="flex justify-between gap-2"><span>{t('rentals_days')}</span><span className="text-text-primary">{estimate.days} {t('rentals_day_count')}</span></div>
+                    <div className="flex justify-between gap-2"><span>{t('rentals_rate')}</span><span className="text-text-primary">{formatPrice(estimate.rateUsd)} / {t('rentals_day')}</span></div>
                   </div>
-                  <div className="flex items-end justify-between gap-2"><span className="text-[10px] text-text-muted">{t('rentals_estimate')}</span><strong className="text-xl text-brand-red">{formatPrice(total)}</strong></div>
+                  <div className="flex items-end justify-between gap-2"><span className="text-[10px] text-text-muted">{t('rentals_estimate')}</span><strong className="text-xl text-brand-red">{formatPrice(estimate.totalUsd)}</strong></div>
                 </>
               ) : (
                 <p className="mt-2 text-[10px] leading-4 text-text-muted">{t('rentals_select_first_detail')}</p>
@@ -416,17 +394,30 @@ export function RentalsPage() {
 
       {showPolicies && (
         <section className="grid gap-2 sm:grid-cols-3">
-          {[
-            { icon: Check, title: 'rentals_rule_daily', detail: 'rentals_rule_daily_detail' },
-            { icon: MapPin, title: 'rentals_rule_distance', detail: 'rentals_rule_distance_detail' },
-            { icon: UserRound, title: 'rentals_rule_driver', detail: 'rentals_rule_driver_detail' },
-          ].map(({ icon: Icon, title, detail }) => (
-            <article key={title} className="rounded-xl border border-border bg-bg-card p-3">
-              <Icon size={16} className="text-brand-blue" />
-              <h3 className="mt-2 text-[10px] font-semibold text-text-primary">{t(title as TranslationKey)}</h3>
-              <p className="mt-1 text-[9px] leading-4 text-text-muted">{t(detail as TranslationKey)}</p>
-            </article>
-          ))}
+          <article className="rounded-xl border border-border bg-bg-card p-3">
+            <Check size={16} className="text-brand-blue" />
+            <h3 className="mt-2 text-[10px] font-semibold text-text-primary">{t('rentals_rule_daily')}</h3>
+            <p className="mt-1 text-[9px] leading-4 text-text-muted">{t('rentals_rule_daily_detail')}</p>
+          </article>
+          <article className="rounded-xl border border-border bg-bg-card p-3">
+            <MapPin size={16} className="text-brand-blue" />
+            <h3 className="mt-2 text-[10px] font-semibold text-text-primary">{t('rentals_rule_distance')}</h3>
+            <p className="mt-1 text-[9px] leading-4 text-text-muted">{t('rentals_rule_distance_detail')}</p>
+          </article>
+          <article className="rounded-xl border border-border bg-bg-card p-3">
+            <UserRound size={16} className="text-brand-blue" />
+            <h3 className="mt-2 text-[10px] font-semibold text-text-primary">{t('rentals_rule_driver')}</h3>
+            <p className="mt-1 text-[9px] leading-4 text-text-muted">
+              {driverTypes.length > 0
+                ? `${t('rentals_rule_driver_detail')} ${driverTypes.map((type) => localized(type.label, language)).join(', ')}.`
+                : t('rentals_rule_driver_detail')}
+            </p>
+          </article>
+          <article className="rounded-xl border border-border bg-bg-card p-3 sm:col-span-3">
+            <ShieldCheck size={16} className="text-brand-blue" />
+            <h3 className="mt-2 text-[10px] font-semibold text-text-primary">{t('rentals_terms_title')}</h3>
+            <p className="mt-1 text-[9px] leading-4 text-text-muted">{localized(catalog.terms, language)}</p>
+          </article>
         </section>
       )}
 
