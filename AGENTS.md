@@ -28,6 +28,11 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `src/lib/rentalCatalogStore.ts`. Do not add a rental type as page code, and price with
   `estimateRental()` so the estimate panel and the submitted amount cannot disagree.
   `rentalCatalogProblems()` must stay empty for a save to be allowed.
+- **Rental order rules live in `src/lib/rentalOrderRules.ts`**, one function per
+  §8.7 check in the order `submit_rental_order` runs them, returning a stable
+  `rental_error_*` code. `quoteRentalOrder()` is the only quote; `buildRentalOrder()`
+  in `src/lib/rentalOrders.ts` stores its numbers and ignores the client total.
+  Days come from `src/lib/myanmarTime.ts` (UTC+6:30), never `new Date()` slicing.
 
 ## Conventions
 

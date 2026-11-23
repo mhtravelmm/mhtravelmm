@@ -1,4 +1,5 @@
 import type { RentalOrder, RentalOrderStatus } from './rentalOrders';
+import { myanmarDay } from './myanmarTime';
 import { extrasTotalUsd, orderTotalUsd, RENTAL_ORDER_STATUSES } from './rentalOrders';
 
 /**
@@ -7,14 +8,7 @@ import { extrasTotalUsd, orderTotalUsd, RENTAL_ORDER_STATUSES } from './rentalOr
  * numbers, and so a report can be recomputed without a server round trip.
  */
 
-/** Myanmar Time is UTC+6:30 all year, so the day boundary is fixed. */
-const MYANMAR_OFFSET_MINUTES = 6 * 60 + 30;
-
-/** The calendar day an instant falls on in Myanmar Time, as `YYYY-MM-DD`. */
-export function myanmarDay(iso: string): string {
-  const shifted = new Date(new Date(iso).getTime() + MYANMAR_OFFSET_MINUTES * 60000);
-  return shifted.toISOString().slice(0, 10);
-}
+export { myanmarDay } from './myanmarTime';
 
 export type StatusTally = { status: RentalOrderStatus; count: number; totalUsd: number };
 

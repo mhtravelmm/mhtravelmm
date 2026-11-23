@@ -1,6 +1,6 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 22 November 2026
+**Last updated:** 23 November 2026
 **Verified against:** `main` plus the Rental catalog data module and Rental Admin
 panel, and the per-account Favorites, notification, and review wiring; earlier baseline `ecb231f` covers the Blog and Travel Guide admin
 editors, admin-role accounts, the rental-category work of 20–22 November 2026,
@@ -657,3 +657,42 @@ row); `npm run build` succeeds; `npx eslint src` reports 0 errors. Browser check
 adding "Lodging in Bagan" at $30 to paid order `RNT-261120-0010` moved the total
 due from $70 to $100, wrote the timeline event, wrote the traveler notice under
 `traveler-10` only, and the voucher showed `Total due 450,000 Ks / $100.00`.
+
+## Rental server rules mirrored on the client (Plan §8.7, §8.12) — 23 November 2026
+
+Plan §8.7 says the server is the authority and the client rules mirror them, and
+§8.12 acceptance 2–4 test the mirror: a tampered total is ignored, a type the
+city does not offer is rejected, and a car order shorter than its minimum days
+or a start before tomorrow in Myanmar Time is rejected. The page enforced none
+of those; it computed a total and stored whatever it displayed.
+
+- `src/lib/rentalOrderRules.ts` is the rule set, in the order
+  `submit_rental_order` checks it: category active, city × type available,
+  variant belongs to the category, branch belongs to the city, start at least
+  tomorrow in Myanmar Time (or the Settings notice period, whichever is later),
+  end not before start, `minDays` honoured, name at least 2 characters, phone at
+  least 7 digits, delivery address at least 3 characters when delivering,
+  participants at least 1, current terms version, then the per-account limit of
+  `RENTAL_SUBMIT_LIMIT_PER_HOUR` (10). Each failure returns one stable
+  `rental_error_*` code.
+- `quoteRentalOrder()` is the single quote. The estimate panel calls it to
+  preview and `buildRentalOrder()` calls it to store, so the two cannot drift.
+- `buildRentalOrder()` in `src/lib/rentalOrders.ts` is the pure order builder:
+  it validates, then writes `rateUsd`, `totalUsd` and `days` from the quote and
+  never from the form. `createOrder` now only reads storage, calls the builder,
+  writes, persists and notifies, so the rules are testable without a hook.
+- `src/lib/myanmarTime.ts` holds `myanmarToday()` and `addDaysToDay()` (UTC+6:30,
+  no DST). `rentalReports.ts` and `rentalCatalog.ts` use it instead of their own
+  copies, so "today" means the same day in the reports, the rules and the form.
+- `RentalsPage.tsx` shows a rejection in an alert above the submit button, keyed
+  by the returned code, so a server error and a client error read the same in
+  both languages. The 15 `rental_error_*` keys are in MM and EN.
+
+**Verification.** `npx tsc --noEmit -p tsconfig.app.json` clean; `npx vitest run`
+21 files / 248 tests, including 23 in `src/lib/rentalOrderRules.test.ts` and 7
+new ones in `src/lib/rentalOrders.test.ts` for the tampered total, the request
+code, city availability, minimum days, the Myanmar Time start, and the per-account
+hourly limit; `npm run build` succeeds; `npx eslint .` reports 0 errors.
+Browser check: a Yangon bicycle order submitted and produced
+`RNT-261123-0001` at 36,000 Ks on `/account/bookings/RNT-261123-0001`, and a
+forced `rental_error_city_availability` rendered in Burmese above the button.

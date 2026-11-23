@@ -1,7 +1,8 @@
 # MH Travel — Remaining Work Record
 
-**Last updated:** 22 November 2026
-**Verified against:** `main` plus the full Rental Admin panel (catalog,
+**Last updated:** 23 November 2026
+**Verified against:** `main` plus the rental order rules
+(`src/lib/rentalOrderRules.ts`), the full Rental Admin panel (catalog,
 availability, rates, branches, terms, settings, orders) built to Plan §8.8, the
 per-account Favorites/notification/review wiring, and the 22 November work on the
 guide route follower, the two owner dashboards, and the Foreign Tourist section;
@@ -53,7 +54,9 @@ the suite instead of reaching a user as "coming soon."
   them, seed the catalog from `src/data/rentalCatalog.ts`, and replace the
   browser stores (`rentalCatalogStore.ts`, `rentalOrders.ts`) with queries. Until
   then the browser record leads and the server rules are only mirrored in
-  `src/lib/rentalOrders.ts`.
+  `src/lib/rentalOrderRules.ts` (all fifteen §8.7 checks, the shared quote and
+  the hourly per-account limit), which `buildRentalOrder` in
+  `src/lib/rentalOrders.ts` runs before anything is stored.
 - Rental Admin panel coverage (Plan §8.8): Catalog, Availability, Rates (city ×
   category × variant with effective dates and history), Branches (name, address,
   phone), Terms (publish a new version, keep the history), and Settings

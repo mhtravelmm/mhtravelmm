@@ -1,3 +1,4 @@
+import { addDaysToDay, inclusiveDaysBetween } from '../lib/myanmarTime';
 import type { Language } from '../types';
 
 /**
@@ -555,16 +556,12 @@ export function typeRateUsd(catalog: RentalCatalog, query: RateQuery): number {
 }
 
 export function addDays(dateString: string, amount: number): string {
-  const date = new Date(`${dateString}T12:00:00`);
-  date.setDate(date.getDate() + amount);
-  return date.toISOString().slice(0, 10);
+  return addDaysToDay(dateString, amount);
 }
 
 /** Both endpoints count, so a same-day rental is one day. */
 export function inclusiveDays(startDate: string, endDate: string): number {
-  const start = new Date(`${startDate}T12:00:00`).getTime();
-  const end = new Date(`${endDate}T12:00:00`).getTime();
-  return Math.max(1, Math.round((end - start) / 86400000) + 1);
+  return inclusiveDaysBetween(startDate, endDate);
 }
 
 export function minimumEndDate(startDate: string, type: RentalType | undefined): string {

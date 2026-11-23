@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
+  AlertTriangle,
   ArrowRight,
   Bike,
   Car,
@@ -27,6 +28,8 @@ import { useCurrency } from '../../lib/currency';
 import { useLanguage } from '../../lib/i18n';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useRentalOrders, type RentalFulfillment } from '../../lib/rentalOrders';
+import { quoteRentalOrder, type RentalOrderErrorCode } from '../../lib/rentalOrderRules';
+import { myanmarToday, addDaysToDay } from '../../lib/myanmarTime';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { RENTAL_PAGE_LISTINGS } from '../../data/cityPageData';
 import {
@@ -34,7 +37,6 @@ import {
   activeVariants,
   cardMetrics,
   cityHasType,
-  estimateRental,
   availableTypes,
   findRentalType,
   firstCityForType,
@@ -63,10 +65,9 @@ const ICONS: Record<RentalIconName, LucideIcon> = {
 /** Plan §8: the catalog carries `sortOrder`, so the selector just reads it. */
 const PRIMARY_TYPES = ['bicycle', 'ebike', 'motorbike', 'scooter', 'tricycle', 'car'];
 
+/** Plan §8.7: at least tomorrow in Myanmar Time, or the Settings notice period if longer. */
 function addDaysFromToday(days: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + Math.max(1, days));
-  return date.toISOString().slice(0, 10);
+  return addDaysToDay(myanmarToday(), Math.max(1, days));
 }
 
 export function RentalsPage() {
@@ -99,6 +100,8 @@ export function RentalsPage() {
   const [specialRequests, setSpecialRequests] = useState('');
   const [variantId, setVariantId] = useState<string | null>(null);
   const [submittedCode, setSubmittedCode] = useState<string | null>(null);
+  /** Plan §8.7: a rejection reads in MM and EN, keyed by the server's error code. */
+  const [orderError, setOrderError] = useState<RentalOrderErrorCode | null>(null);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const city = catalog.cities.find((item) => item.id === cityId) ?? catalog.cities[0];
@@ -107,15 +110,25 @@ export function RentalsPage() {
   const chosenVariant = variants.find((variant) => variant.id === variantId) ?? variants[0];
   const earliestEnd = minimumEndDate(date, selected);
   const validEndDate = endDate < earliestEnd ? earliestEnd : endDate;
-  const estimate = estimateRental({
+  // The preview and the stored order come from the same quote (Plan §8.4, §8.7).
+  const estimate = quoteRentalOrder(
+    {
+      cityId: city.id,
+      categoryId: selected?.id ?? '',
+      variantId: chosenVariant?.id ?? null,
+      startDate: date,
+      endDate: validEndDate,
+      participants,
+      customerType,
+      fulfillment,
+      branchId: branch || null,
+      deliveryAddress: address,
+      customerName,
+      phone,
+      termsVersion: catalog.termsVersion,
+    },
     catalog,
-    cityId: city.id,
-    type: selected,
-    customerType,
-    variantId: chosenVariant?.id ?? null,
-    startDate: date,
-    endDate: validEndDate,
-  });
+  );
   const locationReady = fulfillment === 'branch' ? Boolean(branch) : address.trim().length >= 3;
   const nameReady = customerName.trim().length >= 2;
   const canSubmit = Boolean(selected && nameReady && phone.trim().length >= 7 && locationReady && termsAccepted);
@@ -168,8 +181,10 @@ export function RentalsPage() {
 
   function submitOrder() {
     if (!canSubmit || !selected || !user) return;
-    // The client total is a preview; the server recomputes it (Plan §8.7).
-    const order = createOrder({
+    setOrderError(null);
+    // The estimate is a preview; createOrder re-checks the rules and recomputes
+    // the stored total, so nothing here is trusted (Plan §8.7).
+    const result = createOrder({
       userId: user.id,
       customerName: customerName.trim(),
       phone: phone.trim(),
@@ -192,7 +207,11 @@ export function RentalsPage() {
       displayCurrency: currency,
       fxMmkPerUsd: exchangeRate,
     });
-    setSubmittedCode(order.requestCode);
+    if (!result.ok) {
+      setOrderError(result.code);
+      return;
+    }
+    setSubmittedCode(result.order.requestCode);
   }
 
   /** A type with no seed listing still needs the four card fields (Plan §4). */
@@ -380,6 +399,12 @@ export function RentalsPage() {
                     <input type="checkbox" checked={termsAccepted} onChange={(event) => { setTermsAccepted(event.target.checked); setSubmittedCode(null); }} className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-brand-blue" />
                     <span>{t('rentals_accept_terms')}</span>
                   </label>
+                  {orderError && (
+                    <p role="alert" className="flex items-start gap-2 rounded-lg border border-brand-red/40 bg-brand-red/10 px-3 py-2 text-[10px] leading-4 text-brand-redLight">
+                      <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                      <span>{t(orderError)}</span>
+                    </p>
+                  )}
                   <button type="button" onClick={submitOrder} disabled={!canSubmit} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-blue px-3 py-3 text-xs font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">{t('rentals_submit_order')} <ChevronRight size={14} /></button>
                   <p className="text-center text-[9px] leading-4 text-text-faint">{t('rentals_contact_note')}</p>
                   {submittedCode && (

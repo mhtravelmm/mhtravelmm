@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   addRentalExtra,
+  buildRentalOrder,
   expireOverdueNow,
   extrasTotalUsd,
   orderTotalUsd,
@@ -17,7 +18,10 @@ import {
   rescheduleOrder,
   statusCanFollow,
   type RentalOrder,
+  type RentalOrderInput,
 } from './rentalOrders';
+import { DEFAULT_RENTAL_CATALOG } from '../data/rentalCatalog';
+import { addDaysToDay, myanmarToday } from './myanmarTime';
 import { readTravelerNotices } from './rentalNotifications';
 import { readRentalAudit } from './rentalAudit';
 import { deliverRentalNotices } from './rentalOrders';
@@ -321,5 +325,92 @@ describe('the extra notice and its audit row', () => {
     expect(readTravelerNotices(order.userId)[0].kind).toBe('extra');
     const rows = readRentalAudit().filter((entry) => entry.orderCode === order.requestCode);
     expect(rows).toEqual([]);
+  });
+});
+
+describe('building an order (Plan §8.7, acceptance 2–4)', () => {
+  const NOW = new Date('2026-11-20T03:00:00.000Z');
+  const TOMORROW = addDaysToDay(myanmarToday(NOW), 1);
+
+  function input(overrides: Partial<RentalOrderInput> = {}): RentalOrderInput {
+    return {
+      ...baseOrder({ startDate: TOMORROW, endDate: addDaysToDay(TOMORROW, 2) }),
+      ...overrides,
+    } as RentalOrderInput;
+  }
+
+  it('replaces a tampered total with the price the catalog gives', () => {
+    const built = buildRentalOrder(
+      input({ rateUsd: 1, totalUsd: 1, days: 1 }),
+      DEFAULT_RENTAL_CATALOG,
+      [],
+      NOW,
+    );
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.order.rateUsd).toBe(8);
+    expect(built.order.days).toBe(3);
+    expect(built.order.totalUsd).toBe(24);
+  });
+
+  it('creates exactly one requested order with a request code', () => {
+    const built = buildRentalOrder(input(), DEFAULT_RENTAL_CATALOG, [], NOW);
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.order.status).toBe('requested');
+    expect(built.order.requestCode).toMatch(/^RNT-\d{6}-\d{4}$/);
+    expect(built.order.events).toHaveLength(1);
+  });
+
+  it('refuses a type the chosen city does not offer', () => {
+    const built = buildRentalOrder(
+      input({ cityId: 'yangon', categoryId: 'motorbike' }),
+      DEFAULT_RENTAL_CATALOG,
+      [],
+      NOW,
+    );
+    expect(built).toEqual({ ok: false, code: 'rental_error_city_availability' });
+  });
+
+  it('refuses a car order that is shorter than its minimum days', () => {
+    const built = buildRentalOrder(
+      input({ categoryId: 'car', variantId: 'family_car', startDate: TOMORROW, endDate: TOMORROW }),
+      DEFAULT_RENTAL_CATALOG,
+      [],
+      NOW,
+    );
+    expect(built).toEqual({ ok: false, code: 'rental_error_min_days' });
+  });
+
+  it('refuses a start date before tomorrow in Myanmar Time', () => {
+    const today = myanmarToday(NOW);
+    const built = buildRentalOrder(
+      input({ startDate: today, endDate: addDaysToDay(today, 2) }),
+      DEFAULT_RENTAL_CATALOG,
+      [],
+      NOW,
+    );
+    expect(built).toEqual({ ok: false, code: 'rental_error_start_date' });
+  });
+
+  it('counts the account’s own submissions in the last hour, not everyone’s', () => {
+    const recent = Array.from({ length: 10 }, (_, index) =>
+      baseOrder({ id: `r-${index}`, createdAt: new Date(NOW.getTime() - 60000).toISOString() }),
+    );
+    const otherTraveler = baseOrder({
+      id: 'other',
+      userId: 'traveler-2',
+      createdAt: new Date(NOW.getTime() - 60000).toISOString(),
+    });
+    expect(buildRentalOrder(input(), DEFAULT_RENTAL_CATALOG, recent, NOW))
+      .toEqual({ ok: false, code: 'rental_error_rate_limit' });
+    expect(buildRentalOrder(input(), DEFAULT_RENTAL_CATALOG, [...recent.slice(0, 9), otherTraveler], NOW).ok).toBe(true);
+  });
+
+  it('ignores submissions older than an hour when counting the limit', () => {
+    const old = Array.from({ length: 10 }, (_, index) =>
+      baseOrder({ id: `old-${index}`, createdAt: new Date(NOW.getTime() - 2 * 3600000).toISOString() }),
+    );
+    expect(buildRentalOrder(input(), DEFAULT_RENTAL_CATALOG, old, NOW).ok).toBe(true);
   });
 });

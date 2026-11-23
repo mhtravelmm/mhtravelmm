@@ -632,6 +632,16 @@ Online payment and deposits, ID or licence checks, per-date stock, driver assign
 9. Reschedule works once, at least 24 hours ahead, and issues a new voucher version.
 10. Every message, including server errors, shows in Myanmar and English.
 
+**Implementation note, 23 November 2026.** Criteria 2–4 and 10 are now enforced
+in the client preview. `src/lib/rentalOrderRules.ts` repeats all fifteen §7
+checks in the order `submit_rental_order` runs them and returns one stable
+`rental_error_*` code per failure, translated through `t()` in MM and EN.
+`quoteRentalOrder()` is the only quote, called by the estimate panel and by
+`buildRentalOrder()`, so a tampered client total is discarded and the stored
+total is recomputed from the catalog. `src/lib/myanmarTime.ts` is the shared
+UTC+6:30 day helper for the rules, the catalog and the reports. The migrations
+remain the authority once they are applied.
+
 ---
 
 ## 9. Owner Business Model

@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import { isSupabaseConfigured, supabase } from './supabase';
+import type { RentalCatalog } from '../data/rentalCatalog';
+import { readRentalCatalog } from './rentalCatalogStore';
+import {
+  quoteRentalOrder,
+  RENTAL_SUBMIT_LIMIT_PER_HOUR,
+  validateRentalOrder,
+  type RentalOrderErrorCode,
+} from './rentalOrderRules';
 import { recordOrderAudit } from './rentalAudit';
 import {
   appendStaffNotifications,
@@ -108,6 +116,12 @@ export type RentalOrder = {
   updatedAt: string;
   events: RentalOrderEvent[];
 };
+
+export type CreateOrderResult =
+  | { ok: true; order: RentalOrder }
+  | { ok: false; code: RentalOrderErrorCode };
+
+export const RENTAL_HOURLY_SUBMIT_LIMIT = RENTAL_SUBMIT_LIMIT_PER_HOUR;
 
 export type RentalOrderInput = Omit<
   RentalOrder,
@@ -425,6 +439,70 @@ export function useRentalExpiryJob(intervalMs = RENTAL_EXPIRY_INTERVAL_MS): void
   }, [intervalMs]);
 }
 
+/**
+ * Plan §8.7: the client's total is ignored. The draft is re-checked against the
+ * same rules the server runs, and the stored total is recomputed from the
+ * catalog, so a tampered form cannot create a cheap order.
+ */
+export function buildRentalOrder(
+  input: RentalOrderInput,
+  catalog: RentalCatalog,
+  existing: RentalOrder[],
+  now: Date,
+): CreateOrderResult {
+  const hourAgo = now.getTime() - 3600000;
+  const check = validateRentalOrder(
+    {
+      cityId: input.cityId,
+      categoryId: input.categoryId,
+      variantId: input.variantId,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      participants: input.participants,
+      customerType: input.customerType,
+      fulfillment: input.fulfillment,
+      branchId: input.branchId,
+      deliveryAddress: input.deliveryAddress,
+      customerName: input.customerName,
+      phone: input.phone,
+      termsVersion: input.termsVersion,
+    },
+    {
+      catalog,
+      recentSubmissions: existing.filter(
+        (order) => order.userId === input.userId && new Date(order.createdAt).getTime() > hourAgo,
+      ).length,
+      now,
+    },
+  );
+  if (!check.ok) return check;
+  const quote = quoteRentalOrder(input, catalog);
+  const day = now.toISOString().slice(0, 10);
+  return {
+    ok: true,
+    order: {
+      ...input,
+      rateUsd: quote.rateUsd,
+      totalUsd: quote.totalUsd,
+      days: quote.days,
+      id: `${now.getTime()}-${existing.length + 1}`,
+      requestCode: rentalRequestCode(now, existing.filter((order) => order.createdAt.slice(0, 10) === day).length + 1),
+      status: 'requested',
+      acceptedAt: null,
+      paymentDeadline: null,
+      paymentMethod: null,
+      paymentReceivedAt: null,
+      voucherVersion: 0,
+      rescheduledCount: 0,
+      adminNote: '',
+      extras: [],
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      events: [{ at: now.toISOString(), from: null, to: 'requested', actor: 'traveler', note: 'submitted' }],
+    },
+  };
+}
+
 export function useRentalOrders() {
   const { user } = useAuth();
   const owner = user?.id ?? null;
@@ -445,30 +523,16 @@ export function useRentalOrders() {
     setAllOrders(next);
   }, []);
 
-  const createOrder = useCallback((input: RentalOrderInput): RentalOrder => {
+  const createOrder = useCallback((input: RentalOrderInput): CreateOrderResult => {
     const current = readAllOrders();
     const now = new Date();
-    const order: RentalOrder = {
-      ...input,
-      id: `${now.getTime()}-${current.length + 1}`,
-      requestCode: rentalRequestCode(now, current.filter((order) => order.createdAt.slice(0, 10) === now.toISOString().slice(0, 10)).length + 1),
-      status: 'requested',
-      acceptedAt: null,
-      paymentDeadline: null,
-      paymentMethod: null,
-      paymentReceivedAt: null,
-      voucherVersion: 0,
-      rescheduledCount: 0,
-      adminNote: '',
-      extras: [],
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-      events: [{ at: now.toISOString(), from: null, to: 'requested', actor: 'traveler', note: 'submitted' }],
-    };
+    const built = buildRentalOrder(input, readRentalCatalog(), current, now);
+    if (!built.ok) return built;
+    const order = built.order;
     write([...current, order]);
     if (owner) void persistRemote(order);
     deliverRentalNotices(order, 'requested', now);
-    return order;
+    return { ok: true, order };
   }, [owner, write]);
 
   /** Staff action: move one order to a status the lifecycle allows. */
