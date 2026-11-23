@@ -1621,6 +1621,14 @@ const translations = {
   rr_col_day: { mm: 'ရက်', en: 'Day' },
   rr_empty: { mm: 'ဤကာလအတွင်း Order မရှိပါ။', en: 'No orders in this window.' },
   ra_problem_settings: { mm: 'ဆက်တင် တန်ဖိုး မမှန်ပါ: {field}', en: 'Settings value needs a fix: {field}' },
+  ra_audit_title: { mm: 'ပြောင်းလဲမှု မှတ်တမ်း', en: 'Audit log' },
+  ra_audit_note: { mm: 'Catalog သိမ်းတိုင်း၊ Order အခြေအနေ ပြောင်းတိုင်း ဤနေရာတွင် မှတ်ထားသည်။', en: 'Every catalog save and every order status change is recorded here.' },
+  ra_audit_empty: { mm: 'မှတ်တမ်း မရှိသေးပါ။', en: 'Nothing recorded yet.' },
+  ra_audit_actor: { mm: 'လုပ်ဆောင်သူ', en: 'By' },
+  ra_audit_order: { mm: 'Order', en: 'Order' },
+  ra_audit_count: { mm: 'ပြောင်းလဲမှု {count} ခု', en: '{count} changes' },
+  ra_audit_show: { mm: 'အားလုံး ကြည့်ရန်', en: 'Show all' },
+  ra_audit_hide: { mm: 'ဖျောက်ရန်', en: 'Show less' },
 
 } as const;
 

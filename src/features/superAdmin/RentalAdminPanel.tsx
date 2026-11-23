@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Bike,
@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Save,
   Settings2,
+  ShieldCheck,
   ShipWheel,
   TentTree,
   Trash2,
@@ -23,6 +24,8 @@ import type { LucideIcon } from 'lucide-react';
 import { fill } from '../../lib/fill';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
+import { auditChangedEvent, readRentalAudit, recordRentalAudit, type RentalAuditEntry } from '../../lib/rentalAudit';
+import { useAuth } from '../../lib/auth';
 import {
   activeVariants,
   DEFAULT_RENTAL_CATALOG,
@@ -88,8 +91,21 @@ function problemKey(problem: string): TranslationKey {
 export function RentalAdminPanel({ runAction }: { runAction: (label: string) => void }) {
   const { language, t } = useLanguage();
   const { catalog, save, reset } = useRentalCatalog();
+  const { user } = useAuth();
   const [draft, setDraft] = useState<RentalCatalog>(catalog);
   const [openTypeId, setOpenTypeId] = useState<string | null>(catalog.types[0]?.id ?? null);
+  const [audit, setAudit] = useState<RentalAuditEntry[]>(readRentalAudit);
+  const [auditExpanded, setAuditExpanded] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setAudit(readRentalAudit());
+    window.addEventListener(auditChangedEvent(), sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener(auditChangedEvent(), sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
 
   const problems = rentalCatalogProblems(draft);
   const dirty = JSON.stringify(draft) !== JSON.stringify(catalog);
@@ -302,6 +318,9 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
 
   function commit() {
     if (problems.length > 0) return;
+    // Plan §8.8: every write reaches the audit log, so the log is written
+    // before the save that would otherwise leave no trace of the old values.
+    recordRentalAudit(catalog, draft, user?.email ?? user?.name ?? 'Rental Admin');
     save(draft);
     runAction(t('ra_saved'));
   }
@@ -585,6 +604,48 @@ export function RentalAdminPanel({ runAction }: { runAction: (label: string) => 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#244668] px-3 py-2 text-[10px] text-slate-400">
           <p>{t('ra_reset_note')}</p>
           <button type="button" onClick={() => { reset(); setDraft(DEFAULT_RENTAL_CATALOG); runAction(t('ra_reset_done')); }} className="inline-flex items-center gap-1.5 rounded border border-[#2f6192] px-2 py-1 font-semibold text-slate-300 hover:bg-white/10"><RotateCcw size={11} /> {t('ra_reset')}</button>
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-[#294d76] bg-[#0b203b] shadow-xl">
+        <div className="flex items-center justify-between border-b border-[#244668] px-3 py-2">
+          <h2 className="flex items-center gap-2 text-sm font-bold"><ShieldCheck size={16} className="text-[#26b8ff]" /> {t('ra_audit_title')}</h2>
+          <span className="text-[10px] text-slate-400">{audit.length}</span>
+        </div>
+        <div className="px-3 py-2">
+          <p className="mb-2 text-[9px] text-slate-500">{t('ra_audit_note')}</p>
+          {audit.length === 0 ? (
+            <p className="py-2 text-[10px] text-slate-500">{t('ra_audit_empty')}</p>
+          ) : (
+            <ul className="space-y-1">
+              {(auditExpanded ? audit : audit.slice(0, 5)).map((entry) => (
+                <li key={entry.id} className="rounded border border-[#244668] bg-[#091b32] px-2 py-1 text-[10px]">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-slate-300">{new Date(entry.at).toLocaleString(language === 'mm' ? 'my-MM' : 'en-GB')}</span>
+                    {entry.orderCode && <span className="rounded-full bg-cyan-400/15 px-1.5 py-0.5 font-mono text-[9px] text-cyan-200">{entry.orderCode}</span>}
+                    <span className="text-slate-500">{t('ra_audit_actor')}: {entry.actor}</span>
+                    <span className="text-slate-500">{fill(t('ra_audit_count'), { count: entry.changes.length })}</span>
+                  </div>
+                  <ul className="mt-0.5 space-y-0.5">
+                    {entry.changes.slice(0, auditExpanded ? entry.changes.length : 3).map((change) => (
+                      <li key={`${entry.id}-${change.field}`} className="truncate text-slate-400">
+                        <span className="font-mono text-[9px] text-cyan-300">{change.field}</span>
+                        <span className="mx-1 text-slate-600">·</span>
+                        <span className="line-through opacity-60">{change.from || '—'}</span>
+                        <span className="mx-1 text-slate-600">→</span>
+                        <span className="text-slate-200">{change.to || '—'}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          )}
+          {audit.length > 5 && (
+            <button type="button" onClick={() => setAuditExpanded((current) => !current)} className="mt-2 rounded border border-[#2f6192] px-2 py-1 text-[10px] font-semibold text-cyan-200 hover:bg-white/10">
+              {auditExpanded ? t('ra_audit_hide') : t('ra_audit_show')}
+            </button>
+          )}
         </div>
       </section>
 

@@ -604,3 +604,29 @@ accepting order `RNT-261120-0002` as Super Admin wrote a traveler notice that
 appears at the top of `/notifications` for `traveler-2` and links to the voucher,
 and a staff row renders in the Super Admin bell with the traveler's name, phone
 and request code.
+
+## The rental expiry job and the audit log (Plan §8.8, §8.9) — 23 November 2026
+
+`expireOverdueNow` in `src/lib/rentalOrders.ts` is now the one place that moves an
+unpaid Accepted order to Expired: it rewrites storage, writes the event, and sends
+the traveler the notice. `useRentalExpiryJob` runs it on the Plan's five-minute
+cadence and once on mount, so a tab left open overnight catches up the moment it
+loads, and `AppRoutes` mounts it for the whole app. A browser cannot wake itself
+up, so the real schedule still belongs to the server job once orders move into the
+tables.
+
+`src/lib/rentalAudit.ts` answers Plan §8.8's "every write goes to the audit log"
+and §8.5's "every change writes an admin audit-log row". A catalog save is diffed
+field by field, so the log reads as decisions — `types[bicycle].terms.en` went
+from this to that — rather than as a copy of the whole catalog. Publish timestamps
+and the terms history are skipped, or every save would look like a terms change.
+A status change or reschedule writes a row carrying the request code. The log caps
+at 200 rows and the Rental Admin panel lists it under Settings.
+
+**Verification.** `npx tsc --noEmit -p tsconfig.app.json` clean; `npx vitest run`
+20 files / 210 tests (4 new in `src/lib/rentalOrders.test.ts` for the job, 11 in
+`src/lib/rentalAudit.test.ts` for the diff and the log); `npm run build` succeeds;
+`npx eslint src` reports 0 errors. Browser check: an Accepted order past its
+deadline was Expired on page load, with the traveler notice written and a
+`status: accepted → expired` audit row; editing one type's English terms and
+saving wrote one audit row naming the field, its old text and its new text.

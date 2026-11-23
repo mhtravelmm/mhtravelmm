@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  expireOverdueNow,
   expireOverdueOrders,
+  readAllOrders,
+  writeAllOrders,
   markPaid,
   nextStatuses,
   ordersForUser,
@@ -12,6 +15,7 @@ import {
   statusCanFollow,
   type RentalOrder,
 } from './rentalOrders';
+import { readTravelerNotices } from './rentalNotifications';
 
 function baseOrder(overrides: Partial<RentalOrder> = {}): RentalOrder {
   return {
@@ -189,5 +193,63 @@ describe('voucher version', () => {
     const result = rescheduleOrder({ ...paid!, voucherVersion: 1 }, '2026-12-05', now);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.order.voucherVersion).toBe(2);
+  });
+});
+
+describe('the expiry job', () => {
+  function fakeWindow() {
+    const map = new Map<string, string>();
+    const store: Storage = {
+      get length() { return map.size; },
+      clear: () => map.clear(),
+      getItem: (key: string) => map.get(key) ?? null,
+      key: (index: number) => Array.from(map.keys())[index] ?? null,
+      removeItem: (key: string) => { map.delete(key); },
+      setItem: (key: string, value: string) => { map.set(key, value); },
+    };
+    (globalThis as { window?: unknown }).window = {
+      localStorage: store,
+      dispatchEvent: () => true,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      setInterval: () => 0,
+      clearInterval: () => undefined,
+    };
+  }
+
+  beforeEach(() => {
+    fakeWindow();
+  });
+
+  it('expires an overdue order in storage and reports it', () => {
+    const overdue = baseOrder({ status: 'accepted', paymentDeadline: '2026-11-20T21:00:00.000Z' });
+    writeAllOrders([overdue]);
+    expect(expireOverdueNow(new Date('2026-11-20T22:00:00.000Z'))).toBe(1);
+    expect(readAllOrders()[0].status).toBe('expired');
+  });
+
+  it('notifies the traveler, who is the one who lost the window', () => {
+    const overdue = baseOrder({ status: 'accepted', paymentDeadline: '2026-11-20T21:00:00.000Z' });
+    writeAllOrders([overdue]);
+    expireOverdueNow(new Date('2026-11-20T22:00:00.000Z'));
+    const notices = readTravelerNotices(overdue.userId);
+    expect(notices).toHaveLength(1);
+    expect(notices[0].kind).toBe('expired');
+  });
+
+  it('reports nothing on a second run and does not repeat the notice', () => {
+    const overdue = baseOrder({ status: 'accepted', paymentDeadline: '2026-11-20T21:00:00.000Z' });
+    writeAllOrders([overdue]);
+    const at = new Date('2026-11-20T22:00:00.000Z');
+    expect(expireOverdueNow(at)).toBe(1);
+    expect(expireOverdueNow(at)).toBe(0);
+    expect(readTravelerNotices(overdue.userId)).toHaveLength(1);
+  });
+
+  it('leaves a paid order alone however old the deadline is', () => {
+    const paid = baseOrder({ status: 'paid', paymentDeadline: '2026-11-20T21:00:00.000Z' });
+    writeAllOrders([paid]);
+    expect(expireOverdueNow(new Date('2026-11-30T22:00:00.000Z'))).toBe(0);
+    expect(readAllOrders()[0].status).toBe('paid');
   });
 });

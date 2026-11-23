@@ -68,6 +68,11 @@ the suite instead of reaching a user as "coming soon."
   to the Rental Admin, Accepted/Paid/Expired/Cancelled to the traveler, a
   reschedule back to staff. Both bells read browser storage, so they move to the
   `notifications` table with the rest.
+- **The rental expiry job** runs in the tab (`useRentalExpiryJob`, every five
+  minutes plus once on load). A closed browser cannot expire anything, so the
+  schedule moves to a Supabase cron function when the order tables go live.
+- **The rental audit log** (`mh-travel-rental-audit`) records catalog diffs and
+  order status changes in browser storage; it moves to the admin audit table.
 - Schedule the rental expiry job (Plan §16B.7, every 5 minutes). The function is
   committed; the `pg_cron` entry and the job-failure notification are not.
 - Send the rental notifications (Plan §16B.3): requested to Rental Admin;

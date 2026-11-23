@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import { isSupabaseConfigured, supabase } from './supabase';
+import { recordOrderAudit } from './rentalAudit';
 import {
   appendStaffNotifications,
   appendTravelerNotices,
@@ -314,7 +315,7 @@ export function writeAllOrders(orders: RentalOrder[]): void {
  * the admin bell, traveler notices to the traveler's own scope, so one
  * account's notices never show up under the next account's badge.
  */
-export function deliverRentalNotices(order: RentalOrder, kind: RentalNotice['kind'], at: Date): void {
+export function deliverRentalNotices(order: RentalOrder, kind: RentalNotice['kind'], at: Date, before = ''): void {
   if (typeof window === 'undefined') return;
   const notices = noticesForChange(order, kind, at);
   const staffNotices = notices.filter((notice) => notice.audience === 'staff');
@@ -323,6 +324,47 @@ export function deliverRentalNotices(order: RentalOrder, kind: RentalNotice['kin
   }
   const travelerNotices = notices.filter((notice) => notice.audience === 'traveler');
   if (travelerNotices.length > 0) appendTravelerNotices(order.userId, travelerNotices);
+  if (kind !== 'requested') {
+    const field = kind === 'rescheduled' ? 'startDate' : 'status';
+    recordOrderAudit(order.requestCode, field, before, kind === 'rescheduled' ? order.startDate : kind, 'staff', at);
+  }
+}
+
+/**
+ * Plan §8.9: the expiry job. Returns how many orders it moved, so a caller can
+ * stay quiet when there was nothing to do.
+ */
+export function expireOverdueNow(now = new Date()): number {
+  if (typeof window === 'undefined') return 0;
+  const current = readAllOrders();
+  const next = expireOverdueOrders(current, now);
+  if (next === current) return 0;
+  writeAllOrders(next);
+  let expired = 0;
+  for (const order of next) {
+    const before = current.find((item) => item.id === order.id);
+    if (before && before.status !== 'expired' && order.status === 'expired') {
+      expired += 1;
+      deliverRentalNotices(order, 'expired', now, before.status);
+    }
+  }
+  return expired;
+}
+
+export const RENTAL_EXPIRY_INTERVAL_MS = 5 * 60 * 1000;
+
+/**
+ * Runs the expiry check on the Plan's 5-minute cadence while the app is open,
+ * and once on mount so a tab left overnight catches up as soon as it loads.
+ * A browser cannot wake itself up, so the real schedule belongs to the server
+ * job once orders move into the tables.
+ */
+export function useRentalExpiryJob(intervalMs = RENTAL_EXPIRY_INTERVAL_MS): void {
+  useEffect(() => {
+    expireOverdueNow();
+    const timer = window.setInterval(() => expireOverdueNow(), intervalMs);
+    return () => window.clearInterval(timer);
+  }, [intervalMs]);
 }
 
 export function useRentalOrders() {
@@ -387,7 +429,7 @@ export function useRentalOrders() {
       events: [...target.events, { at: now.toISOString(), from: target.status, to, actor, note }],
     };
     write(current.map((order) => (order.id === orderId ? updated : order)));
-    deliverRentalNotices(updated, to, now);
+    deliverRentalNotices(updated, to, now, target.status);
     return updated;
   }, [write]);
 
@@ -399,7 +441,7 @@ export function useRentalOrders() {
     const updated = markPaid(target, method, now, note);
     if (!updated) return null;
     write(current.map((order) => (order.id === orderId ? updated : order)));
-    deliverRentalNotices(updated, 'paid', now);
+    deliverRentalNotices(updated, 'paid', now, target.status);
     return updated;
   }, [write]);
 
@@ -411,7 +453,7 @@ export function useRentalOrders() {
     const result = rescheduleOrder(target, nextStartDate, now);
     if (!result.ok) return result;
     write(current.map((order) => (order.id === orderId ? result.order : order)));
-    deliverRentalNotices(result.order, 'rescheduled', now);
+    deliverRentalNotices(result.order, 'rescheduled', now, target.startDate);
     return result;
   }, [write]);
 
@@ -421,18 +463,8 @@ export function useRentalOrders() {
   }, [write]);
 
   const expireOverdue = useCallback(() => {
-    const current = readAllOrders();
-    const now = new Date();
-    const next = expireOverdueOrders(current, now);
-    if (next === current) return;
-    write(next);
-    for (const order of next) {
-      const before = current.find((item) => item.id === order.id);
-      if (before && before.status !== 'expired' && order.status === 'expired') {
-        deliverRentalNotices(order, 'expired', now);
-      }
-    }
-  }, [write]);
+    expireOverdueNow();
+  }, []);
 
   return {
     /** The signed-in traveler's own orders; staff read `allOrders` instead. */
