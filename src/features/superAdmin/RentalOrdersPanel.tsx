@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, Check, ChevronRight, Clock, FileText, Phone, RefreshCw, Search, X } from 'lucide-react';
+import { AlertTriangle, Check, ChevronRight, Clock, FileText, Phone, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { useLanguage } from '../../lib/i18n';
 import { useCurrency } from '../../lib/currency';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { findRentalType, findVariant, localized } from '../../data/rentalCatalog';
+import { useAuth } from '../../lib/auth';
 import {
+  extrasTotalUsd,
   nextStatuses,
+  orderTotalUsd,
   paymentTimeLeft,
   useRentalOrders,
   type RentalOrder,
@@ -57,7 +60,8 @@ export function RentalOrdersPanel() {
   const { language, t } = useLanguage();
   const { formatPrice } = useCurrency();
   const { catalog } = useRentalCatalog();
-  const { allOrders, setStatus, recordPayment, noteOrder, expireOverdue } = useRentalOrders();
+  const { allOrders, setStatus, recordPayment, addExtra, noteOrder, expireOverdue } = useRentalOrders();
+  const { user } = useAuth();
   const [filter, setFilter] = useState<RentalOrderStatus | 'all'>('all');
   const [openId, setOpenId] = useState<string | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<Record<string, RentalPaymentMethod>>({});
@@ -68,6 +72,8 @@ export function RentalOrdersPanel() {
   const [toDate, setToDate] = useState('');
   /** Plan §8.8: a cancel carries a reason, so the dialog holds it per order. */
   const [cancelDraft, setCancelDraft] = useState<{ orderId: string; reason: string } | null>(null);
+  /** Plan §16: the guide's lodging, food and travel costs are added after the rental. */
+  const [extraDraft, setExtraDraft] = useState<Record<string, { description: string; amount: string }>>({});
 
   /** Plan §8.8: status, city, type, date range and a code/name/phone search. */
   const visible = useMemo(() => {
@@ -215,7 +221,10 @@ export function RentalOrdersPanel() {
                         <p><span className="text-slate-500">{t('rv_phone')}: </span>{order.phone}</p>
                         <p><span className="text-slate-500">{t('rv_days')}: </span>{order.days} · {order.participants} {t('rentals_participants')}</p>
                         <p><span className="text-slate-500">{t('rv_handover')}: </span>{order.fulfillment === 'branch' ? order.branchId : order.deliveryAddress}</p>
-                        <p><span className="text-slate-500">{t('rv_amount')}: </span>{formatPrice(order.totalUsd)} ({order.totalUsd} USD)</p>
+                        <p>
+                          <span className="text-slate-500">{extrasTotalUsd(order) > 0 ? t('ra_orders_amount_due') : t('rv_amount')}: </span>
+                          {formatPrice(orderTotalUsd(order))} ({orderTotalUsd(order)} USD)
+                        </p>
                         <p><span className="text-slate-500">{t('rv_cancellation')}: </span>{order.termsVersion}</p>
                       </div>
                       {order.specialRequests.trim() && (
@@ -297,6 +306,62 @@ export function RentalOrdersPanel() {
                             </li>
                           ))}
                         </ul>
+                      </div>
+
+                      <div className="rounded border border-[#2b527d] bg-[#081a31] p-2">
+                        <p className="mb-1 flex items-center gap-1 font-semibold text-slate-300"><Plus size={11} /> {t('ra_orders_extras')}</p>
+                        <p className="mb-1.5 text-[9px] text-slate-500">{t('ra_orders_extras_note')}</p>
+                        {(order.extras ?? []).length === 0 ? (
+                          <p className="text-[10px] text-slate-500">{t('ra_orders_extra_empty')}</p>
+                        ) : (
+                          <ul className="mb-1.5 space-y-0.5">
+                            {(order.extras ?? []).map((extra) => (
+                              <li key={extra.id} className="flex flex-wrap items-center gap-1.5 text-[10px] text-slate-300">
+                                <span>{extra.description}</span>
+                                <span className="text-slate-500">·</span>
+                                <span className="font-semibold text-cyan-200">${extra.amountUsd.toFixed(2)}</span>
+                                <span className="text-[9px] text-slate-500">{t('ra_orders_extra_by')} {extra.addedBy}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <div className="flex flex-wrap items-end gap-1.5">
+                          <label className="min-w-[120px] flex-1">
+                            <span className="mb-0.5 block text-[9px] text-slate-400">{t('ra_orders_extra_description')}</span>
+                            <input
+                              value={extraDraft[order.id]?.description ?? ''}
+                              onChange={(event) => setExtraDraft((current) => ({ ...current, [order.id]: { description: event.target.value, amount: current[order.id]?.amount ?? '' } }))}
+                              className="w-full rounded border border-[#2b527d] bg-[#0b203b] px-2 py-1 text-[10px] text-white outline-none focus:border-cyan-300"
+                            />
+                          </label>
+                          <label className="w-[90px]">
+                            <span className="mb-0.5 block text-[9px] text-slate-400">{t('ra_orders_extra_amount')}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={extraDraft[order.id]?.amount ?? ''}
+                              onChange={(event) => setExtraDraft((current) => ({ ...current, [order.id]: { description: current[order.id]?.description ?? '', amount: event.target.value } }))}
+                              className="w-full rounded border border-[#2b527d] bg-[#0b203b] px-2 py-1 text-[10px] text-white outline-none focus:border-cyan-300"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            disabled={!(extraDraft[order.id]?.description ?? '').trim() || Number(extraDraft[order.id]?.amount ?? 0) <= 0}
+                            onClick={() => {
+                              addExtra(order.id, extraDraft[order.id].description, Number(extraDraft[order.id].amount), user?.email ?? 'staff');
+                              setExtraDraft((current) => ({ ...current, [order.id]: { description: '', amount: '' } }));
+                            }}
+                            className="rounded border border-cyan-300/40 px-2 py-1 text-[10px] font-bold text-cyan-100 hover:bg-cyan-400/10 disabled:opacity-40"
+                          >
+                            {t('ra_orders_extra_add')}
+                          </button>
+                        </div>
+                        <dl className="mt-2 space-y-0.5 border-t border-[#244668] pt-1.5 text-[10px]">
+                          <div className="flex justify-between text-slate-400"><dt>{t('ra_orders_rate_total')}</dt><dd>${order.totalUsd.toFixed(2)}</dd></div>
+                          <div className="flex justify-between text-slate-400"><dt>{t('ra_orders_extras_total')}</dt><dd>${extrasTotalUsd(order).toFixed(2)}</dd></div>
+                          <div className="flex justify-between font-bold text-cyan-200"><dt>{t('ra_orders_amount_due')}</dt><dd>${orderTotalUsd(order).toFixed(2)}</dd></div>
+                        </dl>
                       </div>
 
                       {order.status === 'paid' && (

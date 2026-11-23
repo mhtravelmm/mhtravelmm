@@ -10,7 +10,7 @@ import {
   tallyByDay,
   tallyByStatus,
 } from './rentalReports';
-import type { RentalOrder } from './rentalOrders';
+import { addRentalExtra, type RentalOrder } from './rentalOrders';
 
 function order(overrides: Partial<RentalOrder> = {}): RentalOrder {
   return {
@@ -45,6 +45,7 @@ function order(overrides: Partial<RentalOrder> = {}): RentalOrder {
     voucherVersion: 0,
     rescheduledCount: 0,
     adminNote: '',
+    extras: [],
     createdAt: '2026-11-20T03:00:00.000Z',
     updatedAt: '2026-11-20T03:00:00.000Z',
     events: [],
@@ -164,5 +165,26 @@ describe('CSV export', () => {
     const csv = ordersToCsv([order()]);
     const cells = csv.split('\n')[1].split(',');
     expect(cells).not.toContain('null');
+  });
+});
+
+describe('guide costs in the report (Plan §16)', () => {
+  it('counts the added cost in the settled value', () => {
+    const base = order({ status: 'paid', totalUsd: 16, fxMmkPerUsd: 4500 });
+    const withExtra = addRentalExtra(base, { description: 'Lodging', amountUsd: 30 }, 'a@mhtravel.com', new Date('2026-11-25T10:00:00.000Z'));
+    expect(settledValue([withExtra]).usd).toBe(46);
+    expect(settledValue([withExtra]).mmk).toBe(207000);
+  });
+
+  it('exports the daily total, the costs and the amount due as separate columns', () => {
+    const base = order({ status: 'paid', totalUsd: 16 });
+    const withExtra = addRentalExtra(base, { description: 'Lodging', amountUsd: 30 }, 'a@mhtravel.com', new Date('2026-11-25T10:00:00.000Z'));
+    const csv = ordersToCsv([withExtra]);
+    const [header, row] = csv.split('\n');
+    const columns = header.split(',');
+    const values = row.split(',');
+    expect(values[columns.indexOf('total_usd')]).toBe('16');
+    expect(values[columns.indexOf('extras_usd')]).toBe('30');
+    expect(values[columns.indexOf('amount_due_usd')]).toBe('46');
   });
 });

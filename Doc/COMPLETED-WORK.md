@@ -630,3 +630,30 @@ at 200 rows and the Rental Admin panel lists it under Settings.
 deadline was Expired on page load, with the traveler notice written and a
 `status: accepted → expired` audit row; editing one type's English terms and
 saving wrote one audit row naming the field, its old text and its new text.
+
+## Guide costs on a rental order (Plan §16) — 23 November 2026
+
+A travel guide's lodging, food and travel costs are charged on top of the daily
+rate, so they are rows on the order rather than a bigger rate. `RentalOrder` now
+carries `extras`, and `addRentalExtra` in `src/lib/rentalOrders.ts` appends one
+with a description, an amount, who added it and when. `extrasTotalUsd` and
+`orderTotalUsd` are the only places a total is computed, so the panel, the
+voucher, the reports and the CSV cannot disagree.
+
+The Rental Admin orders panel has a Guide costs block on every order: the rows
+already added, a description and amount field, and the daily total, the costs
+added and the total due underneath. Adding a cost writes a timeline event, an
+audit row and a traveler notice. The voucher lists the costs and shows the total
+due, and the reports and CSV count the costs in the settled value.
+
+An order saved before `extras` existed still opens, because `normalizeOrder`
+fills an empty list.
+
+**Verification.** `npx tsc --noEmit -p tsconfig.app.json` clean; `npx vitest run`
+20 files / 218 tests (5 new in `src/lib/rentalOrders.test.ts` for the total, the
+rows, rounding and the timeline event, 2 in `src/lib/rentalReports.test.ts` for
+the settled value and the new CSV columns, 1 for the notice with no status audit
+row); `npm run build` succeeds; `npx eslint src` reports 0 errors. Browser check:
+adding "Lodging in Bagan" at $30 to paid order `RNT-261120-0010` moved the total
+due from $70 to $100, wrote the timeline event, wrote the traveler notice under
+`traveler-10` only, and the voucher showed `Total due 450,000 Ks / $100.00`.

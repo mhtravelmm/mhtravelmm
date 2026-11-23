@@ -73,6 +73,10 @@ the suite instead of reaching a user as "coming soon."
   schedule moves to a Supabase cron function when the order tables go live.
 - **The rental audit log** (`mh-travel-rental-audit`) records catalog diffs and
   order status changes in browser storage; it moves to the admin audit table.
+- **Guide costs (Plan §16)** are stored on the order as `extras` in browser
+  storage. The `rental_order_extras` table is committed but not applied, so the
+  rows move with the rest of the order data. Collecting the added amount still
+  goes through the same staff-recorded payment as the daily rate.
 - Schedule the rental expiry job (Plan §16B.7, every 5 minutes). The function is
   committed; the `pg_cron` entry and the job-failure notification are not.
 - Send the rental notifications (Plan §16B.3): requested to Rental Admin;

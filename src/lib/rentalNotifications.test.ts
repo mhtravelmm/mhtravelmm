@@ -47,6 +47,7 @@ function order(overrides: Partial<RentalOrder> = {}): RentalOrder {
     voucherVersion: 0,
     rescheduledCount: 0,
     adminNote: '',
+    extras: [],
     createdAt: '2026-11-20T03:00:00.000Z',
     updatedAt: '2026-11-20T03:00:00.000Z',
     events: [],

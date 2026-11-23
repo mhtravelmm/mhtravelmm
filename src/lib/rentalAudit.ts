@@ -5,7 +5,7 @@
  * whole catalog, because a founder reading it wants to know what moved.
  */
 
-export type RentalAuditSection = 'catalog' | 'availability' | 'rates' | 'branches' | 'terms' | 'settings';
+export type RentalAuditSection = 'catalog' | 'availability' | 'rates' | 'branches' | 'terms' | 'settings' | 'order';
 
 export type RentalAuditChange = {
   section: RentalAuditSection;
@@ -120,7 +120,7 @@ export function recordRentalAudit(before: unknown, after: unknown, actor: string
  */
 export function recordOrderAudit(
   orderCode: string,
-  field: 'status' | 'startDate',
+  field: 'status' | 'startDate' | 'extras',
   from: string,
   to: string,
   actor: string,
@@ -131,7 +131,7 @@ export function recordOrderAudit(
     at: at.toISOString(),
     actor,
     orderCode,
-    changes: [{ section: 'catalog', field, from, to }],
+    changes: [{ section: 'order', field, from, to }],
   };
   writeRentalAudit([entry, ...readRentalAudit()]);
   return entry;

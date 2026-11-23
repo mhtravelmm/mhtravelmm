@@ -1,5 +1,5 @@
 import type { RentalOrder, RentalOrderStatus } from './rentalOrders';
-import { RENTAL_ORDER_STATUSES } from './rentalOrders';
+import { extrasTotalUsd, orderTotalUsd, RENTAL_ORDER_STATUSES } from './rentalOrders';
 
 /**
  * Plan §8.9: the Rental Admin reports. Everything here is a pure function of
@@ -24,7 +24,7 @@ export function tallyByStatus(orders: RentalOrder[]): StatusTally[] {
     return {
       status,
       count: rows.length,
-      totalUsd: round2(rows.reduce((sum, order) => sum + order.totalUsd, 0)),
+      totalUsd: round2(rows.reduce((sum, order) => sum + orderTotalUsd(order), 0)),
     };
   });
 }
@@ -37,7 +37,7 @@ function groupBy(orders: RentalOrder[], keyOf: (order: RentalOrder) => string): 
     const key = keyOf(order);
     const row = totals.get(key) ?? { key, count: 0, totalUsd: 0 };
     row.count += 1;
-    row.totalUsd += order.totalUsd;
+    row.totalUsd += orderTotalUsd(order);
     totals.set(key, row);
   }
   return [...totals.values()]
@@ -89,8 +89,8 @@ export function medianAcceptHours(orders: RentalOrder[]): number | null {
 export function settledValue(orders: RentalOrder[]): { usd: number; mmk: number } {
   const settled = orders.filter((order) => order.status === 'paid' || order.status === 'completed');
   return {
-    usd: round2(settled.reduce((sum, order) => sum + order.totalUsd, 0)),
-    mmk: Math.round(settled.reduce((sum, order) => sum + order.totalUsd * order.fxMmkPerUsd, 0)),
+    usd: round2(settled.reduce((sum, order) => sum + orderTotalUsd(order), 0)),
+    mmk: Math.round(settled.reduce((sum, order) => sum + orderTotalUsd(order) * order.fxMmkPerUsd, 0)),
   };
 }
 
@@ -144,6 +144,8 @@ export const ORDER_CSV_COLUMNS = [
   'fulfillment',
   'rate_usd',
   'total_usd',
+  'extras_usd',
+  'amount_due_usd',
   'display_currency',
   'fx_mmk_per_usd',
   'payment_method',
@@ -171,6 +173,8 @@ export function ordersToCsv(orders: RentalOrder[]): string {
       order.fulfillment,
       order.rateUsd,
       order.totalUsd,
+      extrasTotalUsd(order),
+      orderTotalUsd(order),
       order.displayCurrency,
       order.fxMmkPerUsd,
       order.paymentMethod,

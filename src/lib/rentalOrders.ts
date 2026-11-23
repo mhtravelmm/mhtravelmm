@@ -49,6 +49,18 @@ export type RentalFulfillment = 'delivery' | 'branch';
 
 export type RentalPaymentMethod = 'cash' | 'bank_transfer' | 'mobile_wallet';
 
+/**
+ * Plan §16: a travel guide's lodging, food and travel costs are charged on top
+ * of the daily rate, so they are rows on the order rather than a bigger rate.
+ */
+export type RentalOrderExtra = {
+  id: string;
+  description: string;
+  amountUsd: number;
+  addedBy: string;
+  at: string;
+};
+
 export type RentalOrderEvent = {
   at: string;
   from: RentalOrderStatus | null;
@@ -91,6 +103,7 @@ export type RentalOrder = {
   voucherVersion: number;
   rescheduledCount: number;
   adminNote: string;
+  extras: RentalOrderExtra[];
   createdAt: string;
   updatedAt: string;
   events: RentalOrderEvent[];
@@ -108,6 +121,7 @@ export type RentalOrderInput = Omit<
   | 'voucherVersion'
   | 'rescheduledCount'
   | 'adminNote'
+  | 'extras'
   | 'createdAt'
   | 'updatedAt'
   | 'events'
@@ -249,6 +263,47 @@ export function markPaid(
   };
 }
 
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** The extras charged on top of the daily rate. */
+export function extrasTotalUsd(order: RentalOrder): number {
+  return round2((order.extras ?? []).reduce((sum, extra) => sum + extra.amountUsd, 0));
+}
+
+/** Daily rate plus extras, which is what the traveler actually owes. */
+export function orderTotalUsd(order: RentalOrder): number {
+  return round2(order.totalUsd + extrasTotalUsd(order));
+}
+
+/**
+ * Plan §16: after the rental, staff record the guide's actual costs. The
+ * traveler owes the new total, so the change is appended to the timeline.
+ */
+export function addRentalExtra(
+  order: RentalOrder,
+  input: { description: string; amountUsd: number },
+  addedBy: string,
+  now: Date,
+): RentalOrder {
+  const description = input.description.trim();
+  const amountUsd = round2(input.amountUsd);
+  const extra: RentalOrderExtra = {
+    id: `extra-${now.getTime()}-${(order.extras?.length ?? 0) + 1}`,
+    description,
+    amountUsd,
+    addedBy,
+    at: now.toISOString(),
+  };
+  return {
+    ...order,
+    extras: [...(order.extras ?? []), extra],
+    updatedAt: now.toISOString(),
+    events: [...order.events, { at: now.toISOString(), from: order.status, to: order.status, actor: 'staff' as const, note: `extra:${description}:${amountUsd}` }],
+  };
+}
+
 export function findOrderByCode(orders: RentalOrder[], requestCode: string): RentalOrder | undefined {
   return orders.find((order) => order.requestCode === requestCode);
 }
@@ -286,10 +341,11 @@ async function persistRemote(order: RentalOrder) {
   }
 }
 
-/** An order saved before `voucherVersion` existed still opens and prints. */
+/** An order saved before `voucherVersion` or `extras` existed still opens and prints. */
 function normalizeOrder(order: RentalOrder): RentalOrder {
-  if (typeof order.voucherVersion === 'number') return order;
-  return { ...order, voucherVersion: order.paymentReceivedAt ? 1 : 0 };
+  const withExtras = Array.isArray(order.extras) ? order : { ...order, extras: [] };
+  if (typeof order.voucherVersion === 'number') return withExtras;
+  return { ...withExtras, voucherVersion: order.paymentReceivedAt ? 1 : 0 };
 }
 
 export function readAllOrders(): RentalOrder[] {
@@ -324,7 +380,9 @@ export function deliverRentalNotices(order: RentalOrder, kind: RentalNotice['kin
   }
   const travelerNotices = notices.filter((notice) => notice.audience === 'traveler');
   if (travelerNotices.length > 0) appendTravelerNotices(order.userId, travelerNotices);
-  if (kind !== 'requested') {
+  // Requested and extra are not status changes, and each already writes its
+  // own audit row where the change is made.
+  if (kind !== 'requested' && kind !== 'extra') {
     const field = kind === 'rescheduled' ? 'startDate' : 'status';
     recordOrderAudit(order.requestCode, field, before, kind === 'rescheduled' ? order.startDate : kind, 'staff', at);
   }
@@ -402,6 +460,7 @@ export function useRentalOrders() {
       voucherVersion: 0,
       rescheduledCount: 0,
       adminNote: '',
+      extras: [],
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
       events: [{ at: now.toISOString(), from: null, to: 'requested', actor: 'traveler', note: 'submitted' }],
@@ -457,6 +516,19 @@ export function useRentalOrders() {
     return result;
   }, [write]);
 
+  /** Plan §16: staff add the guide's lodging, food and travel costs after the rental. */
+  const addExtra = useCallback((orderId: string, description: string, amountUsd: number, actor: string) => {
+    const current = readAllOrders();
+    const target = current.find((order) => order.id === orderId);
+    if (!target) return null;
+    const now = new Date();
+    const updated = addRentalExtra(target, { description, amountUsd }, actor, now);
+    write(current.map((order) => (order.id === orderId ? updated : order)));
+    recordOrderAudit(updated.requestCode, 'extras', String(extrasTotalUsd(target)), String(extrasTotalUsd(updated)), actor, now);
+    deliverRentalNotices(updated, 'extra', now);
+    return updated;
+  }, [write]);
+
   const noteOrder = useCallback((orderId: string, adminNote: string) => {
     const current = readAllOrders();
     write(current.map((order) => (order.id === orderId ? { ...order, adminNote, updatedAt: new Date().toISOString() } : order)));
@@ -474,6 +546,7 @@ export function useRentalOrders() {
     setStatus,
     recordPayment,
     reschedule,
+    addExtra,
     noteOrder,
     expireOverdue,
   };

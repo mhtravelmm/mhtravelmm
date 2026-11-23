@@ -5,7 +5,7 @@ import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import { useCurrency } from '../../lib/currency';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { findRentalType, findVariant, localized } from '../../data/rentalCatalog';
-import { findOrderByCode, paymentTimeLeft, useRentalOrders, type RentalOrder } from '../../lib/rentalOrders';
+import { extrasTotalUsd, findOrderByCode, orderTotalUsd, paymentTimeLeft, useRentalOrders, type RentalOrder } from '../../lib/rentalOrders';
 import { useAuth } from '../../lib/auth';
 
 /**
@@ -104,7 +104,9 @@ export function RentalVoucherPage() {
   const deadlineLeft = paymentTimeLeft(order.paymentDeadline, new Date());
   const deadlineHours = Math.floor(deadlineLeft / 3600000);
   const deadlineMinutes = Math.floor((deadlineLeft % 3600000) / 60000);
-  const mmkTotal = Math.round((order.totalUsd * order.fxMmkPerUsd) / 100) * 100;
+  const extrasUsd = extrasTotalUsd(order);
+  const dueUsd = orderTotalUsd(order);
+  const mmkTotal = Math.round((dueUsd * order.fxMmkPerUsd) / 100) * 100;
 
   const rows: { label: string; value: string }[] = [
     {
@@ -126,7 +128,13 @@ export function RentalVoucherPage() {
         ? branch ? localized(branch.name, language) : t('rentals_branch_pickup')
         : order.deliveryAddress,
     },
-    { label: t('rv_amount'), value: `${formatPrice(order.totalUsd)} (${mmkTotal.toLocaleString('en-US')} Ks / $ ${order.totalUsd.toFixed(2)})` },
+    { label: t('rv_amount'), value: formatPrice(order.totalUsd) },
+    ...(extrasUsd > 0
+      ? [
+          { label: t('rv_extras'), value: (order.extras ?? []).map((extra) => `${extra.description} — $${extra.amountUsd.toFixed(2)}`).join(', ') },
+          { label: t('rv_amount_due'), value: `${formatPrice(dueUsd)} (${mmkTotal.toLocaleString('en-US')} Ks / $ ${dueUsd.toFixed(2)})` },
+        ]
+      : []),
     { label: t('rv_payment_method'), value: order.paymentMethod ? t(PAYMENT_KEY[order.paymentMethod]) : t('rv_payment_pending') },
     { label: t('rv_booked_on'), value: formatDateTime(order.createdAt, language) },
     { label: t('rv_voucher_version'), value: `v${order.voucherVersion || 1}` },

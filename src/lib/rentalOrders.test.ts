@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  addRentalExtra,
   expireOverdueNow,
+  extrasTotalUsd,
+  orderTotalUsd,
   expireOverdueOrders,
   readAllOrders,
   writeAllOrders,
@@ -16,6 +19,8 @@ import {
   type RentalOrder,
 } from './rentalOrders';
 import { readTravelerNotices } from './rentalNotifications';
+import { readRentalAudit } from './rentalAudit';
+import { deliverRentalNotices } from './rentalOrders';
 
 function baseOrder(overrides: Partial<RentalOrder> = {}): RentalOrder {
   return {
@@ -50,6 +55,7 @@ function baseOrder(overrides: Partial<RentalOrder> = {}): RentalOrder {
     voucherVersion: 0,
     rescheduledCount: 0,
     adminNote: '',
+    extras: [],
     createdAt: '2026-11-20T09:00:00.000Z',
     updatedAt: '2026-11-20T09:00:00.000Z',
     events: [],
@@ -251,5 +257,69 @@ describe('the expiry job', () => {
     writeAllOrders([paid]);
     expect(expireOverdueNow(new Date('2026-11-30T22:00:00.000Z'))).toBe(0);
     expect(readAllOrders()[0].status).toBe('paid');
+  });
+});
+
+describe('guide costs (Plan §16)', () => {
+  it('charges nothing extra until a cost is added', () => {
+    const order = baseOrder();
+    expect(extrasTotalUsd(order)).toBe(0);
+    expect(orderTotalUsd(order)).toBe(16);
+  });
+
+  it('adds the cost to the amount due', () => {
+    const order = addRentalExtra(baseOrder(), { description: 'Lodging', amountUsd: 30 }, 'guide@mhtravel.com', new Date('2026-11-25T10:00:00.000Z'));
+    expect(extrasTotalUsd(order)).toBe(30);
+    expect(orderTotalUsd(order)).toBe(46);
+  });
+
+  it('keeps each cost as its own row with who added it', () => {
+    const once = addRentalExtra(baseOrder(), { description: 'Lodging', amountUsd: 30 }, 'a@mhtravel.com', new Date('2026-11-25T10:00:00.000Z'));
+    const twice = addRentalExtra(once, { description: 'Food', amountUsd: 12.5 }, 'b@mhtravel.com', new Date('2026-11-25T11:00:00.000Z'));
+    expect(twice.extras).toHaveLength(2);
+    expect(twice.extras[1]).toMatchObject({ description: 'Food', amountUsd: 12.5, addedBy: 'b@mhtravel.com' });
+    expect(orderTotalUsd(twice)).toBe(58.5);
+  });
+
+  it('rounds a fractional cost so the total never drifts', () => {
+    const order = addRentalExtra(baseOrder(), { description: 'Fuel', amountUsd: 10.005 }, 'a@mhtravel.com', new Date('2026-11-25T10:00:00.000Z'));
+    expect(order.extras[0].amountUsd).toBe(10.01);
+  });
+
+  it('records the change on the timeline', () => {
+    const order = addRentalExtra(baseOrder(), { description: 'Lodging', amountUsd: 30 }, 'a@mhtravel.com', new Date('2026-11-25T10:00:00.000Z'));
+    expect(order.events[order.events.length - 1].note).toBe('extra:Lodging:30');
+  });
+});
+
+describe('the extra notice and its audit row', () => {
+  beforeEach(() => {
+    const map = new Map<string, string>();
+    (globalThis as { window?: unknown }).window = {
+      localStorage: {
+        getItem: (key: string) => map.get(key) ?? null,
+        setItem: (key: string, value: string) => { map.set(key, value); },
+        removeItem: (key: string) => { map.delete(key); },
+        clear: () => map.clear(),
+        key: () => null,
+        get length() { return map.size; },
+      },
+      dispatchEvent: () => true,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    };
+  });
+
+  it('tells the traveler and logs one row, not a status change', () => {
+    const order = baseOrder({ status: 'paid' });
+    writeAllOrders([order]);
+    const before = readTravelerNotices(order.userId).length;
+    const updated = addRentalExtra(order, { description: 'Lodging', amountUsd: 30 }, 'staff@mhtravel.com', new Date('2026-11-25T10:00:00.000Z'));
+    writeAllOrders([updated]);
+    deliverRentalNotices(updated, 'extra', new Date('2026-11-25T10:00:00.000Z'));
+    expect(readTravelerNotices(order.userId).length).toBe(before + 1);
+    expect(readTravelerNotices(order.userId)[0].kind).toBe('extra');
+    const rows = readRentalAudit().filter((entry) => entry.orderCode === order.requestCode);
+    expect(rows).toEqual([]);
   });
 });

@@ -28,7 +28,7 @@ export type RentalNotice = {
   requestCode: string;
   audience: RentalNoticeAudience;
   /** Set for the reschedule notice, which is not a status change. */
-  kind: RentalOrderStatus | 'rescheduled';
+  kind: RentalOrderStatus | 'rescheduled' | 'extra';
   createdAt: string;
   href: string;
 };
@@ -55,7 +55,11 @@ function noticeId(orderId: string, kind: string, at: string): string {
  */
 export function noticesForChange(order: RentalOrder, kind: RentalNotice['kind'], at: Date): RentalNotice[] {
   const audiences: RentalNoticeAudience[] =
-    kind === 'rescheduled' ? ['staff'] : noticeAudiences(kind as RentalOrderStatus);
+    kind === 'rescheduled'
+      ? ['staff']
+      : kind === 'extra'
+        ? ['traveler']
+        : noticeAudiences(kind as RentalOrderStatus);
   const stamp = at.toISOString();
   return audiences.map((audience) => ({
     id: noticeId(order.id, kind, stamp),
@@ -81,6 +85,7 @@ const STAFF_TITLE: Record<RentalNotice['kind'], string> = {
   expired: 'Rental order expired',
   cancelled: 'Rental order cancelled',
   rescheduled: 'Rental order rescheduled',
+  extra: 'Rental costs added',
 };
 
 export function staffNotificationFor(notice: RentalNotice, order?: RentalOrder): StaffNotification {
@@ -90,7 +95,9 @@ export function staffNotificationFor(notice: RentalNotice, order?: RentalOrder):
       ? `${who} asked for a rental. Open ${notice.requestCode} to accept or decline.`
       : notice.kind === 'rescheduled'
         ? `${who} moved ${notice.requestCode} to a new start date.`
-        : `${notice.requestCode} is now ${notice.kind}.`;
+        : notice.kind === 'extra'
+          ? `Guide costs were added to ${notice.requestCode}.`
+          : `${notice.requestCode} is now ${notice.kind}.`;
   return {
     id: notice.id,
     title: STAFF_TITLE[notice.kind],
@@ -159,6 +166,7 @@ const TRAVELER_TITLE: Record<RentalNotice['kind'], { mm: string; en: string }> =
   expired: { mm: 'ငွေမပေးချေသဖြင့် Order သက်တမ်းကုန်ပါပြီ', en: 'Order expired because payment was not received' },
   cancelled: { mm: 'Order ကို ပယ်ဖျက်ပါပြီ', en: 'Order cancelled' },
   rescheduled: { mm: 'ရက်ပြောင်းပြီးပါပြီ', en: 'Start date changed' },
+  extra: { mm: 'ငှားရမ်းမှု ကုန်ကျစရိတ် ထပ်တိုးပါပြီ', en: 'Rental costs were added' },
 };
 
 /** Minutes, hours, then days — the same shape the seeded feed uses. */
