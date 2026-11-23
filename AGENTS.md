@@ -62,6 +62,18 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `dueJobs()` compares each job with its own last run in `job_runs`, and a handler that
   throws becomes a `failed` row plus a Super Admin bell notice, never a stopped tick.
   Mark a job `wired: true` only when its handler does real work.
+- **Subscription lifecycle rules live in `src/lib/ownerSubscriptions.ts`.** One
+  record covers an Owner account fee (§9) and a paid template entitlement (§4);
+  `kind` says which. `deriveStatus()` is the only status decision — a stored
+  `status` is what the job last wrote, so a reader always re-derives it, and an
+  unreadable `periodEnd` counts as expired so a broken row cannot grant free
+  service. Days come from `daysUntilEnd()` on the Myanmar calendar, never from
+  hour arithmetic. A reminder is keyed `id:periodEnd:daysLeft` in `remindedKeys`,
+  which is what makes a second daily run silent and what a renewal resets. An
+  owner reads only their own row through `subscriptionForOwner()` — never
+  `subscriptions[0]`, because that shows one owner another shop's fee. The rows
+  live in `ownerSubscriptionStore.ts` (the `shop_subscriptions` stand-in), and
+  `subscriptionJobs.ts` holds both handlers so the panels stay free of job code.
 - **Blog and Guide content has one store and one reader projection.**
   `src/lib/contentStore.ts` holds the admin rows (`useBlogPosts`, `useGuides`,
   `useRevisions`, `useContentAudit`); the panels write it, never `useState`.

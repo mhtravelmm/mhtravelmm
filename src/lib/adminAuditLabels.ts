@@ -40,6 +40,7 @@ export const SOURCE_KEYS: Record<AdminAuditEntry['source'], TranslationKey> = {
   rental_orders: 'sa_audit_source_rental_orders',
   currency: 'sa_audit_source_currency',
   ads: 'sa_audit_source_ads',
+  subscriptions: 'sa_audit_source_subscriptions',
 };
 
 export const ACTION_TONES: Record<AdminAuditAction, string> = {

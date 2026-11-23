@@ -106,11 +106,13 @@ the suite instead of reaching a user as "coming soon."
   storage. The `rental_order_extras` table is committed but not applied, so the
   rows move with the rest of the order data. Collecting the added amount still
   goes through the same staff-recorded payment as the daily rate.
-- Six of the eight §16B.7 jobs are registered but unwired: ad campaign windows,
-  subscription expiry, renewal reminders, the ad statistics roll-up, orphan
-  media cleanup and the raw ad event purge. Each needs the table it reads (ad
-  campaigns, subscriptions, media, ad events) before it can do any work, and
-  the Super Admin jobs page shows them as "not wired" until then.
+- All eight §16B.7 jobs are now `wired: true` and do real work against a browser
+  stand-in: publish due content, ad campaign windows, rental payment expiry,
+  subscription expiry, renewal reminders, the ad statistics roll-up, orphan media
+  cleanup and the raw ad event purge. What is left for each is the table it
+  should read — ad campaigns, `shop_subscriptions`, media objects, ad events —
+  so the schedule moves to `pg_cron` rather than a timer in an open tab. A closed
+  browser runs no job.
 - Publishing due content is wired, but against browser storage: the job reads
   the rows in `src/lib/contentStore.ts`, so it only runs while a Super Admin has
   the app open. `blog_posts` and `travel_guides` are committed in
@@ -126,9 +128,10 @@ the suite instead of reaching a user as "coming soon."
   in-browser: a recipient sees the row when they open the app, not when it
   happens.
 - Publish the rest of the §16B.3 events from the server: ad creative waiting for
-  approval, campaign ending in three days and campaign ended, subscription
-  ending at 7/3/1 days, and the traveler's rental notices. The table and the
-  recipient rules exist; only the writers that fire them are missing.
+  approval, campaign ending in three days and campaign ended, and the traveler's
+  rental notices. The subscription ending at 7/3/1 days is written now by
+  `runRenewalReminders()` and addressed to the owner by byline, but it still fires
+  from an open tab; the server-side writer is what is missing.
 - Add live ticket operator inventory, availability, seat maps, seat locking, payment, and provider/API integration.
 - Replace seeded city/category/business recommendations with city-scoped content tables, real pagination, map distance, open/closed state, availability, and review counts.
 - Add Admin-managed content tables and public API/cache invalidation for blogs, guides, listings, and search indexing.
@@ -243,6 +246,7 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `ad_campaign_window` job), so what remains is the storage swap: apply
   `20261125000100_ads.sql` and point `src/lib/adStore.ts` at the tables.
 - Build the Shop Owner template catalog and entitlement system: one Free template, paid templates at 2,000 MMK/month/shop, preview/apply switching, compatibility, billing, renewal, grace period, fallback, retirement, rollback, and analytics.
+  The **billing half** is built (26 November 2026): `src/lib/ownerSubscriptions.ts` holds the lifecycle for both an Owner account fee (§9) and a template entitlement (§4) as one record with a `kind`, `src/lib/subscriptionJobs.ts` runs the expiry and the 7/3/1-day reminders, and `shop_subscriptions` is committed. What is left is the catalog itself — `shop_templates` rows, the lazy template modules, the owner's preview/apply selector, the Admin catalog screen and the Payment Admin invoice recording.
 - Implement the ticket operator hierarchy with parent-child operator/branch records, 10,000 MMK/month Branch Owner billing, scoped RLS, lifecycle states, ticket attribution, revenue-share snapshots, and audit events.
 - Implement MH Platform, Main Owner consolidated, and Branch Owner wallet ledgers, settlements, payouts, refunds, adjustments, withdrawal rules, and configurable commission/revenue-share policies after the business rules are finalized.
 

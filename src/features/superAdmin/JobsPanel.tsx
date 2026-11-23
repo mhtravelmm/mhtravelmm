@@ -50,6 +50,8 @@ function detailLabel(run: JobRun | undefined, t: (key: TranslationKey) => string
   }
   if (run.id === 'ad_stats_rollup') return fill(t('sa_jobs_detail_rows'), { count: run.detail });
   if (run.id === 'ad_events_purge') return fill(t('sa_jobs_detail_purged'), { count: run.detail });
+  if (run.id === 'subscription_expiry') return fill(t('sa_jobs_detail_moved'), { count: run.detail });
+  if (run.id === 'renewal_reminders') return fill(t('sa_jobs_detail_sent'), { count: run.detail });
   return fill(t('sa_jobs_detail_expired'), { count: run.detail });
 }
 

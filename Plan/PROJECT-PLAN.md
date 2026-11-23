@@ -1415,7 +1415,7 @@ One service, two tables: `notification_feed` (shared rows such as "new blog post
 | Ad creative waiting for approval | Super Admin | Adsboard approvals |
 | Campaign ends in 3 days, campaign ended | Ads Admin | the campaign |
 | Guide earning amount set, marked paid | the author | the earnings list |
-| Owner or template subscription ending (7, 3, 1 days) | the owner | the renewal screen |
+| Owner or template subscription ending (7, 3, 1 days) | the owner | the renewal screen (built 26 November 2026: `runRenewalReminders()` writes it with an `author` recipient matching the owner's byline, in both languages) |
 | Shop Owner application submitted | Admin, Super Admin | the application |
 | A scheduled job failed | Super Admin | the jobs page |
 
@@ -1457,6 +1457,19 @@ Runs on `pg_cron` or Cloudflare Cron Triggers. Every job is safe to run twice, l
 | Ad statistics roll-up | daily, 00:30 Myanmar Time | `ad_events` into `ad_stats_daily` |
 | Orphan media cleanup | daily, 02:00 Myanmar Time | Removes unreferenced R2 objects |
 | Raw ad events purge | daily | Deletes `ad_events` older than 90 days |
+
+Built 26 November 2026 (browser stand-in for `pg_cron`): all eight jobs are
+`wired: true` in `src/lib/jobs.ts` and each does real work against a store that
+mirrors its table. The subscription pair is `src/lib/subscriptionJobs.ts` —
+`subscription_expiry` moves Active to grace to expired and writes one audit row
+per row that moved, `renewal_reminders` writes one bilingual feed row per due
+threshold. Both are safe to run twice: the expiry only rewrites a row whose
+derived status differs from the stored one, and a reminder is recorded in
+`remindedKeys` as `id:periodEnd:daysLeft`, so renewing the period resets the
+count. A handler that throws still becomes a `failed` row plus a Super Admin
+bell notice. Still open: the schedule moves to `pg_cron` once
+`shop_subscriptions` and the other tables are applied, because a closed browser
+runs no job.
 
 ### 16B.8 Security baseline
 

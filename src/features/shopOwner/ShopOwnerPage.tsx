@@ -27,12 +27,18 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
+import { useFeedRows } from '../../lib/notificationFeed';
+import { timeAgoLabel } from '../../lib/timeAgo';
+import { localizedOrFallback } from '../../lib/translationCache';
+import { blocksBooking, daysUntilEnd, graceDaysLeft, subscriptionForOwner } from '../../lib/ownerSubscriptions';
+import { useSubscriptions } from '../../lib/ownerSubscriptionStore';
 import { useCurrency } from '../../lib/currency';
+import { fill } from '../../lib/fill';
 import type { TranslationKey } from '../../lib/i18n';
 import { useLanguage } from '../../lib/i18n';
 import type { Language } from '../../types';
 
-type OwnerView = 'dashboard' | 'shop' | 'bookings' | 'orders' | 'menu' | 'gallery' | 'reviews' | 'analytics' | 'payments' | 'promotions' | 'settings' | 'support';
+type OwnerView = 'dashboard' | 'shop' | 'bookings' | 'orders' | 'menu' | 'gallery' | 'reviews' | 'analytics' | 'payments' | 'promotions' | 'subscription' | 'settings' | 'support';
 
 type OwnerNavItem = { id: OwnerView; labelKey: TranslationKey; icon: LucideIcon };
 type Translate = (key: TranslationKey) => string;
@@ -48,6 +54,7 @@ const navItems: OwnerNavItem[] = [
   { id: 'analytics', labelKey: 'owner_shop_nav_analytics', icon: BarChart3 },
   { id: 'payments', labelKey: 'owner_shop_nav_payments', icon: CircleDollarSign },
   { id: 'promotions', labelKey: 'owner_shop_nav_promotions', icon: Tag },
+  { id: 'subscription', labelKey: 'owner_shop_nav_subscription', icon: CircleDollarSign },
   { id: 'settings', labelKey: 'owner_shop_nav_settings', icon: Settings },
   { id: 'support', labelKey: 'owner_shop_nav_support', icon: HelpCircle },
 ];
@@ -98,12 +105,16 @@ function PanelHeading({ icon: Icon, title, action, onAction }: { icon: LucideIco
 
 export function ShopOwnerPage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
   const [view, setView] = useState<OwnerView>('dashboard');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [period, setPeriod] = useState('Last 30 Days');
   const [notice, setNotice] = useState('');
+  const [bellOpen, setBellOpen] = useState(false);
+  // Plan §16B.3: the owner reads the same feed rows the platform writes, so a
+  // renewal reminder lands here instead of a hard-coded badge.
+  const feed = useFeedRows({ userId: user?.id ?? null, name: user?.name });
 
   function notify(message: string) {
     setNotice(message);
@@ -154,7 +165,30 @@ export function ShopOwnerPage() {
                 <Globe2 size={14} />
                 {language === 'mm' ? 'မြန်မာ' : 'English'}
               </button>
-              <button type="button" onClick={() => notify(t('owner_notifications'))} className="relative rounded-full p-1.5 hover:bg-white/10" aria-label={t('owner_notifications')}><Bell size={22} /><span className="absolute -right-0.5 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">3</span></button>
+              <div className="relative">
+                <button type="button" onClick={() => setBellOpen((open) => !open)} className="relative rounded-full p-1.5 hover:bg-white/10" aria-label={t('owner_notifications')} aria-expanded={bellOpen}><Bell size={22} />{feed.unread > 0 && <span className="absolute -right-0.5 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">{feed.unread}</span>}</button>
+                {bellOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-2 w-[280px] rounded-lg border border-[#cfdceb] bg-white text-[#0b2147] shadow-xl">
+                    <div className="flex items-center justify-between border-b border-[#e7edf4] px-3 py-2">
+                      <p className="text-xs font-bold">{t('owner_notifications')}</p>
+                      <button type="button" onClick={() => { feed.markAllRead(); setBellOpen(false); }} className="text-[10px] font-semibold text-[#147bea] hover:underline">{t('notifications_mark_all_read')}</button>
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {feed.rows.length === 0 ? (
+                        <p className="px-3 py-5 text-center text-[11px] text-slate-400">{t('notifications_empty')}</p>
+                      ) : (
+                        feed.rows.map((row) => (
+                          <button key={row.id} type="button" onClick={() => { setBellOpen(false); navigate(row.href); }} className={`block w-full border-b border-[#f0f4f9] px-3 py-2 text-left last:border-0 hover:bg-[#f4f8fc] ${row.read ? '' : 'bg-[#eaf5ff]'}`}>
+                            <p className="text-[11px] font-bold leading-4">{localizedOrFallback(row.title, language)}</p>
+                            <p className="mt-0.5 text-[10px] text-slate-500">{localizedOrFallback(row.message, language)}</p>
+                            <p className="mt-1 text-[9px] text-slate-400">{timeAgoLabel(row.createdAt, new Date(), language)}</p>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-2 border-l border-white/15 pl-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-200 to-green-700 text-xl">🍽️</div>
                 <div className="hidden text-left sm:block"><p className="text-sm font-bold">Royal Myanmar Restaurant</p><p className="text-[11px] text-blue-100">{t('owner_role_shop')} <ChevronDown size={12} className="inline" /></p></div>
@@ -340,6 +374,7 @@ function OwnerSection({ view, notify, t }: { view: Exclude<OwnerView, 'dashboard
   const Icon = item.icon;
   const label = t(item.labelKey);
   if (view === 'settings') return <OwnerCurrencySettings notify={notify} t={t} />;
+  if (view === 'subscription') return <OwnerSubscriptionPanel t={t} />;
   return (
     <div className="mx-auto max-w-[1100px]">
       <OwnerPanel>
@@ -391,6 +426,91 @@ function OwnerCurrencySettings({ notify, t }: { notify: (message: string) => voi
             </div>
           </div>
           <p className="text-[10px] text-slate-400">{t('owner_preview_setting_note')}</p>
+        </div>
+      </OwnerPanel>
+    </div>
+  );
+}
+
+/**
+ * Plan §9: the owner sees the monthly fee, the period and what happens next,
+ * and an expired subscription blocks booking while the listing stays visible.
+ * The rows come from `ownerSubscriptionStore`, the browser stand-in for
+ * `shop_subscriptions`.
+ */
+function OwnerSubscriptionPanel({ t }: { t: Translate }) {
+  const { user, isSuperAdmin } = useAuth();
+  const subscriptions = useSubscriptions();
+  // §9 bills an owner for their own shop, so another shop's fee is never shown.
+  // Super Admin opens this panel through `?preview=1` with no shop of their own,
+  // so the preview reads the first owner row instead.
+  const row =
+    subscriptionForOwner(subscriptions, user?.name) ??
+    (isSuperAdmin ? subscriptions.find((candidate) => candidate.kind === 'owner') : undefined);
+  if (!row) {
+    return (
+      <div className="mx-auto max-w-[1100px]">
+        <OwnerPanel>
+          <PanelHeading icon={CircleDollarSign} title={t('owner_sub_title')} />
+          <p className="p-3 text-sm text-slate-500">{t('owner_sub_no_row')}</p>
+        </OwnerPanel>
+      </div>
+    );
+  }
+
+  const daysLeft = daysUntilEnd(row);
+  const statusKey: TranslationKey =
+    row.status === 'active'
+      ? 'owner_sub_status_active'
+      : row.status === 'grace'
+        ? 'owner_sub_status_grace'
+        : 'owner_sub_status_expired';
+  const tone =
+    row.status === 'active'
+      ? 'border-green-300 bg-green-50 text-green-700'
+      : row.status === 'grace'
+        ? 'border-amber-300 bg-amber-50 text-amber-700'
+        : 'border-red-300 bg-red-50 text-red-700';
+
+  return (
+    <div className="mx-auto max-w-[1100px]">
+      <OwnerPanel>
+        <PanelHeading icon={CircleDollarSign} title={t('owner_sub_title')} />
+        <div className="space-y-3 p-3">
+          <p className="text-xs text-slate-500">{t('owner_sub_intro')}</p>
+          <div className={`rounded-lg border p-3 ${tone}`}>
+            <p className="text-[10px] font-bold uppercase tracking-wide">{t('owner_sub_current')}</p>
+            <p className="mt-1 text-lg font-extrabold">{t(statusKey)}</p>
+            {row.status === 'active' && daysLeft !== null && (
+              <p className="mt-1 text-xs font-semibold">{fill(t('owner_sub_days_left'), { days: daysLeft })}</p>
+            )}
+            {row.status === 'grace' && (
+              <p className="mt-1 text-xs font-semibold">{fill(t('owner_sub_grace_note'), { days: graceDaysLeft(row) })}</p>
+            )}
+            {row.status === 'expired' && (
+              <p className="mt-1 text-xs font-semibold">{t('owner_sub_expired_note')}</p>
+            )}
+          </div>
+          <dl className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
+              <dt className="text-[10px] font-bold text-slate-500">{t('owner_sub_amount')}</dt>
+              <dd className="mt-1 text-sm font-extrabold text-[#0b2147]">{row.amountMmk.toLocaleString('en-US')} MMK</dd>
+            </div>
+            <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
+              <dt className="text-[10px] font-bold text-slate-500">{t('owner_sub_period')}</dt>
+              <dd className="mt-1 text-sm font-extrabold text-[#0b2147]">{row.periodStart.slice(0, 10)} → {row.periodEnd.slice(0, 10)}</dd>
+            </div>
+            <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
+              <dt className="text-[10px] font-bold text-slate-500">{t('owner_sub_ends_on')}</dt>
+              <dd className="mt-1 text-sm font-extrabold text-[#0b2147]">{row.periodEnd.slice(0, 10)}</dd>
+            </div>
+          </dl>
+          {blocksBooking(row) && (
+            <p className="rounded-lg border border-red-300 bg-red-50 p-3 text-xs font-bold text-red-700">
+              {t('owner_sub_blocked_title')} — {t('owner_sub_expired_note')}
+            </p>
+          )}
+          <p className="text-[10px] text-slate-400">{t('owner_sub_renew_note')}</p>
         </div>
       </OwnerPanel>
     </div>

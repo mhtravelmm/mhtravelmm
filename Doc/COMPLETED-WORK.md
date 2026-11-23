@@ -16,6 +16,62 @@ For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
 
+## Owner and template subscriptions (Plan §9, §4, §16B.3, §16B.7) — 26 November 2026
+
+An Owner pays a monthly fee for the shop account (§9, Admin-discretion, any
+amount or none) and, separately, 2,000 MMK per month for a paid Shop Page
+template (§4). Both run the same lifecycle — active, then a grace period after
+the period ends, then expired — so both are one record with a `kind`.
+
+- **The rules are pure functions.** `src/lib/ownerSubscriptions.ts` states
+  `deriveStatus()` (active → grace → expired, with an unreadable `periodEnd`
+  treated as expired so a broken row cannot grant free service),
+  `daysUntilEnd()` counted on the Myanmar calendar rather than in hours,
+  `graceDaysLeft()`, `blocksBooking()` (§9: the listing stays visible, booking
+  and contact stop), `dueReminders()` and `markReminded()`. A reminder key is
+  `id:periodEnd:daysLeft`, so renewing the period resets the count and a second
+  run on the same day finds nothing.
+- **The rows live in a store, not in a panel.** `src/lib/ownerSubscriptionStore.ts`
+  is the browser stand-in for `shop_subscriptions`; `readSubscriptions()` returns
+  the row as stored so the job can still see the old status, while
+  `useSubscriptions()` derives the status as of now for the reader, because a
+  stored status is up to an hour stale between two runs.
+- **Two jobs are wired.** `src/lib/subscriptionJobs.ts` holds
+  `runSubscriptionExpiry()` (Active → grace → expired, one audit row per row that
+  actually moved, actor `system`) and `runRenewalReminders()` (one bilingual feed
+  row per due threshold). Both write only what changed, so a rerun is silent.
+  `src/lib/jobs.ts` marks `subscription_expiry` (`wired: true`, hourly) and
+  `renewal_reminders` (`wired: true`, daily 09:00 Myanmar Time), and
+  `src/lib/platformJobs.ts` binds them. All eight §16B.7 jobs now report a real
+  result on the Super Admin jobs page.
+- **Reminders reach the owner, not the staff bell.** §16B.3 addresses the
+  reminder to the owner, so the feed row is written with an `author` recipient
+  matching `ownerName` — the same byline rule guide earnings already use. The
+  row stores both languages, so an owner who switches language before reading
+  still reads their own copy.
+- **Audit.** `'subscriptions'` is a new `adminAudit` source with MM and EN
+  labels, so the §16B.2 log can be filtered by it.
+- **Owner screen.** Shop Owner → Subscription shows the status, the days left or
+  the grace remaining, the monthly fee, the period, the end date, the
+  booking-blocked banner when expired, and the renewal instruction. It reads only
+  the signed-in owner's own row (`subscriptionForOwner()`), so one owner never
+  sees another shop's fee; Super Admin's `?preview=1` view falls back to the first
+  owner row because it has no shop of its own.
+- **Notification bell.** The Shop Owner header bell now reads the same
+  `useFeedRows()` the platform writes, so a renewal reminder lands there instead
+  of a hard-coded badge.
+- **Migration committed.** `supabase/migrations/20261126000100_shop_subscriptions.sql`
+  holds `shop_subscriptions` (`kind`, `template_id`, `amount_mmk`, `period_start`,
+  `period_end`, `grace_days`, `status`, `reminded_keys`), the two indexes the
+  jobs scan by, and RLS: Super Admin, Admin and Payment Admin read all rows, an
+  owner reads the row matching their own byline, and only Super Admin and Payment
+  Admin insert.
+
+Verified in the browser: the panel renders active, grace and expired states, the
+bell shows a seeded reminder in both languages, and the jobs page reports
+`subscription_expiry` and `renewal_reminders` as wired. `npm test` 62 files /
+699 tests; typecheck and lint clean (7 pre-existing warnings).
+
 ## Notification readers — 26 November 2026
 
 A notification is written once and read later, in whatever language the reader

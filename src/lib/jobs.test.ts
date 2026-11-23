@@ -24,11 +24,12 @@ beforeEach(() => { fakeWindow(); });
 
 const MINUTE = 60 * 1000;
 const at = (iso: string) => new Date(iso);
-// Every wired job, so a test about one does not trip over another.
+// Every due job, so a test about one does not trip over another.
 const handlers = {
   rental_payment_expiry: () => 2,
   publish_due_content: () => '0/0',
   ad_campaign_window: () => '0/0/0',
+  subscription_expiry: () => 0,
   ad_stats_rollup: () => 0,
   ad_events_purge: () => 0,
 };
@@ -102,6 +103,7 @@ describe('runDueJobs', () => {
       { id: 'publish_due_content', at: now.toISOString(), outcome: 'ok', detail: '0/0' },
       { id: 'ad_campaign_window', at: now.toISOString(), outcome: 'ok', detail: '0/0/0' },
       { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'ok', detail: '2' },
+      { id: 'subscription_expiry', at: now.toISOString(), outcome: 'ok', detail: '0' },
     ]);
   });
 
@@ -120,16 +122,21 @@ describe('runDueJobs', () => {
     expect(second.runs).toEqual([]);
   });
 
-  it('skips an unwired job without writing a row for it', () => {
+  it('reports a due job with no handler as not wired rather than skipping it', () => {
     const { runs } = runDueJobs(now, {}, []);
-    // Only the due wired jobs are reported, so a job still waiting for its
-    // table never fills the log.
+    // Every job in the registry has a data source now, so a due job without a
+    // handler is a gap the log must show instead of hiding.
     expect(runs.map((run) => run.id).sort()).toEqual([
       'ad_campaign_window',
       'publish_due_content',
       'rental_payment_expiry',
+      'subscription_expiry',
     ]);
     expect(runs.every((run) => run.outcome === 'not_wired')).toBe(true);
+  });
+
+  it('marks every registry entry as wired once its data exists', () => {
+    expect(JOBS.filter((job) => !job.wired)).toEqual([]);
   });
 
   it('records a wired job that has no handler, so the gap is visible', () => {
@@ -137,11 +144,13 @@ describe('runDueJobs', () => {
       { id: 'rental_payment_expiry', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0' },
       { id: 'publish_due_content', at: '2026-11-23T00:00:00Z', outcome: 'ok', detail: '0/0' },
     ]);
-    // Both jobs just ran, so their missing handlers are what the tick reports.
+    // Both jobs just ran, so their missing handlers are what the tick reports;
+    // the hourly subscription job is due too and has no handler either.
     expect(runs).toEqual([
       { id: 'publish_due_content', at: now.toISOString(), outcome: 'not_wired', detail: '' },
       { id: 'ad_campaign_window', at: now.toISOString(), outcome: 'not_wired', detail: '' },
       { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'not_wired', detail: '' },
+      { id: 'subscription_expiry', at: now.toISOString(), outcome: 'not_wired', detail: '' },
     ]);
   });
 
@@ -192,6 +201,7 @@ describe('a failed job alerts Super Admin (Plan §16D Phase 0 gate)', () => {
       { id: 'publish_due_content', at: now.toISOString(), outcome: 'ok', detail: '0/0' },
       { id: 'ad_campaign_window', at: now.toISOString(), outcome: 'ok', detail: '0/0/0' },
       { id: 'rental_payment_expiry', at: now.toISOString(), outcome: 'ok', detail: '2' },
+      { id: 'subscription_expiry', at: now.toISOString(), outcome: 'ok', detail: '0' },
     ]);
     // The stored row is what stops the next tick from running it again.
     expect(runDueJobs(now, handlers, readJobRuns()).runs).toEqual([]);

@@ -41,7 +41,7 @@ export interface AdminAuditEntry {
   objectId: string;
   /** Short before/after or what changed, in one line. */
   summary: string;
-  source: 'admin_workspace' | 'auth' | 'earnings' | 'content' | 'rental_orders' | 'currency' | 'ads';
+  source: 'admin_workspace' | 'auth' | 'earnings' | 'content' | 'rental_orders' | 'currency' | 'ads' | 'subscriptions';
 }
 
 const STORAGE_KEY = 'mh-travel-admin-audit';
