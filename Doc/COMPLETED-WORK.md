@@ -479,8 +479,10 @@ The public reader's per-stop Directions link now goes through the shared
 
 Admin Management now creates a real local admin account instead of a table row:
 the form gained an initial password, `createAdminAccount` in `src/lib/auth.tsx`
-stores the account with `role: 'content_admin'` and the chosen Plan §3 role, and
-the new admin signs in at the existing admin login.
+stores the account with `role: 'admin_staff'` and the chosen Plan §3 role, and
+the new admin signs in at the existing admin login. Sessions and accounts
+written before the rename (`content_admin`) are remapped on read, so an older
+stored admin keeps the workspace instead of reading as a traveler.
 
 `src/lib/contentAdminAccess.ts` states the rule from Plan §10 item 6: a Blog
 Post Admin reaches the Blog editor and nothing else, a Travel Guide Content
@@ -742,3 +744,44 @@ visible to a test instead of hidden behind a cast.
 and the same 7 pre-existing warnings. Browser check in Burmese and English: the
 `RNT-261120-0001` voucher rendered all 17 fields in both languages, and the
 reschedule panel rejected a past date with its translated message.
+
+## One role-scoped admin workspace (Plan §3, §16B.1) — 23 November 2026
+
+Two spellings of the same role were in play: `profiles.role` stores a slug
+(`rental_admin`), while the Admin Management form, the UI and the permission
+matrix speak the product name (`Rental Admin`). The rental migrations compared
+product names against the slug column, so `is_rental_staff()` never matched a
+real account and every rental write was rejected as forbidden. On the client the
+same mismatch made a staff account fall back to `traveler`.
+
+- **`src/lib/roleMapping.ts`** holds `ROLE_SLUGS` (all eight product roles) and
+  `adminRoleFrom()`, which accepts either spelling in any case and separator
+  style, so `rental_admin`, `Rental Admin` and `rental-admin` resolve alike.
+  `normalizeStoredRole()` maps the retired `content_admin` to `admin_staff`.
+- **`src/lib/adminWorkspace.ts`** turns §16B.1 into data: `sectionsForRole()`
+  lists the sections a role may open, `canOpenSection()` answers for one, and
+  `canHandleOrders()` / `canRecordPayment()` split the rental-order row into its
+  two rights, so a Payment Admin records a payment and changes nothing else.
+- **`auth.tsx`** hydrates `adminRole` from the profile row and signs every
+  recognised staff role in as `admin_staff` rather than as a traveler. Sessions
+  and accounts written before the rename are remapped on read.
+- **`SuperAdminPage.tsx`** filters its navigation through `sectionsForRole()`,
+  so each role lands on its own first section; a super admin without a hydrated
+  role keeps the full workspace, and any other role without one sees nothing.
+- **`RentalOrdersPanel.tsx`** shows only the status buttons the role may press,
+  hides the guide-cost form and the expiry job from a payment-only account, and
+  makes the admin note read-only for it.
+- **`supabase/migrations/20261122000400_rental_role_slugs.sql`** normalises the
+  slug once in `current_role_name()`, adds `can_handle_rental_orders()` for
+  writes, restricts Payment Admin to the `accepted → paid` step, points
+  `is_rental_editor()` at the handler predicate, and repoints the
+  `rental_order_extras` write policy at it too.
+
+**Verification.** `npx tsc --noEmit` clean; `npx vitest run` 25 files / 314
+tests; `npm run build` succeeds; `npx eslint src` reports the same 7 pre-existing
+warnings. Browser check at `/super-admin` in Burmese: Super Admin saw all 18 nav
+entries, Rental Admin only Rentals, Rental Orders and Rental Reports, Payment
+Admin only Orders, Reports and Currency, Blog Post Admin only Blogs, and a
+session still holding `content_admin` kept the workspace instead of being sent
+to `/account`. On an accepted order the Payment Admin saw the record-payment
+control alone, and the Rental Admin saw the full action set.

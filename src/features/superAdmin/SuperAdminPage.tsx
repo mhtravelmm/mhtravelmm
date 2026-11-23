@@ -50,6 +50,7 @@ import {
   type StaffNotification,
 } from '../../lib/rentalNotifications';
 import { CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS } from '../../lib/adminRoles';
+import { sectionsForRole } from '../../lib/adminWorkspace';
 
 type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
@@ -128,7 +129,7 @@ const accentClasses: Record<Accent, { card: string; icon: string; line: string }
 export function SuperAdminPage() {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const { user, logout, adminRole } = useAuth();
+  const { user, logout, adminRole, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<AdminView>('overview');
   const [period, setPeriod] = useState('Last 30 Days');
@@ -159,11 +160,14 @@ export function SuperAdminPage() {
     navigate('/admin/login', { replace: true });
   }
 
-  // A content admin only reaches the editor for their own content type (Plan §10 item 6).
-  const isContentOnly = Boolean(adminRole) && !['Super Admin', 'Ads Admin', 'Admin', 'Rental Admin', 'Payment Admin', 'Owner Admin'].includes(adminRole ?? '');
-  const visibleNav = isContentOnly
-    ? navItems.filter((item) => (adminRole === 'Blog Post Admin' && item.id === 'blogs') || (adminRole === 'Travel Guide Content Admin' && item.id === 'guides'))
-    : navItems;
+  // Plan §3 and §16B.1: one workspace, scoped per role. Super Admin keeps every
+  // section; each other role sees only its own permission row.
+  // A session stored before `adminRole` was hydrated still has to work, so a
+  // super admin without one falls back to the full workspace. Any other role
+  // without a product role sees nothing rather than everything.
+  const effectiveRole = adminRole ?? (isSuperAdmin ? 'Super Admin' : undefined);
+  const allowedSections = sectionsForRole(effectiveRole);
+  const visibleNav = navItems.filter((item) => allowedSections.includes(item.id));
   const activeView: AdminView = visibleNav.some((item) => item.id === view) ? view : (visibleNav[0]?.id ?? view);
 
   function selectNav(nextView: AdminView) {
@@ -192,7 +196,7 @@ export function SuperAdminPage() {
   }
 
   const displayName = user?.name || t('admin_super_admin');
-  const roleBadge = adminRole ?? t('sa_super_administrator');
+  const roleBadge = effectiveRole ?? t('sa_super_administrator');
   const initials = displayName.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
 
   return (
@@ -230,7 +234,7 @@ export function SuperAdminPage() {
               <button type="button" onClick={toggleLanguage} className="hidden items-center gap-2 text-sm font-semibold text-white sm:flex"><Globe2 size={18} />{language === 'mm' ? 'မြန်မာ' : 'English'}<ChevronDown size={14} /></button>
               <button type="button" onClick={toggleTheme} className="hidden rounded-full p-1.5 text-slate-200 hover:bg-white/10 sm:block" aria-label={t('sa_toggle_theme')}>{theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}</button>
               <button type="button" onClick={() => setNotificationsOpen((open) => !open)} className="relative rounded-full p-1.5 text-white hover:bg-white/10" aria-label={t('sa_notifications')}><Bell size={19} fill="currentColor" />{notifications.some((notification) => !notification.read) && <span className="absolute -right-0.5 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold">{notifications.filter((notification) => !notification.read).length}</span>}</button>
-              <div className="hidden items-center gap-2 sm:flex"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-700 text-[10px] font-bold text-white">{initials}</div><span className="text-sm font-semibold">{t('admin_super_admin')}</span><ChevronDown size={14} className="text-slate-300" /></div>
+              <div className="hidden items-center gap-2 sm:flex"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-700 text-[10px] font-bold text-white">{initials}</div><span className="text-sm font-semibold">{roleBadge}</span><ChevronDown size={14} className="text-slate-300" /></div>
             </div>
             {notificationsOpen && <div className="absolute right-3 top-12 z-40 w-[min(360px,calc(100vw-24px))] rounded-lg border border-[#2b527d] bg-[#0b203b] p-2 shadow-2xl sm:right-5"><div className="flex items-center justify-between border-b border-[#244668] px-2 pb-2"><div><p className="text-xs font-bold text-white">{t('sa_admin_notifications')}</p><p className="text-[10px] text-slate-400">{t('sa_admin_notifications_detail')}</p></div><button type="button" onClick={markNotificationsRead} className="text-[10px] font-semibold text-cyan-300 hover:text-white">{t('sa_mark_all_read')}</button></div><div className="max-h-72 overflow-y-auto pt-1">{notifications.length === 0 ? <p className="px-2 py-5 text-center text-xs text-slate-400">{t('sa_no_notifications')}</p> : notifications.map((notification) => <button key={notification.id} type="button" onClick={() => setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read: true } : item))} className={`block w-full rounded-md px-2 py-2 text-left ${notification.read ? 'bg-transparent' : 'bg-cyan-400/10'}`}><div className="flex items-start gap-2"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${notification.read ? 'bg-slate-600' : 'bg-cyan-300'}`} /><span className="min-w-0"><strong className="block text-[11px] text-white">{notification.title}</strong><span className="mt-0.5 block text-[10px] leading-4 text-slate-300">{notification.message}</span><span className="mt-1 block text-[9px] text-slate-500">{notification.createdAt}</span></span></div></button>)}</div></div>}
           </header>

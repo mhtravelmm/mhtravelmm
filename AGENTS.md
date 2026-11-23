@@ -52,6 +52,11 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
 - Docs live in `Doc/`: `STATUS.md` is the single status view, `COMPLETED-WORK.md` and
   `REMAINING-WORK.md` hold the detail, `PLAN-VS-CODE.md` records Plan drift. The
   authoritative product plan is `Plan/PROJECT-PLAN.md` — update it when a section ships.
+- Roles have two spellings: `profiles.role` stores a slug (`rental_admin`), the UI
+  and RLS speak the product name (`Rental Admin`). Resolve both through
+  `roleMapping.ts`; never compare a raw profile value to a product name. The admin
+  workspace reads `adminRole` (from the profile) through `adminWorkspace.ts`, which
+  is the Plan §16B.1 matrix — add a section there before adding it to the nav.
 
 ## Pushing to origin
 

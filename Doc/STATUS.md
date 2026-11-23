@@ -48,7 +48,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (291 tests, 23 files) |
+| `npm test` (vitest) | **PASS** (314 tests, 25 files) |
 | Seed link audit | **PASS** (0 broken of 261 clickable targets) |
 | Route audit | **PASS** (43 declared routes, all render) |
 
@@ -182,7 +182,7 @@ places rather than advice.
 | Travel Guide Management | **PARTIAL** | Editor and itinerary builder with listing-linked stops, publish checks, revisions, audit log, and per-post earning rows; content is still local state. Localized through `useLanguage` |
 | Shop Owner dashboard | **PARTIAL** | Bilingual through `useLanguage` with a header language control; data is still local |
 | Main Owner dashboard | **PARTIAL** | Bilingual through `useLanguage`; branch-account validation messages are translation keys |
-| Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected; Blog Post Admin and Travel Guide Content Admin reach only their own editor |
+| Role guards | **DONE** | Super Admin, Shop Owner, Main Owner protected. Plan §3 and §16B.1 now scope one admin workspace per role: `src/lib/adminWorkspace.ts` lists the sections each role may open, and the Super Admin page filters its navigation through it, so Ads Admin sees only Ads, Payment Admin only orders/reports/currency, Blog Post Admin only Blogs, and Travel Guide Content Admin only Guides. `src/lib/roleMapping.ts` maps every one of the nine `profiles.role` slugs to a product role, and `auth.tsx` hydrates `adminRole` from the profile row, which is what the workspace reads |
 
 ---
 
@@ -320,6 +320,19 @@ Steps 1 and 2 are now done, so the list starts where the frontend stops:
    23 `rental_error_*` codes in MM and EN; `translate()` returns `undefined` for
    a code this build does not know, so a newer server code reads as missing
    instead of crashing, and the test reads the codes out of the migrations.
+
+   **§3 role slugs and the §16B.1 workspace.** `profiles.role` stores a slug,
+   but the rental migrations compared product names, so no staff account ever
+   passed `is_rental_staff()` and every rental write failed as forbidden.
+   `supabase/migrations/20261122000400_rental_role_slugs.sql` normalises the
+   slug once in `current_role_name()`, so the rest of the schema keeps comparing
+   product names, and adds `can_handle_rental_orders()` for writes, so a Payment
+   Admin records a payment and changes nothing else. On the client,
+   `src/lib/roleMapping.ts` maps all nine slugs to a product role, `auth.tsx`
+   hydrates `adminRole` from the profile row, and `src/lib/adminWorkspace.ts`
+   turns the §16B.1 matrix into the sections each role may open. The Super Admin
+   page filters its navigation through it, and the order panel offers only the
+   actions the role may take.
 
 6. ~~Connect the Custom Plan, Rental, and Ticketing submissions to request
    records with an ID and a confirmation.~~ **Done 22 November 2026.** Each

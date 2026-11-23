@@ -5,6 +5,7 @@ import { useCurrency } from '../../lib/currency';
 import { useRentalCatalog } from '../../lib/rentalCatalogStore';
 import { findRentalType, findVariant, localized } from '../../data/rentalCatalog';
 import { useAuth } from '../../lib/auth';
+import { canHandleOrders, canRecordPayment } from '../../lib/adminWorkspace';
 import {
   extrasTotalUsd,
   nextStatuses,
@@ -61,7 +62,10 @@ export function RentalOrdersPanel() {
   const { formatPrice } = useCurrency();
   const { catalog } = useRentalCatalog();
   const { allOrders, setStatus, recordPayment, addExtra, noteOrder, expireOverdue } = useRentalOrders();
-  const { user } = useAuth();
+  const { user, adminRole } = useAuth();
+  // Plan §16B.1: Payment Admin reads orders and records payments; accepting,
+  // cancelling and completing stay with the order-handling roles.
+  const mayHandle = canHandleOrders(adminRole);
   const [filter, setFilter] = useState<RentalOrderStatus | 'all'>('all');
   const [openId, setOpenId] = useState<string | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<Record<string, RentalPaymentMethod>>({});
@@ -127,9 +131,11 @@ export function RentalOrdersPanel() {
           <h1 className="mt-1 text-lg font-extrabold sm:text-3xl">{t('ra_orders_title')}</h1>
           <p className="mt-1 text-sm text-slate-400">{t('ra_orders_intro')}</p>
         </div>
-        <button type="button" onClick={expireOverdue} className="inline-flex items-center gap-2 self-start rounded-lg border border-[#2f6192] px-3 py-2 text-[11px] font-semibold text-slate-300 hover:bg-white/10">
-          <RefreshCw size={15} /> {t('ra_orders_run_expiry')}
-        </button>
+        {mayHandle && (
+          <button type="button" onClick={expireOverdue} className="inline-flex items-center gap-2 self-start rounded-lg border border-[#2f6192] px-3 py-2 text-[11px] font-semibold text-slate-300 hover:bg-white/10">
+            <RefreshCw size={15} /> {t('ra_orders_run_expiry')}
+          </button>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
@@ -193,7 +199,9 @@ export function RentalOrdersPanel() {
               const left = paymentTimeLeft(order.paymentDeadline, new Date());
               const hours = Math.floor(left / 3600000);
               const minutes = Math.floor((left % 3600000) / 60000);
-              const canChange = nextStatuses(order.status);
+              const canChange = nextStatuses(order.status).filter(
+                (to) => (to === 'paid' ? canRecordPayment(adminRole) : mayHandle),
+              );
               const method = paymentDraft[order.id] ?? order.paymentMethod ?? 'cash';
               return (
                 <div key={order.id}>
@@ -291,8 +299,9 @@ export function RentalOrdersPanel() {
                         <textarea
                           rows={2}
                           value={order.adminNote}
+                          readOnly={!mayHandle}
                           onChange={(event) => noteOrder(order.id, event.target.value)}
-                          className="w-full resize-none rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none focus:border-cyan-300"
+                          className="w-full resize-none rounded border border-[#2b527d] bg-[#081a31] px-2 py-1 text-[10px] text-white outline-none focus:border-cyan-300 read-only:opacity-70"
                         />
                       </label>
 
@@ -325,7 +334,7 @@ export function RentalOrdersPanel() {
                             ))}
                           </ul>
                         )}
-                        <div className="flex flex-wrap items-end gap-1.5">
+                        {mayHandle && <div className="flex flex-wrap items-end gap-1.5">
                           <label className="min-w-[120px] flex-1">
                             <span className="mb-0.5 block text-[9px] text-slate-400">{t('ra_orders_extra_description')}</span>
                             <input
@@ -356,7 +365,7 @@ export function RentalOrdersPanel() {
                           >
                             {t('ra_orders_extra_add')}
                           </button>
-                        </div>
+                        </div>}
                         <dl className="mt-2 space-y-0.5 border-t border-[#244668] pt-1.5 text-[10px]">
                           <div className="flex justify-between text-slate-400"><dt>{t('ra_orders_rate_total')}</dt><dd>${order.totalUsd.toFixed(2)}</dd></div>
                           <div className="flex justify-between text-slate-400"><dt>{t('ra_orders_extras_total')}</dt><dd>${extrasTotalUsd(order).toFixed(2)}</dd></div>

@@ -50,9 +50,11 @@ the suite instead of reaching a user as "coming soon."
   `rental_availability`, `rental_rates`, `rental_terms`, `rental_orders`,
   `rental_order_events`, `rental_order_extras`, the `my_bookings` view, and
   `submit_rental_order` / `set_rental_order_status` /
-  `reschedule_rental_order` / `expire_overdue_rental_orders`). What remains: run
-  them, seed the catalog from `src/data/rentalCatalog.ts`, and replace the
-  browser stores (`rentalCatalogStore.ts`, `rentalOrders.ts`) with queries. Until
+  `reschedule_rental_order` / `expire_overdue_rental_orders`, plus
+  `20261122000400_rental_role_slugs.sql`, which maps the stored role slugs to the
+  product names the rest of the schema compares). What remains: run them, seed
+  the catalog from `src/data/rentalCatalog.ts`, and replace the browser stores
+  (`rentalCatalogStore.ts`, `rentalOrders.ts`) with queries. Until
   then the browser record leads and the server rules are only mirrored in
   `src/lib/rentalOrderRules.ts` (all fifteen §8.7 checks, the shared quote and
   the hourly per-account limit), which `buildRentalOrder` in

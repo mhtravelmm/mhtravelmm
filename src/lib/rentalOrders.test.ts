@@ -26,6 +26,7 @@ import { DEFAULT_RENTAL_CATALOG } from '../data/rentalCatalog';
 import { addDaysToDay, myanmarToday } from './myanmarTime';
 import { readTravelerNotices } from './rentalNotifications';
 import { readRentalAudit } from './rentalAudit';
+import { quoteRentalOrder } from './rentalOrderRules';
 import { deliverRentalNotices } from './rentalOrders';
 
 function baseOrder(overrides: Partial<RentalOrder> = {}): RentalOrder {
@@ -477,5 +478,116 @@ describe('building an order (Plan §8.7, acceptance 2–4)', () => {
       baseOrder({ id: `old-${index}`, createdAt: new Date(NOW.getTime() - 2 * 3600000).toISOString() }),
     );
     expect(buildRentalOrder(input(), DEFAULT_RENTAL_CATALOG, old, NOW).ok).toBe(true);
+  });
+});
+
+describe('acceptance 6–8 (Plan §8.12)', () => {
+  function fakeWindow() {
+    const map = new Map<string, string>();
+    (globalThis as { window?: unknown }).window = {
+      localStorage: {
+        getItem: (key: string) => map.get(key) ?? null,
+        setItem: (key: string, value: string) => { map.set(key, value); },
+        removeItem: (key: string) => { map.delete(key); },
+        clear: () => map.clear(),
+        key: (index: number) => Array.from(map.keys())[index] ?? null,
+        get length() { return map.size; },
+      },
+      dispatchEvent: () => true,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      setInterval: () => 0,
+      clearInterval: () => undefined,
+    };
+  }
+
+  beforeEach(() => {
+    fakeWindow();
+  });
+
+  it('accept sets a deadline exactly 12 hours out', () => {
+    const acceptedAt = new Date('2026-11-20T05:00:00.000Z');
+    const order = baseOrder({ status: 'accepted', acceptedAt: acceptedAt.toISOString(), paymentDeadline: paymentDeadlineFor(acceptedAt) });
+    expect(paymentDeadlineFor(acceptedAt)).toBe('2026-11-20T17:00:00.000Z');
+    expect(paymentTimeLeft(order.paymentDeadline, acceptedAt)).toBe(PAYMENT_WINDOW_HOURS * 3600000);
+  });
+
+  it('expires an unpaid accepted order on its own, then issues the voucher on payment', () => {
+    const acceptedAt = new Date('2026-11-20T05:00:00.000Z');
+    const order = baseOrder({ status: 'accepted', acceptedAt: acceptedAt.toISOString(), paymentDeadline: paymentDeadlineFor(acceptedAt) });
+    writeAllOrders([order]);
+
+    // Past the deadline with no payment: the job, not a person, ends it.
+    expect(expireOverdueNow(new Date('2026-11-20T17:00:01.000Z'))).toBe(1);
+    const expired = readAllOrders()[0];
+    expect(expired.status).toBe('expired');
+    expect(expired.voucherVersion).toBe(0);
+
+    // An expired order can no longer be paid, so no voucher is issued.
+    expect(markPaid(expired, 'cash', new Date('2026-11-20T18:00:00.000Z'))).toBeNull();
+  });
+
+  it('issues voucher version 1 when the payment is recorded inside the window', () => {
+    const acceptedAt = new Date('2026-11-20T05:00:00.000Z');
+    const order = baseOrder({ status: 'accepted', acceptedAt: acceptedAt.toISOString(), paymentDeadline: paymentDeadlineFor(acceptedAt) });
+    writeAllOrders([order]);
+    expect(expireOverdueNow(new Date('2026-11-20T16:59:00.000Z'))).toBe(0);
+
+    const paid = markPaid(readAllOrders()[0], 'bank_transfer', new Date('2026-11-20T16:59:00.000Z'));
+    expect(paid).not.toBeNull();
+    expect(paid?.status).toBe('paid');
+    expect(paid?.voucherVersion).toBe(1);
+    expect(paid?.paymentMethod).toBe('bank_transfer');
+  });
+
+  it('writes one timeline event, one audit row and one traveler notice per status change', () => {
+    const order = baseOrder();
+    writeAllOrders([order]);
+    const at = new Date('2026-11-20T06:00:00.000Z');
+
+    const accepted = {
+      ...order,
+      status: 'accepted' as const,
+      acceptedAt: at.toISOString(),
+      paymentDeadline: paymentDeadlineFor(at),
+      events: [...order.events, { at: at.toISOString(), from: 'requested' as const, to: 'accepted' as const, actor: 'staff' as const, note: '' }],
+    };
+    writeAllOrders([accepted]);
+    deliverRentalNotices(accepted, 'accepted', at, 'requested');
+
+    expect(accepted.events).toHaveLength(order.events.length + 1);
+    const rows = readRentalAudit().filter((entry) => entry.orderCode === order.requestCode && entry.changes.some((change) => change.field === 'status'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].changes[0]).toMatchObject({ from: 'requested', to: 'accepted' });
+    expect(readTravelerNotices(order.userId).map((notice) => notice.kind)).toEqual(['accepted']);
+  });
+
+  it('keeps an existing order’s total when the catalog rate changes (acceptance 8)', () => {
+    const NOW2 = new Date('2026-11-20T03:00:00.000Z');
+    const tomorrow = addDaysToDay(myanmarToday(NOW2), 1);
+    const built = buildRentalOrder(
+      { ...baseOrder({ startDate: tomorrow, endDate: addDaysToDay(tomorrow, 2) }) } as RentalOrderInput,
+      DEFAULT_RENTAL_CATALOG,
+      [],
+      NOW2,
+    );
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    const stored = built.order;
+
+    // Reprice the bicycle in a copy of the catalog, the way Rental Admin would.
+    const repriced = {
+      ...DEFAULT_RENTAL_CATALOG,
+      types: DEFAULT_RENTAL_CATALOG.types.map((type) =>
+        type.id === 'bicycle' ? { ...type, rateUsd: 99, foreignRateUsd: 120 } : type,
+      ),
+    };
+    const nowQuote = quoteRentalOrder({ ...stored }, repriced);
+    expect(nowQuote.rateUsd).toBe(99);
+
+    // The order still carries the price it was booked at.
+    expect(stored.rateUsd).toBe(8);
+    expect(stored.totalUsd).toBe(24);
+    expect(orderTotalUsd(stored)).toBe(24);
   });
 });

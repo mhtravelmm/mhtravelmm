@@ -6,7 +6,7 @@ import { useAuth } from '../../lib/auth';
 
 export function AdminLoginPage() {
   const { t } = useLanguage();
-  const { loginAdmin, isAuthenticated, isSuperAdmin, isShopOwner, isContentAdmin } = useAuth();
+  const { loginAdmin, isAuthenticated, isSuperAdmin, isShopOwner, isAdminStaff } = useAuth();
   const navigate = useNavigate();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -15,8 +15,8 @@ export function AdminLoginPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) navigate(isSuperAdmin || isContentAdmin ? '/super-admin' : isShopOwner ? '/shop-owner' : '/account', { replace: true });
-  }, [isAuthenticated, isShopOwner, isSuperAdmin, isContentAdmin, navigate]);
+    if (isAuthenticated) navigate(isSuperAdmin || isAdminStaff ? '/super-admin' : isShopOwner ? '/shop-owner' : '/account', { replace: true });
+  }, [isAuthenticated, isShopOwner, isSuperAdmin, isAdminStaff, navigate]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();

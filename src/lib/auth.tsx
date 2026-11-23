@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { isSupabaseConfigured, supabase } from './supabase';
 import type { AdminRole } from './adminRoles';
+import { adminRoleFrom, normalizeStoredRole } from './roleMapping';
 
-export type AuthRole = 'traveler' | 'super_admin' | 'owner_admin' | 'content_admin';
+export type AuthRole = 'traveler' | 'super_admin' | 'owner_admin' | 'admin_staff';
 export type OAuthProvider = 'google' | 'facebook';
 
 export interface AuthUser {
@@ -25,7 +26,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isSuperAdmin: boolean;
   isShopOwner: boolean;
-  isContentAdmin: boolean;
+  isAdminStaff: boolean;
   adminRole: AdminRole | undefined;
   createAdminAccount: (input: { name: string; email: string; role: AdminRole; password: string }) => Promise<AuthResult>;
   login: (identifier: string, password: string) => Promise<AuthResult>;
@@ -54,7 +55,9 @@ function readUsers(): StoredUser[] {
   if (typeof window === 'undefined') return [DEMO_ADMIN];
   try {
     const stored = window.localStorage.getItem(USERS_KEY);
-    const users = stored ? (JSON.parse(stored) as StoredUser[]) : [];
+    const users = (stored ? (JSON.parse(stored) as StoredUser[]) : []).map((user) =>
+      normalizeStoredRole(user.role) === 'admin_staff' ? { ...user, role: 'admin_staff' as const } : user,
+    );
     if (!users.some((user) => user.email === DEMO_ADMIN.email)) users.unshift(DEMO_ADMIN);
     return users;
   } catch {
@@ -64,11 +67,27 @@ function readUsers(): StoredUser[] {
 
 function saveUsers(users: StoredUser[]) { window.localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
 function publicUser(user: StoredUser): AuthUser { const safeUser = { ...user }; Reflect.deleteProperty(safeUser, 'password'); return safeUser; }
-function readSession(): AuthUser | null { if (typeof window === 'undefined') return null; try { const stored = window.localStorage.getItem(SESSION_KEY); return stored ? (JSON.parse(stored) as AuthUser) : null; } catch { return null; } }
+function readSession(): AuthUser | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = window.localStorage.getItem(SESSION_KEY);
+    if (!stored) return null;
+    const session = JSON.parse(stored) as AuthUser;
+    if (normalizeStoredRole(session.role) === 'admin_staff') session.role = 'admin_staff';
+    return session;
+  } catch {
+    return null;
+  }
+}
 function emitAuthChange() { window.dispatchEvent(new Event(AUTH_EVENT)); }
 function clearLocalSession() { window.localStorage.removeItem(SESSION_KEY); window.localStorage.removeItem('mh-travel-authenticated'); }
 function mapRole(value: unknown): AuthRole {
-  return value === 'super_admin' || value === 'owner_admin' || value === 'content_admin' ? value : 'traveler';
+  const role = adminRoleFrom(value);
+  if (role === 'Super Admin') return 'super_admin';
+  if (role === 'Owner Admin') return 'owner_admin';
+  // Plan §3: the remaining six product roles share the admin workspace, so any
+  // recognised staff role signs in as one instead of falling back to `traveler`.
+  return role ? 'admin_staff' : 'traveler';
 }
 function setLocalSession(user: StoredUser, setUser: (user: AuthUser) => void) { const safeUser = publicUser(user); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); }
 
@@ -95,6 +114,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: profile?.username || authUser.user_metadata?.username || authUser.email?.split('@')[0] || `traveler_${authUser.id.slice(0, 8)}`,
         email: authUser.email || '',
         role: mapRole(profile?.role),
+        // Plan §3: the product role scopes the admin workspace, so it has to
+        // come from the profile row; the slug alone cannot say which sections
+        // a staff account may open.
+        adminRole: adminRoleFrom(profile?.role),
         createdAt: profile?.created_at || authUser.created_at,
       };
       window.localStorage.setItem(SESSION_KEY, JSON.stringify(hydrated));
@@ -115,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: Boolean(user),
     isSuperAdmin: user?.role === 'super_admin',
     isShopOwner: user?.role === 'owner_admin',
-    isContentAdmin: user?.role === 'content_admin',
+    isAdminStaff: user?.role === 'admin_staff',
     adminRole: user?.adminRole,
     async login(identifier, password) {
       const normalizedIdentifier = identifier.trim().toLowerCase();
@@ -139,13 +162,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: email.split('@')[0],
         email,
         password: input.password,
-        role: 'content_admin',
+        role: 'admin_staff',
         adminRole: input.role,
         createdAt: new Date().toISOString(),
       };
       users.push(created);
       saveUsers(users);
-      return { ok: true, role: 'content_admin' };
+      return { ok: true, role: 'admin_staff' };
     },
     async loginAdmin(identifier, password) {
       const normalizedIdentifier = identifier.trim().toLowerCase();
@@ -153,7 +176,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedIdentifier, password });
         if (!error && data.user) {
           const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).maybeSingle();
-          if (profile?.role === 'super_admin' || profile?.role === 'owner_admin' || profile?.role === 'content_admin') return { ok: true, role: profile.role };
+          const staffRole = adminRoleFrom(profile?.role);
+          if (staffRole) return { ok: true, role: mapRole(profile?.role) };
           await supabase.auth.signOut();
           return { ok: false, message: 'auth_admin_required' };
         }

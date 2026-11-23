@@ -69,9 +69,11 @@ function LegacyBlogRedirect() {
 }
 
 function RequireSuperAdmin() {
-  const { isAuthenticated, isSuperAdmin, isContentAdmin } = useAuth();
+  const { isAuthenticated, isSuperAdmin, isAdminStaff, adminRole } = useAuth();
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
-  if (!isSuperAdmin && !isContentAdmin) return <Navigate to="/account" replace />;
+  // Plan §16B.1: the workspace is scoped by the product role, so a staff
+  // account without one has nothing it may open and must not see the shell.
+  if (!isSuperAdmin && (!isAdminStaff || !adminRole)) return <Navigate to="/account" replace />;
   return <SuperAdminPage />;
 }
 
