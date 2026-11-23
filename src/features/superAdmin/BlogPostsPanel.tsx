@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { ArrowDown, ArrowUp, CalendarDays, Edit3, Eye, ImagePlus, Megaphone, Plus, Search, Send, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, Edit3, Eye, EyeOff, ImagePlus, Megaphone, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
 import {
   actionForSave,
@@ -18,6 +18,12 @@ import {
   type AdminPost,
 } from '../../lib/contentStore';
 import { formatScheduleLabel, myanmarWallClockToUtc, utcToMyanmarWallClock } from '../../lib/scheduleRules';
+import {
+  isStaleSave,
+  restorePost,
+  softDeletePost,
+  unpublishPost,
+} from '../../lib/contentLifecycle';
 import {
   adSlotProblem,
   blogPublishCheck,
@@ -126,6 +132,9 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
   const [statusFilter, setStatusFilter] = useState<'All' | BlogPostStatus>('All');
   const [notice, setNotice] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingVersion, setEditingVersion] = useState(0);
+  const [restoredFrom, setRestoredFrom] = useState<string | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [revisions, setRevisions] = useRevisions<FormState>('blog');
   const [audit, setAudit] = useContentAudit('blog');
@@ -147,6 +156,9 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
 
   function openNew() {
     setEditingId(null);
+    setEditingVersion(0);
+    setRestoredFrom(null);
+    setConflict(false);
     setForm({ ...emptyForm, blocks: [createTextBlock()] });
     setShowEditor(true);
   }
@@ -158,6 +170,9 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
     const date = wall?.date ?? '';
     const time = wall?.time ?? '';
     setEditingId(post.id);
+    setEditingVersion(post.version);
+    setRestoredFrom(null);
+    setConflict(false);
     setForm({
       ...emptyForm,
       titleEn: post.titleEn,
@@ -175,6 +190,18 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
     setShowEditor(true);
   }
 
+  /** Plan §10 §4 Concurrency: Reload takes the row as the other editor left it. */
+  function reloadAfterConflict() {
+    const row = editingId ? posts.find((post) => post.id === editingId) : undefined;
+    setConflict(false);
+    if (!row) {
+      setShowEditor(false);
+      return notify(t('cw_conflict_row_gone'));
+    }
+    openEdit(row);
+    notify(fill(t('cw_conflict_reloaded'), { title: row.titleEn }));
+  }
+
   function addCategory(label: string) {
     const slug = label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
     if (!slug || slug.length < 2) return notify(t('bp_category_too_short'));
@@ -188,6 +215,15 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    const existing = editingId ? posts.find((post) => post.id === editingId) : undefined;
+    // Plan §10 §7 acceptance 5: the save carries the version it loaded, so a
+    // second editor cannot silently overwrite the first one's work.
+    if (isStaleSave(existing, editingVersion)) {
+      // The notice sits under the overlay, so the editor itself has to carry
+      // the refusal and the Reload that Plan §10 §4 asks for.
+      setConflict(true);
+      return notify(problemMessage(t, { code: 'version_conflict' }));
+    }
     const check = blogPublishCheck({
       status: form.status,
       titleEn: form.titleEn,
@@ -230,9 +266,11 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       // time arrives, so the table never shows a future post as published.
       publishedAt: form.status === 'Published'
         ? now
-        : (posts.find((post) => post.id === editingId)?.publishedAt ?? ''),
+        : (existing?.publishedAt ?? ''),
       scheduledFor,
-      views: editingId ? (posts.find((post) => post.id === editingId)?.views ?? 0) : 0,
+      deletedAt: existing?.deletedAt ?? null,
+      version: (existing?.version ?? 0) + 1,
+      views: existing?.views ?? 0,
       updatedAt: now,
     };
 
@@ -247,7 +285,7 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
     setAudit((current) => appendAudit(current, {
       id: `audit-${Date.now()}`,
       contentId: id,
-      action: actionForSave(next.status, !editingId),
+      action: restoredFrom ? 'restored' : actionForSave(next.status, !editingId),
       at: new Date().toISOString(),
       actor: 'Super Admin',
     }));
@@ -261,7 +299,72 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
       source: 'content',
     });
     setShowEditor(false);
+    setRestoredFrom(null);
     notify(form.status === 'Published' ? t('bp_notice_published') : form.status === 'Scheduled' ? t('bp_notice_scheduled') : t('bp_notice_draft'));
+  }
+
+  /**
+   * Plan §10 §4 Unpublish: back to Draft, with the publish date cleared so the
+   * reader stops showing it as live and the table stops claiming a date.
+   */
+  function unpublish(post: AdminPost) {
+    setPosts((current) => current.map((item) => (item.id === post.id ? unpublishPost(item) : item)));
+    setAudit((current) => appendAudit(current, {
+      id: `audit-${Date.now()}`,
+      contentId: post.id,
+      action: 'unpublished',
+      at: new Date().toISOString(),
+      actor: 'Super Admin',
+    }));
+    recordAdminAction({
+      action: 'updated',
+      objectType: 'blog',
+      objectId: post.id,
+      summary: `${post.titleEn} · unpublished to Draft`,
+      source: 'content',
+    });
+    notify(fill(t('bp_notice_unpublished'), { title: post.titleEn }));
+  }
+
+  /** Plan §10 §4 Delete: soft delete, audited, and the reader drops it at once. */
+  function remove(post: AdminPost) {
+    setPosts((current) => current.map((item) => (item.id === post.id
+      ? softDeletePost(item, new Date().toISOString())
+      : item)));
+    setAudit((current) => appendAudit(current, {
+      id: `audit-${Date.now()}`,
+      contentId: post.id,
+      action: 'deleted',
+      at: new Date().toISOString(),
+      actor: 'Super Admin',
+    }));
+    recordAdminAction({
+      action: 'deleted',
+      objectType: 'blog',
+      objectId: post.id,
+      summary: `${post.titleEn} · deleted`,
+      source: 'content',
+    });
+    notify(fill(t('bp_notice_deleted'), { title: post.titleEn }));
+  }
+
+  function undelete(post: AdminPost) {
+    setPosts((current) => current.map((item) => (item.id === post.id ? restorePost(item) : item)));
+    setAudit((current) => appendAudit(current, {
+      id: `audit-${Date.now()}`,
+      contentId: post.id,
+      action: 'restored',
+      at: new Date().toISOString(),
+      actor: 'Super Admin',
+    }));
+    recordAdminAction({
+      action: 'updated',
+      objectType: 'blog',
+      objectId: post.id,
+      summary: `${post.titleEn} · restored from the deleted list`,
+      source: 'content',
+    });
+    notify(fill(t('bp_notice_undeleted'), { title: post.titleEn }));
   }
 
   function publish(post: AdminPost) {
@@ -284,6 +387,8 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
           status: 'Published',
           publishedAt: new Date().toISOString().slice(0, 10),
           scheduledFor: null,
+          deletedAt: null,
+          version: item.version + 1,
           updatedAt: new Date().toISOString().slice(0, 10),
         }
       : item)));
@@ -362,13 +467,14 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
             </thead>
             <tbody>
               {filteredPosts.map((post) => (
-                <tr key={post.id} className="border-t border-[#1d3a5c] text-slate-200">
+                <tr key={post.id} className={`border-t border-[#1d3a5c] text-slate-200 ${post.deletedAt ? 'opacity-55' : ''}`}>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">
                       <img src={post.imageUrl} alt="" className="h-9 w-14 rounded object-cover" />
                       <div>
                         <p className="font-semibold text-white">{post.titleEn}</p>
                         <p className="text-[9px] text-slate-500">{fill(t('bp_gallery_count'), { count: post.galleryUrls.length })}</p>
+                        {post.deletedAt && <p className="text-[9px] text-red-300">{t('cw_deleted_marker')}</p>}
                       </div>
                     </div>
                   </td>
@@ -385,9 +491,13 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
                       <button type="button" onClick={() => openEdit(post)} className="rounded p-1.5 text-slate-300 hover:bg-white/10 hover:text-cyan-300" aria-label={fill(t('bp_aria_edit'), { title: post.titleEn })}><Edit3 size={14} /></button>
-                      {post.status !== 'Published' && (
+                      {post.status !== 'Published' && !post.deletedAt && (
                         <button type="button" onClick={() => publish(post)} className="rounded p-1.5 text-green-300 hover:bg-white/10" aria-label={fill(t('bp_aria_publish'), { title: post.titleEn })}><Send size={14} /></button>
                       )}
+                      {post.status === 'Published' && !post.deletedAt && (
+                        <button type="button" onClick={() => unpublish(post)} className="rounded p-1.5 text-amber-300 hover:bg-white/10" aria-label={fill(t('bp_aria_unpublish'), { title: post.titleEn })}><EyeOff size={14} /></button>
+                      )}
+                      <button type="button" onClick={() => (post.deletedAt ? undelete(post) : remove(post))} className={`rounded p-1.5 hover:bg-white/10 ${post.deletedAt ? 'text-cyan-300' : 'text-red-300'}`} aria-label={fill(t(post.deletedAt ? 'bp_aria_undelete' : 'bp_aria_delete'), { title: post.titleEn })}><Trash2 size={14} /></button>
                       <button type="button" onClick={() => runAction(`${t('bp_aria_preview')} ${post.titleEn}`)} className="rounded p-1.5 text-slate-300 hover:bg-white/10 hover:text-cyan-300" aria-label={fill(t('bp_aria_preview'), { title: post.titleEn })}><Eye size={14} /></button>
                     </div>
                   </td>
@@ -411,14 +521,19 @@ export function BlogPostsPanel({ runAction }: { runAction: (label: string) => vo
           update={update}
           history={editingId ? revisionsFor(revisions, editingId) : []}
           auditTrail={editingId ? auditFor(audit, editingId) : []}
-          onRestore={(snapshot) => setForm(snapshot)}
+          onRestore={(snapshot, revisionId) => {
+            setForm(snapshot);
+            setRestoredFrom(revisionId);
+          }}
+          conflict={conflict}
+          onReload={reloadAfterConflict}
         />
       )}
     </div>
   );
 }
 
-function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClose, onSubmit, update, history, auditTrail, onRestore }: {
+function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClose, onSubmit, update, history, auditTrail, onRestore, conflict, onReload }: {
   form: FormState;
   editing: boolean;
   categories: string[];
@@ -429,7 +544,9 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
   update: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
   history: Revision<FormState>[];
   auditTrail: AuditEntry[];
-  onRestore: (snapshot: FormState) => void;
+  onRestore: (snapshot: FormState, revisionId: string) => void;
+  conflict: boolean;
+  onReload: () => void;
 }) {
   const { t } = useLanguage();
   const [uploading, setUploading] = useState(false);
@@ -637,11 +754,18 @@ function Editor({ form, editing, categories, categoryLabel, onAddCategory, onClo
                     {history.slice(0, 3).map((revision) => (
                       <div key={revision.id} className="flex items-center justify-between gap-2 rounded bg-[#081a31] px-1.5 py-1">
                         <span className="text-[9px] text-slate-400">{revision.status} · {revision.savedAt.slice(0, 16).replace('T', ' ')}</span>
-                        <button type="button" onClick={() => onRestore(revision.snapshot)} className="rounded border border-cyan-300/40 px-1.5 py-0.5 text-[9px] font-bold text-cyan-200">{t('cw_restore')}</button>
+                        <button type="button" onClick={() => onRestore(revision.snapshot, revision.id)} className="rounded border border-cyan-300/40 px-1.5 py-0.5 text-[9px] font-bold text-cyan-200">{t('cw_restore')}</button>
                       </div>
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {conflict && (
+              <div role="alert" className="rounded-md border border-red-400/40 bg-red-500/10 px-2.5 py-2 text-[10px] text-red-100">
+                <p className="font-bold">{t('cw_problem_version_conflict')}</p>
+                <button type="button" onClick={onReload} className="mt-1.5 rounded border border-red-300/50 px-2 py-1 text-[10px] font-bold text-red-100 hover:bg-red-500/20">{t('cw_conflict_reload')}</button>
               </div>
             )}
 

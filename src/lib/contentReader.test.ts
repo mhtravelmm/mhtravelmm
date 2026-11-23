@@ -115,6 +115,36 @@ describe('what the reader is allowed to see', () => {
   });
 });
 
+describe('a withdrawn story (Plan §10 §4 Unpublish and Delete)', () => {
+  it('drops a soft-deleted admin post from the reader', () => {
+    const posts = [post({ deletedAt: '2026-11-24T10:00:00.000Z' })];
+    expect(publishedBlogPosts(posts, BLOG_POSTS).some((item) => item.id === 'admin-post')).toBe(false);
+  });
+
+  it('takes a seeded story off the reader once Admin unpublishes it', () => {
+    const seed = BLOG_POSTS[0];
+    const posts = [post({ id: seed.id, status: 'Draft' })];
+    expect(publishedBlogPosts(posts, BLOG_POSTS).some((item) => item.id === seed.id)).toBe(false);
+  });
+
+  it('takes a seeded story off the reader once Admin deletes it', () => {
+    const seed = BLOG_POSTS[0];
+    const posts = [post({ id: seed.id, deletedAt: '2026-11-24T10:00:00.000Z' })];
+    expect(publishedBlogPosts(posts, BLOG_POSTS).some((item) => item.id === seed.id)).toBe(false);
+  });
+
+  it('drops a soft-deleted guide from the reader', () => {
+    const guides = [guide({ deletedAt: '2026-11-24T10:00:00.000Z' })];
+    expect(publishedGuides(guides, TRAVEL_GUIDE_STORIES).some((item) => item.id === 'admin-guide')).toBe(false);
+  });
+
+  it('takes a seeded guide off the reader once Admin deletes it', () => {
+    const seed = TRAVEL_GUIDE_STORIES[0];
+    const guides = [guide({ id: seed.id, deletedAt: '2026-11-24T10:00:00.000Z' })];
+    expect(publishedGuides(guides, TRAVEL_GUIDE_STORIES).some((item) => item.id === seed.id)).toBe(false);
+  });
+});
+
 describe('an admin post as a reader story', () => {
   it('turns editor blocks into the reader blocks, in order', () => {
     const story = adminPostToReader(post({

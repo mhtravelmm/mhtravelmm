@@ -8,7 +8,7 @@ import type { TranslationKey } from './i18n';
 
 export type ContentKind = 'blog' | 'guide';
 
-export type ContentAction = 'created' | 'saved' | 'published' | 'scheduled' | 'restored';
+export type ContentAction = 'created' | 'saved' | 'published' | 'scheduled' | 'restored' | 'unpublished' | 'deleted';
 
 export interface Revision<T> {
   id: string;
@@ -61,6 +61,8 @@ export function actionLabelKey(action: ContentAction): TranslationKey {
     case 'published': return 'cw_action_published';
     case 'scheduled': return 'cw_action_scheduled';
     case 'restored': return 'cw_action_restored';
+    case 'unpublished': return 'cw_action_unpublished';
+    case 'deleted': return 'cw_action_deleted';
     default: return 'cw_action_saved';
   }
 }

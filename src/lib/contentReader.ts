@@ -119,8 +119,14 @@ export function adminPostToReader(post: AdminPost, taken: Set<string>): BlogPost
 export function publishedBlogPosts(posts: AdminPost[], seeds: BlogPost[]): BlogPost[] {
   const seedById = new Map(seeds.map((seed) => [seed.id, seed]));
   const taken = new Set(seeds.map((seed) => seed.slug));
-  const published = posts.filter((post) => post.status === 'Published');
+  const published = posts.filter((post) => post.status === 'Published' && !post.deletedAt);
   const overriding = new Set(published.filter((post) => seedById.has(post.id)).map((post) => post.id));
+  // Plan §10 §4 Unpublish and Delete: a stored row that is no longer published,
+  // or is soft-deleted, takes its seeded story off the reader too. Without this
+  // an Admin who unpublished a seed would still see it live on /blogs.
+  const withdrawn = new Set(posts
+    .filter((post) => seedById.has(post.id) && (post.status !== 'Published' || Boolean(post.deletedAt)))
+    .map((post) => post.id));
 
   // A seed Admin has taken over keeps its slug (fixed after first publish, so a
   // shared link keeps working) and its rating, distance and favourites, which
@@ -143,7 +149,7 @@ export function publishedBlogPosts(posts: AdminPost[], seeds: BlogPost[]): BlogP
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .map((post) => adminPostToReader(post, taken));
 
-  const keptSeeds = seeds.filter((seed) => !overriding.has(seed.id));
+  const keptSeeds = seeds.filter((seed) => !overriding.has(seed.id) && !withdrawn.has(seed.id));
   return [...replaced, ...added, ...keptSeeds];
 }
 
@@ -193,8 +199,11 @@ export function adminGuideToReader(guide: AdminGuide): TravelGuideStory {
 /** Published guides, with a seeded guide replaced when the editor has taken it over. */
 export function publishedGuides(guides: AdminGuide[], seeds: TravelGuideStory[]): TravelGuideStory[] {
   const seedIds = new Set(seeds.map((seed) => seed.id));
-  const published = guides.filter((guide) => guide.status === 'Published');
+  const published = guides.filter((guide) => guide.status === 'Published' && !guide.deletedAt);
   const overriding = new Set(published.filter((guide) => seedIds.has(guide.id)).map((guide) => guide.id));
+  const withdrawn = new Set(guides
+    .filter((guide) => seedIds.has(guide.id) && (guide.status !== 'Published' || Boolean(guide.deletedAt)))
+    .map((guide) => guide.id));
 
   // A seed guide keeps its rating and distance, which the editor does not
   // collect; a reader would see them drop to zero the moment Admin edits it.
@@ -210,6 +219,6 @@ export function publishedGuides(guides: AdminGuide[], seeds: TravelGuideStory[])
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .map(adminGuideToReader);
 
-  const keptSeeds = seeds.filter((seed) => !overriding.has(seed.id));
+  const keptSeeds = seeds.filter((seed) => !overriding.has(seed.id) && !withdrawn.has(seed.id));
   return [...replaced, ...added, ...keptSeeds];
 }

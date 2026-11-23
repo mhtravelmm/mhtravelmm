@@ -21,7 +21,8 @@ export type PublishProblemCode =
   | 'stop_time_order'
   | 'ad_first'
   | 'ad_adjacent'
-  | 'ad_max';
+  | 'ad_max'
+  | 'version_conflict';
 
 export type PublishProblem = { code: PublishProblemCode; count?: number };
 
@@ -42,4 +43,5 @@ export const PUBLISH_PROBLEM_KEYS: Record<PublishProblemCode, TranslationKey> = 
   ad_first: 'cw_problem_ad_first',
   ad_adjacent: 'cw_problem_ad_adjacent',
   ad_max: 'cw_problem_ad_max',
+  version_conflict: 'cw_problem_version_conflict',
 };

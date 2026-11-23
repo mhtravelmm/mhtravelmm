@@ -127,6 +127,35 @@ describe('publish_due_content (Plan §16B.7, §10 §4)', () => {
     expect(feed[0].href).toBe('/travel-guide/guide-scheduled');
   });
 
+  it('does not resurrect a deleted post whose schedule came due', () => {
+    const posts = seedPosts();
+    posts.unshift({
+      ...seedPosts()[0],
+      id: 'deleted-1',
+      status: 'Scheduled',
+      publishedAt: '',
+      scheduledFor: '2026-11-25T02:30:00.000Z',
+      deletedAt: '2026-11-24T10:00:00.000Z',
+    });
+    writeBlogPosts(posts);
+
+    expect(publishDueContent(at('2026-11-26T00:00:00.000Z')).blog).toBe(0);
+    const row = readBlogPosts().find((post) => post.id === 'deleted-1');
+    // Skipped, not dropped: the row keeps its delete marker for the audit trail.
+    expect(row?.deletedAt).toBe('2026-11-24T10:00:00.000Z');
+    expect(row?.status).toBe('Scheduled');
+  });
+
+  it('bumps the version when the job publishes, so an open editor is told it is stale', () => {
+    const base = seedPosts()[0];
+    writeBlogPosts([
+      { ...base, id: 'scheduled-version', status: 'Scheduled', publishedAt: '', version: 3, scheduledFor: '2026-11-25T02:30:00.000Z' },
+    ]);
+
+    publishDueContent(at('2026-11-25T02:30:00.000Z'));
+    expect(readBlogPosts().find((post) => post.id === 'scheduled-version')?.version).toBe(4);
+  });
+
   it('never publishes a draft, even one carrying a schedule', () => {
     const posts = seedPosts();
     posts.unshift({

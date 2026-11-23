@@ -79,10 +79,11 @@ export function publishDueItems<T extends ScheduledItem>(
   items: T[],
   now: Date,
   markPublished: (item: T) => T,
+  isEligible: (item: T) => boolean = () => true,
 ): { items: T[]; published: T[] } {
   const published: T[] = [];
   const next = items.map((item) => {
-    if (item.status !== 'Scheduled' || !isDue(item.scheduledFor, now)) return item;
+    if (item.status !== 'Scheduled' || !isEligible(item) || !isDue(item.scheduledFor, now)) return item;
     const done = markPublished(item);
     published.push(done);
     return done;

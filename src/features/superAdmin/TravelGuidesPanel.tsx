@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, ImagePlus, Plus, Search, Send, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CalendarDays, Compass, Edit3, EyeOff, ImagePlus, Plus, Search, Send, Trash2, X } from 'lucide-react';
 import { LISTING_IDS, LISTING_INDEX, listingTitle } from '../../data/listingIndex';
 import type { GuideCategory } from '../../data/travelGuideData';
 import { uploadContentImage, type MediaErrorCode } from '../../lib/mediaApi';
@@ -21,6 +21,12 @@ import {
   type AdminGuide,
 } from '../../lib/contentStore';
 import { formatScheduleLabel, myanmarWallClockToUtc, utcToMyanmarWallClock } from '../../lib/scheduleRules';
+import {
+  isStaleSave,
+  restoreGuide,
+  softDeleteGuide,
+  unpublishGuide,
+} from '../../lib/contentLifecycle';
 import {
   createStop,
   guidePublishCheck,
@@ -87,6 +93,9 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
   const [guides, setGuides] = useGuides();
   const [draft, setDraft] = useState<GuideDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingVersion, setEditingVersion] = useState(0);
+  const [restoredFrom, setRestoredFrom] = useState<string | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState('');
@@ -109,6 +118,9 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
 
   function openNew() {
     setEditingId(null);
+    setEditingVersion(0);
+    setRestoredFrom(null);
+    setConflict(false);
     setDraft({ ...emptyDraft, stops: [createStop()] });
     setShowEditor(true);
   }
@@ -118,6 +130,9 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       ? utcToMyanmarWallClock(guide.scheduledFor)
       : null;
     setEditingId(guide.id);
+    setEditingVersion(guide.version);
+    setRestoredFrom(null);
+    setConflict(false);
     setDraft({
       titleEn: guide.titleEn,
       titleMm: guide.titleMm,
@@ -136,6 +151,12 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
 
   function save(event: FormEvent) {
     event.preventDefault();
+    const existing = editingId ? guides.find((guide) => guide.id === editingId) : undefined;
+    // Plan §10 §7 acceptance 5: the same version guard as Blog.
+    if (isStaleSave(existing, editingVersion)) {
+      setConflict(true);
+      return notify(problemMessage(t, { code: 'version_conflict' }));
+    }
     const check = guidePublishCheck(draft, LISTING_IDS);
     if (draft.status !== 'Draft' && !check.ok) return notify(problemMessage(t, check.problems[0]));
     // Plan §10 §4: Myanmar Time in, UTC stored, same rule as Blog.
@@ -151,9 +172,11 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       id: editingId ?? `guide-${Date.now()}`,
       publishedAt: draft.status === 'Published'
         ? now
-        : (guides.find((guide) => guide.id === editingId)?.publishedAt ?? ''),
+        : (existing?.publishedAt ?? ''),
       scheduledFor,
-      views: editingId ? (guides.find((guide) => guide.id === editingId)?.views ?? 0) : 0,
+      deletedAt: existing?.deletedAt ?? null,
+      version: (existing?.version ?? 0) + 1,
+      views: existing?.views ?? 0,
     };
     setGuides((current) => (editingId ? current.map((guide) => (guide.id === editingId ? next : guide)) : [next, ...current]));
     setRevisions((current) => recordRevision(current, {
@@ -166,7 +189,7 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     setAudit((current) => appendAudit(current, {
       id: `audit-${Date.now()}`,
       contentId: next.id,
-      action: actionForSave(next.status, !editingId),
+      action: restoredFrom ? 'restored' : actionForSave(next.status, !editingId),
       at: new Date().toISOString(),
       actor: draft.author || 'Travel Guide Content Admin',
     }));
@@ -190,7 +213,78 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
       });
     }
     setShowEditor(false);
+    setRestoredFrom(null);
     notify(draft.status === 'Published' ? t('tg_notice_published') : draft.status === 'Scheduled' ? t('tg_notice_scheduled') : t('tg_notice_draft'));
+  }
+
+  function reloadAfterConflict() {
+    const row = editingId ? guides.find((guide) => guide.id === editingId) : undefined;
+    setConflict(false);
+    if (!row) {
+      setShowEditor(false);
+      return notify(t('cw_conflict_row_gone'));
+    }
+    openEdit(row);
+    notify(fill(t('cw_conflict_reloaded'), { title: row.titleEn }));
+  }
+
+  function unpublish(guide: AdminGuide) {
+    setGuides((current) => current.map((item) => (item.id === guide.id ? unpublishGuide(item) : item)));
+    setAudit((current) => appendAudit(current, {
+      id: `audit-${Date.now()}`,
+      contentId: guide.id,
+      action: 'unpublished',
+      at: new Date().toISOString(),
+      actor: guide.author,
+    }));
+    recordAdminAction({
+      action: 'updated',
+      objectType: 'guide',
+      objectId: guide.id,
+      summary: `${guide.titleEn} · unpublished to Draft`,
+      source: 'content',
+    });
+    notify(fill(t('tg_notice_unpublished'), { title: guide.titleEn }));
+  }
+
+  function remove(guide: AdminGuide) {
+    setGuides((current) => current.map((item) => (item.id === guide.id
+      ? softDeleteGuide(item, new Date().toISOString())
+      : item)));
+    setAudit((current) => appendAudit(current, {
+      id: `audit-${Date.now()}`,
+      contentId: guide.id,
+      action: 'deleted',
+      at: new Date().toISOString(),
+      actor: guide.author,
+    }));
+    recordAdminAction({
+      action: 'deleted',
+      objectType: 'guide',
+      objectId: guide.id,
+      summary: `${guide.titleEn} · deleted`,
+      source: 'content',
+    });
+    notify(fill(t('tg_notice_deleted'), { title: guide.titleEn }));
+  }
+
+  function undelete(guide: AdminGuide) {
+    setGuides((current) => current.map((item) => (item.id === guide.id ? restoreGuide(item) : item)));
+    setAudit((current) => appendAudit(current, {
+      id: `audit-${Date.now()}`,
+      contentId: guide.id,
+      action: 'restored',
+      at: new Date().toISOString(),
+      actor: guide.author,
+    }));
+    recordAdminAction({
+      action: 'updated',
+      objectType: 'guide',
+      objectId: guide.id,
+      summary: `${guide.titleEn} · restored from the deleted list`,
+      source: 'content',
+    });
+    notify(fill(t('tg_notice_undeleted'), { title: guide.titleEn }));
   }
 
   function publish(guide: AdminGuide) {
@@ -198,7 +292,14 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
     const seededWithoutListings = guide.stops.length > 0 && guide.stops.every((stop) => !stop.listingId);
     if (!check.ok && !seededWithoutListings) return notify(problemMessage(t, check.problems[0]));
     setGuides((current) => current.map((item) => (item.id === guide.id
-      ? { ...item, status: 'Published', publishedAt: new Date().toISOString().slice(0, 10), scheduledFor: null }
+      ? {
+          ...item,
+          status: 'Published',
+          publishedAt: new Date().toISOString().slice(0, 10),
+          scheduledFor: null,
+          deletedAt: null,
+          version: item.version + 1,
+        }
       : item)));
     setAudit((current) => appendAudit(current, {
       id: `audit-${Date.now()}`,
@@ -262,11 +363,14 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
             </thead>
             <tbody>
               {filtered.map((guide) => (
-                <tr key={guide.id} className="border-t border-[#1d3a5c] text-slate-200">
+                <tr key={guide.id} className={`border-t border-[#1d3a5c] text-slate-200 ${guide.deletedAt ? 'opacity-55' : ''}`}>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">
                       <img src={guide.coverUrl} alt="" className="h-9 w-14 rounded object-cover" />
-                      <p className="font-semibold text-white">{guide.titleEn}</p>
+                      <div>
+                        <p className="font-semibold text-white">{guide.titleEn}</p>
+                        {guide.deletedAt && <p className="text-[9px] text-red-300">{t('cw_deleted_marker')}</p>}
+                      </div>
                     </div>
                   </td>
                   <td className="px-2 py-2.5 text-slate-400">{t(CATEGORY_KEYS[guide.category])}</td>
@@ -281,7 +385,9 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
                   <td className="px-3 py-2.5">
                     <div className="flex gap-1">
                       <button type="button" onClick={() => openEdit(guide)} className="rounded p-1.5 text-slate-300 hover:bg-white/10 hover:text-cyan-300" aria-label={fill(t('tg_aria_edit'), { title: guide.titleEn })}><Edit3 size={14} /></button>
-                      {guide.status !== 'Published' && <button type="button" onClick={() => publish(guide)} className="rounded p-1.5 text-green-300 hover:bg-white/10" aria-label={fill(t('tg_aria_publish'), { title: guide.titleEn })}><Send size={14} /></button>}
+                      {guide.status !== 'Published' && !guide.deletedAt && <button type="button" onClick={() => publish(guide)} className="rounded p-1.5 text-green-300 hover:bg-white/10" aria-label={fill(t('tg_aria_publish'), { title: guide.titleEn })}><Send size={14} /></button>}
+                      {guide.status === 'Published' && !guide.deletedAt && <button type="button" onClick={() => unpublish(guide)} className="rounded p-1.5 text-amber-300 hover:bg-white/10" aria-label={fill(t('tg_aria_unpublish'), { title: guide.titleEn })}><EyeOff size={14} /></button>}
+                      <button type="button" onClick={() => (guide.deletedAt ? undelete(guide) : remove(guide))} className={`rounded p-1.5 hover:bg-white/10 ${guide.deletedAt ? 'text-cyan-300' : 'text-red-300'}`} aria-label={fill(t(guide.deletedAt ? 'tg_aria_undelete' : 'tg_aria_delete'), { title: guide.titleEn })}><Trash2 size={14} /></button>
                       <button type="button" onClick={() => runAction(`${t('tg_aria_preview')} ${guide.titleEn}`)} className="rounded p-1.5 text-slate-300 hover:bg-white/10 hover:text-cyan-300" aria-label={fill(t('tg_aria_preview'), { title: guide.titleEn })}><Compass size={14} /></button>
                     </div>
                   </td>
@@ -303,14 +409,19 @@ export function TravelGuidesPanel({ runAction }: { runAction: (label: string) =>
           onSubmit={save}
           history={editingId ? revisionsFor(revisions, editingId) : []}
           auditTrail={editingId ? auditFor(audit, editingId) : []}
-          onRestore={(snapshot) => setDraft(snapshot)}
+          onRestore={(snapshot, revisionId) => {
+            setDraft(snapshot);
+            setRestoredFrom(revisionId);
+          }}
+          conflict={conflict}
+          onReload={reloadAfterConflict}
         />
       )}
     </div>
   );
 }
 
-function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, history, auditTrail, onRestore }: {
+function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, history, auditTrail, onRestore, conflict, onReload }: {
   draft: GuideDraft;
   editing: boolean;
   onChange: <K extends keyof GuideDraft>(key: K, value: GuideDraft[K]) => void;
@@ -319,7 +430,9 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
   onSubmit: (event: FormEvent) => void;
   history: Revision<GuideDraft>[];
   auditTrail: AuditEntry[];
-  onRestore: (snapshot: GuideDraft) => void;
+  onRestore: (snapshot: GuideDraft, revisionId: string) => void;
+  conflict: boolean;
+  onReload: () => void;
 }) {
   const { t } = useLanguage();
   const [uploading, setUploading] = useState(false);
@@ -468,11 +581,18 @@ function GuideEditor({ draft, editing, onChange, onStops, onClose, onSubmit, his
                     {history.slice(0, 3).map((revision) => (
                       <div key={revision.id} className="flex items-center justify-between gap-2 rounded bg-[#081a31] px-1.5 py-1">
                         <span className="text-[9px] text-slate-400">{revision.status} · {revision.savedAt.slice(0, 16).replace('T', ' ')}</span>
-                        <button type="button" onClick={() => onRestore(revision.snapshot)} className="rounded border border-cyan-300/40 px-1.5 py-0.5 text-[9px] font-bold text-cyan-200">{t('cw_restore')}</button>
+                        <button type="button" onClick={() => onRestore(revision.snapshot, revision.id)} className="rounded border border-cyan-300/40 px-1.5 py-0.5 text-[9px] font-bold text-cyan-200">{t('cw_restore')}</button>
                       </div>
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {conflict && (
+              <div role="alert" className="rounded-md border border-red-400/40 bg-red-500/10 px-2.5 py-2 text-[10px] text-red-100">
+                <p className="font-bold">{t('cw_problem_version_conflict')}</p>
+                <button type="button" onClick={onReload} className="mt-1.5 rounded border border-red-300/50 px-2 py-1 text-[10px] font-bold text-red-100 hover:bg-red-500/20">{t('cw_conflict_reload')}</button>
               </div>
             )}
 

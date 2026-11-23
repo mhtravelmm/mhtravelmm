@@ -204,6 +204,15 @@ instead of owning the data, and `estimateRental()` is the one pricing function
 behind both the estimate panel and the submitted amount. The remaining gap is
 storage: the record is browser-local until the catalog tables exist.
 
+A sixth gap row is closed: Plan §10 §4 names Schedule, Unpublish, Delete and
+Restore, and §7 acceptance 5 asks that two editors on one post never overwrite
+each other. The first was wired earlier; the rest now live in
+`src/lib/contentLifecycle.ts` and are called from both Admin panels, with the
+reader dropping a withdrawn row and the seed it took over, and
+`20261124000100_content_lifecycle.sql` carrying the same `version + 1` rule on
+the server. The remaining gap is the same storage one as the other content
+rows: the guard is enforced in the browser until the migration is applied.
+
 A fifth row is closed: Plan §8.12 lists ten acceptance criteria for Rental and
 four of them were unenforced. Criteria 1, 5, 9 and 10 are now checked in the
 client preview — one order per submit, a voucher lookup scoped to the viewer

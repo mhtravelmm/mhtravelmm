@@ -38,6 +38,10 @@ export type AdminPost = {
   publishedAt: string;
   /** The UTC instant a Scheduled post goes live; null for Draft and Published. */
   scheduledFor: string | null;
+  /** Soft delete (Plan §10 §4): the row stays for the audit trail, the reader drops it. */
+  deletedAt: string | null;
+  /** Bumped on every save; a save carrying an older value is refused. */
+  version: number;
   views: number;
   updatedAt: string;
 };
@@ -47,6 +51,8 @@ export type AdminGuide = GuideDraft & {
   id: string;
   publishedAt: string;
   scheduledFor: string | null;
+  deletedAt: string | null;
+  version: number;
   views: number;
 };
 
@@ -100,6 +106,8 @@ export function seedPosts(): AdminPost[] {
     status: 'Published',
     publishedAt: post.publishedAt,
     scheduledFor: null,
+    deletedAt: null,
+    version: 1,
     views: post.views,
     updatedAt: post.publishedAt,
   }));
@@ -141,6 +149,8 @@ export function seedGuides(): AdminGuide[] {
     scheduledTime: '',
     publishedAt: guide.publishedAt,
     scheduledFor: null,
+    deletedAt: null,
+    version: 1,
     views: guide.views,
   }));
 }
@@ -165,6 +175,8 @@ function normalizePost(post: AdminPost): AdminPost {
     galleryUrls: Array.isArray(post.galleryUrls) ? post.galleryUrls : [],
     seoTags: post.seoTags ?? '',
     scheduledFor: Number.isNaN(new Date(scheduledFor ?? '').getTime()) ? null : scheduledFor,
+    deletedAt: post.deletedAt ?? null,
+    version: post.version ?? 1,
     views: post.views ?? 0,
     updatedAt: post.updatedAt ?? post.publishedAt,
   };
@@ -186,6 +198,8 @@ function normalizeGuide(guide: AdminGuide): AdminGuide {
     scheduledDate: guide.scheduledDate ?? '',
     scheduledTime: guide.scheduledTime ?? '',
     scheduledFor: Number.isNaN(new Date(scheduledFor ?? '').getTime()) ? null : scheduledFor,
+    deletedAt: guide.deletedAt ?? null,
+    version: guide.version ?? 1,
     views: guide.views ?? 0,
   };
 }

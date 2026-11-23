@@ -4,7 +4,8 @@
 **Verified against:** `main` plus the Rental catalog data module and Rental Admin
 panel, the per-account Favorites, notification, and review wiring, and the
 scheduled publishing seam that now sits between the Blog/Travel Guide editors
-and their readers; earlier baseline `ecb231f` covers the Blog and Travel Guide
+and their readers, with unpublish, soft delete, restore and the version guard
+that refuses a stale save; earlier baseline `ecb231f` covers the Blog and Travel Guide
 admin editors, admin-role accounts, the rental-category work of 20–22 November
 2026, and the same-day work on the guide route follower, the two owner
 dashboards, and the Foreign Tourist section.
@@ -1186,3 +1187,66 @@ image, location and author. A second reload published nothing and wrote no
 duplicate feed row. A future-dated post stayed invisible to the reader, and an
 Admin-authored guide appeared in `/travel-guide` and at
 `/travel-guide/<id>` with its stops in time order and a computed duration.
+
+## Unpublish, delete, restore and a stale save — Plan §10 §4, §7 acceptance 5–6, 24 November 2026
+
+The editor could publish and schedule, but Plan §10 §4 also names Unpublish,
+Delete and Restore, and §7 acceptance 5 asks that two editors saving one post
+never silently overwrite each other. Both panels now do all four.
+
+`src/lib/contentLifecycle.ts` holds the rules once, so Blog and Travel Guide
+cannot drift: `unpublishPost` / `unpublishGuide` return the row to `Draft` and
+clear `publishedAt` and `scheduledFor`; `softDeletePost` / `softDeleteGuide`
+set `deletedAt` and keep the row, its revisions and its audit trail;
+`restorePost` / `restoreGuide` clear that marker again. Every one of them bumps
+`version`, and `isStaleSave(row, loadedVersion)` is what makes a save from an
+older row detectable.
+
+`AdminPost` and `AdminGuide` gained `deletedAt` and `version`, filled in for a
+row stored before they existed. The Blog and Guide tables gained a delete
+button that becomes a restore button on a deleted row, an unpublish button on a
+published one, and a `Deleted` marker with a dimmed row, so the table still
+lists what Admin removed. Publish, unpublish and restore are hidden on a
+deleted row, so a stray click cannot bring it back half-way.
+
+The editor records the version it loaded. On save, a row that has moved on is
+refused with `cw_problem_version_conflict` and the editor shows its own banner
+with a `Reload` button, because the panel notice renders under the modal
+overlay. `Reload` reopens the row as the other editor left it, and a row that
+has since been deleted closes the editor with an explanation instead. A
+revision restored from the history is now recorded as `restored` in the audit
+trail rather than as a plain save, which is what §7 acceptance 6 describes.
+
+`src/lib/contentReader.ts` drops a soft-deleted row, and — the part that was
+easy to miss — also drops the *seed* a row has taken over when that row is no
+longer published. Without that, unpublishing or deleting a seeded story left it
+live on `/blogs` and `/travel-guide`, because the seed was never overridden by
+a published row and so fell through to the untouched-seed branch.
+
+`publish_due_content` skips a soft-deleted row (`publishDueItems` gained an
+eligibility predicate rather than losing the row from the store) and bumps the
+version it publishes, so an editor left open on a scheduled post is told the
+row moved instead of overwriting the job's publish.
+
+`supabase/migrations/20261124000100_content_lifecycle.sql` puts the same rule
+on the server: a `before update` trigger on both tables refuses any write that
+does not claim exactly `old.version + 1` and raises `version_conflict`
+(`40001`), and `unpublish_blog_post`, `soft_delete_content` and
+`restore_content` are the version-checked wrappers. `publish_due_content` is
+redefined there so the job's own update claims the next version too.
+
+**Verification.** `npm run typecheck` clean; `npm test` 42 files / 501 tests
+(new: `contentLifecycle`; `contentReader` gained the five withdrawal cases;
+`scheduledPublishing` gained the deleted-row and version-bump cases);
+`npm run build` succeeds; `npx eslint src` unchanged at 7 pre-existing
+warnings. Browser check on a seeded published post: Delete wrote
+`deletedAt` and `version 2`, the row showed `Deleted`, and `/blogs?story=lc-post`
+dropped the story and cleared the query; Restore wrote `version 3` and the
+story came back; Unpublish left `Draft` with an empty `publishedAt` at
+`version 4` and the story left the reader again. The same three steps passed for
+a guide on `/travel-guide/gg-post`. A second editor moving the stored row to
+`version 9` made the open editor's save fail with the conflict banner, the
+other editor's title survived, and `Reload` refilled the form from the newer
+row. Restoring an older revision wrote a `restored` audit row and a new
+revision. `/super-admin`, `/blogs` and `/travel-guide` showed zero horizontal
+overflow at 360, 768 and 1440 px.

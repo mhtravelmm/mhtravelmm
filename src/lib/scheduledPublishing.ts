@@ -34,13 +34,22 @@ export type PublishRun = { blog: number; guide: number };
 
 /** Publishes every due post, then every due guide, and reports how many of each. */
 export function publishDueContent(now = new Date()): PublishRun {
-  const postResult = publishDueItems(readBlogPosts(), now, (post): AdminPost => ({
-    ...post,
-    status: 'Published',
-    publishedAt: today(now),
-    scheduledFor: null,
-    updatedAt: today(now),
-  }));
+  // A soft-deleted row is skipped rather than published: Delete is a decision,
+  // and a schedule left on the row must not undo it. The row still goes back
+  // into the store, so deleting a post never removes it from the table.
+  const postResult = publishDueItems(
+    readBlogPosts(),
+    now,
+    (post): AdminPost => ({
+      ...post,
+      status: 'Published',
+      publishedAt: today(now),
+      scheduledFor: null,
+      version: post.version + 1,
+      updatedAt: today(now),
+    }),
+    (post) => !post.deletedAt,
+  );
 
   for (const post of postResult.published) {
     recordAdminAudit({
@@ -61,12 +70,18 @@ export function publishDueContent(now = new Date()): PublishRun {
   }
   if (postResult.published.length > 0) writeBlogPosts(postResult.items);
 
-  const guideResult = publishDueItems(readGuides(), now, (guide): AdminGuide => ({
-    ...guide,
-    status: 'Published',
-    publishedAt: today(now),
-    scheduledFor: null,
-  }));
+  const guideResult = publishDueItems(
+    readGuides(),
+    now,
+    (guide): AdminGuide => ({
+      ...guide,
+      status: 'Published',
+      publishedAt: today(now),
+      scheduledFor: null,
+      version: guide.version + 1,
+    }),
+    (guide) => !guide.deletedAt,
+  );
 
   for (const guide of guideResult.published) {
     recordAdminAudit({
