@@ -83,7 +83,7 @@ function distanceBetweenKm(lat1: number, lng1: number, lat2: number, lng2: numbe
 }
 
 export function NearbyPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const favorites = useToggleFavorite(NEARBY_LISTINGS);
   const [searchParams] = useSearchParams();
   const requestedCategory = searchParams.get('category') as NearbyCategory | null;
@@ -240,6 +240,7 @@ export function NearbyPage() {
               removeLabel={t('nearby_remove_place')}
               isFavorited={listing.isFavorited}
               onToggleFavorite={favorites.toggle}
+              language={language}
               variant="md"
             />)}
           </div>
@@ -284,6 +285,7 @@ export function NearbyPage() {
             removeLabel={t('nearby_remove_place')}
             isFavorited={listing.isFavorited}
             onToggleFavorite={favorites.toggle}
+            language={language}
           /></div>)}
         </div>
       </section>

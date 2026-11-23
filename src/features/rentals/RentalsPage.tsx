@@ -27,6 +27,7 @@ import { AdSlot } from '../../components/ui/AdSlot';
 import { useAuth } from '../../lib/auth';
 import { useCurrency } from '../../lib/currency';
 import { useLanguage } from '../../lib/i18n';
+import { formatRating, hasRating } from '../../lib/cardMeta';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
 import { useRentalOrders, type RentalFulfillment } from '../../lib/rentalOrders';
 import { quoteRentalOrder, type RentalOrderErrorCode } from '../../lib/rentalOrderRules';
@@ -312,7 +313,7 @@ export function RentalsPage() {
                   <div className="relative h-[76px] w-[76px] shrink-0 overflow-hidden rounded-lg bg-bg-cardAlt sm:h-[84px] sm:w-[84px] lg:h-[102px] lg:w-full lg:rounded-none">
                     <img src={type.image} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/5 to-slate-950/15" />
-                    <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-slate-950/75 px-1.5 py-1 text-[9px] font-bold text-amber-300 backdrop-blur"><Star size={9} fill="currentColor" />{listing.rating.toFixed(1)}</span>
+                    {hasRating(listing) && <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded-full bg-slate-950/75 px-1.5 py-1 text-[9px] font-bold text-amber-300 backdrop-blur"><Star size={9} fill="currentColor" />{formatRating(listing.rating, language)}</span>}
                     <span className="absolute bottom-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-400 text-slate-950"><Icon size={13} /></span>
                     <button type="button" aria-label={listing.isFavorited ? t('rentals_remove_favorite') : t('rentals_add_favorite')} onClick={() => favorites.toggle(favoriteId)} className={`absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full backdrop-blur transition ${listing.isFavorited ? 'bg-brand-red text-white' : 'bg-slate-950/65 text-white hover:bg-brand-red'}`}>
                       <Heart size={14} fill={listing.isFavorited ? 'currentColor' : 'none'} />

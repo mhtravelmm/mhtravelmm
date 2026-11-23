@@ -1375,3 +1375,39 @@ table listed the four posts with the image-block count, and the editor showed
 အမျိုးအစား, the four `ရေးသားသူ`/`တည်နေရာ` fields in two columns each, the
 cover picker, the new note about adding extra photos as image blocks, and no
 gallery strip.
+
+## A card hides the rating and the distance it does not have — Plan §4, §10 §8, 26 November 2026
+
+Plan §4 said every card always shows rating, distance, favourites and views.
+Plan §10 §8 and the decision register's row 16 said the opposite for two of the
+four: a post with no rating shows no rating, and a distance shows only when the
+item has coordinates and the reader allowed location. Both were true of the
+code — Blogs and Travel Guide guarded correctly, the shared `ListingCard` and
+five other card surfaces printed `0.0` and `0 km`.
+
+**One rule.** `src/lib/cardMeta.ts` holds `hasRating` and `hasDistance`, plus
+`formatRating` and `formatDistance`. A zero, a negative or a `NaN` counts as
+absent, so a missing value can never reach the screen as a number. The card asks
+the rule, it does not re-derive it.
+
+**Where it applies.** The shared `ListingCard` (which every grid uses), and the
+page-level cards that draw their own meta row instead: `NearbyPlaceCard`,
+`RentalsPage`, `PlaceDetailPage`, `RestaurantPage`, `BookShopPage`, `CityPage`
+and the Travel Plan hero. `BlogsPage` and `TravelGuidePage` already had the
+guard and were left alone.
+
+**One number convention.** The new formatters go through `Intl.NumberFormat`
+with the `my-MM` locale, which is what the app already uses, so Myanmar readers
+see `၄.၉` and `၁.၂ ကီလိုမီတာ` while English readers see `4.9` and `1.2 km`.
+`NearbyPlaceCard` gained a `language` prop for this; `NearbyPage` already had
+the hook.
+
+**Plan corrected.** §4's "always shows all four, no exceptions" was the line
+that produced the bug, so it now says the four are always *carried* and two are
+*hidden when absent*, with the file that implements it.
+
+**Verification.** `npm run typecheck` clean; `npm test` 54 files / 604 tests
+(7 new in `cardMeta.test.ts`, covering zero, `NaN`, negative, and both
+languages); `npm run build` succeeds; `npx eslint src` back to 7 pre-existing
+warnings. Browser check at `/nearby` in Burmese: every card read `၁.၂
+ကီလိုမီတာ`-style distances with Myanmar digits and no card showed a zero.

@@ -3,6 +3,7 @@ import { ArrowLeft, Eye, Heart, MapPin, Star } from 'lucide-react';
 import { ListingCard } from '../../components/ui/ListingCard';
 import { useFavorites } from '../../lib/favorites';
 import { useLanguage } from '../../lib/i18n';
+import { formatDistance, formatRating, hasDistance, hasRating } from '../../lib/cardMeta';
 import { useCurrency } from '../../lib/currency';
 import { findPlace, findPlaceKind } from './placeCatalog';
 
@@ -59,12 +60,16 @@ export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
           </p>
           <h1 className="mt-1 text-2xl font-extrabold text-white sm:text-3xl">{listing.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-200">
-            <span className="inline-flex items-center gap-1 text-status-rating">
-              <Star size={12} fill="currentColor" /> {listing.rating.toFixed(1)}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <MapPin size={12} /> {listing.distanceKm} km
-            </span>
+            {hasRating(listing) && (
+              <span className="inline-flex items-center gap-1 text-status-rating">
+                <Star size={12} fill="currentColor" /> {formatRating(listing.rating, language)}
+              </span>
+            )}
+            {hasDistance(listing) && (
+              <span className="inline-flex items-center gap-1">
+                <MapPin size={12} /> {formatDistance(listing.distanceKm, language)}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1">
               <Eye size={12} /> {listing.views.toLocaleString()}
             </span>

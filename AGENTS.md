@@ -85,6 +85,14 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   in `src/lib/rentalOrders.ts` stores its numbers and ignores the client total.
   Days come from `src/lib/myanmarTime.ts` (UTC+6:30), never `new Date()` slicing.
 
+- **A card draws a rating and a distance only when it has one.**
+  `src/lib/cardMeta.ts` is the single rule (`hasRating`, `hasDistance`) plus the
+  two formatters; `ListingCard` and every page-level card that writes its own
+  meta row read it from there. Zero means "not rated" and "unknown distance", so
+  it is never printed as `0.0` or `0 km`. Views and the favourite button are
+  unconditional. Format numbers with `Intl` and the `my-MM` locale, never a
+  hand-written digit map.
+
 ## Conventions
 
 - One feature per folder under `src/features/<name>/`; page-level components end in `Page`.

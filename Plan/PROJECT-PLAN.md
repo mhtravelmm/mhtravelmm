@@ -207,9 +207,15 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
 ## 4. Design System Rules
 
 - Every listing/content card (Travel Plans, Travel Guide, Blogs, Populars,
-  Nearby results, City cards, business listings) always shows all four:
-  rating, distance, favorite state, views. No exceptions. This is enforced
-  by making them required fields on the shared `CardListing` type.
+  Nearby results, City cards, business listings) carries all four:
+  rating, distance, favorite state, views. The four are required fields on the
+  shared `CardListing` type, so a card cannot be built without deciding them.
+- **Two of the four are hidden when the value is absent** (§10 §8, decision
+  register row 16). A rating of `0` means "not rated yet" and a distance of `0`
+  means "no coordinates or no reader location", so neither is drawn — a card
+  never shows `0.0` or `0 km`. Views and the favorite button always show. The
+  rule lives once in `src/lib/cardMeta.ts` (`hasRating`, `hasDistance`) and the
+  shared card plus every page-level card reads it from there.
 
 ### Card sizes — exactly five, no others
 
@@ -937,6 +943,13 @@ The public API returns the reader's `BlogPost`: a `text` block becomes `paragrap
 
 A new post has no rating, and the card hides the rating when there is none. Distance shows only when the post has coordinates (optional `latitude` and `longitude` in the editor) and the reader has allowed location; otherwise it is hidden. Views and favorites always show. Seeded posts keep their sample ratings until replaced. The reader's card code must treat a missing rating and a missing distance as "do not render", not as 0.
 
+**Built 26 November 2026.** The rule is `src/lib/cardMeta.ts` (`hasRating`,
+`hasDistance`), applied in the shared `ListingCard` and in the page-level cards
+that draw their own meta row: Nearby, Rentals, Place detail, Restaurant, Book
+Shop, City and Travel Plan. The two formatters beside it (`formatRating`,
+`formatDistance`) use the same `Intl` + `my-MM` convention as the rest of the
+app, so a Myanmar reader sees `၄.၉` and `၁.၂ ကီလိုမီတာ`.
+
 Travel Guide:
 
 - Written by Travel Guide Content Admin, who earns per post.
@@ -1521,7 +1534,7 @@ The founder delegated these decisions to Claude and will review them after the m
 | 13 | Blog: 3 ad blocks per post, never first, never adjacent (as in code) | 10 | One constant |
 | 14 | Blog captions bilingual; `galleryUrls` removed | 10 | Editor and reader field change |
 | 15 | Missing language is auto-translated and queued for review | 10, 16B | Switch the reader to show the other language instead |
-| 16 | Blog cards hide rating and distance when absent | 10 | Reader card change |
+| 16 | Cards hide rating and distance when absent | 4, 10 | Done in `src/lib/cardMeta.ts`; one rule, every card |
 | 17 | Slug from English title, fixed after first publish | 10 | Allow redirects if titles must change |
 | 18 | Scheduling entered in Myanmar Time, stored in UTC | 10, 16B | None |
 | 19 | Guides are single-day now; `day_number` column ready | 10 | Add multi-day UI later |

@@ -1,5 +1,7 @@
 import { ArrowRight, Eye, Heart, MapPin, Star } from 'lucide-react';
 import type { NearbyListing } from '../../data/nearbyData';
+import { formatDistance, formatRating, hasDistance, hasRating } from '../../lib/cardMeta';
+import type { Language } from '../../types';
 
 interface NearbyPlaceCardProps {
   listing: NearbyListing;
@@ -11,6 +13,7 @@ interface NearbyPlaceCardProps {
   removeLabel: string;
   isFavorited: boolean;
   onToggleFavorite: (id: string) => void;
+  language: Language;
   /** Card size — the design system allows exactly these five. */
   variant?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
@@ -84,6 +87,7 @@ export function NearbyPlaceCard({
   removeLabel,
   isFavorited,
   onToggleFavorite,
+  language,
   variant = 'md',
 }: NearbyPlaceCardProps) {
   const s = CARD_SIZES[variant];
@@ -94,9 +98,11 @@ export function NearbyPlaceCard({
       <a href={destination} className="flex h-full flex-row md:flex-col">
         <div className={`relative shrink-0 overflow-hidden bg-bg-cardAlt ${s.image}`}>
           {listing.imageUrl && <img src={listing.imageUrl} alt={listing.title} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />}
-          <span className={`absolute inline-flex items-center gap-1 rounded-full bg-black/75 font-medium text-amber-300 ${s.rating}`}>
-            <Star size={9} fill="currentColor" />{listing.rating.toFixed(1)}
-          </span>
+          {hasRating(listing) && (
+            <span className={`absolute inline-flex items-center gap-1 rounded-full bg-black/75 font-medium text-amber-300 ${s.rating}`}>
+              <Star size={9} fill="currentColor" />{formatRating(listing.rating, language)}
+            </span>
+          )}
           <span className={`absolute rounded-full font-medium ${s.open} ${listing.openNow ? 'bg-emerald-500/90 text-white' : 'bg-black/75 text-white'}`}>
             {listing.openNow ? openNowLabel : closedLabel}
           </span>
@@ -105,7 +111,10 @@ export function NearbyPlaceCard({
         <div className={`flex min-w-0 flex-1 flex-col justify-between ${s.body}`}>
           <div className="min-w-0 pr-4">
             <h3 className={`${s.title} truncate font-semibold text-text-primary`}>{listing.title}</h3>
-            <p className="mt-0.5 truncate text-[9px] text-brand-blue">{categoryLabel} <span className="text-text-faint">·</span> {listing.distanceKm.toFixed(1)} km</p>
+            <p className="mt-0.5 truncate text-[9px] text-brand-blue">
+              {categoryLabel}
+              {hasDistance(listing) && <><span className="text-text-faint"> · </span>{formatDistance(listing.distanceKm, language)}</>}
+            </p>
             {listing.subtitle && <p className={`mt-0.5 line-clamp-1 text-[10px] text-text-secondary ${s.detail}`}>{listing.subtitle}</p>}
             <p className={`mt-0.5 items-center gap-1 truncate text-[9px] text-text-faint ${s.address}`}><MapPin size={9} className="shrink-0" />{listing.address}</p>
           </div>

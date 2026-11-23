@@ -2,6 +2,8 @@ import { Star, MapPin, Heart, Eye } from 'lucide-react';
 import type { CardListing } from '../../types';
 import { useCurrency } from '../../lib/currency';
 import { useFavorites } from '../../lib/favorites';
+import { formatDistance, formatRating, hasDistance, hasRating } from '../../lib/cardMeta';
+import { useLanguage } from '../../lib/i18n';
 
 interface ListingCardProps {
   listing: CardListing;
@@ -47,7 +49,12 @@ const CARD_SIZES: Record<CardSize, CardSizeTokens> = {
  */
 export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 'default' }: ListingCardProps) {
   const { formatPrice } = useCurrency();
+  const { language } = useLanguage();
   const { isFavorite, toggleFavorite } = useFavorites();
+  // Plan §10 §8: a card hides the two values it does not have. Views and the
+  // favourite button are unconditional, so only these two are guarded.
+  const showRating = hasRating(listing);
+  const showDistance = hasDistance(listing);
   const favoriteState = onToggleFavorite ? listing.isFavorited : isFavorite(listing.id, listing.isFavorited);
   const s = CARD_SIZES[size];
   const isGuide = variant === 'guide';
@@ -67,10 +74,12 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
           />
         )}
 
-        <span className={`absolute ${isGuide ? 'left-0.5 top-0.5' : 'left-1.5 top-1.5'} flex items-center gap-0.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] text-status-rating`}>
-          <Star size={9} fill="currentColor" />
-          {listing.rating.toFixed(1)}
-        </span>
+        {showRating && (
+          <span className={`absolute ${isGuide ? 'left-0.5 top-0.5' : 'left-1.5 top-1.5'} flex items-center gap-0.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] text-status-rating`}>
+            <Star size={9} fill="currentColor" />
+            {formatRating(listing.rating, language)}
+          </span>
+        )}
 
         <button
           type="button"
@@ -103,11 +112,13 @@ export function ListingCard({ listing, onToggleFavorite, size = 'md', variant = 
         )}
 
         <div className={`${s.meta} flex items-center justify-between text-text-faint`}>
-          <span className="flex items-center gap-0.5">
-            <MapPin size={s.icon} />
-            {listing.distanceKm} km
-          </span>
-          <span className="flex items-center gap-0.5">
+          {showDistance && (
+            <span className="flex items-center gap-0.5">
+              <MapPin size={s.icon} />
+              {formatDistance(listing.distanceKm, language)}
+            </span>
+          )}
+          <span className={`flex items-center gap-0.5 ${showDistance ? '' : 'ml-auto'}`}>
             <Eye size={s.icon} />
             {formatCount(listing.views)}
           </span>
