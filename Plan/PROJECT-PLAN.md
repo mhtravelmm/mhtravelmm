@@ -36,8 +36,10 @@
   cafes, book shops, ticketing and so on) are filled in one by one,
   gradually, afterwards.
 - The Shop Page template system (section 4) and the Operator system for
-  outside businesses (section 9) are planned capabilities and are not
-  scheduled as the next build step.
+  outside businesses (section 9) are planned capabilities, built in Phases 3
+  and 4 of the roadmap (section 16D), after the MH-owned modules and the core
+  listings. Decisions made on the founder's behalf are listed in section 16E
+  for review after testing.
 
 ---
 
@@ -185,7 +187,7 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   for Ads Admin, earnings and payouts for Payment Admin, users and support for
   Admin, and bookings for Owner Admin. Super Admin keeps all sections. Route
   guards only hide menus; the server must check the role on every write
-  (sections 8, 10 and 16A).
+  (sections 8, 10 and 16A; the permission matrix is in section 16B.1).
 
 ---
 
@@ -351,9 +353,34 @@ selects one of them; a page never overrides the internal dimensions itself.
 - Status (2026-11-21): design and build of the templates are deferred to a
   later stage; this section records that the system will exist. Founder's
   expectation: a hotel page gets about 10 designs plus one MH Travel default,
-  with genuinely different UI/UX rather than recolors. Which categories get
-  templates first, and whether 2,000 MMK/month applies to every category,
-  are decided when template work starts.
+  with genuinely different UI/UX rather than recolors. The open points
+  (categories first, price, grace period) are decided in the specification
+  below.
+- **Specification (2026-11-22).** The build is deferred, but the system is defined so nothing built before it has to change.
+
+  **Contract.** Every Shop Page template receives the same typed data (`ShopPageData`): business profile (name MM/EN, description, address, coordinates, open and close times, check-in and check-out for hotels), photos, catalog (rooms, menu items or products with prices under the owner's price-display mode), reviews, contact and booking CTA, and the booking-flow mode. A template only decides how that data is laid out. Switching templates never touches business data.
+
+  **Registry and code.** Each template is a lazy module (`src/templates/<category>/<template-id>`) plus a row in `shop_templates`. Adding a template is a new module and a new row, with no change to the Shop Page route.
+
+  **Tables:** `shop_templates` (`id`, `category`, `name_mm`, `name_en`, `version`, `status` draft / active / retired, `preview_image_key`, `price_mmk_month` default 2,000, `is_free`), `shop_page_settings` (`shop_id`, `active_template_id`, `applied_at`), `shop_template_entitlements` (`shop_id`, `template_id`, `status` active / grace / expired / cancelled, `period_start`, `period_end`, `grace_until`), `template_invoices` (`id`, `shop_id`, `template_id`, `amount_mmk`, `period_start`, `period_end`, `status`, `paid_at`, `recorded_by`).
+
+  **Rules (decided).**
+  - Price: 2,000 MMK per shop per month for every category.
+  - Grace period: 7 days after `period_end`, then the Shop Page falls back to the free template; content and bookings are untouched, and the entitlement becomes `expired`.
+  - Renewal reminders go to the owner 7, 3 and 1 days before `period_end`.
+  - Preview: an owner can preview any template on their own real data (`?preview=<template-id>`, visible only to that owner); applying a paid template needs an active entitlement.
+  - Payment in this phase is recorded by Admin or Payment Admin when received (an invoice row and an entitlement extension); an online gateway comes later.
+  - Retirement: owners using the template get 30 days of notice; at the end they move to the free template or a replacement they choose. A retired template never breaks a shop.
+  - Rollback: Admin can mark a template version `draft` again; shops on it fall back to the previous version.
+  - Access: an owner changes only their own Shop Page; Super Admin manages the catalog; Payment Admin records payments.
+
+  **"Genuinely different" test.** Before a template is set `active` it must differ from every other template of its category in at least four of: layout skeleton, navigation pattern, hero treatment, catalog presentation, booking-CTA placement, gallery type, mobile pattern. The founder reviews it first. A recolor fails.
+
+  **Order and count (decided).** Hotel first, since it has the most data. Launch with the free default plus 3 paid designs, then grow toward about 10 for hotels, then Restaurant and the other categories.
+
+  **Each template must pass:** renders the fixture shop with every section (hero, catalog, gallery, reviews, contact, booking CTA) at phone and desktop widths, in both languages and both themes, with no horizontal overflow and no axe violation except the known contrast pair.
+
+  **Owner screen:** Free or Paid label, the 2,000 MMK price, active template, preview, apply or switch, renewal, cancellation and status, separate from business-data editing.
 
 ---
 
@@ -451,9 +478,9 @@ Common rules:
 
 - Owned and operated by MH Travel itself, managed by Rental Admin (not
   third-party Owner Admins).
-- Categories are dynamic and manageable by Admin and Super Admin. Current
-  list: car, motorbike, motorboat, horse carriage, bicycle, camping tent,
-  travel guide (hire-a-person).
+- Categories are dynamic and manageable by Admin and Super Admin. The current
+  list, with cars, boats and bicycles as variants, is in the Rental system
+  specification below.
 - Daily-rate pricing. Terms must be accepted before booking.
 - Full-day car rental requires a driver. This rule is configurable per
   category (for example motorbike and bicycle stay self-drive).
@@ -465,7 +492,7 @@ Common rules:
 
 ### Rental: system specification (2026-11-22)
 
-Verified against `src/features/rentals/RentalsPage.tsx`, `src/types/index.ts` and `Doc/STATUS.md` (main @ `0e34141`). Rental is owned and operated by MH Travel. In this phase it is a manual, phone-confirmed order (`BookingFlowMode` = `full_manual`): the traveler submits a request, MH Travel calls, and payment is taken offline at pickup.
+Verified against `src/features/rentals/RentalsPage.tsx`, `src/types/index.ts` and `Doc/STATUS.md` (main @ `74b80fa`). Rental is owned and operated by MH Travel, so there is no Owner commission and no Owner subscription on it. It follows the universal **Full Manual** flow of section 6: request → MH Travel accepts → a 12-hour payment window → MH Travel confirms payment → voucher → completed. Payment is recorded by staff (cash at pickup, bank transfer or mobile wallet); there is no online gateway in this phase.
 
 #### 1. As built (PREVIEW, local state)
 
@@ -482,103 +509,127 @@ Verified against `src/features/rentals/RentalsPage.tsx`, `src/types/index.ts` an
 
 - **Sample rates in code** (USD per day, local / foreigner; sample values, not confirmed prices): bicycle 8 / 10, e-bike 12 / 15, motorbike 18 / 22, scooter 10 / 13, tricycle 14 / 18, car with driver 42 / 55, self-drive car 32 / 42, horse carriage 28 / 34, camping tent 12 / 15, motorboat 55 / 68, travel guide 35 / 45. Car types: family car (4–5 seats) 42 / 55, 35-seat minibus 180 / 225, 45-seat bus 240 / 295.
 - **Order form:** city, category, car type (car only), start and end date, participants, customer type (citizen / foreigner), delivery or branch pickup, delivery address or branch, phone, terms checkbox. Car and self-drive car need an end date at least start + 1. Total = rate × inclusive days, in USD base, shown in MMK or USD by the display currency toggle. The page asks for booking at least 1 day ahead.
-- **Submission:** sets a local `submitted` flag and shows "Order received. MH Travel will contact you on the phone number provided." Nothing is recorded: no order row, no request ID, no notification.
+- **Submission:** sets a local `submitted` flag. Nothing is recorded: no order row, no request code, no notification, no voucher. The form has no guest name and no special-requests field, both of which the section 6 voucher needs.
 
-#### 2. Conflicts with the founder's rules (open)
+#### 2. Decisions on the open conflicts (decided 2026-11-22)
 
-- Yangon lists motorbike and scooter; the founder says Yangon has no motorbike rental.
-- A self-drive car category exists; the founder says a car is booked with a driver.
-- The founder's "express" vehicle and "အာတာဖတ်" are not in the car types.
-- Bicycles have no types, although the founder says the traveler picks a bicycle type.
-- One global rate per category, not per city. Inle Lake and Ngapali have no car; Ngapali has no travel guide hire.
+| Question | Decision |
+|---|---|
+| Yangon motorbike | Remove **motorbike and scooter** from Yangon (the founder says Yangon has no motorbike rental, and a scooter is a motorbike). E-bike and tricycle stay. Tents are already absent. |
+| Self-drive car | **Retire** the self-drive category (set inactive, keep history). A car is always booked with a driver (`driver_required = true`). |
+| "Express" and "အာတာဖတ်" vehicles | Car vehicle types are **data**. Rental Admin adds them with seats, rules and rates when defined; nothing is hard-coded. Seed only the three existing types. |
+| Bicycle types | Data too. Seed one "Standard bicycle" so the flow works; Rental Admin adds the rest. |
+| Boats | One **Boat** category; "Motorboat" is its seeded variant; others are added as variants. |
+| E-bike, tricycle | Same data model, no special flow. |
+| Price | One rate per city × category × variant, with the category rate as the default. |
+| Guests | A traveler must **sign in** to submit, so the order appears in Account → My Bookings. |
 
 #### 3. Data model (Supabase)
 
 | Table | Key columns | Notes |
 |---|---|---|
-| `rental_categories` | `id` (slug), `name_mm`, `name_en`, `detail_mm`, `detail_en`, `flow` (`simple` / `driver_vehicle` / `self_drive`), `driver_required`, `min_days`, `image_key`, `active`, `sort_order` | 11 rows seeded from `RentalCategory` |
-| `rental_variants` | `id`, `category_id`, `name_mm`, `name_en`, `seats` (nullable), `rules_mm`, `rules_en`, `active`, `sort_order` | Seed the three car types; Rental Admin adds bicycle types and others |
+| `rental_categories` | `id` (slug), `name_mm`, `name_en`, `detail_mm`, `detail_en`, `flow` (`simple` / `driver_vehicle`), `driver_required`, `min_days`, `image_key`, `active`, `sort_order` | 11 rows seeded from `RentalCategory`; `self_drive_car` seeded inactive |
+| `rental_variants` | `id`, `category_id`, `name_mm`, `name_en`, `seats` (nullable), `rules_mm`, `rules_en`, `active`, `sort_order` | Car types, bicycle types, boat types |
 | `rental_cities` | `id`, `name_mm`, `name_en`, `active` | Five cities today |
 | `rental_branches` | `id`, `city_id`, `name_mm`, `name_en`, `address`, `phone`, `active` | One per city today |
 | `rental_availability` | primary key (`city_id`, `category_id`), `active` | The city × category matrix |
-| `rental_rates` | `id`, `category_id`, `variant_id` (nullable), `city_id` (nullable = default), `rate_local_usd`, `rate_foreign_usd`, `effective_from`, `effective_to` | `numeric(10,2)`; ranges for one key must not overlap |
-| `rental_terms` | `version` (primary key), `body_mm`, `body_en`, `published_at`, `published_by` | Each order stores the version accepted |
-| `rental_orders` | `id`, `request_code` (unique), `user_id`, `city_id`, `category_id`, `variant_id`, `start_date`, `end_date`, `days`, `participants`, `customer_type`, `fulfillment`, `branch_id`, `delivery_address`, `phone`, `terms_version`, `rate_usd`, `total_usd`, `display_currency`, `fx_mmk_per_usd`, `status`, `handled_by`, `admin_note`, `created_at`, `updated_at` | Rate and total are computed on the server |
+| `rental_rates` | `id`, `category_id`, `variant_id` (nullable), `city_id` (nullable = default), `rate_local_usd`, `rate_foreign_usd`, `effective_from`, `effective_to` | `numeric(10,2)`; ranges for one key never overlap |
+| `rental_terms` | `version` (primary key), `body_mm`, `body_en`, `published_at`, `published_by` | Each order stores the version accepted; it is also the cancellation policy on the voucher |
+| `rental_orders` | `id`, `request_code` (unique), `user_id`, `customer_name`, `phone`, `city_id`, `category_id`, `variant_id`, `start_date`, `end_date`, `original_start_date`, `days`, `participants`, `customer_type`, `fulfillment`, `branch_id`, `delivery_address`, `special_requests`, `terms_version`, `rate_usd`, `total_usd`, `display_currency`, `fx_mmk_per_usd`, `status`, `accepted_at`, `payment_deadline`, `payment_method`, `payment_received_at`, `received_by`, `voucher_version`, `rescheduled_count`, `handled_by`, `admin_note`, `created_at`, `updated_at` | Rate, total and deadline are set by the server |
 | `rental_order_events` | `id`, `order_id`, `from_status`, `to_status`, `actor_id`, `note`, `at` | Append-only timeline |
+| `my_bookings` (view) | union of `bookings` and `rental_orders` for one user | Account → My Bookings reads this view |
 
-**Access (RLS).** Catalog tables: everyone reads active rows; Rental Admin and Super Admin write. Orders: a traveler reads their own and creates one only through `submit_rental_order`; Rental Admin, Admin and Super Admin read all; Payment Admin reads totals; status changes only through `set_rental_order_status`. Roles come from `public.profiles` and are checked on the server; the client role helpers only hide menus.
-
-**Sign-in (decided).** A traveler must be signed in to submit, so the request appears in their Account and the `bookings` ownership model applies. Guests can browse prices and are asked to sign in at submit. Revisit if the founder wants guest orders.
+**Access (RLS).** Catalog tables: everyone reads active rows; Rental Admin and Super Admin write. Orders: a traveler reads their own and creates one only through `submit_rental_order`; Rental Admin, Admin and Super Admin read all; Payment Admin reads totals and payment fields; status changes only through `set_rental_order_status`. Roles come from `public.profiles` and are checked on the server; client role helpers only hide menus.
 
 #### 4. Pricing
 
 1. Find the rate row, most specific first: city + category + variant, then city + category, then default (no city) + category + variant, then default + category.
 2. Pick the local or foreigner column by customer type.
 3. Total = rate × inclusive days (end − start + 1). Keep USD to 2 decimals.
-4. Snapshot `rate_usd`, `total_usd`, `display_currency` and the exchange rate (`fx_mmk_per_usd`) on the order, so later rate changes never alter an old order. MMK rounding and the exchange-rate service are defined with the currency work in `Doc/REMAINING-WORK.md`.
+4. Snapshot `rate_usd`, `total_usd`, `display_currency` and the exchange rate on the order, so later changes never alter an old order. MMK display rounds to the nearest 100 (section 16B).
+5. Travel guide hire: the guide's accommodation, food and travel costs are paid on top of the daily rate (section 8); the voucher states this in its notes line.
 
-#### 5. Order lifecycle
+#### 5. Order lifecycle (matches section 6)
 
 | Status | Set by | Next |
 |---|---|---|
-| New | the traveler's submit | Contacted, Cancelled |
-| Contacted | Rental Admin, Admin, Super Admin | Confirmed, Cancelled |
-| Confirmed | same | Completed, Cancelled |
-| Completed | same | none |
-| Cancelled | admin (a reason is required) or the traveler while New or Contacted | none |
+| Requested | the traveler's submit | Accepted, Cancelled |
+| Accepted | Rental Admin, Admin, Super Admin. Opens the payment window: `payment_deadline = accepted_at + 12 hours` | Paid, Expired, Cancelled |
+| Paid | the same staff, after recording the payment (method, amount, time). The voucher is issued automatically | Completed, Cancelled |
+| Completed | the same staff, after the rental period | none |
+| Expired | the system, when the window passes unpaid | none |
+| Cancelled | staff only, with a reason. **Travelers cannot cancel** (section 6) | none |
 
-Every change writes a `rental_order_events` row and an admin audit-log row. A new order notifies the Rental Admin accounts (bell). Confirmed and Cancelled notify the traveler. An order still New after a threshold in settings (default 2 hours) is highlighted in the Rental Admin list.
+- **Reschedule.** After payment the traveler may change the date once (`rescheduled_count` < 1), at least 24 hours before the original start, to a start date of at least tomorrow, keeping the same number of days. The server re-checks that the category is still offered in the city, writes an event, issues voucher version 2, and notifies Rental Admin.
+- Every change writes a `rental_order_events` row and an admin audit-log row. An order still Requested after a threshold in settings (default 2 hours) is highlighted for staff.
 
-#### 6. Server rules (the server is the authority; the client rules mirror them)
+#### 6. Voucher (the 17 fields of section 6)
 
-- The category must be active in the chosen city (`rental_availability`); the variant must belong to the category; a branch must belong to the city.
-- Start date is at least tomorrow in Myanmar Time; end date is not before start; for `driver_vehicle` and `self_drive` flows the end date is at least start + 1.
-- Participants at least 1; phone at least 7 characters (current rule), tightened to digits with an optional leading `+`; delivery address at least 3 characters when delivering; a branch when picking up.
-- `terms_version` must be the current published version.
-- The client's total is ignored; the server recomputes it. Rate-limit submissions per account.
+Shown at `/account/bookings/<request_code>` as a printable page with a QR code that encodes the request code; staff open the same page to print it.
+
+| Voucher field | Rental source |
+|---|---|
+| Booking ID, QR | `request_code` |
+| Business name and address | "MH Travel Rental" and the branch name and address |
+| Dates, nights | start–end, days |
+| Guest name, contact | `customer_name`, phone, and the branch phone |
+| Item type | category and variant ("with driver" for cars) |
+| Guests | participants |
+| Amount paid, payment method | total in the order currency and USD; `payment_method` |
+| Booking date, status | `created_at`, current status |
+| Special requests | `special_requests` |
+| Owner name | MH Travel |
+| Cancellation policy | the terms version accepted |
+| Branding | MH Travel logo and colors |
+
+#### 7. Server rules (the server is the authority; the client rules mirror them)
+
+- The category must be active in the chosen city; the variant must belong to the category; a branch must belong to the city.
+- Start date at least tomorrow in Myanmar Time; end date not before start; for categories with `min_days` 2 (car), end at least start + 1.
+- Participants at least 1; `customer_name` at least 2 characters; phone at least 7 characters, tightened to digits with an optional leading `+`; delivery address at least 3 characters when delivering; a branch when picking up.
+- `terms_version` must be the current published version. The client's total is ignored; the server recomputes it. Rate-limit submissions per account.
 - Errors return stable codes that the page translates through `t()` (MM/EN), as the content editors do.
 
-#### 7. Rental Admin dashboard
+#### 8. Rental Admin dashboard
 
 | Section | What it does |
 |---|---|
-| Orders | List with filters (status, city, category, date range) and search by request code or phone. Detail with timeline, a Call button (`tel:`), status actions, and an internal note. |
+| Orders | List with filters (status, city, category, date range) and search by request code, name or phone. Detail with timeline, a Call button (`tel:`), and the actions Accept, Record payment, Complete, Cancel (reason), plus an internal note. Shows the payment countdown for Accepted orders. |
 | Catalog | Categories and variants: names (MM/EN), images, flow, driver required, minimum days, active. |
-| Availability | The city × category matrix with on/off toggles. Turning a cell off hides it from the page and keeps old orders. |
+| Availability | The city × category matrix with on/off toggles. Turning a cell off hides it and keeps old orders. |
 | Rates | Rate table by city × category × variant, local and foreigner, with effective dates and history. |
 | Branches | Per-city branch name, address, phone. |
 | Terms | Publish a new MM/EN terms version. |
-| Settings | New-order highlight threshold; minimum notice days (default 1). |
+| Settings | Highlight threshold; minimum notice days (default 1). |
 
-Every write goes to the audit log. Roles: Rental Admin and Super Admin edit; Admin reads and handles orders; Payment Admin reads totals only.
+Every write goes to the audit log. Roles: Rental Admin and Super Admin edit; Admin reads and handles orders; Payment Admin reads totals and records payments.
 
-#### 8. Reports
+#### 9. Notifications, jobs and reports
 
-Orders by status, city, category and day (Myanmar Time); share of New orders reaching Confirmed; median time from New to Contacted; estimated value of Confirmed and Completed orders (USD and MMK at the order's snapshot); CSV export.
+- **Notifications** (section 16B): Requested → Rental Admin; Accepted (with the payment deadline), Paid (voucher ready), Expired, Cancelled → traveler; Rescheduled → Rental Admin.
+- **Job:** every 5 minutes, set Accepted orders past `payment_deadline` to Expired (safe to run twice).
+- **Reports:** orders by status, city, category and day (Myanmar Time); share of Requested orders reaching Paid; median time from Requested to Accepted; value of Paid and Completed orders (USD and MMK at the order's snapshot); CSV export.
 
-#### 9. Not in this phase
+#### 10. Not in this phase
 
-Online payment and deposits, ID or licence checks, per-date stock, driver assignment, delivery tracking, multi-item orders, rental reviews.
+Online payment and deposits, ID or licence checks, per-date stock, driver assignment, delivery tracking, multi-item orders. Rental reviews come after Completed, in the reviews work of Phase 2 (section 16D).
 
-#### 10. Build steps (for Cursor)
+#### 11. Build steps (for Cursor)
 
-1. Migrations for the catalog tables and orders, with RLS. 2. Seed them from the values in `RentalsPage.tsx`. 3. Make the page read catalog, availability and rates from Supabase instead of constants. 4. `submit_rental_order` and the confirmation with the request code. 5. "My rental requests" in Account. 6. Rental Admin Orders. 7. Rental Admin Catalog, Availability, Rates, Branches and Terms. 8. Notifications. 9. Reports.
+1. Migrations for the catalog tables and orders, with RLS, committed under `supabase/migrations`. 2. Seed them from `RentalsPage.tsx` and apply the section 2 decisions. 3. Make the page read catalog, availability and rates from Supabase instead of constants; add name and special-requests fields. 4. `submit_rental_order` and the confirmation with the request code. 5. My Bookings view and the voucher page. 6. Rental Admin Orders with the status actions and the expiry job. 7. Rental Admin Catalog, Availability, Rates, Branches and Terms. 8. Notifications. 9. Reschedule. 10. Reports.
 
-#### 11. Acceptance criteria
+#### 12. Acceptance criteria
 
 1. Submitting creates exactly one order with a `RNT-YYMMDD-####` code and shows the code.
 2. A tampered client total is ignored.
-3. A category not offered in the chosen city is rejected.
-4. A car order with end date before start + 1 is rejected; a start date before tomorrow (Myanmar Time) is rejected.
-5. A traveler sees only their own orders; Rental Admin sees all.
-6. Each status change writes a timeline event, an audit row and the right notification.
-7. Changing a rate does not change existing orders' totals.
-8. Turning a category off in a city hides it from the page without deleting history.
-9. Every message, including server errors, shows in Myanmar and English.
-
-#### 12. Still to confirm
-
-Whether scooter is also excluded from Yangon; whether the self-drive car category stays; what "အာတာဖတ်" and the "express" vehicle are and their rules; bicycle types and e-bike and tricycle details; whether boats go beyond motorboat; whether guests may submit without signing in.
+3. A category not offered in the chosen city is rejected; Yangon no longer offers motorbike or scooter.
+4. A car order with end before start + 1, or a start before tomorrow (Myanmar Time), is rejected.
+5. A traveler sees only their own orders and cannot cancel; Rental Admin sees all.
+6. Accept sets a 12-hour deadline; an unpaid order becomes Expired by itself; recording payment issues the voucher.
+7. Each status change writes a timeline event, an audit row and the right notification.
+8. Changing a rate does not change existing orders' totals.
+9. Reschedule works once, at least 24 hours ahead, and issues a new voucher version.
+10. Every message, including server errors, shows in Myanmar and English.
 
 ---
 
@@ -674,26 +725,77 @@ Whether scooter is also excluded from Yangon; whether the self-drive car categor
   persistence, authentication, uniqueness enforcement, and authorization
   remain open backend work.
 
-### Operator system for outside businesses (planned, not scheduled; 2026-11-21)
+### Operator system and Ticketing integration: specification (planned, not scheduled; 2026-11-22)
 
-- Other businesses, such as a ticket seller, can use the system as their own
-  system. The operator's admin account is where tickets are sold and cut.
-- Operator data stays in the operator's own admin account data and is **not
-  sent to MH Travel**. MH Travel pulls only **seat availability (free/taken)**
-  and **date availability**.
-- Operators can design their own custom vouchers/tickets.
-- To reconcile: section 7 describes Ticketing as MH Travel's own product
-  integrated by API; this extends it to outside operators. The Main Owner and
-  Branch Owner model above assumes MH Travel records ticket attribution,
-  revenue-share snapshots and wallet ledgers. If operator data is not sent to
-  MH Travel, what MH Travel can see and settle must be redefined.
-- Open questions: what MH Travel stores about a sale (seat marker only, or a
-  booking reference) and how payment, commission and refunds work if booking
-  data stays with the operator; how availability is fetched and what happens
-  when an operator system is offline; whether the voucher designer is
-  free-form or a fixed field set and who owns required legal fields;
-  operator onboarding, subscription and whether the Branch Owner billing still
-  applies.
+This turns the founder's 2026-11-21 notes into a specification. It builds on section 7 (Ticketing is MH Travel's own product with its own web app, reached by API) and the Main Owner and Branch Owner model above. Business numbers stay Admin-configurable, as section 9 already requires.
+
+**Position.** Ticketing is a separate product, the **MH Ticketing operator system**. An operator (for example JJ Express) uses it as its own system: its admin account sells and cuts tickets, runs counter sales, and designs its vouchers. The MH Travel app and its Ticketing hub are one more sales channel that talks to each operator system through the API below. Outside businesses and MH Travel's own ticketing use the same system.
+
+#### 1. Who owns which data
+
+| Data | Stays in the operator's system | Shared with MH Travel |
+|---|---|---|
+| Staff accounts, branches, counter sales, counter customers | yes | never |
+| Routes, vehicles, schedules, fares, seat layouts | yes | trips and fares offered to the hub, seat status live |
+| Voucher and ticket designs | yes | never (the traveler receives the rendered ticket) |
+| Internal reports and finances | yes | never |
+| A sale made through MH Travel | the full booking | a minimal record: operator, branch, trip, travel date, seat numbers, seat count, amount, `booking_ref`, status, traveler account id |
+
+The traveler's name and phone are sent to the operator with the booking, because the ticket needs them. MH Travel receives nothing about the operator's other customers or sales.
+
+#### 2. API between MH Travel and an operator system
+
+Every request is signed with a per-operator key and carries an idempotency key on writes.
+
+| Call | Purpose |
+|---|---|
+| `GET /trips?from&to&date` | Trips with times, fares and free-seat counts |
+| `GET /trips/{id}/seats?date` | Seat map: free, taken, held. **Queried live when the booking flow opens, never cached** (section 7) |
+| `POST /holds` | Hold chosen seats (trip, date, seats, traveler name and phone). Returns `hold_id` and `expires_at` (10 minutes) |
+| `POST /holds/{id}/confirm` | After payment: returns `booking_ref` and the ticket |
+| `DELETE /holds/{id}` | Release seats |
+| `POST /bookings/{ref}/reschedule` | Change the date (the only change a traveler may make, section 6) |
+| Webhook `booking.updated` | Operator-side changes (trip cancelled, seats moved) |
+
+The operator system is the authority on seats: a seat conflict returns 409 and the traveler goes back to seat selection.
+
+#### 3. Booking and money flow
+
+Tickets use the **Instant** flow of section 6: choose seats → hold → pay → confirm → ticket issued.
+
+- The traveler **pays MH Travel**. MH Travel records the transaction with the commission rate snapshotted (section 9: Admin-configurable per operator or branch, no default) and settles to the operator on the section 9 schedule (the 20th for days 1 to 15, the 5th for days 16 to month end, minimum 50,000 MMK carried over).
+- Travelers cannot cancel. If the operator cancels a trip, the traveler is refunded in full and the amount is deducted from that operator's next settlement.
+- **Failures:** if the operator system is unreachable, its trips are hidden in the hub with a short "temporarily unavailable" note, and nothing is cached. If confirm fails after payment, the call is retried 3 times over 5 minutes; if it still fails the payment is refunded and an Admin alert is raised. An expired hold blocks payment.
+
+#### 4. Vouchers and tickets
+
+An operator designs its own voucher inside fixed limits, so the booking ID, QR and legal fields can never be removed.
+
+- **Fixed fields:** booking ID, operator name, route, date and time, passenger name, seats, amount paid, QR code (always `booking_ref`), contact, payment method, booking date, status, cancellation and reschedule policy.
+- **Operator controls:** logo, brand colors, header and footer text, terms text, and one of three layouts.
+- Designs are versioned and previewed with sample data. The same renderer prints counter sales and MH Travel sales.
+
+#### 5. Operator console sections
+
+Dashboard; Trips and schedules; Fares; Seat layouts; Counter sales (sell and print a ticket); Bookings (MH Travel and counter, with the channel shown); Voucher designer; Branches and staff; Reports; Settlement (statements for MH Travel sales); Settings.
+
+#### 6. Accounts
+
+The Main Owner and Branch Owner model above applies: Branch Owner accounts cost 10,000 MMK per month per branch, billed to the operator, and an outside operator pays the same unless Admin sets another term (section 9 leaves subscriptions to Admin). Inside the operator system there are three roles: owner, branch manager, and counter staff (sell only). Each is scoped to its own operator and, for branch roles, its own branch.
+
+#### 7. MH Travel side tables
+
+| Table | Key columns |
+|---|---|
+| `operators` | `id`, `name`, `status`, `api_base_url`, `api_key_ref`, `commission_pct`, `subscription_note`, `created_at` |
+| `operator_branches` | `id`, `operator_id`, `station`, `city`, `monthly_fee_mmk` (10,000), `status`, `revenue_share_pct` (the migration that section 9 says is still required) |
+| `ticket_transactions` | `id`, `operator_id`, `branch_id`, `booking_ref`, `trip_ref`, `travel_date`, `seats`, `traveler_id`, `amount_mmk`, `commission_pct`, `commission_mmk`, `net_mmk`, `status` (held, confirmed, refunded, rescheduled), `created_at` |
+| `wallet_ledger_entries` | `id`, `wallet` (platform, main owner, branch), `owner_id`, `entry_type`, `amount_mmk`, `ref`, `at` |
+| `settlement_batches` | `id`, `operator_id`, `period_start`, `period_end`, `gross_mmk`, `commission_mmk`, `adjustments_mmk`, `net_mmk`, `status`, `paid_at` |
+
+#### 8. Build steps and acceptance
+
+Build the operator system's seat and hold logic and the signed API first; then the hub's search and live seat map; then payment and confirm; then settlement and wallets; then the voucher designer and counter sales. Acceptance: a seat held by one traveler cannot be held by another; a confirmed booking appears on both sides with the same `booking_ref`; an unreachable operator disappears from the hub without errors; a refund leaves the settlement statement correct; the MH Travel side never stores anything from the operator's counter sales.
 
 ---
 
@@ -732,7 +834,7 @@ Blog:
 
 ### Blog: system specification (2026-11-22)
 
-Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib/publishProblems.ts`, `src/lib/blogMediaApi.ts`, `src/lib/contentAdminAccess.ts` and `src/features/superAdmin/BlogPostsPanel.tsx` (main @ `0e34141`).
+Verified against `src/lib/blogBlocks.ts`, `src/lib/contentWorkflow.ts`, `src/lib/publishProblems.ts`, `src/lib/blogMediaApi.ts`, `src/lib/contentAdminAccess.ts` and `src/features/superAdmin/BlogPostsPanel.tsx` (main @ `74b80fa`).
 
 #### 1. As built (PARTIAL: editor works on local state)
 
@@ -751,7 +853,7 @@ Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code 
 
 - Keep the limit of 3 ad blocks per post, never first, never adjacent. The top and bottom reader slots stay automatic (`blog_post_top`, `blog_post_bottom`).
 - Captions become bilingual (`captionEn`, `captionMm`) to match the reader's `LocalizedText`; `credit` stays one string (photographer or source).
-- A text block with only one language filled is allowed; the editor warns, and the reader shows the filled language.
+- A text block with only one language filled is allowed; the editor warns. The reader shows an auto-translation of the missing language, cached and queued for Admin review (section 14 and the translation service in section 16B).
 - `galleryUrls` is removed. Extra photos are image blocks.
 - A post's reader fields are the canonical model: slug, MM/EN title, excerpt, author and location, blocks, category, read time, counters.
 
@@ -759,7 +861,7 @@ Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code 
 
 | Table | Key columns | Notes |
 |---|---|---|
-| `blog_posts` | `id`, `slug` (unique), `status`, `category_slug`, `cover_key`, `cover_url`, `title_mm`, `title_en`, `excerpt_mm`, `excerpt_en`, `author_mm`, `author_en`, `location_mm`, `location_en`, `blocks` (jsonb), `seo_tags` (text[]), `read_minutes`, `scheduled_for` (timestamptz), `published_at`, `views`, `version`, `created_by`, `updated_by`, `created_at`, `updated_at`, `deleted_at` | `blocks` mirrors `BlogBlock`; `version` is for optimistic concurrency |
+| `blog_posts` | `id`, `slug` (unique), `status`, `category_slug`, `cover_key`, `cover_url`, `title_mm`, `title_en`, `excerpt_mm`, `excerpt_en`, `author_mm`, `author_en`, `location_mm`, `location_en`, `blocks` (jsonb), `seo_tags` (text[]), `read_minutes`, `latitude`, `longitude`, `rating` (nullable), `scheduled_for` (timestamptz), `published_at`, `views`, `version`, `created_by`, `updated_by`, `created_at`, `updated_at`, `deleted_at` | `blocks` mirrors `BlogBlock`; `version` is for optimistic concurrency |
 | `blog_categories` | `slug`, `label_mm`, `label_en`, `sort_order`, `active` | Seed the seven current categories; adding one needs both labels |
 | `blog_revisions` | `id`, `post_id`, `saved_at`, `status`, `snapshot` (jsonb), `saved_by` | Keep 20 per post (trigger) |
 | audit | `kind` (`blog` / `guide`), `content_id`, `action`, `actor_id`, `at` | Reuse `admin_audit_logs` after checking its columns; actions as in `ContentAction` |
@@ -784,7 +886,7 @@ POST multipart with the user's Supabase token. Allow only Super Admin and Blog P
 
 #### 6. Reader contract
 
-The public API returns the reader's `BlogPost`: a `text` block becomes `paragraph` with `{ en, mm }`; an `image` block becomes `image` with `alt` and `caption` as `{ en, mm }`; an `ad` block stays `ad` and renders the `blog_inline` placement (section 16A). Where a post has two or more ad blocks, the ad service avoids showing the same creative twice in one post.
+The public API returns the reader's `BlogPost`: a `text` block becomes `paragraph` with `{ en, mm }`; an `image` block becomes `image` with `alt` and `caption` as `{ en, mm }`; an `ad` block stays `ad` and renders the `blog_inline` placement (section 17). Where a post has two or more ad blocks, the ad service avoids showing the same creative twice in one post.
 
 #### 7. Acceptance criteria
 
@@ -797,10 +899,9 @@ The public API returns the reader's `BlogPost`: a `text` block becomes `paragrap
 7. Replacing an image leaves the old object for the nightly cleanup, never deleting one still referenced.
 8. A Blog Post Admin cannot read or write guides, rentals or ads.
 
-#### 8. Still to define
+#### 8. Card rating and distance (decided)
 
-How a new post gets the rating and distance the reader's card shows for every post.
-
+A new post has no rating, and the card hides the rating when there is none. Distance shows only when the post has coordinates (optional `latitude` and `longitude` in the editor) and the reader has allowed location; otherwise it is hidden. Views and favorites always show. Seeded posts keep their sample ratings until replaced. The reader's card code must treat a missing rating and a missing distance as "do not render", not as 0.
 
 Travel Guide:
 
@@ -831,7 +932,7 @@ Travel Guide:
 
 ### Travel Guide: system specification (2026-11-22)
 
-Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/lib/contentWorkflow.ts`, `src/data/listingIndex` (imported by `TravelGuidesPanel.tsx`), `src/data/travelGuideData.ts` and `Doc/STATUS.md` (main @ `0e34141`).
+Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/lib/contentWorkflow.ts`, `src/data/listingIndex` (imported by `TravelGuidesPanel.tsx`), `src/data/travelGuideData.ts` and `Doc/STATUS.md` (main @ `74b80fa`).
 
 #### 1. As built (PARTIAL: editor works on local state)
 
@@ -847,7 +948,7 @@ Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/l
 #### 2. Decisions for the system
 
 - `guideId` for a new guide is its slug (lowercase, hyphenated English title, unique, fixed after first publish).
-- The reader needs a duration; the editor has none. Duration is derived from the first and last stop times, in hours rounded to the nearest half hour. Guides are single-day for now.
+- The reader needs a duration; the editor has none. Duration is derived from the first and last stop times, in hours rounded to the nearest half hour. Guides are **single-day in this phase**; multi-day guides come later by adding a `day_number` to stops (the column exists from the start, default 1).
 - The reader's MM/EN author is the one author string for both languages unless Admin sets a Myanmar name.
 - The excerpt is the reader's `summary`.
 - Stop title defaults to the listing name; the reader's `place` text is derived from the listing, never typed.
@@ -857,10 +958,10 @@ Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/l
 | Table | Key columns | Notes |
 |---|---|---|
 | `travel_guides` | `id`, `slug` (unique), `status`, `category`, `cover_key`, `cover_url`, `title_mm`, `title_en`, `summary_mm`, `summary_en`, `author_name`, `author_id` (nullable), `duration_minutes`, `scheduled_for`, `published_at`, `views`, `version`, `needs_review`, `created_by`, `updated_by`, `created_at`, `updated_at`, `deleted_at` | Six fixed categories |
-| `guide_stops` | `id`, `guide_id`, `position`, `time_text` (HH:MM), `time_minutes`, `listing_id`, `title_mm`, `title_en`, `description_mm`, `description_en`, `image_key` | Stops are saved and replaced together with the guide, in one transaction |
+| `guide_stops` | `id`, `guide_id`, `position`, `day_number` (default 1), `time_text` (HH:MM), `time_minutes`, `listing_id`, `title_mm`, `title_en`, `description_mm`, `description_en`, `image_key` | Stops are saved and replaced together with the guide, in one transaction |
 | `guide_revisions` | as `blog_revisions`, snapshot includes stops | 20 per guide |
 | audit | shared with Blog | `kind = 'guide'` |
-| `guide_earnings` | `id`, `guide_id` (unique), `author_id` / `author_name`, `published_at`, `amount_usd` (nullable, `>= 0`), `paid`, `paid_at`, `paid_by`, `created_at` | `check (paid = false or amount_usd is not null)` |
+| `guide_earnings` | `id`, `guide_id` (unique), `author_id` / `author_name`, `published_at`, `amount_usd` (nullable, `>= 0`), `paid`, `paid_at`, `paid_by`, `fx_mmk_per_usd` and `paid_mmk` (set when marked paid), `payout_date`, `created_at` | `check (paid = false or amount_usd is not null)` |
 
 **Listing dependency.** Listings are compiled data today (`src/data/listingIndex.ts`), not in Supabase. Until they move, the server validates `listing_id` against a seeded `listings_index` table with the same ids, and the later move to the real catalog must keep those ids stable.
 
@@ -871,7 +972,7 @@ Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/l
 - **Save, concurrency, publish, schedule, unpublish, restore, delete:** exactly as for Blog (section 10, Blog flows), with the guide checks and `slug`.
 - **Server publish check:** the same codes as `guidePublishCheck`, with `stop_listing` checked against the listings table at publish time.
 - **Listing removed or deactivated:** guides using it get `needs_review = true` and appear in an Admin list. A published guide stays up, keeps the stop's stored title, and disables that stop's Directions button until it is fixed.
-- **Earnings:** a row is created automatically the first time a guide becomes Published, once per guide (the unique `guide_id` stops duplicates on republish). Amount is entered by Admin or Payment Admin (per-post rate undecided). Marking paid needs an amount, a payer and a date. Payment itself is outside the app in this phase.
+- **Earnings:** a row is created automatically the first time a guide becomes Published, once per guide (the unique `guide_id` stops duplicates on republish). Amount is entered by Admin or Payment Admin, starting from a default in settings (`guide_post_rate_usd`, empty until the founder sets it). Marking paid needs an amount, a payer and a date, and records the exchange rate and the MMK amount actually paid. Payment itself is outside the app in this phase.
 
 #### 5. Acceptance criteria
 
@@ -884,9 +985,9 @@ Verified against `src/lib/guideItinerary.ts`, `src/lib/guideEarnings.ts`, `src/l
 7. Removing a listing flags the guides that use it without hiding them.
 8. The reader's stepper follows the saved stop order, and duration matches the first and last stop times.
 
-#### 6. Still to define
+#### 6. Payout timing (decided)
 
-Whether a guide can span more than one day; the per-post rate and when it becomes payable.
+Earnings of Published guides are paid on the same two dates as Owner payouts (section 9): Day 1 to 15 on the 20th, Day 16 to month end on the 5th of the next month, with no minimum amount for content authors. A row with no amount yet is listed as pending for Admin. The per-post rate is a setting, not code, so the founder can set or change it at any time.
 
 ---
 
@@ -1082,30 +1183,9 @@ shell and bilingual throughout:
 - Travel guide rental expense mechanics.
 - Owner and Admin dashboard screens, after the user-facing pages are done.
 
-### Decisions (2026-11-22)
-
-Made by Claude under the founder's delegation; the founder can change any of them.
-
-**Built already from earlier decisions** (see `Doc/STATUS.md`): the card-size rule and Load More (page size 12, `src/lib/usePagedList.ts`); the eight Plan §3 roles in the Admin Management form; Blog ad blocks, reorder, image alt text, caption and credit, publish checks, revisions and audit; the Travel Guide editor with listing-linked stops and earning rows; the Tricycle category; route guards for Blog Post Admin and Travel Guide Content Admin.
-
-**Decided in this pass** (all four are specifications for the backend; none is built):
-
-1. **Rentals (section 8):** tables for catalog, availability, rates, terms and orders; price by city × category × variant; sign-in required to submit; order status flow; Rental Admin dashboard.
-2. **Blog (section 10):** the ad limit stays at 3 as in code; captions become bilingual; `galleryUrls` is removed; slug, read time, autosave, scheduled publishing by a job, optimistic concurrency and the R2 media endpoint are specified.
-3. **Travel Guide (section 10):** guide and stop tables, duration derived from stop times, one earning row per guide created on first publish, listing-removal handling.
-4. **Ads and the Adsboard (section 16A):** placement catalog, tables, serving rules, campaign lifecycle with Super Admin approval, dashboard sections, creative limits.
-
-### Still needing the founder's input
-
-1. **Rentals (section 8):** is scooter also excluded from Yangon; does the self-drive car category stay when cars are booked with a driver; what are "အာတာဖတ်" and the "express" vehicle; bicycle types; e-bike and tricycle details; do boats go beyond motorboat; may guests submit without signing in.
-2. **Blog (section 10):** how a new post gets the rating and distance that every card shows.
-3. **Travel Guide (section 10):** can a guide span more than one day; the per-post rate and when it becomes payable.
-4. **Ads (section 16A):** how advertisers are charged and invoiced; the AdSense / AdMob accounts; whether the mobile app uses the same ad service; who besides Super Admin approves campaigns.
-5. **Operator system (section 9)** questions, and template questions when template work starts (section 4).
-
 ## 16A. Ads system and Adsboard (2026-11-22)
 
-The Adsboard is the Ads Management dashboard. It controls every ad shown in the web app and, later, the mobile app. Written against `src/components/ui/AdSlot.tsx`, `src/data/ads.ts`, the Ads Management panel in `SuperAdminPage.tsx` and `Doc/STATUS.md` (PREVIEW, local state).
+The Adsboard is the Ads Management dashboard. It controls every ad shown in the web app and, later, the mobile app. Written against `src/components/ui/AdSlot.tsx`, `src/data/ads.ts`, the Ads Management panel in `SuperAdminPage.tsx` and `Doc/STATUS.md` (PREVIEW, local state; main @ `74b80fa`).
 
 ### 16A.1 Rules (already decided)
 
@@ -1210,9 +1290,214 @@ Direct reads of the ad tables are denied to the public; they use `serve_ad` and 
 6. Every ad carries a Sponsored label and alt text in both languages.
 7. The Adsboard totals equal the sum of the daily roll-up.
 
-### 16A.12 Still to define
+### 16A.12 Commercial rules (decided)
 
-How advertisers are charged (flat fee, CPM or CPC) and invoiced; the AdSense / AdMob accounts and ids; whether the mobile app uses the same `serve_ad`; who besides Super Admin may approve.
+- **Pricing:** a flat fee per campaign, agreed by hand with the advertiser for a period and a set of placements. No self-serve billing and no CPM or CPC in this phase. The campaign stores `agreed_fee_mmk`, `invoiced` and `paid` flags; invoices are issued outside the app.
+- **AdSense / AdMob:** the web app uses AdSense as the fallback on placements with `fallback_allowed`. The account and ids go in Settings and stay empty until the founder supplies them, so fallback is off until then. AdMob is used when the mobile app ships.
+- **Mobile app:** it uses the same `serve_ad` and the same placement catalog, with mobile-specific placements added later.
+- **Approval:** Super Admin only.
+
+## 16B. Platform services (shared by every module; 2026-11-22)
+
+These are built once in Phase 0 and then used by Rentals, Blog, Travel Guide, Ads and every later module.
+
+### 16B.1 Roles and permissions
+
+Roles live in `public.profiles.role` and are checked on the server for every write (RLS plus a role helper in the private schema). Client helpers such as `canManageBlogs` only hide menus. F = full, R = read, O = own records only, A = approve.
+
+| Area | Super Admin | Ads Admin | Admin | Rental Admin | Payment Admin | Guide Content Admin | Blog Post Admin | Owner Admin |
+|---|---|---|---|---|---|---|---|---|
+| Rental orders and catalog | F | – | R + handle orders | F | R + record payment | – | – | – |
+| Blog posts | F | – | R | – | – | – | F | – |
+| Travel guides | F | – | R | – | – | F | – | – |
+| Guide earnings | F | – | R | – | F (set amount, mark paid) | O (read) | – | – |
+| Ads and Adsboard | F + A | F | – | – | R (reports) | – | – | – |
+| Users and support | F | – | F | – | – | – | – | – |
+| Owner accounts and listing approval | F | – | F | – | – | – | – | O (own listing) |
+| Payments, payouts, exchange rates | F | – | – | – | F | – | – | O (own earnings) |
+| Template catalog and entitlements | F | – | R | – | F (record payments) | – | – | O (own shop) |
+| Settings and roles | F | – | – | – | – | – | – | – |
+
+Super Admin creates every other admin account. Traveler accounts are separate from all of these (section 3).
+
+### 16B.2 Audit log
+
+Every create, update, delete, publish, approve, payment and role change writes one row: actor, role, action, object type, object id, a short before/after summary, time (UTC), and the request source. Rows are append-only and kept 24 months. Content actions use the `ContentAction` names already in `contentWorkflow.ts`. Reuse `admin_audit_logs` after checking its columns.
+
+### 16B.3 Notifications
+
+One service, two tables: `notification_feed` (shared rows such as "new blog post") and the existing per-user `notifications` read-state. Delivery is Supabase Realtime to the bell; retention 90 days.
+
+| Event | Recipients | Link |
+|---|---|---|
+| Blog post published | all users | `/blogs?story=<slug>` |
+| Travel guide published | all users | `/travel-guide/<slug>` |
+| Rental requested | Rental Admin accounts | the order in the Rental Admin dashboard |
+| Rental accepted, paid, expired, cancelled | the traveler | `/account/bookings/<code>` |
+| Rental rescheduled | Rental Admin accounts | the order |
+| Ad creative waiting for approval | Super Admin | Adsboard approvals |
+| Campaign ends in 3 days, campaign ended | Ads Admin | the campaign |
+| Guide earning amount set, marked paid | the author | the earnings list |
+| Owner or template subscription ending (7, 3, 1 days) | the owner | the renewal screen |
+| Shop Owner application submitted | Admin, Super Admin | the application |
+| A scheduled job failed | Super Admin | the jobs page |
+
+### 16B.4 Translation fallback (section 14)
+
+When a text exists in one language only, the reader asks `translate(text, from, to)`. The result is cached in `translation_cache` (`id`, `source_hash`, `from_lang`, `to_lang`, `source_text`, `translated_text`, `status` auto / approved / edited, `reviewed_by`, `created_at`) and shown with a small "Auto-translated" marker. Admin has a review queue of `auto` rows, most viewed first; approving or editing makes the text permanent and removes the marker. The translation provider is called from a Cloudflare Worker with its key in secrets. Names, addresses and prices are never translated.
+
+### 16B.5 Currency
+
+`exchange_rates` (`id`, `mmk_per_usd`, `effective_from`, `set_by`, `note`); the current rate is the latest row with `effective_from <= now`. Super Admin and Payment Admin set it, and rows are never edited. Orders and bookings snapshot the rate and display currency. USD is kept to 2 decimals; MMK is shown rounded to the nearest 100. The hard-coded 4,500 stays as the fallback until the first row exists.
+
+### 16B.6 Media and storage (Cloudflare R2)
+
+| Folder | Holds | Limit |
+|---|---|---|
+| `blog-posts/` | cover and inline images | WebP, at most 450 KB |
+| `guide-stops/` | guide covers and stop photos | WebP, at most 450 KB |
+| `ads/` | ad images and video | image at most 300 KB; video MP4 at most 3 MB and 15 s |
+| `rentals/` | category and variant images | WebP, at most 450 KB |
+| `shops/<shop-id>/` | owner photos, within the Admin-set quota | WebP, at most 450 KB |
+
+All uploads go through the authenticated Worker (type check, size check, role check, rate limit, CORS allowlist). A nightly job removes objects nothing has referenced for 30 days.
+
+### 16B.7 Scheduled jobs
+
+Runs on `pg_cron` or Cloudflare Cron Triggers. Every job is safe to run twice, logs its result, and notifies Super Admin when it fails.
+
+| Job | Every | Does |
+|---|---|---|
+| Publish due content | 1 minute | Scheduled blog posts and guides whose time has come |
+| Ad campaign start and end | 1 minute | Approved to Live at `start_at`; Live to Ended at `end_at` |
+| Rental payment expiry | 5 minutes | Accepted orders past `payment_deadline` become Expired |
+| Template and owner subscription expiry | 1 hour | Active to grace to expired |
+| Renewal and campaign reminders | daily, 09:00 Myanmar Time | Sends the 7, 3 and 1-day notices |
+| Ad statistics roll-up | daily, 00:30 Myanmar Time | `ad_events` into `ad_stats_daily` |
+| Orphan media cleanup | daily, 02:00 Myanmar Time | Removes unreferenced R2 objects |
+| Raw ad events purge | daily | Deletes `ad_events` older than 90 days |
+
+### 16B.8 Security baseline
+
+- RLS on every table; no table is readable or writable by the public except through a named view or function.
+- Server-side role checks on every write; the client is never trusted for totals, prices, roles or dates.
+- Stable error codes, translated on the client; no raw database errors reach the user.
+- Rate limits on submissions, uploads and login. Secrets only in Worker and Supabase secrets, never in the repo or `VITE_` variables.
+- No plaintext passwords anywhere in production: Admin and Owner creation use Supabase Auth invitations (`Doc/REMAINING-WORK.md`).
+- Personal data kept to what a feature needs; the traveler's data is shared with an operator only for a booking the traveler made.
+- Daily database backups with a tested restore.
+
+### 16B.9 Environments and delivery
+
+Three environments: local with a development Supabase project, staging, production. Every migration is committed under `supabase/migrations`, so a new project can be rebuilt from the repo. Every push runs typecheck, `npm test` and the production build. Deploys go through Cloudflare. Error tracking and an uptime check are set up before launch.
+
+### 16B.10 Tests
+
+Keep the pure-rule unit tests. Add: RLS tests per role for every new table; one end-to-end test per critical flow (submit and pay a rental, publish and schedule a blog post, serve and click an ad); and a Playwright or axe check of each new dashboard section.
+
+## 16C. Remaining modules: the repeatable recipe (2026-11-22)
+
+After the MH-owned modules, every other module is filled in one at a time with the same recipe, so each one is a copy of a pattern that already works.
+
+### 16C.1 Order
+
+| # | Module | Why in this place |
+|---|---|---|
+| 1 | Hotels | The most data and the full booking flow; it settles the universal booking and voucher work for everyone after it |
+| 2 | Restaurants | Adds menus and price display modes |
+| 3 | Cafes | Same shape as Restaurants |
+| 4 | Attractions | MH-managed content with no Owner, so no subscription or commission |
+| 5 | Markets | Same shape as Attractions |
+| 6 | Book Shops | Owner catalog of products |
+| 7 | Transport and local Bus | Static route and stop data; no seat booking |
+| 8 | Nearby | Reads the listings built above; adds distance, open now and the map |
+| 9 | Travel Plans | Custom-plan requests (`custom_plan_requests` exists) |
+| 10 | Unified Search | Needs all listings and content to exist |
+
+Ticketing and the Operator system follow in their own phase (the Operator system specification in section 9).
+
+### 16C.2 Shared tables
+
+- **`listings`** (ids stay as today, for example `lotte` or `pre1`, so links and tests keep working): `id`, `category`, `city_id`, `owner_id` (null for MH-managed), `name_mm`, `name_en`, `description_mm`, `description_en`, `address`, `latitude`, `longitude`, `open_time`, `close_time`, `checkin_time` and `checkout_time` (hotels), `price_display` (hidden / after payment / public), `price_from_mmk`, `price_from_usd`, `booking_flow_mode` (full_manual / instant), `status` (pending / active / suspended / retired), `rating`, `review_count`, `favorite_count`, `views`, `created_at`, `updated_at`.
+- **Category detail tables** for what differs: hotel rooms, restaurant and cafe menus, book shop products, market stalls.
+- **`listing_photos`** (`id`, `listing_id`, `key`, `position`) within the owner's Admin-set quota, stored in `shops/<shop-id>/`.
+- **`bookings`** (exists): the universal booking with the section 6 flow. A listing's mode decides the path. **Full Manual:** requested → accepted → payment pending (12 hours) → paid → voucher → completed, with Expired and Cancelled; **Instant:** pay → voucher. Users cannot cancel; after full payment they may reschedule the date. The Owner's commission rate is snapshotted on each transaction (section 9).
+- **`reviews`** (exists): a review requires a Completed booking or a recorded visit for that listing (section 11); repeated reports lower the rating and Admin can raise it again.
+
+### 16C.3 The recipe for one module
+
+1. Seed `listings` and the detail tables from the compiled catalog (`src/data/placeCatalog.ts`), keeping ids.
+2. Admin and Owner management: create, edit, photo quota, price display, open times, approval (Owner edits go live after the first Admin approval, section 9).
+3. Switch the module's pages from compiled data to Supabase queries, scoped by city and with real pagination.
+4. Booking or contact CTA according to the listing's flow mode, with the voucher.
+5. Reviews with the verification rule.
+6. Add the module to the search index and to the notification events (new listing, booking status).
+7. Tests: rules, RLS per role, one end-to-end booking, and the route and link tests that already run.
+
+Acceptance for each module: pages read live data; an Owner changes only their own listing; a booking follows the listing's flow mode end to end; a review appears only after a verified booking; the module is searchable.
+
+## 16D. Build roadmap and gates (2026-11-22)
+
+Phases are ordered by dependency, with no calendar dates. A phase is finished only when its gate is met. Each phase ends with the `Doc/` update (what was completed and how it was built).
+
+| Phase | Work | Gate |
+|---|---|---|
+| 0. Platform foundation | Migrations committed under `supabase/migrations`; real Auth with the first Super Admin (email and Google); roles on `profiles` and the server role helper; audit log standard; jobs runner; media Worker; notification service; exchange-rate service; translation fallback (section 16B) | Super Admin signs in, creates a Blog Post Admin, and the audit row and a notification appear; a failed job alerts Super Admin |
+| 1A. Rentals | Section 8 end to end, including Rental Admin | Section 8 acceptance criteria all pass |
+| 1B. Blog | Section 10 Blog end to end, including the R2 endpoint and scheduling | Blog acceptance criteria all pass |
+| 1C. Travel Guide | Section 10 Travel Guide end to end, with the listing index seeded | Guide acceptance criteria all pass |
+| 1D. Ads and Adsboard | Section 16A, starting with Home and `blog_inline`; can run beside 1C | Section 16A acceptance criteria all pass |
+| 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one, with reviews and search | Hotels pass the 16C acceptance, then each next module does |
+| 3. Owner money and templates | Owner subscriptions, commission snapshots, wallets and twice-monthly payouts (section 9); template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work |
+| 4. Ticketing and operators | Operator system specification (section 9) | Operator system acceptance (section 9) passes |
+| 5. Mobile app | App using the same APIs, `serve_ad` with AdMob, push notifications | Same flows pass on a phone |
+| 6. Launch readiness | Security review of RLS and Workers; load test of search and booking; backup restore drill; privacy policy and terms pages; error tracking and uptime check; contrast palette decision (`Doc/STATUS.md` §8); content seeding | Checklist signed off by the founder |
+
+Dependencies to respect: the media Worker (Phase 0) before Blog, Guide and Ads uploads; the listing index before guide stops can use the database; the booking and voucher work in Hotels before any module after it; ledgers before payouts and before the operator settlement.
+
+## 16E. Decision register: review after trying the product (2026-11-22)
+
+The founder delegated these decisions to Claude and will review them after the modules are connected and used. Each row says where it lives and what changing it costs. Nothing here is final until the founder has tried it.
+
+| # | Decision | Section | If changed |
+|---|---|---|---|
+| 1 | Card size: `md` default, `lg` / `xl` limits by column count | 4 | Done in code; a rule edit only |
+| 2 | Load More: page size 12, shared helper | 4 | Done in code |
+| 3 | Role names follow section 3; Admin form uses them | 3 | Done in code |
+| 4 | One role-guarded admin workspace for the content roles | 3 | Menu and route changes |
+| 5 | Rental follows the section 6 Full Manual flow; payment recorded by staff | 8 | Add a gateway later without changing statuses |
+| 6 | Traveler must sign in to submit a rental | 8 | Allow guests: add phone verification and anti-spam |
+| 7 | Yangon: motorbike and scooter removed | 8 | Data change in the availability matrix |
+| 8 | Self-drive car retired; cars always with a driver | 8 | Set the category active again |
+| 9 | Vehicle, bicycle and boat types are Rental Admin data | 8 | None; types are data |
+| 10 | Rental price by city × category × variant | 8 | Drop city rows to return to one rate |
+| 11 | 12-hour payment window; travelers cannot cancel; reschedule once, 24 hours ahead | 8 | Settings and one server rule |
+| 12 | Rental voucher fills the 17 section 6 fields; printable page with QR | 8 | Voucher template only |
+| 13 | Blog: 3 ad blocks per post, never first, never adjacent (as in code) | 10 | One constant |
+| 14 | Blog captions bilingual; `galleryUrls` removed | 10 | Editor and reader field change |
+| 15 | Missing language is auto-translated and queued for review | 10, 16B | Switch the reader to show the other language instead |
+| 16 | Blog cards hide rating and distance when absent | 10 | Reader card change |
+| 17 | Slug from English title, fixed after first publish | 10 | Allow redirects if titles must change |
+| 18 | Scheduling entered in Myanmar Time, stored in UTC | 10, 16B | None |
+| 19 | Guides are single-day now; `day_number` column ready | 10 | Add multi-day UI later |
+| 20 | Guide author earnings paid on the 20th and 5th, no minimum, amount from a settings default | 10 | A setting and the payout rule |
+| 21 | Guide earning amount kept in USD with the MMK paid recorded | 10 | Switch the stored currency to MMK |
+| 22 | Ads: flat fee per campaign agreed by hand; no self-serve billing | 16A | Add billing tables later |
+| 23 | Ads: Super Admin approves; AdSense fallback off until ids are set | 16A | Approval rule and Settings |
+| 24 | Ads: impression counted after half the ad is visible for 1 second | 16A | One threshold |
+| 25 | Ad creative limits: image 300 KB, video 3 MB and 15 s | 16A, 16B | Settings |
+| 26 | Operator data stays in the operator system; MH keeps a minimal sale record | 9 | The record's columns |
+| 27 | Tickets use the Instant flow; the traveler pays MH Travel; settlement twice a month | 9 | Direct settlement is a new flow |
+| 28 | Seat hold lasts 10 minutes | 9 | One constant on both sides |
+| 29 | Operator vouchers: fixed fields plus logo, colors, text and one of three layouts | 9 | Allow more layouts |
+| 30 | Templates: 2,000 MMK for all categories; 7-day grace; Hotel first; launch with the default plus 3 paid | 4 | Price and counts are data |
+| 31 | The "genuinely different" test: at least four of seven differences | 4 | The checklist |
+| 32 | Audit log kept 24 months; notification retention 90 days | 16B | Settings |
+| 33 | MMK shown rounded to the nearest 100; USD 2 decimals | 16B | One formatter |
+| 34 | Module order: Hotels, Restaurants, Cafes, Attractions, Markets, Book Shops, Transport, Nearby, Travel Plans, Search | 16C | Reorder the list |
+| 35 | Phase order 0, 1A–1D, 2 to 6 with gates | 16D | Reorder; gates stay |
+
+**Facts only the founder can supply later** (not blocking any build step): the Travel Guide default per-post rate; the commercial terms of each ad campaign; the AdSense and AdMob account ids; the commission percentage and revenue-share formula for tickets (already left Admin-configurable in section 9); definitions of the "express" and "အာတာဖတ်" vehicles, which Rental Admin enters as data.
 
 ## Rentals UI reference provided by the user (2026-11-08)
 
