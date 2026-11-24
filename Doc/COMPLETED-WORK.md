@@ -43,6 +43,7 @@ Only `*.dom.test.tsx` gets a document (`environmentMatchGlobs` in
 |---|---|
 | `src/features/place/PlaceDetailPage.dom.test.tsx` | the not-found state on `PlaceDetailPage`, `RestaurantPage` and `BookShopPage`; a real hotel id renders its record instead; the text follows the chosen language |
 | `src/features/blogs/BlogsPage.dom.test.tsx` | choosing a category chip narrows the list to that category's own stories, `aria-pressed` moves off All, and All restores the full list |
+| `src/features/emptyStates.dom.test.tsx` | Blogs, Travel Guide, Travel Plans, Rentals, Nearby, a category page and Favorites each reach their empty state, with the MM/EN copy |
 
 Both were mutation-checked before commit: reinstating `?? POPULAR_BOOK_SHOPS[0]`
 in `BookShopPage` and deleting the category filter line each turn the suite red,
@@ -50,7 +51,7 @@ so the tests can fail. `jsdom`, `@testing-library/react` and
 `@testing-library/user-event` are new dev dependencies; the react-refresh lint
 rule is switched off for test files only, so the warning count stays at seven.
 
-861 tests in 70 files pass; typecheck clean, lint 0 errors, build clean.
+868 tests in 71 files pass; typecheck clean, lint 0 errors, build clean.
 
 ## Detail links that resolve, and grids that compute their cap — 24 November 2026
 

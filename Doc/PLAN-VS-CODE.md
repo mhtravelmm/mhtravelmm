@@ -400,7 +400,7 @@ record, which has not been touched since 2026-11-09.
 | 6 | Add a Load More rule to §4 | ~~Done 22 Nov~~ |
 | 7 | Point the Plan at `Doc/STATUS.md` | ~~Done~~: the Plan's first line names it as the status view |
 | 8 | **Replace "no `supabase/` migration directory"** with "19 migrations committed, none applied" | **Open** (§3.6). This is the most misleading remaining claim: it makes the schema work look unstarted |
-| 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 861 tests in 70 files, including 8 that render a page under jsdom |
+| 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 868 tests in 71 files, including 15 that render a page under jsdom |
 | 10 | **Drop the 48-broken-links count** and the visual-CTA rows | **Open.** Both were fixed on 20 Nov and are test-guarded |
 | 11 | **Narrow "catalog data is not API"** to reads | **Open.** Writes already go through Supabase when configured (§5) |
 
@@ -425,6 +425,11 @@ fail):
 
 Still hand-checked: the Account tab sets, the Search chips, the rental order form,
 and every admin panel form.
+
+A third suite, `src/features/emptyStates.dom.test.tsx`, closes the backlog item
+that said no list was audited for an empty state: it drives Blogs, Travel Guide,
+Travel Plans, Rentals, Nearby, a category page and Favorites each to the state
+they show when nothing matches, and asserts the MM/EN copy.
 
 Items 8–11 are mechanical, and each one currently understates the project. Item
 3 is mechanical too but needs the list of nine modules from §3.2.

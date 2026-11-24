@@ -448,8 +448,14 @@ routes. Every check except contrast is now clean.
   `src/lib/usePagedList.ts`. Twelve divides evenly into two, three, four and
   six columns, so no batch ends on a ragged row; the last batch is clamped to
   what exists and the button hides once everything is shown. Unit-tested.
-- **No empty-state audit.** Empty states exist on some pages (Blogs search,
-  Favorites, Travel Guide) but there is no check that every list has one.
+- ~~**No empty-state audit.**~~ **Audited and guarded 24 November 2026.** All
+  seven lists that can go empty have a state — Blogs, Travel Guide, Travel Plans,
+  Rentals, Nearby, the category pages and Favorites — and
+  `src/features/emptyStates.dom.test.tsx` reaches each one by driving the real
+  control: a search query no record matches, the clinic-plus-open-now combination
+  on Nearby (every seeded clinic is closed), or an empty Favorites store. The
+  test was mutation-checked by deleting `category_no_results` from
+  `CategoryPage`, which fails it.
 
 ### Localization
 
