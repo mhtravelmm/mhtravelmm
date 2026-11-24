@@ -14,14 +14,24 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
 
 ## Standing permission
 
-The agent may write and change code freely in this repository without asking first:
-implement the Plan, add tests, add dependencies the work needs, refactor, and commit.
-Docs and Plan edits are allowed too. The only things to confirm are the ones the Plan
-itself reserves for the founder — the brand palette decision (`Doc/STATUS.md` §8) and
-the commercial terms in `Plan/PROJECT-PLAN.md` §16E.
+The agent has **full, standing permission to write code** in this repository. Do not
+stop to ask before implementing the Plan, adding tests, adding the dependencies the
+work needs, refactoring, editing docs, or committing and pushing to `main`.
 
-The Plan under `Plan/` is refreshed roughly every five hours. Re-read it at the start
-of a session, and do not treat a doc claim as true without checking the code.
+- Write, refactor, and delete application code, tests, migrations, and config.
+- Add dev or runtime dependencies the work genuinely needs.
+- Update `Plan/` and `Doc/` so they match the code you shipped.
+- Commit and push to `main` when the work is verified (typecheck, tests, lint, build).
+- Add the migration a Plan item needs, even though it is applied later.
+
+The only things to confirm first are the decisions the Plan reserves for the founder:
+the brand-palette contrast values (`Doc/STATUS.md` §8) and the commercial terms in
+`Plan/PROJECT-PLAN.md` §16E. Everything else is yours to decide and ship.
+
+The Plan under `Plan/` is refreshed roughly every five hours, so a later item may not
+have arrived yet. Re-read it at the start of a session; when nothing new has landed,
+keep working the items that are already open rather than waiting. Never treat a doc
+claim as true without checking the code.
 
 ## Rules that tests enforce
 
