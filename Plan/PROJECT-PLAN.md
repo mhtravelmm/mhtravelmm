@@ -378,7 +378,7 @@ selects one of them; a page never overrides the internal dimensions itself.
 - Status (2026-11-24): the system is built. `/shops/:shopId` renders the shop's
   resolved template from a lazy module, nine templates rendered (the free hotel
   default, six paid hotels, one book shop design, and one generic design behind
-  restaurant, cafe and attraction — fifteen after the 29 November growth pass), the owner previews and applies from their
+  restaurant, cafe and attraction — nineteen after the 29 November growth pass), the owner previews and applies from their
   own panel, and Super Admin manages the catalog and records invoices.
   Template views and applies are counted: `src/lib/templateStats.ts` holds the
   rules (one view per template per page view, an apply only when the switch
@@ -387,7 +387,7 @@ selects one of them; a page never overrides the internal dimensions itself.
   catalog panel reads them, and `template_events_purge` runs daily in the
   §16B.7 registry.
 - Status (2026-11-29): the catalog reached the count the founder expects.
-  Fifteen templates render: the free hotel default plus **ten** paid hotel
+  Nineteen templates render: the free hotel default plus **ten** paid hotel
   designs, and one paid alternative beside the free default in each of the
   other four categories (restaurant, cafe, attraction, book shop). The four
   hotel designs of this pass are Split Screen (`hotel_split_screen`), Board

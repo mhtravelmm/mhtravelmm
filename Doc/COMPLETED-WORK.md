@@ -1,7 +1,7 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 29 November 2026 (latest pass: the §4 catalog growth to
-fifteen templates)
+nineteen templates)
 **Verified against:** `main` plus the Shop Page template layer (the lazy
 template modules under `src/templates/`, the `/shops/:shopId` route and the
 `scripts/a11y-audit.mjs` gate), the Rental catalog data module and Rental Admin
@@ -19,7 +19,7 @@ For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
 
-## Template catalog growth to fifteen designs (Plan §4) — 29 November 2026
+## Template catalog growth to nineteen designs (Plan §4) — 29 November 2026
 
 §4 asked for about ten hotel designs and, after the hotel category, a paid
 alternative for the rest. This pass closes both.

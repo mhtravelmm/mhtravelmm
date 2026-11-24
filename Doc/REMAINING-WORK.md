@@ -250,7 +250,7 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `shop_subscriptions`), the §4 rules and catalog
   (`src/lib/shopTemplates.ts`, `shop_templates`), the owner's preview/apply
   selector, the Super Admin catalog screen with invoice recording
-  (`payForTemplate()` in `ShopTemplatesPanel.tsx`), and the rendered layer — `/shops/:shopId` serving fifteen lazy templates over one
+  (`payForTemplate()` in `ShopTemplatesPanel.tsx`), and the rendered layer — `/shops/:shopId` serving nineteen lazy templates over one
   `ShopPageData` fixture, with `scripts/a11y-audit.mjs` (`npm run a11y`) as the
   gate: 192 combinations of template, width and theme, clean.
   **Template analytics is built (24 November 2026):** `src/lib/templateStats.ts`
@@ -262,7 +262,7 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `template_events_purge` in the §16B.7 registry and
   `20261128000200_shop_template_events.sql` as the table, its
   `template_usage()` report function and the purge.
-  **The catalog reached the count §4 asks for (29 November 2026):** fifteen
+  **The catalog reached the count §4 asks for (29 November 2026):** nineteen
   templates render — the free hotel default plus ten paid hotel designs
   (Classic, Editorial, Compact, Gallery First, Booking Focus, Map First, Story,
   Split Screen, Board, Panorama, Directory) and one paid alternative beside the
