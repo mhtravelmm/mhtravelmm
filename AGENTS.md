@@ -14,9 +14,19 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
 
 ## Rules that tests enforce
 
-- **Every seed `href` must resolve.** `src/data/links.test.ts` walks the data modules and
-  fails on an unknown path. Add the route to `src/routes.ts` (`STATIC_PATHS` / `PARAM_PATHS`)
-  *and* to `App.tsx`, or the test fails.
+- **Every seed `href` must resolve, at both levels.** `src/data/links.test.ts` walks the
+  data modules and fails on an unknown path — add the route to `src/routes.ts`
+  (`STATIC_PATHS` / `PARAM_PATHS`) *and* to `App.tsx`, or the test fails. A declared
+  route is not enough: the `:id` must also name a record. Every detail page reads
+  `resolveDetailRecord(slug, id)` from `src/lib/detailRoutes.ts` and renders
+  `RecordNotFound` when it returns nothing — never `?? LISTINGS[0]`, which shows one
+  record under another one's URL. A new detail slug goes into that resolver, and
+  `links.test.ts` walks every seed detail href through `resolveDetailHref()`.
+- **A card grid computes its cap; it never hand-writes one.** `src/lib/cardGrid.ts`
+  holds the Plan §4 formula (`cardGridMaxWidth` = `columns × max width + gaps`) and
+  the pixel table, and `cardGridStyle()` returns the inline style Tailwind cannot
+  build from a runtime class name. `src/lib/cardGrid.test.ts` fails if a page
+  hand-writes a five-column cap or if the table drifts from `CARD_SIZES`.
 - **`public/manus-routes.json` must match `allPaths()`.** Insert the new entry in place;
   do not re-sort the file.
 - **Every UI string goes through `t()`**, and both `mm` and `en` must be filled. The

@@ -5,7 +5,10 @@ import { useFavorites } from '../../lib/favorites';
 import { useLanguage } from '../../lib/i18n';
 import { formatDistance, formatRating, hasDistance, hasRating } from '../../lib/cardMeta';
 import { useCurrency } from '../../lib/currency';
-import { findPlace, findPlaceKind } from './placeCatalog';
+import { findPlaceKind } from './placeCatalog';
+import { RecordNotFound } from '../../components/ui/RecordNotFound';
+import { resolveDetailRecord } from '../../lib/detailRoutes';
+import { cardGridStyle } from '../../lib/cardGrid';
 
 export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
   const { id } = useParams<{ id: string }>();
@@ -15,24 +18,9 @@ export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
   const navigate = useNavigate();
 
   const kind = findPlaceKind(kindSlug);
-  const listing = kind && id ? findPlace(kind, id) : undefined;
+  const listing = kind && id ? resolveDetailRecord(kindSlug, id) : undefined;
 
-  if (!kind || !listing) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <p className="text-sm text-text-muted">
-          {t('place_not_found')}
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="mt-4 inline-flex items-center gap-2 rounded-md bg-brand-blue px-4 py-2 text-xs font-semibold text-white"
-        >
-          <ArrowLeft size={14} /> {t('place_go_back')}
-        </button>
-      </div>
-    );
-  }
+  if (!kind || !listing) return <RecordNotFound />;
 
   const saved = isFavorite(listing.id, listing.isFavorited);
   const related = kind.items.filter((item) => item.id !== listing.id).slice(0, 5);
@@ -124,7 +112,7 @@ export function PlaceDetailPage({ kind: kindSlug }: { kind: string }) {
           <h2 className="mb-3 text-base font-medium text-text-primary">
             {t('place_related')}
           </h2>
-          <div className="grid max-w-[1240px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" style={cardGridStyle(5, 'md')}>
             {related.map((item) => (
               <ListingCard key={item.id} listing={item} />
             ))}

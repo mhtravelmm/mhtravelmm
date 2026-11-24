@@ -40,7 +40,7 @@ export const NOTIFICATIONS: NotificationItem[] = [
     thumbnailTo: '#1a2a3a',
     createdAt: hoursAgo(5),
     isRead: false,
-    href: '/hotels/tp1',
+    href: '/hotels/sedona-yangon',
   },
   {
     id: 'n3',

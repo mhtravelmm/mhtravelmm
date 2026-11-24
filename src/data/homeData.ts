@@ -35,12 +35,12 @@ export const BLOGS: CardListing[] = [
 ];
 
 export const POPULARS: CardListing[] = [
-  { id: 'pp1', title: 'Yangon hotel', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.4, distanceKm: 4, isFavorited: false, views: 1500, href: '/hotels/pp1' },
-  { id: 'pp2', title: 'Shwe book shop', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.7, distanceKm: 1, isFavorited: false, views: 1500, href: '/book-shops/pp2' },
-  { id: 'pp3', title: 'City mall Insein', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.2, distanceKm: 6, isFavorited: false, views: 1500, href: '/markets/pp3' },
-  { id: 'pp4', title: 'Yangon hotel', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.6, distanceKm: 4, isFavorited: false, views: 1500, href: '/hotels/pp4' },
-  { id: 'pp5', title: 'Shwe book shop', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.3, distanceKm: 1, isFavorited: false, views: 1500, href: '/book-shops/pp5' },
-  { id: 'pp6', title: 'City mall Insein', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.5, distanceKm: 6, isFavorited: false, views: 1500, href: '/markets/pp6' },
+  { id: 'pp1', title: 'Sedona hotel Yangon', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.8, distanceKm: 2.5, isFavorited: false, views: 1500, href: '/hotels/sedona-yangon' },
+  { id: 'pp2', title: 'Shwe book shop', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.5, distanceKm: 1.2, isFavorited: false, views: 1500, href: '/book-shops/shwe' },
+  { id: 'pp3', title: 'Bogyoke market', imageUrl: '/images/blog/ubein-evening.webp', rating: 4.6, distanceKm: 1.8, isFavorited: false, views: 1500, href: '/markets/bogyoke' },
+  { id: 'pp4', title: 'Lotte hotel Yangon', imageUrl: '/images/blog/bagan-sunrise.webp', rating: 4.6, distanceKm: 1.8, isFavorited: false, views: 1500, href: '/hotels/lotte' },
+  { id: 'pp5', title: 'Book Nook Yangon', imageUrl: '/images/blog/shwedagon-evening.webp', rating: 4.8, distanceKm: 0.7, isFavorited: false, views: 1500, href: '/book-shops/book-nook' },
+  { id: 'pp6', title: 'Junction city mall', imageUrl: '/images/blog/inle-stilt-houses.webp', rating: 4.5, distanceKm: 1.5, isFavorited: false, views: 1500, href: '/markets/junction-city' },
 ];
 
 export const REVIEWS = [

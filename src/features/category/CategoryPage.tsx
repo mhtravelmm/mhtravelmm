@@ -5,6 +5,7 @@ import { ListingCard } from '../../components/ui/ListingCard';
 import { useLanguage } from '../../lib/i18n';
 import { CATEGORIES } from './categories';
 import { fill } from '../../lib/fill';
+import { cardGridStyle } from '../../lib/cardGrid';
 
 export function CategoryPage({ slug }: { slug: string }) {
   const { language, t } = useLanguage();
@@ -58,7 +59,7 @@ export function CategoryPage({ slug }: { slug: string }) {
         </label>
 
         {visible.length > 0 ? (
-          <div className="mt-4 grid max-w-[1240px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div className="mt-4 grid grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" style={cardGridStyle(5, 'md')}>
             {visible.map((item) => (
               <ListingCard key={`${category.id}-${item.id}`} listing={item} />
             ))}

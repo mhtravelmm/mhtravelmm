@@ -8,7 +8,8 @@ import { useFavorites } from '../../lib/favorites';
 import { mapSearchUrl, telHref } from '../../lib/placeActions';
 import { categoryOptions, filterByCategory } from '../../lib/categoryFilter';
 import { localizedOrFallback } from '../../lib/translationCache';
-import { POPULAR_BOOK_SHOPS } from '../../data/cityPageData';
+import { RecordNotFound } from '../../components/ui/RecordNotFound';
+import { resolveDetailRecord } from '../../lib/detailRoutes';
 
 const PHOTOS = ['/images/blog/ubein-evening.webp', '/images/blog/shwedagon-evening.webp', '/images/blog/inle-stilt-houses.webp', '/images/blog/bagan-sunrise.webp'];
 type Copy = { mm: string; en: string };
@@ -48,8 +49,8 @@ export function BookShopPage() {
   const { formatPrice } = useCurrency();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { id } = useParams<{ id: string }>();
-  const shop = POPULAR_BOOK_SHOPS.find((item) => item.id === id || item.href?.endsWith(`/${id}`)) ?? POPULAR_BOOK_SHOPS[0];
-  const saved = isFavorite(shop.id, shop.isFavorited);
+  const shop = id ? resolveDetailRecord('book-shops', id) : undefined;
+  const saved = shop ? isFavorite(shop.id, shop.isFavorited) : false;
   const [activeTab, setActiveTab] = useState<ShopTab>('books');
   const [bookCategory, setBookCategory] = useState('All categories');
   const tabs: { id: ShopTab; icon: typeof BookOpen; label: string }[] = [
@@ -67,6 +68,8 @@ export function BookShopPage() {
   const bookCategoryLabel = (key: string) => key === 'All categories'
     ? t('bookshop_all_categories')
     : localizedOrFallback(BOOKS.find((book) => book.category.en === key)?.category, language);
+  if (!shop) return <RecordNotFound />;
+
   const directionsUrl = mapSearchUrl(`${shop.title}, Yangon`);
 
   return <div className="mx-auto max-w-7xl pb-8 pt-2 sm:pt-4">

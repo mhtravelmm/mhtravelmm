@@ -1,7 +1,8 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 29 November 2026 (latest pass: the §4 catalog growth to
-nineteen templates)
+nineteen templates; the detail-link and grid-cap fixes of 24 November 2026 sit
+below)
 **Verified against:** `main` plus the Shop Page template layer (the lazy
 template modules under `src/templates/`, the `/shops/:shopId` route and the
 `scripts/a11y-audit.mjs` gate), the Rental catalog data module and Rental Admin
@@ -18,6 +19,60 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## Detail links that resolve, and grids that compute their cap — 24 November 2026
+
+Two findings from the `a6b16ac` audit were code, not documentation, and both are
+now closed and test-guarded.
+
+**The seven dead detail ids.** `links.test.ts` proved a seed `href` matched a
+*declared route*; it never proved the `:id` resolved to a *record*. Seven of the
+47 detail hrefs named nothing: the Home **Populars** row (`pp1…pp6` spread over
+`/hotels/`, `/book-shops/` and `/markets/`), a notification carrying the travel
+plan id `tp1`, and — the worse half — two bespoke pages that answered an unknown
+id with `?? LISTINGS[0]`, so `/book-shops/pp2` rendered the first book shop under
+a URL naming another one.
+
+- `src/lib/detailRoutes.ts` is now the one resolver: `resolveDetailRecord(slug,
+  id)` reads the place catalog for the seven place slugs and the two city-page
+  collections for restaurants and book shops, and `resolveDetailHref(href)`
+  splits a `/slug/id` href. `PlaceDetailPage`, `RestaurantPage` and
+  `BookShopPage` all read it, so there is no second definition of "which record
+  does this URL mean".
+- `src/components/ui/RecordNotFound.tsx` is the single not-found state, with
+  `record_not_found` / `record_go_back` in both languages. The `?? [0]`
+  fallbacks are gone.
+- `POPULARS` links records that exist (`/hotels/sedona-yangon`,
+  `/hotels/lotte`, `/book-shops/shwe`, `/book-shops/book-nook`,
+  `/markets/bogyoke`, `/markets/junction-city`) and the notification points at
+  `/hotels/sedona-yangon`.
+- `links.test.ts` gained a record-level twin of the route test: every seed
+  detail href goes through `resolveDetailHref()` and an unresolved one fails the
+  suite.
+
+Verified in the browser: `/hotels/lotte`, `/book-shops/shwe`,
+`/markets/bogyoke` and `/restaurants/monsoon` render their record;
+`/hotels/pp1` and `/book-shops/pp2` render the not-found state in Burmese and
+English, with no console errors.
+
+**The grid caps that contradicted their card size.** Favorites (990px), Account
+(998px, two grids) and Blogs related hotels (982px) declared `size="md"` while
+capping the grid at the `sm` width, so the size prop did nothing and the row
+read smaller than declared. `src/lib/cardGrid.ts` now computes the number the
+Plan §4 formula gives — `cardGridMaxWidth(columns, size, gap)` = `columns × max
+width + gaps`, over a `CARD_MAX_WIDTH_PX` table that mirrors `CARD_SIZES` — and
+`cardGridStyle()` applies it inline, because Tailwind cannot see a class name
+built at runtime. Every capped card grid uses it now: Favorites, Account, Blogs
+related hotels, City (both), Category, Place, Search and Travel Plans.
+`src/lib/cardGrid.test.ts` fails if a page hand-writes a five-column cap again,
+and fails if the pixel table drifts from the `maxWidth` classes.
+
+Verified in the browser: `/favorites` renders six `md` cards under 1240px,
+`/hotels` 1240px, `/travel-plans` 1230px (4 × 300 + 3 × 10), and no page
+logged a console error.
+
+`npm test` 68 files / 853 tests; typecheck clean, lint 0 errors (7 pre-existing
+warnings), build clean.
 
 ## Template catalog growth to nineteen designs (Plan §4) — 29 November 2026
 

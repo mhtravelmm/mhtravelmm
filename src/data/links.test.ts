@@ -4,6 +4,7 @@ import { CATEGORIES, PARTNERS, POPULARS, REVIEWS, AWARDS, TRAVEL_PLANS, TRAVEL_G
 import * as cityPageData from './cityPageData';
 import type { CardListing } from '../types';
 import { findPlace, PLACE_KINDS } from '../features/place/placeCatalog';
+import { resolveDetailHref } from '../lib/detailRoutes';
 import { NEARBY_LISTINGS } from './nearbyData';
 import { NOTIFICATIONS } from './notifications';
 
@@ -77,6 +78,17 @@ describe('catalog data', () => {
       if (new Set(tails).size !== tails.length) collisions.push(name);
     }
     expect(collisions).toEqual([]);
+  });
+
+  it('resolves every detail href to a record the page can render', () => {
+    // A declared route is not a resolvable record: `/hotels/pp1` matches the
+    // route and then renders the not-found state. The Populars row and a
+    // notification both shipped such ids, so this walks the same seed set the
+    // route test uses and asks the page-level resolver.
+    const detailHrefs = seedHrefs().filter((href) => CATEGORY_SLUGS.some((slug) => href.startsWith(`/${slug}/`)));
+    expect(detailHrefs.length).toBeGreaterThan(30);
+    const unresolved = detailHrefs.filter((href) => !resolveDetailHref(href));
+    expect(unresolved).toEqual([]);
   });
 
   it('resolves a place catalog href to the record that owns it', () => {

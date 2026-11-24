@@ -269,6 +269,10 @@ selects one of them; a page never overrides the internal dimensions itself.
   Blogs-related, Travel Plans) repeats the same cap: `justify-items-center`
   plus `max-w-[columns × the size's max width + gaps]`, so no page can
   reintroduce a stretching card. Phones always show two cards per row.
+  The number is computed, not written: `src/lib/cardGrid.ts` holds
+  `cardGridMaxWidth(columns, size, gap)` and `cardGridStyle()`, which every such
+  grid applies inline, and `src/lib/cardGrid.test.ts` fails on a hand-written
+  cap or a pixel table that drifts from `CARD_SIZES` (2026-11-24).
 - The same five sizes apply to the Nearby place card (`variant` accepts
   `xs`, `sm`, `md`, `lg`, `xl`); it keeps a square thumbnail on phones and
   uses the matching image height from `md` upward.

@@ -24,7 +24,8 @@ import { mapSearchUrl, telHref } from '../../lib/placeActions';
 import { categoryOptions, filterByCategory } from '../../lib/categoryFilter';
 import { localizedOrFallback } from '../../lib/translationCache';
 import type { Language } from '../../types';
-import { POPULAR_RESTAURANTS } from '../../data/cityPageData';
+import { RecordNotFound } from '../../components/ui/RecordNotFound';
+import { resolveDetailRecord } from '../../lib/detailRoutes';
 
 type Copy = { mm: string; en: string };
 
@@ -65,8 +66,8 @@ export function RestaurantPage() {
   const { formatPrice } = useCurrency();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { id } = useParams<{ id: string }>();
-  const restaurant = POPULAR_RESTAURANTS.find((item) => item.id === id || item.href?.endsWith(`/${id}`)) ?? POPULAR_RESTAURANTS[0];
-  const saved = isFavorite(restaurant.id, restaurant.isFavorited);
+  const restaurant = id ? resolveDetailRecord('restaurants', id) : undefined;
+  const saved = restaurant ? isFavorite(restaurant.id, restaurant.isFavorited) : false;
   const [activeTab, setActiveTab] = useState<'food' | 'drinks' | 'photos' | 'reviews'>('food');
   const [menuCategory, setMenuCategory] = useState('All dishes');
 
@@ -78,6 +79,8 @@ export function RestaurantPage() {
   const dishCategoryLabel = (key: string) => key === 'All dishes'
     ? t('restaurant_all_dishes')
     : localizedOrFallback(DISHES.find((dish) => dish.category.en === key)?.category, language);
+  if (!restaurant) return <RecordNotFound />;
+
   const directionsUrl = mapSearchUrl(`${restaurant.title}, Yangon`);
   const restaurantTabs: { id: typeof activeTab; Icon: typeof Utensils; label: string }[] = [
     { id: 'food', Icon: Utensils, label: t('restaurant_food_menu') },

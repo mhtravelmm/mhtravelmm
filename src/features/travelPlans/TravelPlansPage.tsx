@@ -10,6 +10,7 @@ import { formatRating, hasRating } from '../../lib/cardMeta';
 import { useTravelRequests } from '../../lib/travelRequests';
 import { localizedOrFallback } from '../../lib/translationCache';
 import type { CardListing } from '../../types';
+import { cardGridStyle } from '../../lib/cardGrid';
 
 type DurationFilter = 'all' | 'short' | 'long';
 type SortMode = 'popular' | 'rating' | 'price';
@@ -211,7 +212,7 @@ export function TravelPlansPage() {
       </div>
 
       {visiblePlans.length > 0 ? (
-        <div className="grid max-w-[1230px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 lg:grid-cols-4" style={cardGridStyle(4, 'lg')}>
           {visiblePlans.map((plan) => (
             <ListingCard key={plan.id} listing={plan} size="lg" onToggleFavorite={toggle} />
           ))}

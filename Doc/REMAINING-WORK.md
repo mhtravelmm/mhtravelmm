@@ -311,20 +311,17 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   filled in both `mm` and `en`. The remaining translation work is backend
   content, not UI strings.
 - Add component-level behavioral tests. Route, link, manifest, filter, and
-  domain-rule tests exist and run under `npm test` (849 tests in 67 files);
+  domain-rule tests exist and run under `npm test` (853 tests in 68 files);
   nothing yet renders a page and asserts on it, so interaction regressions
   (filters, tabs, forms) are still caught by hand.
-- **Resolve the seven detail ids no catalog holds** (found at `a6b16ac`).
-  The Home Populars row links `pp1…pp6` at `/hotels/`, `/book-shops/` and
-  `/markets/`, and `placeCatalog.ts` has none of them; `/hotels/tp1` is a
-  notification whose href was copied from the travel plan `tp1`. The hotel and
-  market ids render the not-found state, but `BookShopPage.tsx:51` (and
-  `RestaurantPage.tsx:68` behind it) fall back to `?? [0]`, so the reader gets a
-  real record at a URL that names a different one. Fix the hrefs or add the
-  records, and replace both fallbacks with the not-found state
-  `PlaceDetailPage` already renders. A test that walks each detail href and
-  asks the target page to resolve it is what stops this coming back
-  (`PLAN-VS-CODE.md` §6a, `STATUS.md` §5d).
+- ~~Resolve the seven detail ids no catalog holds~~ — **done 24 Nov 2026.**
+  The Populars row now links records that exist, and the two `?? [0]` fallbacks
+  are gone: every detail page reads `resolveDetailRecord()` from
+  `src/lib/detailRoutes.ts` and renders `RecordNotFound` for an unknown id.
+  `links.test.ts` walks each seed detail href through `resolveDetailHref()`, so
+  a dead id fails the suite. Still open from the same finding: nothing renders a
+  page and asserts on it, so the not-found state is guarded by unit tests rather
+  than a component test (`PLAN-VS-CODE.md` §6a, `STATUS.md` §5d).
 
 ## External configuration and decisions
 

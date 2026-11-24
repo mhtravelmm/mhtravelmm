@@ -29,7 +29,7 @@ list is shorter than it reads.
 The re-check at `abe2700` changed seven rows: §2 rows 3, 4, 5, 7 and 9 (the
 migration directory, the exchange rate, the test runner, the Favorites key, and
 the hero page count), §3.2 (nine Supabase modules, not three), §3.3 (the
-manifest now matches exactly, 46 of 46), §3.5 (849 tests in 67 files, not 74 in
+manifest now matches exactly, 46 of 46), §3.5 (853 tests in 68 files, not 74 in
 ten), and the new §3.6 (19 migrations are committed). §4.1 is now resolved in
 the Plan itself; §4.2 is measured against the Plan's own width formula.
 
@@ -116,7 +116,7 @@ that the code does not use.
 **Plan says** (§2A audit): `package.json` has no `test` script and no
 Vitest/Jest dependency, so nothing guards the tree.
 
-**Code says**: `npm test` runs Vitest over 67 files (849 tests).
+**Code says**: `npm test` runs Vitest over 68 files (853 tests).
 `src/routes.ts` is now the single route table; `App.tsx`, the tests, and
 `public/manus-routes.json` all read from it. A seed link to an undeclared route,
 a duplicated catalog id, or a manifest that drifts from the router fails the
@@ -201,26 +201,39 @@ Blogs, Travel Guide (`5 / sm`).
 rule at line 193 was wrong, or fifteen rows were wrong. It was settled on
 22 November in favour of the rows: the rule is gone, the table stands.
 
-### 4.2 Direct card grids declare `md` under a `sm` width cap — **still open**
+### 4.2 Direct card grids declare `md` under a `sm` width cap — **fixed 24 Nov 2026**
 
 Five page-level grids are true CSS grids (not the capped flex row of §3.4), so
-they really do render five columns. All five carry `justify-items-center` and a
-`max-w-`, which the Plan asks for — but the width is not always the number the
-Plan's formula gives:
+they really do render five columns. All five carried `justify-items-center` and
+a `max-w-`, which the Plan asks for — but three of the widths were the `sm`
+number under a declared `md` card:
 
-| File | Columns | Size | `max-w-` | Formula (`columns × maxWidth + gaps`) | Matches? |
-|---|---|---|---|---|---|
-| `CityPage.tsx` line 73 (discovery row) | 5 at `md` | `md` | 1240px | 5 × 240 + 4 × 10 = 1240 | **yes** |
-| `CityPage.tsx` line 234 (business explorer) | 4 at `md`, 5 at `lg` | `md` | 1240px | 1240 | **yes** |
-| `FavoritesPage.tsx` | 5 | `md` | 990px | 5 × 240 + 4 × 10 = 1240 | **no** — this is the `sm` cap (5 × 190 + 40) |
-| `AccountPage.tsx` (two grids) | 5 | `md` | 998px | 1240 | **no** — 5 × 190 + 4 × 12 = 998, again the `sm` cap |
-| `BlogsPage.tsx` line 750 (related hotels) | 5 | `md` | 982px | 1240 | **no** — 5 × 190 + 4 × 8 = 982, the `sm` cap again |
+| File | Columns | Size | Was | Formula (`columns × maxWidth + gaps`) |
+|---|---|---|---|---|
+| `CityPage.tsx` (discovery row) | 5 at `md` | `md` | 1240px | 5 × 240 + 4 × 10 = 1240 — matched |
+| `CityPage.tsx` (business explorer) | 4 at `md`, 5 at `lg` | `md` | 1240px | 1240 — matched |
+| `FavoritesPage.tsx` | 5 | `md` | 990px | 1240 — this was the `sm` cap |
+| `AccountPage.tsx` (two grids) | 5 | `md` | 998px | 1240 — `sm` cap with `gap-3` |
+| `BlogsPage.tsx` (related hotels) | 5 | `md` | 982px | 1240 — `sm` cap with `gap-2` |
 
-The effect is mild: the cards do not stretch past their `maxWidth`, they are
-simply handed a 190px column while declared `md` (240px). So the row reads as
-`sm` and the size prop is a dead letter. Three of the five grids disagree
-with the Plan; the fix is either to widen the cap to 1240 or to declare
-`size="sm"`, and `sm` is the honest one — the cap already renders at 190px.
+The cards did not stretch past their `maxWidth`; they were simply handed a
+190px column while declared `md`, so the row read as `sm` and the size prop was
+a dead letter.
+
+**The fix computes the number instead of hand-writing it.** `src/lib/cardGrid.ts`
+holds the pixel table (`CARD_MAX_WIDTH_PX`, mirroring `CARD_SIZES`),
+`cardGridMaxWidth(columns, size, gap)` and `cardGridStyle()`. Every capped card
+grid — Favorites, Account, Blogs related hotels, City (both), Category, Place,
+Search and Travel Plans — now applies `cardGridStyle(...)` inline, because
+Tailwind cannot see a class name built at runtime. `src/lib/cardGrid.test.ts`
+fails if a page hand-writes a five-column cap again, and fails if the pixel
+table drifts from the `maxWidth` classes in `ListingCard.tsx`.
+
+The docs' earlier suggestion was to declare `size="sm"` instead. Widening to the
+formula was chosen because the cards are drawn at `md` (larger type and image)
+and the narrower cap was shrinking them, not the other way round. Verified in
+the browser: `/favorites` renders six `md` cards under a 1240px cap, `/hotels`
+under 1240px, `/travel-plans` under 1230px (4 × 300 + 3 × 10).
 
 ---
 
@@ -333,38 +346,40 @@ Gaps in the Plan's coverage, found while checking it:
    the file to read first. `COMPLETED-WORK.md` and `REMAINING-WORK.md` are the
    detail behind it, not a second answer.
 
-### 6a. Detail ids that no catalog resolves — **new in this re-check**
+### 6a. Detail ids that no catalog resolves — **fixed 24 Nov 2026**
 
-`links.test.ts` proves every seed `href` matches a *declared route*. It does not
-prove the `:id` resolves to a *record*, and **7 of the 47** detail hrefs in the
-tree do not:
+`links.test.ts` proves every seed `href` matches a *declared route*. It did not
+prove the `:id` resolved to a *record*, and **7 of the 47** detail hrefs did not:
 
-| Href | Page reached | What the reader sees |
+| Href | Page reached | What the reader saw |
 |---|---|---|
-| `/hotels/pp1`, `/hotels/pp4`, `/hotels/tp1` | `PlaceDetailPage` | the not-found state |
+| `/hotels/pp1`, `/hotels/pp4` | `PlaceDetailPage` | the not-found state |
 | `/markets/pp3`, `/markets/pp6` | `PlaceDetailPage` | the not-found state |
+| `/hotels/tp1` (notification) | `PlaceDetailPage` | the not-found state |
 | `/book-shops/pp2`, `/book-shops/pp5` | `BookShopPage` | **the first book shop**, silently |
 
-Six of the seven are the Home **Populars** row: `POPULARS` in `homeData.ts`
-links `pp1…pp6` across `/hotels/`, `/book-shops/` and `/markets/`, and none of
-those ids exists in `placeCatalog.ts`. `/hotels/tp1` is a notification whose
-href was copied from the travel plan `tp1`.
+Six were the Home **Populars** row: `POPULARS` in `homeData.ts` linked `pp1…pp6`
+across `/hotels/`, `/book-shops/` and `/markets/`, and none of those ids existed
+in `placeCatalog.ts`. `/hotels/tp1` was a notification whose href had been
+copied from the travel plan `tp1`.
 
-Two separate faults, and the second is the worse one:
+Two faults, and the second was the worse one:
 
-1. The Populars row should link to ids that exist (`sedona-yangon`,
-   `book-nook`, `bogyoke`), or `placeCatalog.ts` should gain the six rows.
-2. `RestaurantPage.tsx:68` and `BookShopPage.tsx:51` both end in
-   `?? POPULAR_RESTAURANTS[0]` / `?? POPULAR_BOOK_SHOPS[0]`. An unknown id
-   therefore renders a real record instead of a not-found state, so the URL
-   silently lies about what the reader is looking at. `PlaceDetailPage` already
-   gets this right — it renders `place_not_found`. The two bespoke pages should
-   do the same.
+1. The Populars row linked ids that did not exist.
+2. `RestaurantPage.tsx` and `BookShopPage.tsx` both ended in `?? LISTINGS[0]`.
+   An unknown id therefore rendered a real record instead of a not-found state,
+   so the URL silently lied about what the reader was looking at.
 
-`Doc/STATUS.md` §5 says "0 broken" and that is true of *routes*; this is the
-record-level gap behind it. A test that walks each detail href and asserts the
-target page can resolve it would close it the way `links.test.ts` closed the
-route gap.
+**Both are fixed.** Populars now links `/hotels/sedona-yangon`,
+`/hotels/lotte`, `/book-shops/shwe`, `/book-shops/book-nook`,
+`/markets/bogyoke` and `/markets/junction-city`; the notification points at
+`/hotels/sedona-yangon`. `src/lib/detailRoutes.ts` is the one resolver every
+detail page reads — `resolveDetailRecord(slug, id)` (place catalog for the seven
+place slugs, the two city-page collections for restaurants and book shops) and
+`resolveDetailHref(href)` — and `src/components/ui/RecordNotFound.tsx` is what an
+unknown id renders. `links.test.ts` now walks every seed detail href through
+`resolveDetailHref()` and fails on any that resolves to nothing, which is the
+record-level twin of the route test.
 
 ---
 
@@ -385,15 +400,13 @@ record, which has not been touched since 2026-11-09.
 | 6 | Add a Load More rule to §4 | ~~Done 22 Nov~~ |
 | 7 | Point the Plan at `Doc/STATUS.md` | ~~Done~~: the Plan's first line names it as the status view |
 | 8 | **Replace "no `supabase/` migration directory"** with "19 migrations committed, none applied" | **Open** (§3.6). This is the most misleading remaining claim: it makes the schema work look unstarted |
-| 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 849 tests in 67 files |
+| 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 853 tests in 68 files |
 | 10 | **Drop the 48-broken-links count** and the visual-CTA rows | **Open.** Both were fixed on 20 Nov and are test-guarded |
 | 11 | **Narrow "catalog data is not API"** to reads | **Open.** Writes already go through Supabase when configured (§5) |
 
-One edit is not a Plan edit at all, and is the only **code** item on this list:
-**seven detail hrefs reach a page that cannot resolve their id** (§6a). Six come
-from the Home Populars row and one from a notification. Fix the six hrefs or add
-the records, and replace the two `?? [0]` fallbacks in `RestaurantPage` and
-`BookShopPage` with the not-found state `PlaceDetailPage` already renders.
+The only **code** items on this list are now closed: the seven detail hrefs that
+reached a page unable to resolve their id (§6a) and the three grid caps that
+contradicted their declared card size (§4.2). Both are test-guarded.
 
 Items 8–11 are mechanical, and each one currently understates the project. Item
 3 is mechanical too but needs the list of nine modules from §3.2.

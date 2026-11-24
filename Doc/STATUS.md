@@ -86,7 +86,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (849 tests, 67 files) |
+| `npm test` (vitest) | **PASS** (853 tests, 68 files) |
 | Seed link audit | **PASS** (0 broken of 76 unique seed hrefs) |
 | Route audit | **PASS** (46 declared routes, manifest in step) |
 
@@ -102,7 +102,7 @@ app declares.
 |---|---|---|
 | Five card sizes, no others | **DONE** | `xs/sm/md/lg/xl` in `src/components/ui/ListingCard.tsx` |
 | Card width cap (no long bars) | **DONE** | `maxWidth` per size: 150/190/240/300/340px |
-| Grid cap per page | **PARTIAL** | Every grid carries `justify-items-center` + `max-w-`, but Favorites (990px), Account (998px) and Blogs related hotels (982px) declare `size="md"` under a 190px cap, so the prop is a dead letter. City, Category, Place and Search match the formula (`Doc/PLAN-VS-CODE.md` §4.2) |
+| Grid cap per page | **DONE** | Every card grid computes its cap from the card table: `src/lib/cardGrid.ts` holds `cardGridMaxWidth(columns, size, gap)` = `columns × max width + gaps`, and each grid applies `cardGridStyle()` inline (Tailwind cannot see a class built at runtime). Favorites, Account and Blogs related hotels used to declare `size="md"` under a 990/998/982px cap, which made the prop a dead letter; they now compute 1240px, and City, Category, Place, Search and Travel Plans do the same. `src/lib/cardGrid.test.ts` fails if a page hand-writes a five-column cap again or if the pixel table drifts from `CARD_SIZES` |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
 | Bilingual MM/EN provider | **DONE** | 2,198 keys in `src/lib/translations.ts`; every traveler page, dashboard shell, both content editors and the Rental Admin panel are localized |
@@ -209,24 +209,31 @@ to imply them open the matching anchor on `/foreign-tourist` (Plan §13). The
 Exchange tile keeps pointing at the Nearby exchange listings, which are real
 places rather than advice.
 
-### 5d. What the tests do not cover — **7 ids, open** (found at `a6b16ac`)
+### 5d. Record-level links — **fixed** (found at `a6b16ac`, closed 24 Nov 2026)
 
-The audit is route-level. A `href` can match a declared route and still name an
-id no catalog holds, and 7 of the 47 detail hrefs do:
+The route audit was level-deep: a `href` could match a declared route and still
+name an id no catalog holds. Seven of the 47 detail hrefs did — the Home
+**Populars** row (`pp1…pp6`), a notification that had copied the travel-plan id
+`tp1`, and the two bespoke pages that answered an unknown id with
+`?? LISTINGS[0]`, showing one shop under another shop's URL.
 
-- `/hotels/pp1`, `/hotels/pp4`, `/markets/pp3`, `/markets/pp6`,
-  `/book-shops/pp2`, `/book-shops/pp5` — the Home **Populars** row links
-  `pp1…pp6`, and `placeCatalog.ts` has none of them. The hotel and market ones
-  render the not-found state.
-- `/hotels/tp1` — a notification whose href was copied from the travel plan
-  `tp1`. Same outcome.
-- The two book-shop ids do not show not-found: `BookShopPage.tsx:51` falls back
-  to `POPULAR_BOOK_SHOPS[0]`, so the reader silently gets the first shop.
-  `RestaurantPage.tsx:68` has the same `?? [0]` shape and would do the same for
-  an unknown restaurant id.
+Two changes close it:
 
-Detail in `PLAN-VS-CODE.md` §6a. The fix is a href or a record per id, plus the
-not-found state in the two bespoke pages.
+- **The ids are real.** Populars now points at records that exist
+  (`/hotels/sedona-yangon`, `/hotels/lotte`, `/book-shops/shwe`,
+  `/book-shops/book-nook`, `/markets/bogyoke`, `/markets/junction-city`) and the
+  notification at `/hotels/sedona-yangon`.
+- **The fallback is gone.** `src/lib/detailRoutes.ts` holds
+  `resolveDetailRecord(slug, id)` and `resolveDetailHref(href)` — the one
+  resolver every detail page reads (place catalog for the seven place slugs,
+  `POPULAR_RESTAURANTS` / `POPULAR_BOOK_SHOPS` for the two bespoke ones) — and
+  an unknown id now renders `RecordNotFound` instead of a real record.
+  `links.test.ts` asks that resolver about every seed detail href, so a dead id
+  fails the build rather than reaching a reader.
+
+Verified in the browser: `/hotels/lotte`, `/book-shops/shwe` and
+`/restaurants/monsoon` render their record; `/hotels/pp1` and
+`/book-shops/pp2` render the not-found state in both languages.
 
 ---
 

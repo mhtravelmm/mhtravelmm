@@ -15,6 +15,7 @@ import {
 } from '../../data/cityPageData';
 import { useLanguage, type TranslationKey } from '../../lib/i18n';
 import type { CardListing } from '../../types';
+import { cardGridStyle } from '../../lib/cardGrid';
 
 type ResultCategory = 'plans' | 'guides' | 'blogs' | 'hotels' | 'restaurants' | 'bookshops' | 'cafes' | 'rentals' | 'attractions' | 'markets' | 'transport';
 type SearchCity = 'yangon' | 'bago' | 'naypyidaw' | 'mandalay' | 'bagan' | 'other';
@@ -184,7 +185,7 @@ export function SearchPage() {
         <>
           {(combined || selectedCategoryCity) && <p className="mb-3 text-[11px] text-text-muted">{filterLabel(category!, t)} · {filterLabel(combined ? city! : selectedCategoryCity!, t)}</p>}
           {resultEntries.length ? (
-            <div className="grid max-w-[1240px] grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 lg:grid-cols-5" style={cardGridStyle(5, 'md')}>
               {resultEntries.map(({ listing }) => <ListingCard key={listing.id} listing={listing} size="md" />)}
             </div>
           ) : (
