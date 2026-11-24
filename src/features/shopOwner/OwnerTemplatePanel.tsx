@@ -16,8 +16,10 @@ import {
 import {
   applyShopTemplate,
   cancelShopTemplate,
+  recordTemplateApply,
   resolveTemplateForShop,
   shopCategory,
+  templateSessionHash,
   useEntitlements,
   usePageSettings,
   useTemplates,
@@ -60,6 +62,11 @@ export function OwnerTemplatePanel({ shopId, t }: { shopId: string; t: Translate
     if (!result.ok) {
       setNotice(result.reason === 'needs_payment' ? t('owner_tpl_needs_payment') : t('owner_tpl_not_active'));
       return;
+    }
+    // §4 analytics: only a switch that moved the shop is an apply, so a
+    // refused or repeated choice does not inflate the catalog report.
+    if (result.switchedFrom !== template.id) {
+      recordTemplateApply({ templateId: template.id, shopId, sessionHash: templateSessionHash() });
     }
     setPreviewId(null);
     setNotice(fill(t('owner_tpl_applied'), { name: templateName(template, t) }));

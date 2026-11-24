@@ -1203,6 +1203,7 @@ const translations = {
   sa_jobs_job_ad_stats_rollup: { mm: 'ကြော်ငြာ စာရင်း စုစည်းခြင်း', en: 'Ad statistics roll-up' },
   sa_jobs_job_orphan_media_cleanup: { mm: 'မသုံးတော့သော မီဒီယာ ရှင်းလင်းခြင်း', en: 'Orphan media cleanup' },
   sa_jobs_job_ad_events_purge: { mm: 'ကြော်ငြာ event အဟောင်း ဖျက်ခြင်း', en: 'Raw ad events purge' },
+  sa_jobs_job_template_events_purge: { mm: 'ပုံစံပလိတ် ကြည့်ရှုမှု အဟောင်း ဖျက်ခြင်း', en: 'Template event purge' },
   sa_nav_audit: { mm: 'စစ်ဆေးမှု မှတ်တမ်း', en: 'Audit log' },
   sa_audit_kicker: { mm: 'လုံခြုံရေး · Super Admin သီးသန့်', en: 'Security · Super Admin only' },
   sa_audit_title: { mm: 'စစ်ဆေးမှု မှတ်တမ်း', en: 'Audit log' },
@@ -2228,6 +2229,17 @@ const translations = {
   st_audit_activated: { mm: 'ပုံစံပလိတ် အသုံးပြုခွင့်ပြု', en: 'Template activated' },
   st_audit_rolled_back: { mm: 'ပုံစံပလိတ် ပြန်ချ', en: 'Template rolled back' },
   st_audit_retired: { mm: 'ပုံစံပလိတ် ရပ်ဆိုင်း', en: 'Template retired' },
+  st_section_usage: { mm: 'အသုံးပြုမှု စာရင်း', en: 'Template usage' },
+  st_usage_intro: {
+    mm: 'ဆိုင် စာမျက်နှာ ကြည့်ရှုမှုနှင့် ပိုင်ရှင် ပြောင်းလဲမှုကို ပုံစံပလိတ်အလိုက် ရေတွက်သည်။ အစမ်းကြည့်မှုကို မရေတွက်ပါ။',
+    en: 'Shop page views and owner switches, counted per template. A preview is not counted.',
+  },
+  st_col_views: { mm: 'ကြည့်ရှုမှု', en: 'Views' },
+  st_col_applies: { mm: 'ပြောင်းလဲမှု', en: 'Applies' },
+  st_col_apply_rate: { mm: 'ပြောင်းလဲမှု နှုန်း', en: 'Apply rate' },
+  st_col_share: { mm: 'ဝေစု', en: 'Share' },
+  st_col_last_seen: { mm: 'နောက်ဆုံး တွေ့ရသည့်ရက်', en: 'Last seen' },
+  st_usage_empty: { mm: 'ကြည့်ရှုမှု မရှိသေးပါ', en: 'No views recorded yet' },
 
   // Plan §4: the owner's template selector in the shop workspace.
   owner_tpl_title: { mm: 'ဆိုင် ပုံစံပလိတ်', en: 'Shop page template' },

@@ -32,11 +32,12 @@ const handlers = {
   subscription_expiry: () => 0,
   ad_stats_rollup: () => 0,
   ad_events_purge: () => 0,
+  template_events_purge: () => 0,
 };
 
 describe('the §16B.7 schedule', () => {
-  it('lists the eight jobs with the cadence the Plan gives', () => {
-    expect(JOBS).toHaveLength(8);
+  it('lists the nine jobs with the cadence the Plan gives', () => {
+    expect(JOBS).toHaveLength(9);
     expect(JOBS.find((job) => job.id === 'rental_payment_expiry')?.schedule).toEqual({ everyMs: 5 * MINUTE });
     expect(JOBS.find((job) => job.id === 'renewal_reminders')?.schedule).toEqual({ dailyAt: '09:00' });
   });

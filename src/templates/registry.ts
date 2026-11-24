@@ -17,6 +17,11 @@ const MODULES: Record<string, ComponentType<TemplateProps>> = {
   hotel_gallery_first: lazy(() =>
     import('./hotel/HotelGalleryFirst').then((module) => ({ default: module.HotelGalleryFirst })),
   ),
+  hotel_booking_focus: lazy(() =>
+    import('./hotel/HotelBookingFocus').then((module) => ({ default: module.HotelBookingFocus })),
+  ),
+  hotel_map_first: lazy(() => import('./hotel/HotelMapFirst').then((module) => ({ default: module.HotelMapFirst }))),
+  hotel_story: lazy(() => import('./hotel/HotelStory').then((module) => ({ default: module.HotelStory }))),
   book_shop_classic: lazy(() =>
     import('./bookShop/BookShopClassic').then((module) => ({ default: module.BookShopClassic })),
   ),

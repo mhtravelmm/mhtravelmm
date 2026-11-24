@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { isBotUserAgent, newSessionHash } from './adStats';
 import { addDaysToDay, myanmarToday } from './myanmarTime';
 import {
   TEMPLATE_GRACE_DAYS,
@@ -17,6 +18,12 @@ import {
   type TemplateEntitlement,
   type TemplateInvoice,
 } from './shopTemplates';
+import {
+  TEMPLATE_EVENT_RETENTION_DAYS,
+  appendTemplateEvent,
+  purgeTemplateEvents,
+  type TemplateEvent,
+} from './templateStats';
 
 /**
  * Plan §4: the browser stand-in for `shop_templates`, `shop_page_settings`,
@@ -242,4 +249,82 @@ export function useEntitlements(): TemplateEntitlement[] {
 
 export function useTemplateInvoices(): TemplateInvoice[] {
   return useStored(readInvoices);
+}
+
+/**
+ * Plan §4 analytics: the browser stand-in for `shop_template_events`. A view is
+ * one public render, an apply is one switch, and a preview is neither.
+ */
+const EVENTS_KEY = 'mh-travel-template-events';
+
+export function readTemplateEvents(): TemplateEvent[] {
+  const rows = readJson<TemplateEvent[] | null>(EVENTS_KEY, null);
+  return Array.isArray(rows) ? rows.filter((row) => typeof row.templateId === 'string') : [];
+}
+
+function writeTemplateEvents(rows: TemplateEvent[]): void {
+  writeJson(EVENTS_KEY, rows);
+  changed();
+}
+
+/** §4: an owner trying a design on their own data is not a shopper, so a preview is never counted. */
+export function recordTemplateView(input: {
+  templateId: string;
+  shopId: string;
+  sessionHash: string;
+  language?: 'mm' | 'en';
+  preview?: boolean;
+  now?: Date;
+}): boolean {
+  if (typeof window === 'undefined' || input.preview || !input.templateId) return false;
+  if (typeof navigator !== 'undefined' && isBotUserAgent(navigator.userAgent)) return false;
+  const now = input.now ?? new Date();
+  const current = readTemplateEvents();
+  const next = appendTemplateEvent(current, {
+    id: `tpl-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    templateId: input.templateId,
+    shopId: input.shopId,
+    kind: 'view',
+    at: now.toISOString(),
+    sessionHash: input.sessionHash,
+    language: input.language,
+  });
+  if (next === current) return false;
+  writeTemplateEvents(next);
+  return true;
+}
+
+/** §4: one apply row per switch that actually moved the shop. */
+export function recordTemplateApply(input: {
+  templateId: string;
+  shopId: string;
+  sessionHash: string;
+  now?: Date;
+}): void {
+  if (typeof window === 'undefined' || !input.templateId) return;
+  const now = input.now ?? new Date();
+  writeTemplateEvents(appendTemplateEvent(readTemplateEvents(), {
+    id: `tpl-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    templateId: input.templateId,
+    shopId: input.shopId,
+    kind: 'apply',
+    at: now.toISOString(),
+    sessionHash: input.sessionHash,
+  }));
+}
+
+/** §16B.7 `template_events_purge`: keeps the retention window and nothing older. */
+export function purgeTemplateEventRows(now = new Date()): number {
+  const { kept, purged } = purgeTemplateEvents(readTemplateEvents(), now, TEMPLATE_EVENT_RETENTION_DAYS);
+  if (purged > 0) writeTemplateEvents(kept);
+  return purged;
+}
+
+/** The page-view key, so one render counts once whatever React re-renders. */
+export function templateSessionHash(): string {
+  return newSessionHash();
+}
+
+export function useTemplateEvents(): TemplateEvent[] {
+  return useStored(readTemplateEvents);
 }

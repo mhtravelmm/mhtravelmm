@@ -375,16 +375,22 @@ selects one of them; a page never overrides the internal dimensions itself.
   with genuinely different UI/UX rather than recolors. The open points
   (categories first, price, grace period) are decided in the specification
   below.
-- Status (2026-11-28): the system is built. `/shops/:shopId` renders the
-  shop's resolved template from a lazy module, six templates render (the free
-  hotel default, three paid hotels, and one design each for book shop and the
-  generic restaurant/cafe/attraction case), the owner previews and applies from
-  their own panel, and Super Admin manages the catalog and records invoices.
-  What is not built is the rest of the catalog the founder expects — about ten
-  hotel designs — and the storage swap, so catalog rows, settings, entitlements
-  and invoices are still browser records behind `src/lib/shopTemplateStore.ts`.
-  Template views and applies are not counted; only a `preview` audit row is
-  written.
+- Status (2026-11-24): the system is built. `/shops/:shopId` renders the shop's
+  resolved template from a lazy module, nine templates render (the free hotel
+  default, six paid hotels, one book shop design, and one generic design behind
+  restaurant, cafe and attraction), the owner previews and applies from their
+  own panel, and Super Admin manages the catalog and records invoices.
+  Template views and applies are counted: `src/lib/templateStats.ts` holds the
+  rules (one view per template per page view, an apply only when the switch
+  moved the shop, a preview never counted, bots refused, 180-day retention),
+  `ShopPage.tsx` and `OwnerTemplatePanel.tsx` write the rows, the Super Admin
+  catalog panel reads them, and `template_events_purge` runs daily in the
+  §16B.7 registry. What is not built is three more hotel designs to reach the
+  ten the founder expects, a paid alternative in the other four categories, and
+  the storage swap — so catalog rows, settings, entitlements, invoices and
+  events are still browser records behind `src/lib/shopTemplateStore.ts`, with
+  `20261128000100_shop_templates.sql` and
+  `20261128000200_shop_template_events.sql` waiting to be applied.
 - **Specification (2026-11-22).** The build is deferred, but the system is defined so nothing built before it has to change.
 
   **Contract.** Every Shop Page template receives the same typed data (`ShopPageData`): business profile (name MM/EN, description, address, coordinates, open and close times, check-in and check-out for hotels), photos, catalog (rooms, menu items or products with prices under the owner's price-display mode), reviews, contact and booking CTA, and the booking-flow mode. A template only decides how that data is laid out. Switching templates never touches business data.
@@ -1490,8 +1496,10 @@ Runs on `pg_cron` or Cloudflare Cron Triggers. Every job is safe to run twice, l
 | Ad statistics roll-up | daily, 00:30 Myanmar Time | `ad_events` into `ad_stats_daily` |
 | Orphan media cleanup | daily, 02:00 Myanmar Time | Removes unreferenced R2 objects |
 | Raw ad events purge | daily | Deletes `ad_events` older than 90 days |
+| Template event purge | daily, 00:15 Myanmar Time | Deletes `shop_template_events` older than 180 days |
 
-Built 26 November 2026 (browser stand-in for `pg_cron`): all eight jobs are
+Built 26 November 2026, extended 24 November 2026 with
+`template_events_purge` (browser stand-in for `pg_cron`): all nine jobs are
 `wired: true` in `src/lib/jobs.ts` and each does real work against a store that
 mirrors its table. The subscription pair is `src/lib/subscriptionJobs.ts` —
 `subscription_expiry` moves Active to grace to expired and writes one audit row

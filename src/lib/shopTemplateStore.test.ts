@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   applyShopTemplate,
   cancelShopTemplate,
@@ -6,7 +6,10 @@ import {
   readEntitlements,
   readInvoices,
   readPageSettings,
+  readTemplateEvents,
   readTemplates,
+  recordTemplateApply,
+  recordTemplateView,
   resolveTemplateForShop,
   setTemplateStatus,
   writeTemplates,
@@ -133,5 +136,45 @@ describe('shopTemplateStore (Plan §4)', () => {
 
   it('refuses a switch on an unknown shop', () => {
     expect(applyShopTemplate('no_such_shop', 'hotel_editorial', NOW)).toEqual({ ok: false, reason: 'unknown_shop' });
+  });
+});
+
+describe('the §4 template analytics (store)', () => {
+  beforeEach(() => { vi.unstubAllGlobals(); });
+
+  it('records one view per page view and skips a repeat in the same one', () => {
+    const input = { templateId: 'hotel_editorial', shopId: 'rangoon_house', sessionHash: 'pv-1', now: NOW };
+    expect(recordTemplateView(input)).toBe(true);
+    expect(recordTemplateView({ ...input, language: 'mm' })).toBe(false);
+    expect(readTemplateEvents()).toHaveLength(1);
+  });
+
+  it('counts a second page view of the same template again', () => {
+    recordTemplateView({ templateId: 'hotel_editorial', shopId: 'rangoon_house', sessionHash: 'pv-1', now: NOW });
+    recordTemplateView({ templateId: 'hotel_editorial', shopId: 'rangoon_house', sessionHash: 'pv-2', now: NOW });
+    expect(readTemplateEvents()).toHaveLength(2);
+  });
+
+  it('never counts a preview, because that is the owner reading their own data', () => {
+    expect(recordTemplateView({
+      templateId: 'hotel_editorial',
+      shopId: 'rangoon_house',
+      sessionHash: 'pv-1',
+      preview: true,
+      now: NOW,
+    })).toBe(false);
+    expect(readTemplateEvents()).toEqual([]);
+  });
+
+  it('ignores a bot user agent, so a crawler does not inflate the catalog', () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1)' });
+    expect(recordTemplateView({ templateId: 'hotel_editorial', shopId: 'rangoon_house', sessionHash: 'pv-1', now: NOW })).toBe(false);
+    expect(readTemplateEvents()).toEqual([]);
+  });
+
+  it('records an apply beside the view it followed', () => {
+    recordTemplateView({ templateId: 'hotel_editorial', shopId: 'rangoon_house', sessionHash: 'pv-1', now: NOW });
+    recordTemplateApply({ templateId: 'hotel_editorial', shopId: 'rangoon_house', sessionHash: 'pv-1', now: NOW });
+    expect(readTemplateEvents().map((row) => row.kind).sort()).toEqual(['apply', 'view']);
   });
 });

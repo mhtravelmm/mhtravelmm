@@ -106,7 +106,7 @@ the suite instead of reaching a user as "coming soon."
   storage. The `rental_order_extras` table is committed but not applied, so the
   rows move with the rest of the order data. Collecting the added amount still
   goes through the same staff-recorded payment as the daily rate.
-- All eight §16B.7 jobs are now `wired: true` and do real work against a browser
+- All nine §16B.7 jobs are now `wired: true` and do real work against a browser
   stand-in: publish due content, ad campaign windows, rental payment expiry,
   subscription expiry, renewal reminders, the ad statistics roll-up, orphan media
   cleanup and the raw ad event purge. What is left for each is the table it
@@ -252,17 +252,28 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   selector, the Super Admin catalog screen with invoice recording
   (`payForTemplate()` in `ShopTemplatesPanel.tsx`), and the rendered layer — `/shops/:shopId` serving six lazy templates over one
   `ShopPageData` fixture, with `scripts/a11y-audit.mjs` (`npm run a11y`) as the
-  gate: 48 combinations of template, width and theme, clean.
-  What is left: **storage** — apply `20261128000100_shop_templates.sql` and point
-  `src/lib/shopTemplateStore.ts` at the four tables, since the catalog, settings,
-  entitlements and invoices are browser rows today; **catalog growth** — §4 asks
-  for about ten hotel designs plus the free default and then Restaurant and the
-  other categories, and this build has four hotels, a book shop design, and one
-  shared generic design behind restaurant, cafe and attraction, so only hotels
-  have a paid alternative today; **template analytics** — views and
-  applies per template are not recorded, only the `preview` audit row; and
-  **the per-template review** — §4 requires the founder to approve each design
-  against the four-of-seven test before it goes `active`.
+  gate: 72 combinations of template, width and theme, clean.
+  **Template analytics is built (24 November 2026):** `src/lib/templateStats.ts`
+  holds the counting rules (one view per template per page view, an apply only
+  when the switch actually moved the shop, a preview never counted, bot agents
+  refused, 180-day retention), `ShopPage.tsx` records the view,
+  `OwnerTemplatePanel.tsx` records the apply, and the Super Admin catalog panel
+  shows a usage table — views, applies, apply rate, share and last seen — with
+  `template_events_purge` in the §16B.7 registry and
+  `20261128000200_shop_template_events.sql` as the table, its
+  `template_usage()` report function and the purge.
+  **The hotel catalog grew to seven live designs (24 November 2026):** Booking
+  Focus, Map First and Story join Classic, Editorial, Compact and Gallery First,
+  each differing on at least four of the seven axes and checked by the seed test.
+  What is left: **storage** — apply `20261128000100_shop_templates.sql` and
+  `20261128000200_shop_template_events.sql`, then point
+  `src/lib/shopTemplateStore.ts` at the five tables, since the catalog, settings,
+  entitlements, invoices and events are browser rows today; **catalog growth** —
+  §4 asks for about ten hotel designs, so three more are still to design, and
+  Restaurant, Cafe, Book Shop and Attraction have only the free baseline, so no
+  other category has a paid alternative yet; and **the per-template review** — §4
+  requires the founder to approve each design against the four-of-seven test
+  before it goes `active`.
 - ~~Implement MH Platform wallet ledger, settlements and payouts.~~ **Built 27
   November 2026** for the Shop Owner path: `src/lib/ownerLedger.ts` snapshots
   the commission on each transaction, `planPayout()`/`createPayoutRun()` run the

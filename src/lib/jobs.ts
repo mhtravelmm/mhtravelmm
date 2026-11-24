@@ -16,7 +16,8 @@ export type JobId =
   | 'renewal_reminders'
   | 'ad_stats_rollup'
   | 'orphan_media_cleanup'
-  | 'ad_events_purge';
+  | 'ad_events_purge'
+  | 'template_events_purge';
 
 /** An interval, or a daily wall-clock time in Myanmar Time (`HH:MM`). */
 export type JobSchedule = { everyMs: number } | { dailyAt: string };
@@ -40,6 +41,7 @@ export const JOBS: JobDefinition[] = [
   { id: 'ad_stats_rollup', schedule: { dailyAt: '00:30' }, wired: true },
   { id: 'orphan_media_cleanup', schedule: { dailyAt: '02:00' }, wired: true },
   { id: 'ad_events_purge', schedule: { dailyAt: '00:00' }, wired: true },
+  { id: 'template_events_purge', schedule: { dailyAt: '00:15' }, wired: true },
 ];
 
 const DAY_MS = 24 * HOUR;

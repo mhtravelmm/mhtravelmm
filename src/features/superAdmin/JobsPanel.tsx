@@ -21,6 +21,7 @@ const JOB_KEYS: Record<JobId, TranslationKey> = {
   ad_stats_rollup: 'sa_jobs_job_ad_stats_rollup',
   orphan_media_cleanup: 'sa_jobs_job_orphan_media_cleanup',
   ad_events_purge: 'sa_jobs_job_ad_events_purge',
+  template_events_purge: 'sa_jobs_job_template_events_purge',
 };
 
 const OUTCOME_KEYS: Record<JobRun['outcome'], TranslationKey> = {

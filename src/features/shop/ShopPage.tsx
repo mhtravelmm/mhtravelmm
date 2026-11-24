@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Eye, LayoutTemplate } from 'lucide-react';
 import { useAuth } from '../../lib/auth';
@@ -6,9 +6,11 @@ import { useLanguage } from '../../lib/i18n';
 import { recordAdminAudit } from '../../lib/adminAudit';
 import { canPreviewTemplate, freeTemplateFor } from '../../lib/shopTemplates';
 import {
+  recordTemplateView,
   resolveTemplateForShop,
   shopCategory,
   shopIdForOwner,
+  templateSessionHash,
   useTemplates,
 } from '../../lib/shopTemplateStore';
 import { shopPageData } from '../../templates/shopPageData';
@@ -44,6 +46,25 @@ export function ShopPage() {
   const shownId = mayPreview && previewTemplate ? previewTemplate.id : servedId;
   const shownTemplate = mayPreview && previewTemplate ? previewTemplate : servedTemplate;
   const Template = templateModule(shownId);
+
+  // §4 analytics: one view per public render of a template. A preview is the
+  // owner looking at their own data, so it is not a shopper's view and is not
+  // counted — only its audit row is written.
+  const sessionRef = useRef('');
+  if (!sessionRef.current) sessionRef.current = templateSessionHash();
+  const countedRef = useRef('');
+  useEffect(() => {
+    if (!servedId || mayPreview) return;
+    const key = `${servedId}:${shopId}`;
+    if (countedRef.current === key) return;
+    countedRef.current = key;
+    recordTemplateView({
+      templateId: servedId,
+      shopId,
+      sessionHash: sessionRef.current,
+      language,
+    });
+  }, [servedId, shopId, mayPreview, language]);
 
   useEffect(() => {
     if (!mayPreview || !previewTemplate) return;

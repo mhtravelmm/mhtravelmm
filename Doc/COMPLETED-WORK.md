@@ -1,6 +1,7 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 28 November 2026
+**Last updated:** 28 November 2026 (latest pass: 24 November 2026 clock time —
+the system clock reads 24 November, so this pass is dated to it)
 **Verified against:** `main` plus the Shop Page template layer (the lazy
 template modules under `src/templates/`, the `/shops/:shopId` route and the
 `scripts/a11y-audit.mjs` gate), the Rental catalog data module and Rental Admin
@@ -17,6 +18,43 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## Template analytics and three more hotel designs (Plan §4) — 24 November 2026
+
+§4 left two things unbuilt: template usage was not counted, and the catalog held
+four hotel designs where the founder expects about ten.
+
+- **Counting rules.** `src/lib/templateStats.ts` is the new seam. A view is one
+  public render of a template; an apply is one switch that actually moved the
+  shop; a preview is neither, because an owner reading their own data is not a
+  shopper. A bot user agent is refused, a repeat inside the same page view is
+  deduped on `session:template:kind`, the store keeps the newest 5,000 rows and
+  the purge keeps 180 days.
+- **Where the rows come from.** `ShopPage.tsx` records the view through a
+  page-view session hash, so a re-render or a language switch is not a second
+  view while a reload is. `OwnerTemplatePanel.tsx` records the apply only when
+  `switchedFrom` differs from the chosen template, so re-picking the current one
+  is not counted.
+- **Where it is read.** The Super Admin catalog panel gained a *Template usage*
+  section: views, applies, apply rate, share of all views and last seen, in both
+  languages. `template_events_purge` joins the §16B.7 registry (daily, 00:15
+  Myanmar Time) and `platformJobs.ts` binds it.
+- **Storage.** `supabase/migrations/20261128000200_shop_template_events.sql`
+  carries `shop_template_events`, its unique per-session index, a
+  `template_usage()` report function and the purge. An anonymous shopper may
+  insert a view of a live template and nothing else; an owner may insert an
+  apply for their own shop.
+- **Three new hotel designs.** `hotel/HotelBookingFocus` (booking panel, tab
+  bar, bookable room cards), `hotel/HotelMapFirst` (map card, sticky sidebar,
+  definition-list catalog) and `hotel/HotelStory` (typographic opening, no hero
+  photo, interleaved photos, numbered rooms, one closing ask). Each differs from
+  every other live hotel design on at least four of the seven axes, which the
+  seed test now asserts for every pair.
+
+Verified: typecheck 0 errors, lint 0 errors / 7 pre-existing warnings,
+`npm test` 67 files / 829 tests, build clean, and `npm run a11y` clean across
+72 combinations (seven hotel templates plus two free shops × four widths × two
+themes).
 
 ## Shop Page templates and the rendered gate (Plan §4, §16D Phase 3) — 28 November 2026
 

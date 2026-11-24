@@ -83,10 +83,17 @@ describe('seedTemplates (Plan §4 launch set)', () => {
     }
   });
 
-  it('gives hotels the free default plus three paid designs', () => {
+  it('gives hotels one free default and six paid designs that all pass the axis test', () => {
     const hotels = seedTemplates().filter((t) => t.category === 'hotel');
     expect(hotels.filter((t) => t.isFree)).toHaveLength(1);
-    expect(hotels.filter((t) => !t.isFree)).toHaveLength(3);
+    expect(hotels.filter((t) => !t.isFree)).toHaveLength(6);
+    // §4 "genuinely different": every live pair differs on at least four axes.
+    for (const a of hotels) {
+      for (const b of hotels) {
+        if (a.id >= b.id) continue;
+        expect(differingAxes(a, b).length).toBeGreaterThanOrEqual(MIN_DIFFERING_AXES);
+      }
+    }
   });
 
   it('prices every paid template at 2,000 MMK a month', () => {

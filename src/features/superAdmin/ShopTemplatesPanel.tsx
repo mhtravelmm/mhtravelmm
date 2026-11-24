@@ -7,11 +7,13 @@ import { formatMmk } from '../../lib/moneyFormat';
 import { recordAdminAudit } from '../../lib/adminAudit';
 import { canSetCommission } from '../../lib/adminWorkspace';
 import { entitlementForShop, entitlementStatus, resolveShopTemplate, templateProblems } from '../../lib/shopTemplates';
+import { rollUpTemplateStats, templateViewShare } from '../../lib/templateStats';
 import {
   payForTemplate,
   setTemplateStatus,
   useEntitlements,
   usePageSettings,
+  useTemplateEvents,
   useTemplateInvoices,
   useTemplates,
 } from '../../lib/shopTemplateStore';
@@ -29,6 +31,7 @@ export function ShopTemplatesPanel() {
   const settings = usePageSettings();
   const entitlements = useEntitlements();
   const invoices = useTemplateInvoices();
+  const events = useTemplateEvents();
   const [notice, setNotice] = useState('');
 
   const mayEditCatalog = adminRole === 'Super Admin';
@@ -44,6 +47,9 @@ export function ShopTemplatesPanel() {
     for (const row of settings) counts.set(row.activeTemplateId, (counts.get(row.activeTemplateId) ?? 0) + 1);
     return counts;
   }, [settings]);
+  // §4 analytics: views and applies per template. A preview is not a shopper's
+  // view, so it never reaches this roll-up.
+  const stats = useMemo(() => rollUpTemplateStats(events), [events]);
 
   function changeStatus(templateId: string, status: 'active' | 'retired' | 'draft') {
     if (!mayEditCatalog) return;
@@ -250,6 +256,50 @@ export function ShopTemplatesPanel() {
                         {t('st_pay_button')}
                       </button>
                     </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Section>
+
+      <Section title={t('st_section_usage')}>
+        <p className="mb-2 text-[10px] text-slate-500">{t('st_usage_intro')}</p>
+        {stats.length === 0 ? (
+          <Empty text={t('st_usage_empty')} />
+        ) : (
+          <table className="w-full min-w-[560px] text-left text-[10px]">
+            <thead className="text-slate-300">
+              <tr>
+                {[
+                  t('st_col_name'),
+                  t('st_col_views'),
+                  t('st_col_applies'),
+                  t('st_col_apply_rate'),
+                  t('st_col_share'),
+                  t('st_col_last_seen'),
+                ].map((cell, index) => (
+                  <th key={`${cell}-${index}`} className="px-2 py-1.5 font-semibold">
+                    {cell}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {stats.map((row) => {
+                const template = templates.find((candidate) => candidate.id === row.templateId);
+                return (
+                  <tr key={row.templateId} className="border-t border-[#1d3a5c]">
+                    <td className="px-2 py-1.5 text-slate-100">
+                      {template ? (language === 'mm' ? template.nameMm : template.nameEn) : row.templateId}
+                      <span className="ml-1 text-slate-500">{row.templateId}</span>
+                    </td>
+                    <td className="px-2 py-1.5 text-slate-300">{row.views}</td>
+                    <td className="px-2 py-1.5 text-slate-300">{row.applies}</td>
+                    <td className="px-2 py-1.5 text-slate-300">{row.applyRate}%</td>
+                    <td className="px-2 py-1.5 text-slate-300">{templateViewShare(row, stats)}%</td>
+                    <td className="px-2 py-1.5 text-slate-300">{row.lastAt.slice(0, 10)}</td>
                   </tr>
                 );
               })}

@@ -34,6 +34,7 @@ describe('template registry', () => {
  */
 describe('template modules', () => {
   const MODULES = ['hotel/HotelClassic', 'hotel/HotelEditorial', 'hotel/HotelCompact', 'hotel/HotelGalleryFirst',
+    'hotel/HotelBookingFocus', 'hotel/HotelMapFirst', 'hotel/HotelStory',
     'bookShop/BookShopClassic', 'generic/SimpleClassic'];
   const source = (file: string) => readFileSync(join(process.cwd(), 'src', 'templates', `${file}.tsx`), 'utf8');
 

@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { applyCampaignWindow, remindEndingCampaigns } from './adCampaignJobs';
 import { purgeAdEvents, rollUpAdStats } from './adStore';
 import { cleanupOrphanMedia } from './mediaObjects';
+import { purgeTemplateEventRows } from './shopTemplateStore';
 import { expireOverdueNow } from './rentalOrders';
 import { publishDueContent } from './scheduledPublishing';
 import { runRenewalReminders, runSubscriptionExpiry } from './subscriptionJobs';
@@ -47,6 +48,9 @@ export function usePlatformJobs(): void {
     ad_stats_rollup: () => `${rollUpAdStats()}`,
     // §16B.7: raw events are kept 90 days and nothing older.
     ad_events_purge: () => `${purgeAdEvents()}`,
+    // §4 analytics: template rows are kept 180 days, so the catalog report
+    // stays a recent-usage view rather than an archive.
+    template_events_purge: () => `${purgeTemplateEventRows()}`,
     // §16B.6: an object nothing has referenced for 30 days is removed. The rows
     // go with the object, so a second run finds nothing.
     orphan_media_cleanup: () => `${cleanupOrphanMedia().length}`,
