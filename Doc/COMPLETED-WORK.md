@@ -1022,8 +1022,9 @@ visible to a test instead of hidden behind a cast.
 - **The dictionary moved to `src/lib/translations.ts`.** `i18n.tsx` was 1,727
   lines and exported both the dictionary and the provider, which the
   `react-refresh/only-export-components` rule flags. `translations.ts` now holds
-  the 2,001 keys, `TranslationKey` and `translate()`; `i18n.tsx` is 47 lines of
-  provider and re-exports the type, so no import site changed.
+  the dictionary (2,001 keys at the move, 2,198 when counted at `abe2700`),
+  `TranslationKey` and `translate()`; `i18n.tsx` is 47 lines of provider and
+  re-exports the type, so no import site changed.
 - **Acceptance 1 — exactly one order per submit.** `canSubmit` on `/rentals`
   requires `!submittedCode`, so a second click cannot create a duplicate before
   the traveller edits a field.
@@ -1897,5 +1898,5 @@ is kept: the rule is "more than", matching `isOrphan` and the SQL function.
 
 Verified in the browser: two registered objects with one aged past 40 days left
 one row after `cleanupOrphanMedia()`, and the job registry reports
-`orphan_media_cleanup` as wired. `npm test` 59 files / 660 tests; typecheck,
-lint and build clean.
+`orphan_media_cleanup` as wired. `npm test` 59 files / 660 tests at that date
+(849 in 67 files at `abe2700`); typecheck, lint and build clean.

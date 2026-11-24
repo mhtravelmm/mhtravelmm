@@ -307,13 +307,24 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `tel:` link from seed data.
 - ~~Complete remaining bilingual localization.~~ **Done.** Every dashboard
   shell and body is localized, including `BlogPostsPanel.tsx` and
-  `TravelGuidesPanel.tsx` inside Super Admin; the dictionary (`src/lib/translations.ts`) holds 2,001 keys, all
+  `TravelGuidesPanel.tsx` inside Super Admin; the dictionary (`src/lib/translations.ts`) holds 2,198 keys, all
   filled in both `mm` and `en`. The remaining translation work is backend
   content, not UI strings.
 - Add component-level behavioral tests. Route, link, manifest, filter, and
-  domain-rule tests exist and run under `npm test` (664 tests in 59 files);
+  domain-rule tests exist and run under `npm test` (849 tests in 67 files);
   nothing yet renders a page and asserts on it, so interaction regressions
   (filters, tabs, forms) are still caught by hand.
+- **Resolve the seven detail ids no catalog holds** (found at `a6b16ac`).
+  The Home Populars row links `pp1…pp6` at `/hotels/`, `/book-shops/` and
+  `/markets/`, and `placeCatalog.ts` has none of them; `/hotels/tp1` is a
+  notification whose href was copied from the travel plan `tp1`. The hotel and
+  market ids render the not-found state, but `BookShopPage.tsx:51` (and
+  `RestaurantPage.tsx:68` behind it) fall back to `?? [0]`, so the reader gets a
+  real record at a URL that names a different one. Fix the hrefs or add the
+  records, and replace both fallbacks with the not-found state
+  `PlaceDetailPage` already renders. A test that walks each detail href and
+  asks the target page to resolve it is what stops this coming back
+  (`PLAN-VS-CODE.md` §6a, `STATUS.md` §5d).
 
 ## External configuration and decisions
 

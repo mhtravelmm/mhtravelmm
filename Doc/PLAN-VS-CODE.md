@@ -1,6 +1,6 @@
 # Plan vs Code — Verification Record
 
-**Checked:** 20 November 2026; **re-checked** 29 November 2026
+**Checked:** 20 November 2026; **re-checked** against `main` @ `abe2700`.
 **Against:** `main` @ `abe2700` (re-check), originally `8cdcf4e`.
 **Method:** every claim below was read in `Plan/PROJECT-PLAN.md` and then tested
 against the source tree. Nothing here is inferred from earlier notes.
@@ -26,7 +26,7 @@ ignored `:id`, and the missing migration directory — were fixed on 20–29
 November and are now guarded by tests or visible in the tree, so the Plan's gap
 list is shorter than it reads.
 
-The 29 November re-check changed seven rows: §2 rows 3, 4, 5, 7 and 9 (the
+The re-check at `abe2700` changed seven rows: §2 rows 3, 4, 5, 7 and 9 (the
 migration directory, the exchange rate, the test runner, the Favorites key, and
 the hero page count), §3.2 (nine Supabase modules, not three), §3.3 (the
 manifest now matches exactly, 46 of 46), §3.5 (849 tests in 67 files, not 74 in
@@ -228,7 +228,7 @@ with the Plan; the fix is either to widen the cap to 1240 or to declare
 
 | Plan item | Status in code |
 |---|---|
-| Catalog, bookings, plans, notifications are compiled data, not API | **Half confirmed (29 Nov).** The catalogs are still compiled data, and no module reads them from a table. But nine modules now *write* best-effort rows through `supabase` when the env is set (`favorites.tsx`, `notifications.ts`, `reviews.ts`, `travelRequests.ts`, `rentalOrders.ts`, `adServingApi.ts`, `adClickApi.ts`, plus `auth.tsx` and `mainOwnerApi.ts`). So "no query layer" is true for reads, false for writes. |
+| Catalog, bookings, plans, notifications are compiled data, not API | **Half confirmed at `abe2700`.** The catalogs are still compiled data, and no module reads them from a table. But nine modules now *write* best-effort rows through `supabase` when the env is set (`favorites.tsx`, `notifications.ts`, `reviews.ts`, `travelRequests.ts`, `rentalOrders.ts`, `adServingApi.ts`, `adClickApi.ts`, plus `auth.tsx` and `mainOwnerApi.ts`). So "no query layer" is true for reads, false for writes. |
 | Blog distances are seeded, not computed | **Confirmed.** Geolocation gates display only. |
 
 The Plan's honesty here is a strength. These two items should stay, with the
@@ -315,7 +315,7 @@ The three gap rows this section used to carry are closed:
 Gaps in the Plan's coverage, found while checking it:
 
 1. ~~**48 broken internal links.**~~ **Fixed 20 Nov** and now enforced by
-   `npm test`. See [`STATUS.md` §5](./STATUS.md#5-internal-links--done-0-broken).
+   `npm test`. See [`STATUS.md` §5](./STATUS.md#5-internal-links--done-at-route-level-0-broken-routes).
 2. ~~**`/book_shop` typo.**~~ **Fixed.** It maps to `/book-shops`.
 3. ~~**Load More behaviour.**~~ **Fixed 20 Nov; rule added to the Plan 22 Nov.**
    Both lists share `src/lib/usePagedList.ts` with a fixed page size of 12,
@@ -333,12 +333,45 @@ Gaps in the Plan's coverage, found while checking it:
    the file to read first. `COMPLETED-WORK.md` and `REMAINING-WORK.md` are the
    detail behind it, not a second answer.
 
+### 6a. Detail ids that no catalog resolves — **new in this re-check**
+
+`links.test.ts` proves every seed `href` matches a *declared route*. It does not
+prove the `:id` resolves to a *record*, and **7 of the 47** detail hrefs in the
+tree do not:
+
+| Href | Page reached | What the reader sees |
+|---|---|---|
+| `/hotels/pp1`, `/hotels/pp4`, `/hotels/tp1` | `PlaceDetailPage` | the not-found state |
+| `/markets/pp3`, `/markets/pp6` | `PlaceDetailPage` | the not-found state |
+| `/book-shops/pp2`, `/book-shops/pp5` | `BookShopPage` | **the first book shop**, silently |
+
+Six of the seven are the Home **Populars** row: `POPULARS` in `homeData.ts`
+links `pp1…pp6` across `/hotels/`, `/book-shops/` and `/markets/`, and none of
+those ids exists in `placeCatalog.ts`. `/hotels/tp1` is a notification whose
+href was copied from the travel plan `tp1`.
+
+Two separate faults, and the second is the worse one:
+
+1. The Populars row should link to ids that exist (`sedona-yangon`,
+   `book-nook`, `bogyoke`), or `placeCatalog.ts` should gain the six rows.
+2. `RestaurantPage.tsx:68` and `BookShopPage.tsx:51` both end in
+   `?? POPULAR_RESTAURANTS[0]` / `?? POPULAR_BOOK_SHOPS[0]`. An unknown id
+   therefore renders a real record instead of a not-found state, so the URL
+   silently lies about what the reader is looking at. `PlaceDetailPage` already
+   gets this right — it renders `place_not_found`. The two bespoke pages should
+   do the same.
+
+`Doc/STATUS.md` §5 says "0 broken" and that is true of *routes*; this is the
+record-level gap behind it. A test that walks each detail href and asserts the
+target page can resolve it would close it the way `links.test.ts` closed the
+route gap.
+
 ---
 
 ## 7. Recommended plan edits
 
 Ordered by how much confusion each removes. None of these are code changes.
-The 29 November re-check marked six of them done, because the Plan text was
+The re-check at `abe2700` marked six of them done, because the Plan text was
 edited on 22–24 November; the four that remain are all inside the §2A audit
 record, which has not been touched since 2026-11-09.
 
@@ -355,6 +388,12 @@ record, which has not been touched since 2026-11-09.
 | 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 849 tests in 67 files |
 | 10 | **Drop the 48-broken-links count** and the visual-CTA rows | **Open.** Both were fixed on 20 Nov and are test-guarded |
 | 11 | **Narrow "catalog data is not API"** to reads | **Open.** Writes already go through Supabase when configured (§5) |
+
+One edit is not a Plan edit at all, and is the only **code** item on this list:
+**seven detail hrefs reach a page that cannot resolve their id** (§6a). Six come
+from the Home Populars row and one from a notification. Fix the six hrefs or add
+the records, and replace the two `?? [0]` fallbacks in `RestaurantPage` and
+`BookShopPage` with the not-found state `PlaceDetailPage` already renders.
 
 Items 8–11 are mechanical, and each one currently understates the project. Item
 3 is mechanical too but needs the list of nine modules from §3.2.

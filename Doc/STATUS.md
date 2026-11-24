@@ -102,10 +102,10 @@ app declares.
 |---|---|---|
 | Five card sizes, no others | **DONE** | `xs/sm/md/lg/xl` in `src/components/ui/ListingCard.tsx` |
 | Card width cap (no long bars) | **DONE** | `maxWidth` per size: 150/190/240/300/340px |
-| Grid cap per page | **DONE** | Blogs, Favorites, Account, City, Search, Travel Plans |
+| Grid cap per page | **PARTIAL** | Every grid carries `justify-items-center` + `max-w-`, but Favorites (990px), Account (998px) and Blogs related hotels (982px) declare `size="md"` under a 190px cap, so the prop is a dead letter. City, Category, Place and Search match the formula (`Doc/PLAN-VS-CODE.md` §4.2) |
 | Plan doc matches code | **DONE** | Card table in `PROJECT-PLAN.md` §4 matches `CARD_SIZES` |
 | Dark theme base + light theme | **DONE** | `.light` class on `<html>`, tokens in `tailwind.config.js` |
-| Bilingual MM/EN provider | **DONE** | 2,001 keys in `src/lib/translations.ts`; every traveler page, dashboard shell, both content editors and the Rental Admin panel are localized |
+| Bilingual MM/EN provider | **DONE** | 2,198 keys in `src/lib/translations.ts`; every traveler page, dashboard shell, both content editors and the Rental Admin panel are localized |
 | Site-wide right-click / zoom guard | **DONE** | Interaction guard component |
 
 ### Card size reference (verified against code)
@@ -162,10 +162,12 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 
 ---
 
-## 5. Internal links — **DONE** (0 broken)
+## 5. Internal links — **DONE at route level** (0 broken routes)
 
 The 48 broken links recorded in the previous audit are fixed and the fix is now
-guarded by tests. `npm test` fails if a seed `href` stops resolving.
+guarded by tests. `npm test` fails if a seed `href` stops resolving. A declared
+route is not the same as a resolvable record, though — see §5d for the seven
+detail ids that reach a page which cannot find their record.
 
 ### 5a. Category pages — added (9)
 
@@ -206,6 +208,25 @@ link without a route is now a test failure, not a silent 404.
 to imply them open the matching anchor on `/foreign-tourist` (Plan §13). The
 Exchange tile keeps pointing at the Nearby exchange listings, which are real
 places rather than advice.
+
+### 5d. What the tests do not cover — **7 ids, open** (found at `a6b16ac`)
+
+The audit is route-level. A `href` can match a declared route and still name an
+id no catalog holds, and 7 of the 47 detail hrefs do:
+
+- `/hotels/pp1`, `/hotels/pp4`, `/markets/pp3`, `/markets/pp6`,
+  `/book-shops/pp2`, `/book-shops/pp5` — the Home **Populars** row links
+  `pp1…pp6`, and `placeCatalog.ts` has none of them. The hotel and market ones
+  render the not-found state.
+- `/hotels/tp1` — a notification whose href was copied from the travel plan
+  `tp1`. Same outcome.
+- The two book-shop ids do not show not-found: `BookShopPage.tsx:51` falls back
+  to `POPULAR_BOOK_SHOPS[0]`, so the reader silently gets the first shop.
+  `RestaurantPage.tsx:68` has the same `?? [0]` shape and would do the same for
+  an unknown restaurant id.
+
+Detail in `PLAN-VS-CODE.md` §6a. The fix is a href or a record per id, plus the
+not-found state in the two bespoke pages.
 
 ---
 
