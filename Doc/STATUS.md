@@ -86,7 +86,7 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (853 tests, 68 files) |
+| `npm test` (vitest) | **PASS** (861 tests, 70 files) |
 | Seed link audit | **PASS** (0 broken of 76 unique seed hrefs) |
 | Route audit | **PASS** (46 declared routes, manifest in step) |
 

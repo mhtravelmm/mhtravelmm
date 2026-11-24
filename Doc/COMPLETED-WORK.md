@@ -1,8 +1,8 @@
 # MH Travel — Completed Work Record
 
 **Last updated:** 29 November 2026 (latest pass: the §4 catalog growth to
-nineteen templates; the detail-link and grid-cap fixes of 24 November 2026 sit
-below)
+nineteen templates; below it the 24 November component-test seam, then the
+detail-link and grid-cap fixes of the same day)
 **Verified against:** `main` plus the Shop Page template layer (the lazy
 template modules under `src/templates/`, the `/shops/:shopId` route and the
 `scripts/a11y-audit.mjs` gate), the Rental catalog data module and Rental Admin
@@ -19,6 +19,38 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## Pages that are now rendered by a test — 24 November 2026
+
+Every suite before this one read data or source text. None mounted a page, so a
+filter, a tab or a form could break and leave the suite green; the docs said so
+in `REMAINING-WORK.md` and `PLAN-VS-CODE.md` §6a, and every interaction check
+was done by hand.
+
+`src/test/renderWithProviders.tsx` renders a page inside the real provider
+stack — `LanguageProvider` → `AuthProvider` → `CurrencyProvider` →
+`FavoritesProvider` over a `MemoryRouter` — rather than mocks, because a page
+that passes against a mocked `t()` or favourite store can still break in the
+app. `src/test/setupDom.ts` fills the two jsdom gaps the pages touch:
+`matchMedia` (read by the reduced-motion checks) and `IntersectionObserver`
+(read by `AdSlot`). Both exist in a browser and in neither jsdom, so without
+them a page would throw in the test and work in production.
+
+Only `*.dom.test.tsx` gets a document (`environmentMatchGlobs` in
+`vite.config.ts`), so the 68 node suites keep their speed. The two new suites:
+
+| Suite | What it drives |
+|---|---|
+| `src/features/place/PlaceDetailPage.dom.test.tsx` | the not-found state on `PlaceDetailPage`, `RestaurantPage` and `BookShopPage`; a real hotel id renders its record instead; the text follows the chosen language |
+| `src/features/blogs/BlogsPage.dom.test.tsx` | choosing a category chip narrows the list to that category's own stories, `aria-pressed` moves off All, and All restores the full list |
+
+Both were mutation-checked before commit: reinstating `?? POPULAR_BOOK_SHOPS[0]`
+in `BookShopPage` and deleting the category filter line each turn the suite red,
+so the tests can fail. `jsdom`, `@testing-library/react` and
+`@testing-library/user-event` are new dev dependencies; the react-refresh lint
+rule is switched off for test files only, so the warning count stays at seven.
+
+861 tests in 70 files pass; typecheck clean, lint 0 errors, build clean.
 
 ## Detail links that resolve, and grids that compute their cap — 24 November 2026
 

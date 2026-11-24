@@ -400,13 +400,31 @@ record, which has not been touched since 2026-11-09.
 | 6 | Add a Load More rule to §4 | ~~Done 22 Nov~~ |
 | 7 | Point the Plan at `Doc/STATUS.md` | ~~Done~~: the Plan's first line names it as the status view |
 | 8 | **Replace "no `supabase/` migration directory"** with "19 migrations committed, none applied" | **Open** (§3.6). This is the most misleading remaining claim: it makes the schema work look unstarted |
-| 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 853 tests in 68 files |
+| 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 861 tests in 70 files, including 8 that render a page under jsdom |
 | 10 | **Drop the 48-broken-links count** and the visual-CTA rows | **Open.** Both were fixed on 20 Nov and are test-guarded |
 | 11 | **Narrow "catalog data is not API"** to reads | **Open.** Writes already go through Supabase when configured (§5) |
 
 The only **code** items on this list are now closed: the seven detail hrefs that
 reached a page unable to resolve their id (§6a) and the three grid caps that
-contradicted their declared card size (§4.2). Both are test-guarded.
+contradicted their declared card size (§4.2). Both are test-guarded, and §6a now
+has a component test that renders the three detail pages and reads the DOM, so
+the not-found state no longer rests on a unit test alone.
+
+### 6b. No page was ever rendered by a test — **started 24 Nov 2026**
+
+`npm test` guarded routes, seed links, the manifest, the domain rules and the
+dictionary, but no test mounted a page, so a filter, tab or form could break
+without a red suite. Two page suites exist now, both run under jsdom in
+`*.dom.test.tsx` files and both mutation-checked (break the code, watch the test
+fail):
+
+| Suite | Covers |
+|---|---|
+| `src/features/place/PlaceDetailPage.dom.test.tsx` | the not-found state on `PlaceDetailPage`, `RestaurantPage` and `BookShopPage`, in MM and EN |
+| `src/features/blogs/BlogsPage.dom.test.tsx` | the category filter narrows to its own stories, `aria-pressed` moves, and All restores the list |
+
+Still hand-checked: the Account tab sets, the Search chips, the rental order form,
+and every admin panel form.
 
 Items 8–11 are mechanical, and each one currently understates the project. Item
 3 is mechanical too but needs the list of nine modules from §3.2.

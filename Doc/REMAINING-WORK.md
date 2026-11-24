@@ -310,18 +310,26 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `TravelGuidesPanel.tsx` inside Super Admin; the dictionary (`src/lib/translations.ts`) holds 2,198 keys, all
   filled in both `mm` and `en`. The remaining translation work is backend
   content, not UI strings.
-- Add component-level behavioral tests. Route, link, manifest, filter, and
-  domain-rule tests exist and run under `npm test` (853 tests in 68 files);
-  nothing yet renders a page and asserts on it, so interaction regressions
-  (filters, tabs, forms) are still caught by hand.
+- ~~Add component-level behavioral tests.~~ **Started 24 Nov 2026.** A page now
+  renders under jsdom and asserts on the DOM: `src/test/renderWithProviders.tsx`
+  mounts the real `LanguageProvider` → `AuthProvider` → `CurrencyProvider` →
+  `FavoritesProvider` stack over a `MemoryRouter`, and `src/test/setupDom.ts`
+  fills the two jsdom gaps the pages touch (`matchMedia`, `IntersectionObserver`).
+  Only `*.dom.test.tsx` gets a document, so the 68 node suites keep their speed.
+  Covered so far: the not-found state on the three detail pages
+  (`PlaceDetailPage.dom.test.tsx`, 5 tests) and the Blogs category filter
+  (`BlogsPage.dom.test.tsx`, 3 tests). Both were mutation-checked — reinstating
+  `?? POPULAR_BOOK_SHOPS[0]` and disabling the category filter each fail the
+  suite. Still hand-checked: the tab sets inside Account, the Search chips, the
+  rental order form, and every admin panel form.
 - ~~Resolve the seven detail ids no catalog holds~~ — **done 24 Nov 2026.**
   The Populars row now links records that exist, and the two `?? [0]` fallbacks
   are gone: every detail page reads `resolveDetailRecord()` from
   `src/lib/detailRoutes.ts` and renders `RecordNotFound` for an unknown id.
   `links.test.ts` walks each seed detail href through `resolveDetailHref()`, so
-  a dead id fails the suite. Still open from the same finding: nothing renders a
-  page and asserts on it, so the not-found state is guarded by unit tests rather
-  than a component test (`PLAN-VS-CODE.md` §6a, `STATUS.md` §5d).
+  a dead id fails the suite, and `PlaceDetailPage.dom.test.tsx` now renders the
+  three pages and asserts the not-found text in both languages
+  (`PLAN-VS-CODE.md` §6a, `STATUS.md` §5d).
 
 ## External configuration and decisions
 

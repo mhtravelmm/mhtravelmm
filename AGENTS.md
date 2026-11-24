@@ -12,6 +12,17 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
 - Dev server on `http://localhost:5173`. Browser checks use `puppeteer-core` with
   `/usr/bin/chromium`; axe-core is available in `node_modules` for a11y passes.
 
+## Standing permission
+
+The agent may write and change code freely in this repository without asking first:
+implement the Plan, add tests, add dependencies the work needs, refactor, and commit.
+Docs and Plan edits are allowed too. The only things to confirm are the ones the Plan
+itself reserves for the founder — the brand palette decision (`Doc/STATUS.md` §8) and
+the commercial terms in `Plan/PROJECT-PLAN.md` §16E.
+
+The Plan under `Plan/` is refreshed roughly every five hours. Re-read it at the start
+of a session, and do not treat a doc claim as true without checking the code.
+
 ## Rules that tests enforce
 
 - **Every seed `href` must resolve, at both levels.** `src/data/links.test.ts` walks the
@@ -27,6 +38,13 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   the pixel table, and `cardGridStyle()` returns the inline style Tailwind cannot
   build from a runtime class name. `src/lib/cardGrid.test.ts` fails if a page
   hand-writes a five-column cap or if the table drifts from `CARD_SIZES`.
+- **A page is tested by rendering it.** Name the file `*.dom.test.tsx` and mount it
+  through `renderAt(path, ui)` from `src/test/renderWithProviders.tsx`, which supplies
+  the real `LanguageProvider` → `AuthProvider` → `CurrencyProvider` → `FavoritesProvider`
+  stack over a `MemoryRouter`. Do not mock those providers: a page that passes against a
+  mock can still break in the app. Only `*.dom.test.tsx` gets jsdom, so keep node-only
+  logic in the plain `*.test.ts` files. Break the code once and watch the new test fail
+  before committing it — a test that cannot fail guards nothing.
 - **`public/manus-routes.json` must match `allPaths()`.** Insert the new entry in place;
   do not re-sort the file.
 - **Every UI string goes through `t()`**, and both `mm` and `en` must be filled. The
