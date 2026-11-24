@@ -24,6 +24,7 @@ export default {
         },
         // Readable link/accent text: brand-blue in dark, a darker blue in light.
         link: 'rgb(var(--color-link) / <alpha-value>)',
+        ratingText: 'rgb(var(--color-rating-text) / <alpha-value>)',
         review: {
           bg: 'rgb(var(--color-review-bg) / <alpha-value>)',
           text: 'rgb(var(--color-review-text) / <alpha-value>)',
@@ -36,6 +37,8 @@ export default {
           blueDark: '#2a5fd6',
           red: '#c0392b',
           redLight: '#e78a8a',
+          // Deep navy bar (preview strip, editorial CTA): white text on it is 14:1.
+          navy: '#0b2147',
         },
         status: {
           success: '#3fae5c',

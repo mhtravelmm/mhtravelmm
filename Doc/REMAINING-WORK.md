@@ -245,8 +245,23 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   tested (§16A.1–§16A.9: serving order, status machine, approval queue, reports,
   `ad_campaign_window` job), so what remains is the storage swap: apply
   `20261125000100_ads.sql` and point `src/lib/adStore.ts` at the tables.
-- Build the Shop Owner template catalog and entitlement system: one Free template, paid templates at 2,000 MMK/month/shop, preview/apply switching, compatibility, billing, renewal, grace period, fallback, retirement, rollback, and analytics.
-  The **billing half** is built (26 November 2026): `src/lib/ownerSubscriptions.ts` holds the lifecycle for both an Owner account fee (§9) and a template entitlement (§4) as one record with a `kind`, `src/lib/subscriptionJobs.ts` runs the expiry and the 7/3/1-day reminders, and `shop_subscriptions` is committed. What is left is the catalog itself — `shop_templates` rows, the lazy template modules, the owner's preview/apply selector, the Admin catalog screen and the Payment Admin invoice recording.
+- Shop Owner template system. **Built (26–28 November 2026):** the billing half
+  (`src/lib/ownerSubscriptions.ts`, `src/lib/subscriptionJobs.ts`,
+  `shop_subscriptions`), the §4 rules and catalog
+  (`src/lib/shopTemplates.ts`, `shop_templates`), the owner's preview/apply
+  selector, the Super Admin catalog screen with invoice recording
+  (`payForTemplate()` in `ShopTemplatesPanel.tsx`), and the rendered layer — `/shops/:shopId` serving six lazy templates over one
+  `ShopPageData` fixture, with `scripts/a11y-audit.mjs` (`npm run a11y`) as the
+  gate: 48 combinations of template, width and theme, clean.
+  What is left: **storage** — apply `20261128000100_shop_templates.sql` and point
+  `src/lib/shopTemplateStore.ts` at the four tables, since the catalog, settings,
+  entitlements and invoices are browser rows today; **catalog growth** — §4 asks
+  for about ten hotel designs plus the free default and then Restaurant and the
+  other categories, and this build has four hotels plus one design each for book
+  shop, restaurant, cafe and attraction; **template analytics** — views and
+  applies per template are not recorded, only the `preview` audit row; and
+  **the per-template review** — §4 requires the founder to approve each design
+  against the four-of-seven test before it goes `active`.
 - ~~Implement MH Platform wallet ledger, settlements and payouts.~~ **Built 27
   November 2026** for the Shop Owner path: `src/lib/ownerLedger.ts` snapshots
   the commission on each transaction, `planPayout()`/`createPayoutRun()` run the

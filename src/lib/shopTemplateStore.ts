@@ -187,6 +187,18 @@ export function setTemplateStatus(templateId: string, status: 'active' | 'retire
   return next;
 }
 
+/** The category a shop belongs to, which decides its free baseline. */
+export function shopCategory(shopId: string): TemplateCategory | undefined {
+  return SEEDED_SHOPS.find((row) => row.shopId === shopId)?.category;
+}
+
+/** The shop a byline owns, so a panel never guesses another shop's id. */
+export function shopIdForOwner(ownerName: string): string | undefined {
+  const needle = ownerName.trim().toLowerCase();
+  if (!needle) return undefined;
+  return SEEDED_SHOPS.find((row) => row.ownerName.trim().toLowerCase() === needle)?.shopId;
+}
+
 /** The one read a shop page or the owner panel uses. */
 export function resolveTemplateForShop(shopId: string, now = new Date()): ResolvedTemplate {
   const templates = readTemplates();

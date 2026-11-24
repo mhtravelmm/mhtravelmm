@@ -145,6 +145,10 @@
       "title": "Shop Owner Dashboard"
     },
     {
+      "path": "/shops/:shopId",
+      "title": "Shop Page"
+    },
+    {
       "path": "/signup",
       "title": "Registration"
     },

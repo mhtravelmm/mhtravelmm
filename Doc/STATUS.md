@@ -1,6 +1,10 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 27 November 2026 (the owner money path: `src/lib/ownerLedger.ts`
+**Last audited:** 28 November 2026 (the Shop Page template layer: `/shops/:shopId`
+renders six lazy templates from the §4 catalog over one typed fixture, the owner
+previews any of them on their own data, and `scripts/a11y-audit.mjs` is the
+rendered gate — 48 combinations of template, width and theme, clean. Before that,
+the owner money path: `src/lib/ownerLedger.ts`
 snapshots the commission on each transaction, plans and settles the §9
 twice-monthly payout with the 50,000 MMK carry-over, and `replayPayout()` is the
 §16D Phase 3 gate that a run is reproducible from its ledger rows — plus the new
@@ -126,6 +130,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/restaurants/:id` | **PREVIEW** | Resolves the record from `:id` |
 | `/book-shops` | **PREVIEW** | Books, stationery, gifts, reviews, CTA links |
 | `/book-shops/:id` | **PREVIEW** | Resolves the record from `:id` |
+| `/shops/:shopId` | **PREVIEW** | The public Shop Page. The route never changes: it resolves the shop's template through `resolveTemplateForShop()` and asks `src/templates/registry.ts` for the lazy module, so a new template is a new module and a new catalog row. Six render: `hotel_classic` (free), `hotel_editorial`, `hotel_compact`, `hotel_gallery_first`, `book_shop_classic` and the generic classic behind restaurant, cafe and attraction. Every template receives the same `ShopPageData` fixture, so a switch never touches business data (§4). `?preview=<template-id>` renders another template on the same shop for that shop's owner or a Super Admin only, and records a `preview` audit row. Colours come from theme tokens, so the light theme renders correctly; `npm run a11y` is the rendered gate |
 | `/attractions`, `/hotels`, `/cafes`, `/markets`, `/book-shops`, `/rentals`, `/transport`, `/populars` | **PREVIEW** | Catalog list with search and Show more |
 | `/categories` | **DONE** | Category index linking all nine catalogs |
 | `/:slug/:id` place detail | **PREVIEW** | Shared detail page for seven catalogs |
@@ -233,7 +238,7 @@ places rather than advice.
 | Content lifecycle: unpublish, delete, restore, stale save (§10 §4, §7 acceptance 5–6) | **DONE** (client) | `src/lib/contentLifecycle.ts` returns a post or guide to Draft, soft-deletes it with `deletedAt`, restores it, and bumps `version` on every change; both Admin tables show Delete/Restore and Unpublish, mark a deleted row, and refuse a save whose loaded version has moved on, with an in-editor Reload. `contentReader` drops a deleted row and the seed it took over, and `publish_due_content` skips a deleted row. `20261124000100_content_lifecycle.sql` puts the same `version + 1` guard on the server. What is left is applying that migration and the shared revision/audit tables |
 | Scheduled publishing (§10 §4, §16B.7) | **PARTIAL** | Myanmar Time in, UTC stored (`src/lib/scheduleRules.ts`); `publish_due_content` is `wired: true` and runs on the one-minute tick through `src/lib/scheduledPublishing.ts`, publishing due posts and guides with the actor `system`, one audit row, one feed row and a guide's first earning row. It is idempotent because a published row has left `Scheduled`. `blog_posts` and `travel_guides` are committed in `supabase/migrations/20261123000600_scheduled_publishing.sql` but not applied, so the job reads browser storage and only runs while the app is open |
 | Media and storage (§16B.6) | **PARTIAL** | `src/lib/mediaRules.ts` states the five folders and their limits (`blog-posts/`, `guide-stops/`, `rentals/` 450 KB WebP; `ads/` 300 KB image or 3 MB / 15 s MP4; `shops/<shop-id>/` 450 KB within an Admin-set quota), refuses a path-like shop id, and answers with a translatable code. `src/lib/mediaApi.ts` compresses to WebP, halving the longest edge twice before it gives up, and both content editors name their folder. `media_objects` with `last_referenced_at`, `shop_media_count()`, `orphan_media_objects()` and `delete_media_object()` are committed. No deployed Worker yet, so an upload still falls back to a data URL. The nightly orphan job is wired (`wired: true`): `src/lib/mediaObjects.ts` stands in for `media_objects`, a content save touches the photos it keeps, and the 02:00 run removes what nothing referenced for 30 days |
-| Owner and template subscriptions (§9, §4, §16B.7) | **PARTIAL** | `src/lib/ownerSubscriptions.ts` states the rules: `deriveStatus()` moves Active → grace → expired (an unreadable `periodEnd` counts as expired, so a broken row never grants free service), `daysUntilEnd()` counts Myanmar calendar days, `graceDaysLeft()` and `blocksBooking()` are what the panel reads, and `dueReminders()` sends at 7, 3 and 1 days once per period per threshold. `src/lib/subscriptionJobs.ts` runs `subscription_expiry` (hourly, one audit row per row that moved, actor `system`) and `renewal_reminders` (daily 09:00 Myanmar Time, one bilingual feed row addressed to the owner by byline), and both are `wired: true`, so all eight §16B.7 jobs now do real work. `'subscriptions'` is a new audit source with MM and EN labels. `supabase/migrations/20261126000100_shop_subscriptions.sql` carries the table, its two indexes and RLS (staff read all, an owner reads their own byline, Super Admin and Payment Admin insert). Rows are still browser storage, and the paid-template catalog and preview/apply selector of §4 are not built |
+| Owner and template subscriptions (§9, §4, §16B.7) | **PARTIAL** | `src/lib/ownerSubscriptions.ts` states the rules: `deriveStatus()` moves Active → grace → expired (an unreadable `periodEnd` counts as expired, so a broken row never grants free service), `daysUntilEnd()` counts Myanmar calendar days, `graceDaysLeft()` and `blocksBooking()` are what the panel reads, and `dueReminders()` sends at 7, 3 and 1 days once per period per threshold. `src/lib/subscriptionJobs.ts` runs `subscription_expiry` (hourly, one audit row per row that moved, actor `system`) and `renewal_reminders` (daily 09:00 Myanmar Time, one bilingual feed row addressed to the owner by byline), and both are `wired: true`, so all eight §16B.7 jobs now do real work. `'subscriptions'` is a new audit source with MM and EN labels. `supabase/migrations/20261126000100_shop_subscriptions.sql` carries the table, its two indexes and RLS (staff read all, an owner reads their own byline, Super Admin and Payment Admin insert). Rows are still browser storage. The §4 catalog, the owner's preview/apply selector and the rendered templates are built (28 November 2026): `/shops/:shopId` serves six lazy templates over one `ShopPageData` fixture, and `scripts/a11y-audit.mjs` is the rendered gate |
 
 `localStorage` now backs 37 stored keys across 22 files — the count moved with
 the ads, media, subscription and translation stores. Every one of them is a
@@ -255,6 +260,7 @@ so they no longer leak between accounts on a shared browser.
 | Duplicate or missing `<main>` landmark | 0 |
 | axe-core violations, all rules except contrast | **0** across 23 routes |
 | axe-core `color-contrast` | **64 nodes** on 17 routes; `/foreign-tourist` adds 0 in either theme |
+| Shop Page templates (axe + overflow + `h1`), 48 combinations | **0** — `npm run a11y` (28 Nov 2026) |
 
 Measured with axe-core in headless Chromium on 20 November 2026, at 1440px,
 against 23 routes (every declared page plus the three dashboards). The
@@ -274,6 +280,13 @@ admin dashboards, which use their own navy/cyan surfaces. Fixing the two main
 pairs means darkening the blue to about `#356fe0` and using a lighter red for
 text, which changes the brand palette, so it is left as a deliberate decision
 rather than slipped in with a documentation pass.
+
+The template pass of 28 November 2026 did not wait for that decision: a Shop Page
+is a shop's own storefront, so it uses the `text-link`, `ratingText` and
+`brand-navy` tokens instead of `brand-blue` on a light surface, and it is clean
+in both themes. The rest of the palette question above is unchanged — the 64
+nodes still sit on traveler and admin surfaces, and they still need the two
+brand values decided.
 
 ---
 

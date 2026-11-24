@@ -25,6 +25,7 @@ import { SearchPage } from './features/search/SearchPage';
 import { CategoryIndexPage, CategoryPage } from './features/category/CategoryPage';
 import { AdClickRedirect } from './features/ads/AdClickRedirect';
 import { PlaceDetailPage } from './features/place/PlaceDetailPage';
+import { ShopPage } from './features/shop/ShopPage';
 import { CATEGORY_SLUGS, PLACE_SLUGS } from './routes';
 import { useAuth } from './lib/auth';
 import { usePlatformJobs } from './lib/platformJobs';
@@ -128,6 +129,7 @@ function AppRoutes() {
     <Route path="/shop-owner" element={<RequireShopOwner />} />
     <Route path="/main-owner" element={<RequireMainOwner />} />
     <Route path="/account/bookings/:requestCode" element={<Shell><RentalVoucherPage /></Shell>} />
+    <Route path="/shops/:shopId" element={<Shell fullWidth><ShopPage /></Shell>} />
     <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/account/notifications" element={<Shell><NotificationsPage /></Shell>} />
     <Route path="/favorites" element={<Shell><FavoritesPage /></Shell>} />

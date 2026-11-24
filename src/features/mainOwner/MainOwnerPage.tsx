@@ -152,7 +152,7 @@ export function MainOwnerPage() {
               <div className="hidden items-center gap-2 text-xs text-slate-400 lg:flex"><span>{t('owner_operator')}</span><ChevronRight size={13} /><strong className="text-white">JJ Express</strong></div>
             </div>
             <div className="flex items-center gap-3 sm:gap-5">
-              <button type="button" onClick={toggleLanguage} aria-label={t('owner_switch_language')} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/20">
+              <button type="button" onClick={toggleLanguage} aria-label={`${language === 'mm' ? 'မြန်မာ' : 'English'} · ${t('owner_switch_language')}`} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/20">
                 <Globe2 size={14} />
                 {language === 'mm' ? 'မြန်မာ' : 'English'}
               </button>

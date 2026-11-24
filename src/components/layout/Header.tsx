@@ -84,7 +84,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
     return (
       <>
         <header ref={headerRef} className="flex items-center gap-3 py-3">
-          <Link to="/" className="hidden shrink-0 text-lg font-medium text-brand-blue sm:block">
+          <Link to="/" className="hidden shrink-0 text-lg font-medium text-link sm:block">
             MH Travel
           </Link>
           <form onSubmit={submitSearch} className="flex flex-1 items-center gap-2">
@@ -133,7 +133,7 @@ export function Header({ unreadNotifications }: { unreadNotifications?: number }
               <Menu size={19} className="text-text-secondary hover:text-text-primary transition" />
             )}
           </button>
-          <Link to="/" className="text-lg font-medium text-brand-blue">
+          <Link to="/" className="text-lg font-medium text-link">
             MH Travel
           </Link>
         </div>

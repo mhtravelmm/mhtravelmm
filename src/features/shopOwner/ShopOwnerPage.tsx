@@ -168,7 +168,7 @@ export function ShopOwnerPage() {
               <span className="text-xl font-extrabold text-[#27bfff] lg:hidden">✈ MH Travel</span>
             </div>
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
-              <button type="button" onClick={toggleLanguage} aria-label={t('owner_switch_language')} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/20">
+              <button type="button" onClick={toggleLanguage} aria-label={`${language === 'mm' ? 'မြန်မာ' : 'English'} · ${t('owner_switch_language')}`} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-white/20">
                 <Globe2 size={14} />
                 {language === 'mm' ? 'မြန်မာ' : 'English'}
               </button>

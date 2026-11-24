@@ -17,17 +17,13 @@ import {
   applyShopTemplate,
   cancelShopTemplate,
   resolveTemplateForShop,
+  shopCategory,
   useEntitlements,
   usePageSettings,
   useTemplates,
 } from '../../lib/shopTemplateStore';
 
 type Translate = (key: TranslationKey) => string;
-
-const CATEGORY_OF_SHOP: Record<string, TemplateCategory> = {
-  rangoon_house: 'hotel',
-  mandalay_booknook: 'book_shop',
-};
 
 /**
  * Plan §4, the owner's template selector. It shows Free or Paid, the 2,000 MMK
@@ -42,7 +38,7 @@ export function OwnerTemplatePanel({ shopId, t }: { shopId: string; t: Translate
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [notice, setNotice] = useState('');
 
-  const category = CATEGORY_OF_SHOP[shopId] ?? 'hotel';
+  const category: TemplateCategory = shopCategory(shopId) ?? 'hotel';
   const row = settings.find((candidate) => candidate.shopId === shopId);
   const ent = entitlementForShop(entitlements, shopId);
   const state = entitlementStatus(ent);
@@ -57,6 +53,7 @@ export function OwnerTemplatePanel({ shopId, t }: { shopId: string; t: Translate
   const free = freeTemplateFor(templates, category);
   const previewing = previewId ? templates.find((template) => template.id === previewId) : undefined;
   const mayPreview = canPreviewTemplate(shopId, shopId);
+  const shopHref = `/shops/${shopId}`;
 
   function apply(template: ShopTemplate) {
     const result = applyShopTemplate(shopId, template.id);
@@ -86,7 +83,7 @@ export function OwnerTemplatePanel({ shopId, t }: { shopId: string; t: Translate
           <h2 className="text-sm font-bold text-[#0b2147]">{t('owner_tpl_title')}</h2>
         </div>
         <div className="space-y-3 p-3">
-          <p className="text-xs text-slate-500">{t('owner_tpl_intro')}</p>
+          <p className="text-xs text-slate-600">{t('owner_tpl_intro')}</p>
 
           {notice && (
             <p className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-[11px] font-semibold text-green-700">{notice}</p>
@@ -105,21 +102,21 @@ export function OwnerTemplatePanel({ shopId, t }: { shopId: string; t: Translate
 
           <div className="grid gap-2 sm:grid-cols-3">
             <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
-              <p className="text-[10px] font-bold text-slate-500">{t('owner_tpl_current')}</p>
+              <p className="text-[10px] font-bold text-slate-600">{t('owner_tpl_current')}</p>
               <p className="mt-1 text-sm font-extrabold text-[#0b2147]">{served ? served.nameEn : '—'}</p>
-              <p className="mt-0.5 text-[10px] text-slate-500">{served ? served.nameMm : ''}</p>
+              <p className="mt-0.5 text-[10px] text-slate-600">{served ? served.nameMm : ''}</p>
             </div>
             <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
-              <p className="text-[10px] font-bold text-slate-500">{t('owner_tpl_status')}</p>
-              <p className={`mt-1 text-sm font-extrabold ${state === 'active' ? 'text-green-600' : state === 'grace' ? 'text-amber-600' : 'text-red-600'}`}>
+              <p className="text-[10px] font-bold text-slate-600">{t('owner_tpl_status')}</p>
+              <p className={`mt-1 text-sm font-extrabold ${state === 'active' ? 'text-green-700' : state === 'grace' ? 'text-amber-700' : 'text-red-700'}`}>
                 {entitlementText(state, t)}
               </p>
-              {ent && <p className="mt-0.5 text-[10px] text-slate-500">{ent.periodEnd.slice(0, 10)}</p>}
+              {ent && <p className="mt-0.5 text-[10px] text-slate-600">{ent.periodEnd.slice(0, 10)}</p>}
             </div>
             <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
-              <p className="text-[10px] font-bold text-slate-500">{t('owner_tpl_period_end')}</p>
+              <p className="text-[10px] font-bold text-slate-600">{t('owner_tpl_period_end')}</p>
               <p className="mt-1 text-sm font-extrabold text-[#0b2147]">{ent?.periodEnd.slice(0, 10) ?? '—'}</p>
-              <p className="mt-0.5 text-[10px] text-slate-500">{formatMmk(TEMPLATE_PRICE_MMK_MONTH)}</p>
+              <p className="mt-0.5 text-[10px] text-slate-600">{formatMmk(TEMPLATE_PRICE_MMK_MONTH)}</p>
             </div>
           </div>
 
@@ -137,7 +134,7 @@ export function OwnerTemplatePanel({ shopId, t }: { shopId: string; t: Translate
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-bold text-[#0b2147]">{template.nameEn}</p>
-                      <p className="text-[10px] text-slate-500">{template.nameMm}</p>
+                      <p className="text-[10px] text-slate-600">{template.nameMm}</p>
                     </div>
                     <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${template.isFree ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
                       {template.isFree ? t('owner_tpl_free_badge') : fill(t('owner_tpl_paid_badge'), { price: formatMmk(template.priceMmkMonth) })}
@@ -154,29 +151,37 @@ export function OwnerTemplatePanel({ shopId, t }: { shopId: string; t: Translate
                           <div className="h-8 rounded bg-[#f4f8fc]" />
                           <div className="h-8 rounded bg-[#f4f8fc]" />
                         </div>
-                        <p className="text-[9px] text-slate-500">{template.traits.layout} · {template.traits.navigation} · {template.traits.hero}</p>
+                        <p className="text-[9px] text-slate-600">{template.traits.layout} · {template.traits.navigation} · {template.traits.hero}</p>
                       </div>
                     </div>
                   )}
 
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      disabled={!mayPreview}
-                      onClick={() => setPreviewId(previewing?.id === template.id ? null : template.id)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[#dce5f0] bg-white px-2 py-1 text-[10px] font-bold text-[#18375e] hover:border-[#75b8f0] disabled:opacity-40"
+                    <a
+                      href={`${shopHref}?preview=${template.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#dce5f0] bg-white px-2 py-1 text-[10px] font-bold text-[#18375e] hover:border-[#75b8f0]"
                     >
                       <Eye size={11} /> {t('owner_tpl_preview')}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewId(previewing?.id === template.id ? null : template.id)}
+                      disabled={!mayPreview}
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#dce5f0] bg-white px-2 py-1 text-[10px] font-bold text-[#18375e] hover:border-[#75b8f0] disabled:opacity-40"
+                    >
+                      <LayoutTemplate size={11} /> {t('owner_tpl_compare')}
                     </button>
                     {isActive ? (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-[#147bea] px-2 py-1 text-[10px] font-bold text-white">
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-brand-blueDark px-2 py-1 text-[10px] font-bold text-white">
                         <CheckCircle2 size={11} /> {t('owner_tpl_active_badge')}
                       </span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => apply(template)}
-                        className="inline-flex items-center gap-1 rounded-lg bg-[#147bea] px-2 py-1 text-[10px] font-bold text-white hover:bg-[#0b63c4]"
+                        className="inline-flex items-center gap-1 rounded-lg bg-brand-blueDark px-2 py-1 text-[10px] font-bold text-white hover:bg-[#1e4bb8]"
                       >
                         <Palette size={11} /> {active ? t('owner_tpl_switch') : t('owner_tpl_apply')}
                       </button>

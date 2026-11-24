@@ -375,6 +375,16 @@ selects one of them; a page never overrides the internal dimensions itself.
   with genuinely different UI/UX rather than recolors. The open points
   (categories first, price, grace period) are decided in the specification
   below.
+- Status (2026-11-28): the system is built. `/shops/:shopId` renders the
+  shop's resolved template from a lazy module, six templates render (the free
+  hotel default, three paid hotels, and one design each for book shop and the
+  generic restaurant/cafe/attraction case), the owner previews and applies from
+  their own panel, and Super Admin manages the catalog and records invoices.
+  What is not built is the rest of the catalog the founder expects — about ten
+  hotel designs — and the storage swap, so catalog rows, settings, entitlements
+  and invoices are still browser records behind `src/lib/shopTemplateStore.ts`.
+  Template views and applies are not counted; only a `preview` audit row is
+  written.
 - **Specification (2026-11-22).** The build is deferred, but the system is defined so nothing built before it has to change.
 
   **Contract.** Every Shop Page template receives the same typed data (`ShopPageData`): business profile (name MM/EN, description, address, coordinates, open and close times, check-in and check-out for hotels), photos, catalog (rooms, menu items or products with prices under the owner's price-display mode), reviews, contact and booking CTA, and the booking-flow mode. A template only decides how that data is laid out. Switching templates never touches business data.
@@ -1565,7 +1575,7 @@ Phases are ordered by dependency, with no calendar dates. A phase is finished on
 | 1C. Travel Guide | Section 10 Travel Guide end to end, with the listing index seeded | Guide acceptance criteria all pass |
 | 1D. Ads and Adsboard | Section 16A, starting with Home and `blog_inline`; can run beside 1C | Section 16A acceptance criteria all pass |
 | 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one, with reviews and search | Hotels pass the 16C acceptance, then each next module does |
-| 3. Owner money and templates | Owner subscriptions, commission snapshots, wallets and twice-monthly payouts (section 9); template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **the first half is met (2026-11-27): `replayPayout()` recomputes a run from its rows and the panel shows the verdict; the template half is still deferred (§4)** |
+| 3. Owner money and templates | Owner subscriptions, commission snapshots, wallets and twice-monthly payouts (section 9); template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **both halves are met: `replayPayout()` recomputes a run from its rows (2026-11-27), and a switch and a fallback are exercised on the rendered page (2026-11-28) — `resolveTemplateForShop()` falls back on a lapsed entitlement, a retirement or a rollback, and `npm run a11y` proves every template renders in both themes** |
 | 4. Ticketing and operators | Operator system specification (section 9) | Operator system acceptance (section 9) passes |
 | 5. Mobile app | App using the same APIs, `serve_ad` with AdMob, push notifications | Same flows pass on a phone |
 | 6. Launch readiness | Security review of RLS and Workers; load test of search and booking; backup restore drill; privacy policy and terms pages; error tracking and uptime check; contrast palette decision (`Doc/STATUS.md` §8); content seeding | Checklist signed off by the founder |

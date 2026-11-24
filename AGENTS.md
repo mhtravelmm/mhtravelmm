@@ -273,3 +273,11 @@ the push needs a push-capable token; do not retry the same credential in a loop.
 Before calling a UI change done: typecheck, test, build, then load the route in headless
 Chromium at 360/768/1440 px, check `document.scrollWidth <= innerWidth`, and run axe in
 both themes and both languages.
+
+`npm run a11y` does that for the Shop Page: `scripts/a11y-audit.mjs` covers every
+template, four widths and both themes, and fails on a violation, horizontal
+overflow, a page without exactly one `h1`, or a run where the theme did not
+apply. Point `--paths` at other routes when the change is elsewhere. The theme
+must be seeded with `page.evaluateOnNewDocument` before `goto`: the provider
+reads storage once on mount, so setting it after load leaves the previous
+theme in place and the audit silently measures the wrong one.

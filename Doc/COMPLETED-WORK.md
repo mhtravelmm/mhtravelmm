@@ -1,7 +1,9 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 27 November 2026
-**Verified against:** `main` plus the Rental catalog data module and Rental Admin
+**Last updated:** 28 November 2026
+**Verified against:** `main` plus the Shop Page template layer (the lazy
+template modules under `src/templates/`, the `/shops/:shopId` route and the
+`scripts/a11y-audit.mjs` gate), the Rental catalog data module and Rental Admin
 panel, the per-account Favorites, notification, and review wiring, and the
 scheduled publishing seam that now sits between the Blog/Travel Guide editors
 and their readers, with unpublish, soft delete, restore and the version guard
@@ -15,6 +17,61 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## Shop Page templates and the rendered gate (Plan §4, §16D Phase 3) — 28 November 2026
+
+§4 defines a template as "a presentation layer only" and gates Phase 3 on "a
+template switch and fallback work". The catalog and the switch were committed on
+24 November; this pass builds the layer that actually renders, so a template row
+now reaches a page.
+
+- **The route is fixed, the modules are lazy.** `src/features/shop/ShopPage.tsx`
+  serves `/shops/:shopId`. It resolves the template id through
+  `resolveTemplateForShop()`, then asks `src/templates/registry.ts` for the
+  module, so adding a template is a new module and a new catalog row — never a
+  route change, which is what §4 requires. An unknown id renders the free
+  baseline instead of throwing.
+- **Six templates, three shapes.** `hotel/HotelClassic` (the free baseline),
+  `hotel/HotelEditorial`, `hotel/HotelCompact`, `hotel/HotelGalleryFirst`,
+  `bookShop/BookShopClassic` and `generic/SimpleClassic` (restaurant, cafe and
+  attraction). The four hotel designs differ on the seven §4 axes that the
+  catalog already records — layout, navigation, hero, catalog, CTA placement,
+  gallery and mobile pattern — so the "genuinely different" test is visible in
+  the markup rather than claimed in a row.
+- **One data contract.** `src/templates/shopPageData.ts` is the fixture behind
+  `ShopPageData`, with a hotel and a book shop. Every template receives exactly
+  that shape, so a template has no path to the owner's business data and a
+  switch cannot lose it.
+- **Shared parts, not copies.** `src/templates/templateParts.tsx` holds
+  `PriceCell` and `BookingCta`; `src/templates/templateHelpers.ts` holds the
+  pure helpers (`averageRating`, `catalogName`, `photoAlt`, `priceVisible`).
+  `PriceCell` formats through `src/lib/moneyFormat.ts`, so MMK is still rounded
+  to the nearest 100 and USD still shows two decimals (decision 33) — no
+  template does its own arithmetic.
+- **Preview is the owner's, on real data.** `?preview=<template-id>` renders
+  another template over the same shop, allowed only for that shop's owner or a
+  Super Admin (`canPreviewTemplate()`), and every preview writes a `preview`
+  audit row. The owner panel's Preview button opens it in a new tab, so the
+  owner compares two live pages instead of a screenshot.
+- **The gate is a script, not a claim.** `scripts/a11y-audit.mjs` (`npm run
+  a11y`) drives headless Chromium over every hotel template plus the free shop,
+  at 360/390/768/1440px, in dark and light, and fails on any WCAG 2.1 AA
+  violation, any horizontal overflow, a page without exactly one `h1`, or a run
+  whose theme did not actually apply — a "light" pass that silently rendered
+  dark would otherwise satisfy every colour rule while testing nothing. Current
+  result: **48 combinations clean**.
+- **Colour comes from tokens.** The templates first carried hardcoded light-only
+  values, which read as white-on-white in the light theme. They now use
+  `text-text-primary`, `text-text-muted`, `text-link`, `bg-bg-card`,
+  `border-border`, the new `ratingText` token for stars and `brand-navy` for the
+  deep bar. `templates.test.ts` fails if a template reintroduces a
+  `bg-[#…]`-style literal or a second `h1`, so the rule survives the next
+  template.
+- **Two repo-wide fixes came out of the sweep.** The header wordmark was
+  `text-brand-blue` `#4d8dff` on the light background (3.2:1) and is now
+  `text-link`; the owner and Main Owner language buttons carried an `aria-label`
+  that did not contain their visible text, which is a WCAG 2.5.3 failure, so the
+  label now starts with the visible word.
 
 ## Owner ledger and twice-monthly payouts (Plan §9, §16B.1, §16D Phase 3) — 27 November 2026
 

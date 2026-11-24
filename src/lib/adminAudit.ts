@@ -15,6 +15,7 @@ export type AdminAuditAction =
   | 'published'
   | 'approved'
   | 'payment'
+  | 'preview'
   | 'role_change';
 
 export type AdminAuditObject =

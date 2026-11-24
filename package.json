@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "a11y": "node scripts/a11y-audit.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

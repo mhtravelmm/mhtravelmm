@@ -20,6 +20,8 @@
   --color-account-border: 31 64 95;
   --color-account-accent: 0 183 239;
   --color-link: 77 141 255;
+  /* Star/rating text: amber has to clear 4.5:1 on the dark card. */
+  --color-rating-text: 224 169 77;
 }
 
 .light {
@@ -41,6 +43,7 @@
   --color-account-accent: 0 137 191;
   /* brand-blue is too light to read as text on a white surface. */
   --color-link: 42 95 214;
+  --color-rating-text: 146 64 14;
 }
 
 body {

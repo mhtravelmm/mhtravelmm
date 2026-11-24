@@ -57,6 +57,7 @@ export const PARAM_PATHS = [
   '/blogs/:storyId',
   '/ad/click/:creativeId',
   '/account/bookings/:requestCode',
+  '/shops/:shopId',
 ] as const;
 
 export function allPaths(): string[] {

@@ -6,7 +6,7 @@ import type { AdminAuditAction, AdminAuditEntry, AdminAuditObject } from './admi
  * rather than in the panel so a new type cannot ship without a translation —
  * `adminAuditLabels.test.ts` walks every member of each union.
  */
-export const AUDIT_ACTIONS: AdminAuditAction[] = ['created', 'updated', 'deleted', 'published', 'approved', 'payment', 'role_change'];
+export const AUDIT_ACTIONS: AdminAuditAction[] = ['created', 'updated', 'deleted', 'published', 'approved', 'payment', 'preview', 'role_change'];
 
 export const ACTION_KEYS: Record<AdminAuditAction, TranslationKey> = {
   created: 'sa_audit_action_created',
@@ -15,6 +15,7 @@ export const ACTION_KEYS: Record<AdminAuditAction, TranslationKey> = {
   published: 'sa_audit_action_published',
   approved: 'sa_audit_action_approved',
   payment: 'sa_audit_action_payment',
+  preview: 'sa_audit_action_preview',
   role_change: 'sa_audit_action_role_change',
 };
 
@@ -56,5 +57,6 @@ export const ACTION_TONES: Record<AdminAuditAction, string> = {
   published: 'bg-indigo-500/20 text-indigo-200',
   approved: 'bg-teal-500/20 text-teal-200',
   payment: 'bg-amber-500/20 text-amber-200',
+  preview: 'bg-cyan-500/20 text-cyan-200',
   role_change: 'bg-purple-500/20 text-purple-200',
 };
