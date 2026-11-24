@@ -31,10 +31,12 @@ now reaches a page.
   module, so adding a template is a new module and a new catalog row — never a
   route change, which is what §4 requires. An unknown id renders the free
   baseline instead of throwing.
-- **Six templates, three shapes.** `hotel/HotelClassic` (the free baseline),
+- **Six modules, eight catalog rows.** `hotel/HotelClassic` (the free baseline),
   `hotel/HotelEditorial`, `hotel/HotelCompact`, `hotel/HotelGalleryFirst`,
-  `bookShop/BookShopClassic` and `generic/SimpleClassic` (restaurant, cafe and
-  attraction). The four hotel designs differ on the seven §4 axes that the
+  `bookShop/BookShopClassic` and `generic/SimpleClassic`, which the restaurant,
+  cafe and attraction rows share because those three categories differ in data
+  rather than in layout. Only hotels carry paid designs today, so the other
+  categories have a free baseline and no alternative yet. The four hotel designs differ on the seven §4 axes that the
   catalog already records — layout, navigation, hero, catalog, CTA placement,
   gallery and mobile pattern — so the "genuinely different" test is visible in
   the markup rather than claimed in a row.

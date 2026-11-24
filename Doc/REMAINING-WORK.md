@@ -257,8 +257,9 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `src/lib/shopTemplateStore.ts` at the four tables, since the catalog, settings,
   entitlements and invoices are browser rows today; **catalog growth** — §4 asks
   for about ten hotel designs plus the free default and then Restaurant and the
-  other categories, and this build has four hotels plus one design each for book
-  shop, restaurant, cafe and attraction; **template analytics** — views and
+  other categories, and this build has four hotels, a book shop design, and one
+  shared generic design behind restaurant, cafe and attraction, so only hotels
+  have a paid alternative today; **template analytics** — views and
   applies per template are not recorded, only the `preview` audit row; and
   **the per-template review** — §4 requires the founder to approve each design
   against the four-of-seven test before it goes `active`.
