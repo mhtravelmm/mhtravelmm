@@ -238,7 +238,7 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
 
 ## Dashboard and business operations
 
-- Replace seeded dashboard metrics and local preview records with scoped Supabase/API data.
+- Replace seeded dashboard metrics and local preview records with scoped Supabase/API data. The owner money rows are the newest instance: `src/lib/ownerLedgerStore.ts` stands in for `owner_commission_settings`, `owner_ledger_rows` and `owner_payout_runs`, and `20261127000100_owner_ledger.sql` is the table set, so the swap is to apply that migration and point the store at it.
 - Add permission groups, feature-level access checks, admin status transitions, and audit logs. Route-level scoping for the two content roles is done in `src/lib/contentAdminAccess.ts` and the admin shell; the remaining gap is server-side enforcement and account status changes.
 - Connect Ads Management to campaign persistence, creative storage, scheduling,
   budgets, reporting, approval, and AdSlot delivery. The behaviour is built and
