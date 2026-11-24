@@ -1,7 +1,7 @@
 # Plan vs Code — Verification Record
 
-**Checked:** 20 November 2026
-**Against:** `main` @ `8cdcf4e` plus the audit commit of 20 November.
+**Checked:** 20 November 2026; **re-checked** 29 November 2026
+**Against:** `main` @ `abe2700` (re-check), originally `8cdcf4e`.
 **Method:** every claim below was read in `Plan/PROJECT-PLAN.md` and then tested
 against the source tree. Nothing here is inferred from earlier notes.
 
@@ -14,16 +14,24 @@ where it contradicts itself. It does not change any code or any plan text.
 
 | Result | Count |
 |---|---|
-| Plan claim **confirmed** by code | 8 |
-| Plan claim **stale** (code moved on) | 6 |
-| Plan **internally contradictory** | 1 (3 violations in code) |
-| Plan claim **still open / accurate as a gap** | 3 |
+| Plan claim **confirmed** by code | 5 (§2 rows 1, 2, 6, 8, 9) |
+| Plan claim **stale** (code moved on) | 7 (§3.1–§3.7, one each) |
+| Plan **internally contradictory** | 2 (§4.1 resolved 22 Nov; §4.2 still open) |
+| Plan claim **still open / accurate as a gap** | 2 (one narrowed to reads) |
 
 The Plan is broadly honest. Its weakness is age: the audit section is dated
-2026-11-09, and six claims in it have since been fixed in code without the
-doc being updated. Three of those six — the broken links, the dead CTAs, and
-the ignored `:id` — were fixed on 20 November and are now guarded by tests,
-so the Plan's gap list is shorter than it reads.
+2026-11-09, and seven claims in it have since been fixed in code without the
+doc being updated. Four of those seven — the broken links, the dead CTAs, the
+ignored `:id`, and the missing migration directory — were fixed on 20–29
+November and are now guarded by tests or visible in the tree, so the Plan's gap
+list is shorter than it reads.
+
+The 29 November re-check changed seven rows: §2 rows 3, 4, 5, 7 and 9 (the
+migration directory, the exchange rate, the test runner, the Favorites key, and
+the hero page count), §3.2 (nine Supabase modules, not three), §3.3 (the
+manifest now matches exactly, 46 of 46), §3.5 (849 tests in 67 files, not 74 in
+ten), and the new §3.6 (19 migrations are committed). §4.1 is now resolved in
+the Plan itself; §4.2 is measured against the Plan's own width formula.
 
 ---
 
@@ -33,13 +41,13 @@ so the Plan's gap list is shorter than it reads.
 |---|---|---|---|
 | 1 | Cards always show rating, distance, favorite, views; enforced on the type | §4 | `CardListing` has `rating`, `distanceKm`, `isFavorited`, `views` as required fields |
 | 2 | Five card sizes, max widths 150/190/240/300/340px | §4 table | `CARD_SIZES` in `ListingCard.tsx` matches exactly |
-| 3 | No `supabase/` migration directory in the checkout | §2A audit | Directory absent |
-| 4 | Currency uses hard-coded `MMK_PER_USD = 4500` | §2A audit | `DEFAULT_MMK_PER_USD = 4500` in `currency.tsx` |
+| 3 | ~~No `supabase/` migration directory in the checkout~~ | §2A audit | **Stale since 22 Nov:** 19 migrations are committed (see §3.6) |
+| 4 | Currency uses hard-coded `MMK_PER_USD = 4500` | §2A audit | **Half stale:** `FALLBACK_MMK_PER_USD = 4500` in `exchangeRates.ts` is now only the fallback; the rate in force is the latest row from `exchange_rates` (browser store until applied), and `currency.tsx` reads it |
 | 5 | ~~No automated test runner in `package.json`~~ | §2A audit | **Stale since 20 Nov:** `test` script + Vitest added (see §3.5) |
 | 6 | Local preview store keeps plaintext passwords | §2A audit | `type StoredUser = AuthUser & { password: string }` |
-| 7 | Favorites live in `mh-travel-favorite-overrides` only | §2A audit | `STORAGE_KEY` in `favorites.tsx` |
+| 7 | Favorites live in `mh-travel-favorite-overrides` only | §2A audit | **Stale:** that key is now `LEGACY_KEY`, adopted once; rows live per account (`mh-travel:<base>:<userId>`) and write through to `public.favorites` |
 | 8 | Blog reader uses `/blogs?story=<slug>` | §2A audit | `searchParams.get('story')` |
-| 9 | Shared hero utility: 190 / 230 / 250px | §16 | `.mh-page-hero` in `index.css`, used by 8 pages |
+| 9 | Shared hero utility: 190 / 230 / 250px | §16 | `.mh-page-hero` in `index.css`, used by 10 pages (Account, Ticketing, Nearby, Blogs, Travel Plans, City, Foreign Tourist, Category, Rentals, Travel Guide) |
 
 ---
 
@@ -64,22 +72,30 @@ work.
 **Plan says** (§2A): the only Supabase calls in source are Auth/session and
 `public.profiles` lookup in `src/lib/auth.tsx`.
 
-**Code says**: `src/lib/mainOwnerApi.ts` also imports `supabase` and
-`isSupabaseConfigured`, and performs branch-account work. `mediaApi.ts`
-performs a `fetch` to the R2 endpoint. The claim is now too narrow.
+**Code says**: nine modules import the Supabase client and gate on
+`isSupabaseConfigured` — `auth.tsx` (Auth, `profiles`), `mainOwnerApi.ts`
+(branch accounts), `favorites.tsx` (`public.favorites`), `notifications.ts`
+(read state), `reviews.ts` (`public.reviews`), `travelRequests.ts`
+(`public.bookings`), `rentalOrders.ts` (order insert), `adServingApi.ts` and
+`adClickApi.ts`. `mediaApi.ts` is a `fetch` to the R2 Worker endpoint, not
+Supabase. Every one of these is best-effort: when the env is unset the browser
+store answers instead, which is why the Plan's "no application API" claim read
+as true for so long.
 
-**Fix**: name `auth.tsx`, `mainOwnerApi.ts`, and `mediaApi.ts`.
+**Fix**: replace the three-module sentence with "nine Supabase modules, all
+best-effort behind `isSupabaseConfigured`, plus `mediaApi.ts` for R2".
 
 ### 3.3 Route manifest "matches the concrete routes"
 
 **Plan says** (§2A): `public/manus-routes.json` matches the concrete routes.
 
-**Code says**: it matches 25 of 26. `src/App.tsx` declares `/blogs/:storyId`
-and the manifest does not list it. That is a real, if harmless, drift — the
-manifest is used as the route inventory, so it should list every route.
+**Code says**: it matches exactly. `public/manus-routes.json` lists 46 paths
+and `allPaths()` in `src/routes.ts` returns the same 46, including
+`/blogs/:storyId`. `src/routes.manifest.test.ts` fails if the two lists differ,
+if a path is untitled, or if a path appears twice, so the drift §3.3 recorded
+cannot come back.
 
-**Fix**: add `/blogs/:storyId` to the manifest, or state that legacy redirect
-paths are intentionally omitted.
+**Fix**: drop the row.
 
 ### 3.4 "City discovery rows use five desktop columns"
 
@@ -100,7 +116,7 @@ that the code does not use.
 **Plan says** (§2A audit): `package.json` has no `test` script and no
 Vitest/Jest dependency, so nothing guards the tree.
 
-**Code says**: `npm test` runs Vitest over ten files (74 tests).
+**Code says**: `npm test` runs Vitest over 67 files (849 tests).
 `src/routes.ts` is now the single route table; `App.tsx`, the tests, and
 `public/manus-routes.json` all read from it. A seed link to an undeclared route,
 a duplicated catalog id, or a manifest that drifts from the router fails the
@@ -108,7 +124,23 @@ suite.
 
 **Fix**: drop the claim, and record `npm test` in the delivery checks.
 
-### 3.6 "Restaurant/Book Shop CTAs are visual only" and ":id is ignored"
+### 3.6 "No `supabase/` migration directory"
+
+**Plan says** (§2A audit, and it is listed as *confirmed* in §2 above): the
+checkout has no `supabase/` directory, so nothing on the server side exists.
+
+**Code says**: `supabase/migrations/` holds 19 committed migrations, from
+`create_user_profiles_and_auth_policies` through
+`20261129000100_shop_template_catalog_growth.sql`. What the Plan meant is still
+true in a narrower sense — **none of them is applied**, so the browser store
+remains the source of truth for every feature built on them — but "the directory
+is absent" is now wrong, and a reader who trusts it would conclude the schema
+work has not started.
+
+**Fix**: replace the row with "19 migrations committed, none applied", and keep
+the "not applied" fact, which is the part that matters.
+
+### 3.7 "Restaurant/Book Shop CTAs are visual only" and ":id is ignored"
 
 **Plan says** (§2A): the Directions, Call, and View-all buttons have no handler,
 and the two detail pages ignore the route parameter.
@@ -124,9 +156,14 @@ Directions and Call build a Google Maps search URL and a `tel:` link from
 
 ## 4. Internally contradictory — Plan vs Plan, and Plan vs code
 
-### 4.1 The column-count rule contradicts the size table
+### 4.1 The column-count rule contradicts the size table — **resolved 22 Nov**
 
-`Plan/PROJECT-PLAN.md` §4 contains both of these, eleven lines apart:
+`Plan/PROJECT-PLAN.md` §4 used to contain both of these, eleven lines apart.
+The 22 November edit deleted the second rule and wrote the exception into the
+first, so the Plan now says five-column primary rows use `md`, six-column
+Populars use `xs`, and only three-column rows may use `xl` — which is what the
+code does. The evidence below is kept because it is the record of why the rule
+changed:
 
 | Line | Rule |
 |---|---|
@@ -160,22 +197,30 @@ Guide on Home (`4 / lg`), Travel Plans (`3 / xl`), City Travel Guide
 (`3 / xl`), City Top Attractions (`5 / xs`), and the three bottom rows on
 Blogs, Travel Guide (`5 / sm`).
 
-**This is the single most important finding in this document.** Either the
-rule at line 193 is wrong, or fifteen rows are wrong. It cannot be settled
-without a decision, and it should be settled before any further card work.
+**This was the single most important finding in this document.** Either the
+rule at line 193 was wrong, or fifteen rows were wrong. It was settled on
+22 November in favour of the rows: the rule is gone, the table stands.
 
-### 4.2 Direct card grids bypass the size rule entirely
+### 4.2 Direct card grids declare `md` under a `sm` width cap — **still open**
 
-Four page-level grids use `size="md"` at five columns, which the rule at line
-193 forbids but the table at line 183 allows:
+Five page-level grids are true CSS grids (not the capped flex row of §3.4), so
+they really do render five columns. All five carry `justify-items-center` and a
+`max-w-`, which the Plan asks for — but the width is not always the number the
+Plan's formula gives:
 
-- `FavoritesPage.tsx` — `lg:grid-cols-5`, `size="md"`
-- `AccountPage.tsx` — two grids, `lg:grid-cols-5`, `size="md"`
-- `CityPage.tsx` — business explorer, `lg:grid-cols-5`, default size (`md`)
+| File | Columns | Size | `max-w-` | Formula (`columns × maxWidth + gaps`) | Matches? |
+|---|---|---|---|---|---|
+| `CityPage.tsx` line 73 (discovery row) | 5 at `md` | `md` | 1240px | 5 × 240 + 4 × 10 = 1240 | **yes** |
+| `CityPage.tsx` line 234 (business explorer) | 4 at `md`, 5 at `lg` | `md` | 1240px | 1240 | **yes** |
+| `FavoritesPage.tsx` | 5 | `md` | 990px | 5 × 240 + 4 × 10 = 1240 | **no** — this is the `sm` cap (5 × 190 + 40) |
+| `AccountPage.tsx` (two grids) | 5 | `md` | 998px | 1240 | **no** — 5 × 190 + 4 × 12 = 998, again the `sm` cap |
+| `BlogsPage.tsx` line 750 (related hotels) | 5 | `md` | 982px | 1240 | **no** — 5 × 190 + 4 × 8 = 982, the `sm` cap again |
 
-These are true CSS grids, so unlike `ListingGridSection` they really do render
-five columns. The Plan's rule and these four grids disagree in the same way as
-§4.1.
+The effect is mild: the cards do not stretch past their `maxWidth`, they are
+simply handed a 190px column while declared `md` (240px). So the row reads as
+`sm` and the size prop is a dead letter. Three of the five grids disagree
+with the Plan; the fix is either to widen the cap to 1240 or to declare
+`size="sm"`, and `sm` is the honest one — the cap already renders at 190px.
 
 ---
 
@@ -183,10 +228,11 @@ five columns. The Plan's rule and these four grids disagree in the same way as
 
 | Plan item | Status in code |
 |---|---|
-| Catalog, bookings, plans, notifications are compiled data, not API | **Confirmed.** No query layer outside auth, main-owner, and blog media. |
+| Catalog, bookings, plans, notifications are compiled data, not API | **Half confirmed (29 Nov).** The catalogs are still compiled data, and no module reads them from a table. But nine modules now *write* best-effort rows through `supabase` when the env is set (`favorites.tsx`, `notifications.ts`, `reviews.ts`, `travelRequests.ts`, `rentalOrders.ts`, `adServingApi.ts`, `adClickApi.ts`, plus `auth.tsx` and `mainOwnerApi.ts`). So "no query layer" is true for reads, false for writes. |
 | Blog distances are seeded, not computed | **Confirmed.** Geolocation gates display only. |
 
-The Plan's honesty here is a strength. These two items should stay.
+The Plan's honesty here is a strength. These two items should stay, with the
+first narrowed to reads.
 
 A third gap row is also closed: Custom Plan, Rental, and Ticketing submissions
 used to be local state only. Each one now writes a request record with a
@@ -282,28 +328,33 @@ Gaps in the Plan's coverage, found while checking it:
 6. ~~**Shop Owner and Main Owner have no `useLanguage`.**~~ **Fixed 22 Nov.**
    Both dashboards are bilingual now; Super Admin body copy is the only one
    still mostly English.
-7. **`Doc/` and `Plan/` overlap.** Two files now describe status. `STATUS.md`
-   was added on 20 Nov; `COMPLETED-WORK.md` and `REMAINING-WORK.md` predate it
-   and partly duplicate it. The Plan should state which one wins.
+7. ~~**`Doc/` and `Plan/` overlap.**~~ **Resolved.** The Plan's first line now
+   names `Doc/STATUS.md` as the status view, and `Doc/README.md` names it as
+   the file to read first. `COMPLETED-WORK.md` and `REMAINING-WORK.md` are the
+   detail behind it, not a second answer.
 
 ---
 
 ## 7. Recommended plan edits
 
 Ordered by how much confusion each removes. None of these are code changes.
+The 29 November re-check marked six of them done, because the Plan text was
+edited on 22–24 November; the four that remain are all inside the §2A audit
+record, which has not been touched since 2026-11-09.
 
-1. **Resolve §4.1.** Pick one: either `md` is the default for five-column rows
-   (then delete the line-193 rule), or five-column rows must use `xs`/`sm`
-   (then fifteen rows must change). One decision, written down once.
-2. **Delete the `/blogs/:id` stale claims** (§3.1).
-3. **Name the three Supabase-touching modules** (§3.2).
-4. **Add `/blogs/:storyId` to the route manifest** (§3.3).
-5. **Rewrite the "five desktop columns" sentences** to describe the width cap
-   (§3.4).
-6. ~~**Add a Load More rule** to §4.~~ **Done 22 Nov.** §4 now states the page
-   size, the whole-batch rule, and the hide-when-exhausted rule.
-7. **Point the Plan at `Doc/STATUS.md`** as the status view, so there is one
-   answer to "what is left".
+| # | Edit | State |
+|---|---|---|
+| 1 | Resolve §4.1 — pick one column rule | ~~Done 22 Nov~~: §4 now says five-column rows use `md` and only three-column rows may use `xl`, matching the code |
+| 2 | Delete the `/blogs/:id` stale claim | ~~Done~~: §2A now says the redirect forwards to the reader |
+| 3 | Name the Supabase-touching modules | **Open.** §2A still names three; nine modules import the client (§3.2) |
+| 4 | Add `/blogs/:storyId` to the route manifest | ~~Done~~: it is listed, and `routes.manifest.test.ts` keeps it there (§3.3) |
+| 5 | Rewrite the "five desktop columns" sentences | ~~Done~~: §16 now describes the width cap (§3.4) |
+| 6 | Add a Load More rule to §4 | ~~Done 22 Nov~~ |
+| 7 | Point the Plan at `Doc/STATUS.md` | ~~Done~~: the Plan's first line names it as the status view |
+| 8 | **Replace "no `supabase/` migration directory"** with "19 migrations committed, none applied" | **Open** (§3.6). This is the most misleading remaining claim: it makes the schema work look unstarted |
+| 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 849 tests in 67 files |
+| 10 | **Drop the 48-broken-links count** and the visual-CTA rows | **Open.** Both were fixed on 20 Nov and are test-guarded |
+| 11 | **Narrow "catalog data is not API"** to reads | **Open.** Writes already go through Supabase when configured (§5) |
 
-Items 2–5 are mechanical. Item 1 needs your decision. Item 6 is a small design
-rule that will prevent the two implementations from drifting further.
+Items 8–11 are mechanical, and each one currently understates the project. Item
+3 is mechanical too but needs the list of nine modules from §3.2.

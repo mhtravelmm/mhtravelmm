@@ -86,9 +86,9 @@ Verified on this audit:
 | TypeScript typecheck | **PASS** (0 errors) |
 | Vite production build | **PASS** |
 | ESLint | **PASS** (0 errors, 7 pre-existing warnings) |
-| `npm test` (vitest) | **PASS** (664 tests, 59 files) |
-| Seed link audit | **PASS** (0 broken of 261 clickable targets) |
-| Route audit | **PASS** (43 declared routes, all render) |
+| `npm test` (vitest) | **PASS** (849 tests, 67 files) |
+| Seed link audit | **PASS** (0 broken of 76 unique seed hrefs) |
+| Route audit | **PASS** (46 declared routes, manifest in step) |
 
 The test runner is the change that keeps this list honest: `npm test` fails if
 a seed link, a catalog id, or the route manifest drifts from the routes the
@@ -122,7 +122,7 @@ app declares.
 
 ## 4. Traveler-facing pages
 
-All 43 declared routes resolve, verified by a headless crawl of every path and
+All 46 declared routes resolve, verified by a headless crawl of every path and
 by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 
 | Route | Status | Notes |
@@ -246,8 +246,8 @@ places rather than advice.
 | Media and storage (§16B.6) | **PARTIAL** | `src/lib/mediaRules.ts` states the five folders and their limits (`blog-posts/`, `guide-stops/`, `rentals/` 450 KB WebP; `ads/` 300 KB image or 3 MB / 15 s MP4; `shops/<shop-id>/` 450 KB within an Admin-set quota), refuses a path-like shop id, and answers with a translatable code. `src/lib/mediaApi.ts` compresses to WebP, halving the longest edge twice before it gives up, and both content editors name their folder. `media_objects` with `last_referenced_at`, `shop_media_count()`, `orphan_media_objects()` and `delete_media_object()` are committed. No deployed Worker yet, so an upload still falls back to a data URL. The nightly orphan job is wired (`wired: true`): `src/lib/mediaObjects.ts` stands in for `media_objects`, a content save touches the photos it keeps, and the 02:00 run removes what nothing referenced for 30 days |
 | Owner and template subscriptions (§9, §4, §16B.7) | **PARTIAL** | `src/lib/ownerSubscriptions.ts` states the rules: `deriveStatus()` moves Active → grace → expired (an unreadable `periodEnd` counts as expired, so a broken row never grants free service), `daysUntilEnd()` counts Myanmar calendar days, `graceDaysLeft()` and `blocksBooking()` are what the panel reads, and `dueReminders()` sends at 7, 3 and 1 days once per period per threshold. `src/lib/subscriptionJobs.ts` runs `subscription_expiry` (hourly, one audit row per row that moved, actor `system`) and `renewal_reminders` (daily 09:00 Myanmar Time, one bilingual feed row addressed to the owner by byline), and both are `wired: true`, so every §16B.7 job now does real work. `'subscriptions'` is a new audit source with MM and EN labels. `supabase/migrations/20261126000100_shop_subscriptions.sql` carries the table, its two indexes and RLS (staff read all, an owner reads their own byline, Super Admin and Payment Admin insert). Rows are still browser storage. The §4 catalog, the owner's preview/apply selector, the rendered templates and the template analytics are built (24 November 2026, catalog grown to nineteen on 29 November 2026): `/shops/:shopId` serves nineteen lazy templates over one `ShopPageData` fixture, `src/lib/templateStats.ts` counts one view per template per page view and one apply per real switch (a preview is never counted), the Super Admin catalog panel reads the roll-up, `template_events_purge` runs daily, and `scripts/a11y-audit.mjs` is the rendered gate — 192 combinations, clean. The catalog now holds nineteen templates: the free hotel default plus ten paid hotels, and one paid alternative per other category (29 November 2026) |
 
-`localStorage` now backs 37 stored keys across 22 files — the count moved with
-the ads, media, subscription and translation stores. Every one of them is a
+`localStorage` now backs 43 stored keys across 24 files — the count moved with
+the ads, media, subscription, template and translation stores. Every one of them is a
 production replacement target, listed in `REMAINING-WORK.md`. The Favorites
 and notification-read keys are account-scoped (`mh-travel:<base>:<userId>`),
 so they no longer leak between accounts on a shared browser.
