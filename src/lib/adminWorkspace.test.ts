@@ -17,8 +17,8 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
   it('gives Super Admin every section', () => {
     expect(sectionsForRole('Super Admin')).toEqual([
       'overview', 'users', 'admins', 'owners', 'bookings', 'content', 'blogs',
-      'guides', 'guideEarnings', 'payouts', 'ads', 'currency', 'rentals', 'rentalOrders', 'rentalReports', 'audit',
-      'jobs', 'translations',
+      'guides', 'guideEarnings', 'payouts', 'templates', 'ads', 'currency', 'rentals', 'rentalOrders',
+      'rentalReports', 'audit', 'jobs', 'translations',
     ]);
   });
 
@@ -42,6 +42,10 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
     expect(canOpenSection('Payment Admin', 'payouts')).toBe(true);
     expect(canRunPayouts('Payment Admin')).toBe(true);
     expect(canSetCommission('Payment Admin')).toBe(true);
+    // §4: Payment Admin records a template payment, Super Admin owns the catalog.
+    expect(canOpenSection('Payment Admin', 'templates')).toBe(true);
+    expect(canOpenSection('Admin', 'templates')).toBe(false);
+    expect(canOpenSection('Super Admin', 'templates')).toBe(true);
   });
 
   it('gives Admin users, support and the read-only catalogs', () => {

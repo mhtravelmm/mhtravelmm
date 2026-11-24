@@ -13,6 +13,7 @@ import {
   HelpCircle,
   ImagePlus,
   LayoutDashboard,
+  LayoutTemplate,
   LogOut,
   Menu,
   Plus,
@@ -28,6 +29,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
+import { OwnerTemplatePanel } from './OwnerTemplatePanel';
 import { useFeedRows } from '../../lib/notificationFeed';
 import { timeAgoLabel } from '../../lib/timeAgo';
 import { localizedOrFallback } from '../../lib/translationCache';
@@ -42,7 +44,7 @@ import type { TranslationKey } from '../../lib/i18n';
 import { useLanguage } from '../../lib/i18n';
 import type { Language } from '../../types';
 
-type OwnerView = 'dashboard' | 'shop' | 'bookings' | 'orders' | 'menu' | 'gallery' | 'reviews' | 'analytics' | 'payments' | 'promotions' | 'subscription' | 'settings' | 'support';
+type OwnerView = 'dashboard' | 'shop' | 'bookings' | 'orders' | 'menu' | 'gallery' | 'reviews' | 'analytics' | 'payments' | 'promotions' | 'subscription' | 'templates' | 'settings' | 'support';
 
 type OwnerNavItem = { id: OwnerView; labelKey: TranslationKey; icon: LucideIcon };
 type Translate = (key: TranslationKey) => string;
@@ -59,6 +61,7 @@ const navItems: OwnerNavItem[] = [
   { id: 'payments', labelKey: 'owner_shop_nav_payments', icon: CircleDollarSign },
   { id: 'promotions', labelKey: 'owner_shop_nav_promotions', icon: Tag },
   { id: 'subscription', labelKey: 'owner_shop_nav_subscription', icon: CircleDollarSign },
+  { id: 'templates', labelKey: 'owner_tpl_title', icon: LayoutTemplate },
   { id: 'settings', labelKey: 'owner_shop_nav_settings', icon: Settings },
   { id: 'support', labelKey: 'owner_shop_nav_support', icon: HelpCircle },
 ];
@@ -380,6 +383,7 @@ function OwnerSection({ view, notify, t }: { view: Exclude<OwnerView, 'dashboard
   if (view === 'settings') return <OwnerCurrencySettings notify={notify} t={t} />;
   if (view === 'subscription') return <OwnerSubscriptionPanel t={t} />;
   if (view === 'payments') return <OwnerEarningsPanel t={t} />;
+  if (view === 'templates') return <OwnerTemplateSection t={t} />;
   return (
     <div className="mx-auto max-w-[1100px]">
       <OwnerPanel>
@@ -520,6 +524,32 @@ function OwnerSubscriptionPanel({ t }: { t: Translate }) {
       </OwnerPanel>
     </div>
   );
+}
+
+/**
+ * Plan §4: the owner's template selector. It needs the shop id, which comes
+ * from the same subscription row the payments panel reads, so an owner never
+ * resolves another shop's template.
+ */
+function OwnerTemplateSection({ t }: { t: Translate }) {
+  const { user, isSuperAdmin } = useAuth();
+  const subscriptions = useSubscriptions();
+  const shopId =
+    subscriptions.find((row) => row.ownerName.trim().toLowerCase() === (user?.name ?? '').trim().toLowerCase())?.shopId ??
+    (isSuperAdmin ? subscriptions[0]?.shopId : undefined);
+
+  if (!shopId) {
+    return (
+      <div className="mx-auto max-w-[1100px]">
+        <OwnerPanel>
+          <PanelHeading icon={LayoutTemplate} title={t('owner_tpl_title')} />
+          <p className="p-3 text-sm text-slate-500">{t('owner_sub_no_row')}</p>
+        </OwnerPanel>
+      </div>
+    );
+  }
+
+  return <OwnerTemplatePanel shopId={shopId} t={t} />;
 }
 
 /**

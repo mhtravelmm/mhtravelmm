@@ -30,7 +30,9 @@ export type AdminAuditObject =
   | 'ad_campaign'
   | 'ad_creative'
   | 'owner_payout'
-  | 'owner_commission';
+  | 'owner_commission'
+  | 'shop_template'
+  | 'template_entitlement';
 
 export interface AdminAuditEntry {
   id: string;
@@ -52,7 +54,8 @@ export interface AdminAuditEntry {
     | 'currency'
     | 'ads'
     | 'subscriptions'
-    | 'payouts';
+    | 'payouts'
+    | 'templates';
 }
 
 const STORAGE_KEY = 'mh-travel-admin-audit';
