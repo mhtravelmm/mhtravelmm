@@ -16,6 +16,7 @@ export type WorkspaceSection =
   | 'blogs'
   | 'guides'
   | 'guideEarnings'
+  | 'payouts'
   | 'ads'
   | 'currency'
   | 'rentals'
@@ -35,6 +36,7 @@ const ALL_SECTIONS: WorkspaceSection[] = [
   'blogs',
   'guides',
   'guideEarnings',
+  'payouts',
   'ads',
   'currency',
   'rentals',
@@ -60,7 +62,7 @@ const SECTIONS_BY_ROLE: Record<AdminRole, WorkspaceSection[]> = {
   'Ads Admin': ['ads'],
   Admin: ['users', 'owners', 'bookings', 'content', 'blogs', 'guides', 'guideEarnings', 'rentals', 'rentalOrders', 'rentalReports', 'translations'],
   'Rental Admin': ['rentals', 'rentalOrders', 'rentalReports'],
-  'Payment Admin': ['rentalOrders', 'rentalReports', 'currency', 'guideEarnings', 'ads'],
+  'Payment Admin': ['rentalOrders', 'rentalReports', 'currency', 'guideEarnings', 'payouts', 'ads'],
   'Travel Guide Content Admin': ['guides', 'guideEarnings'],
   'Blog Post Admin': ['blogs'],
   'Owner Admin': [],
@@ -116,4 +118,17 @@ export function canReadAllEarnings(role: AdminRole | undefined): boolean {
  */
 export function canReadAuditLog(role: AdminRole | undefined): boolean {
   return role === 'Super Admin';
+}
+
+/**
+ * Plan §16B.1 "Payments, payouts, exchange rates" row: F for Super Admin and
+ * Payment Admin, `–` for Admin, `O (own earnings)` for Owner Admin. Running a
+ * payout moves money out, so it is narrower than reading the ledger.
+ */
+export function canRunPayouts(role: AdminRole | undefined): boolean {
+  return role === 'Super Admin' || role === 'Payment Admin';
+}
+
+export function canSetCommission(role: AdminRole | undefined): boolean {
+  return role === 'Super Admin' || role === 'Payment Admin';
 }

@@ -687,6 +687,29 @@ remain the authority once they are applied.
 - Every listing has open and close times; hotels also have check-in and
   check-out times.
 
+- **Status (2026-11-27): the money path is built.** `src/lib/ownerLedger.ts`
+  states the rules as pure functions: `createSaleRow()` deducts the commission
+  at payment time and freezes `commissionPercent` on the row (so a later rate
+  change never rewrites history, and a repeated `bookingRef` is refused);
+  `payoutWindowFor()` encodes the two windows exactly — day 1–15 is due on the
+  20th, day 16–month end on the 5th of the next month; `planPayout()` settles
+  every unpaid row whose own window is due, which is how the 50,000 MMK minimum
+  carries over without a special case; `createPayoutRun()` writes no run under
+  the minimum rather than paying short; and `replayPayout()` is the §16D Phase 3
+  gate — replaying a run from its rows must give back the totals it was created
+  with. Commission is per shop (`commissionFor()`/`setCommission()`, 0–100%,
+  default 0% when a shop has no setting). `20261127000100_owner_ledger.sql`
+  holds `owner_commission_settings`, `owner_ledger_rows` and
+  `owner_payout_runs`, with RLS per §16B.1, a unique index on `booking_ref`, a
+  `net = gross - commission` check, an append-only trigger that freezes the
+  amount columns, and `run_owner_payout()` / `verify_owner_payout()` as the SQL
+  twin of the run and the replay. The Super Admin workspace has a `payouts`
+  section (F for Super Admin and Payment Admin, `–` for Admin) and the Shop
+  Owner Payments view is the owner's own statement (`O (own earnings)`).
+  Still open: refunds and manual adjustments as their own row kinds, the Main
+  Owner consolidated and Branch Owner ledgers below, and a revenue-share policy
+  editor beyond the single per-shop percentage.
+
 ### Ticketing operator Main Owner and Branch Owner model
 
 - A ticket operator such as JJ Express may have one **Main Owner** shop
@@ -1542,7 +1565,7 @@ Phases are ordered by dependency, with no calendar dates. A phase is finished on
 | 1C. Travel Guide | Section 10 Travel Guide end to end, with the listing index seeded | Guide acceptance criteria all pass |
 | 1D. Ads and Adsboard | Section 16A, starting with Home and `blog_inline`; can run beside 1C | Section 16A acceptance criteria all pass |
 | 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one, with reviews and search | Hotels pass the 16C acceptance, then each next module does |
-| 3. Owner money and templates | Owner subscriptions, commission snapshots, wallets and twice-monthly payouts (section 9); template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work |
+| 3. Owner money and templates | Owner subscriptions, commission snapshots, wallets and twice-monthly payouts (section 9); template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **the first half is met (2026-11-27): `replayPayout()` recomputes a run from its rows and the panel shows the verdict; the template half is still deferred (§4)** |
 | 4. Ticketing and operators | Operator system specification (section 9) | Operator system acceptance (section 9) passes |
 | 5. Mobile app | App using the same APIs, `serve_ad` with AdMob, push notifications | Same flows pass on a phone |
 | 6. Launch readiness | Security review of RLS and Workers; load test of search and booking; backup restore drill; privacy policy and terms pages; error tracking and uptime check; contrast palette decision (`Doc/STATUS.md` §8); content seeding | Checklist signed off by the founder |

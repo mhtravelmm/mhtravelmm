@@ -22,6 +22,7 @@ import {
   Store,
   Tag,
   X,
+  Wallet,
   Zap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -33,6 +34,9 @@ import { localizedOrFallback } from '../../lib/translationCache';
 import { blocksBooking, daysUntilEnd, graceDaysLeft, subscriptionForOwner } from '../../lib/ownerSubscriptions';
 import { useSubscriptions } from '../../lib/ownerSubscriptionStore';
 import { useCurrency } from '../../lib/currency';
+import { MINIMUM_PAYOUT_MMK, statementFor, upcomingDueDays } from '../../lib/ownerLedger';
+import { useLedgerRows, usePayoutRuns } from '../../lib/ownerLedgerStore';
+import { formatMmk } from '../../lib/moneyFormat';
 import { fill } from '../../lib/fill';
 import type { TranslationKey } from '../../lib/i18n';
 import { useLanguage } from '../../lib/i18n';
@@ -375,6 +379,7 @@ function OwnerSection({ view, notify, t }: { view: Exclude<OwnerView, 'dashboard
   const label = t(item.labelKey);
   if (view === 'settings') return <OwnerCurrencySettings notify={notify} t={t} />;
   if (view === 'subscription') return <OwnerSubscriptionPanel t={t} />;
+  if (view === 'payments') return <OwnerEarningsPanel t={t} />;
   return (
     <div className="mx-auto max-w-[1100px]">
       <OwnerPanel>
@@ -512,6 +517,122 @@ function OwnerSubscriptionPanel({ t }: { t: Translate }) {
           )}
           <p className="text-[10px] text-slate-400">{t('owner_sub_renew_note')}</p>
         </div>
+      </OwnerPanel>
+    </div>
+  );
+}
+
+/**
+ * Plan §9 and §16B.1 `O (own earnings)`: the owner sees what their shop keeps
+ * after commission, what has been paid, and the next two payout dates. The rows
+ * come from `statementFor()`, which is scoped by shop, so this panel has no way
+ * to read another shop's money.
+ */
+function OwnerEarningsPanel({ t }: { t: Translate }) {
+  const { user, isSuperAdmin } = useAuth();
+  const subscriptions = useSubscriptions();
+  const rows = useLedgerRows();
+  const runs = usePayoutRuns();
+
+  // The shop a signed-in owner is billed for; Super Admin previews the first
+  // seeded shop because it has no shop of its own (§9 bills per owner).
+  const shopId =
+    subscriptions.find((row) => row.ownerName.trim().toLowerCase() === (user?.name ?? '').trim().toLowerCase())?.shopId ??
+    (isSuperAdmin ? subscriptions[0]?.shopId : undefined);
+
+  if (!shopId) {
+    return (
+      <div className="mx-auto max-w-[1100px]">
+        <OwnerPanel>
+          <PanelHeading icon={CircleDollarSign} title={t('owner_pay_title')} />
+          <p className="p-3 text-sm text-slate-500">{t('owner_sub_no_row')}</p>
+        </OwnerPanel>
+      </div>
+    );
+  }
+
+  const statement = statementFor(rows, runs, shopId);
+  const dueDays = upcomingDueDays();
+
+  return (
+    <div className="mx-auto max-w-[1100px] space-y-3">
+      <OwnerPanel>
+        <PanelHeading icon={CircleDollarSign} title={t('owner_pay_title')} />
+        <div className="space-y-3 p-3">
+          <p className="text-sm text-slate-500">{t('owner_pay_intro')}</p>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
+              <p className="text-xs text-slate-500">{t('owner_pay_owed')}</p>
+              <p className="mt-1 text-xl font-extrabold text-green-600">{formatMmk(statement.owedMmk)}</p>
+              {statement.carriedMmk > 0 && (
+                <p className="mt-1 text-[11px] text-amber-600">{t('owner_pay_carried')}</p>
+              )}
+            </div>
+            <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
+              <p className="text-xs text-slate-500">{t('owner_pay_paid')}</p>
+              <p className="mt-1 text-xl font-extrabold text-[#0b2147]">{formatMmk(statement.paidMmk)}</p>
+            </div>
+            <div className="rounded-lg border border-[#dce5f0] bg-[#f4f8fc] p-3">
+              <p className="text-xs text-slate-500">{t('owner_pay_next')}</p>
+              <p className="mt-1 text-sm font-bold text-[#0b2147]">{dueDays.join(' · ')}</p>
+              <p className="mt-1 text-[11px] text-slate-500">
+                {t('owner_pay_minimum').replace('{minimum}', formatMmk(MINIMUM_PAYOUT_MMK))}
+              </p>
+            </div>
+          </div>
+        </div>
+      </OwnerPanel>
+
+      <OwnerPanel>
+        <PanelHeading icon={Wallet} title={t('owner_pay_rows')} />
+        {statement.rows.length === 0 ? (
+          <p className="p-3 text-sm text-slate-500">{t('owner_pay_empty')}</p>
+        ) : (
+          <div className="overflow-x-auto p-3">
+            <table className="w-full min-w-[520px] text-left text-xs">
+              <thead className="text-slate-500">
+                <tr>
+                  {[t('owner_pay_col_day'), t('owner_pay_col_ref'), t('owner_pay_col_gross'), t('owner_pay_col_commission'), t('owner_pay_col_net'), t('owner_pay_col_state')].map((cell) => (
+                    <th key={cell} className="px-2 py-1.5 font-semibold">{cell}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {statement.rows.map((row) => (
+                  <tr key={row.id} className="border-t border-[#e7edf4]">
+                    <td className="px-2 py-1.5 text-[#0b2147]">{row.paidDay}</td>
+                    <td className="px-2 py-1.5 text-slate-600">{row.bookingRef}</td>
+                    <td className="px-2 py-1.5 text-slate-600">{formatMmk(row.grossMmk)}</td>
+                    <td className="px-2 py-1.5 text-slate-600">{formatMmk(row.commissionMmk)} ({row.commissionPercent}%)</td>
+                    <td className="px-2 py-1.5 font-semibold text-[#0b2147]">{formatMmk(row.netMmk)}</td>
+                    <td className="px-2 py-1.5">
+                      <span className={row.payoutId === null ? 'rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700' : 'rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700'}>
+                        {row.payoutId === null ? t('owner_pay_state_owed') : t('owner_pay_state_paid')}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </OwnerPanel>
+
+      <OwnerPanel>
+        <PanelHeading icon={CircleDollarSign} title={t('owner_pay_runs')} />
+        {statement.runs.length === 0 ? (
+          <p className="p-3 text-sm text-slate-500">{t('po_empty')}</p>
+        ) : (
+          <div className="divide-y divide-[#e7edf4]">
+            {statement.runs.map((run) => (
+              <div key={run.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-xs">
+                <span className="font-semibold text-[#0b2147]">{run.window.dueDay}</span>
+                <span className="text-slate-500">{run.window.startDay} → {run.window.endDay}</span>
+                <span className="font-bold text-green-600">{formatMmk(run.netMmk)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </OwnerPanel>
     </div>
   );

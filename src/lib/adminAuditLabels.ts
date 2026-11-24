@@ -30,6 +30,8 @@ export const OBJECT_KEYS: Record<AdminAuditObject, TranslationKey> = {
   translation: 'sa_audit_object_translation',
   ad_campaign: 'sa_audit_object_ad_campaign',
   ad_creative: 'sa_audit_object_ad_creative',
+  owner_payout: 'sa_audit_object_owner_payout',
+  owner_commission: 'sa_audit_object_owner_commission',
 };
 
 export const SOURCE_KEYS: Record<AdminAuditEntry['source'], TranslationKey> = {
@@ -41,6 +43,7 @@ export const SOURCE_KEYS: Record<AdminAuditEntry['source'], TranslationKey> = {
   currency: 'sa_audit_source_currency',
   ads: 'sa_audit_source_ads',
   subscriptions: 'sa_audit_source_subscriptions',
+  payouts: 'sa_audit_source_payouts',
 };
 
 export const ACTION_TONES: Record<AdminAuditAction, string> = {

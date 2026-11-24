@@ -247,8 +247,21 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `20261125000100_ads.sql` and point `src/lib/adStore.ts` at the tables.
 - Build the Shop Owner template catalog and entitlement system: one Free template, paid templates at 2,000 MMK/month/shop, preview/apply switching, compatibility, billing, renewal, grace period, fallback, retirement, rollback, and analytics.
   The **billing half** is built (26 November 2026): `src/lib/ownerSubscriptions.ts` holds the lifecycle for both an Owner account fee (§9) and a template entitlement (§4) as one record with a `kind`, `src/lib/subscriptionJobs.ts` runs the expiry and the 7/3/1-day reminders, and `shop_subscriptions` is committed. What is left is the catalog itself — `shop_templates` rows, the lazy template modules, the owner's preview/apply selector, the Admin catalog screen and the Payment Admin invoice recording.
-- Implement the ticket operator hierarchy with parent-child operator/branch records, 10,000 MMK/month Branch Owner billing, scoped RLS, lifecycle states, ticket attribution, revenue-share snapshots, and audit events.
-- Implement MH Platform, Main Owner consolidated, and Branch Owner wallet ledgers, settlements, payouts, refunds, adjustments, withdrawal rules, and configurable commission/revenue-share policies after the business rules are finalized.
+- ~~Implement MH Platform wallet ledger, settlements and payouts.~~ **Built 27
+  November 2026** for the Shop Owner path: `src/lib/ownerLedger.ts` snapshots
+  the commission on each transaction, `planPayout()`/`createPayoutRun()` run the
+  §9 twice-monthly payout with the 50,000 MMK carry-over, `replayPayout()` is the
+  §16D Phase 3 reproducibility gate, `20261127000100_owner_ledger.sql` is the
+  table set, and both the Super Admin `payouts` section and the owner's Payments
+  statement read it. What is still open: the **Main Owner consolidated** and
+  **Branch Owner** ledgers (they need the operator hierarchy below), refunds and
+  manual adjustments as their own row kinds, and a revenue-share policy editor
+  beyond the single per-shop commission percent.
+- Implement the ticket operator hierarchy with parent-child operator/branch
+  records, 10,000 MMK/month Branch Owner billing, scoped RLS, lifecycle states,
+  ticket attribution, revenue-share snapshots, and audit events. The owner
+  ledger above gives it the shape to copy: a frozen rate on each row, a
+  per-shop setting, and a reproducible run per window.
 
 ## Routes, content, and UX backlog
 

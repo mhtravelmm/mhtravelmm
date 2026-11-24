@@ -1,6 +1,12 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 26 November 2026 (the owner and template subscriptions:
+**Last audited:** 27 November 2026 (the owner money path: `src/lib/ownerLedger.ts`
+snapshots the commission on each transaction, plans and settles the §9
+twice-monthly payout with the 50,000 MMK carry-over, and `replayPayout()` is the
+§16D Phase 3 gate that a run is reproducible from its ledger rows — plus the new
+Super Admin `payouts` section and the owner's real Payments statement;
+`20261127000100_owner_ledger.sql` is committed. Before that, the owner and
+template subscriptions:
 `src/lib/ownerSubscriptions.ts` holds the Active → grace → expired rules and the
 7/3/1-day reminders, `src/lib/subscriptionJobs.ts` runs both §16B.7 jobs so every
 job in the registry is now wired, the owner's Subscription panel reads only their

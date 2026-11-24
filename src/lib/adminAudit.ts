@@ -28,7 +28,9 @@ export type AdminAuditObject =
   | 'currency_rate'
   | 'translation'
   | 'ad_campaign'
-  | 'ad_creative';
+  | 'ad_creative'
+  | 'owner_payout'
+  | 'owner_commission';
 
 export interface AdminAuditEntry {
   id: string;
@@ -41,7 +43,16 @@ export interface AdminAuditEntry {
   objectId: string;
   /** Short before/after or what changed, in one line. */
   summary: string;
-  source: 'admin_workspace' | 'auth' | 'earnings' | 'content' | 'rental_orders' | 'currency' | 'ads' | 'subscriptions';
+  source:
+    | 'admin_workspace'
+    | 'auth'
+    | 'earnings'
+    | 'content'
+    | 'rental_orders'
+    | 'currency'
+    | 'ads'
+    | 'subscriptions'
+    | 'payouts';
 }
 
 const STORAGE_KEY = 'mh-travel-admin-audit';

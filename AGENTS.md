@@ -74,6 +74,23 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
   `subscriptions[0]`, because that shows one owner another shop's fee. The rows
   live in `ownerSubscriptionStore.ts` (the `shop_subscriptions` stand-in), and
   `subscriptionJobs.ts` holds both handlers so the panels stay free of job code.
+- **Owner money lives in `src/lib/ownerLedger.ts`.** The commission rate is
+  frozen on each ledger row (`createSaleRow()`), so changing a shop's setting
+  never rewrites a past payment, and a repeated `bookingRef` is refused — a
+  payment recorded twice must not pay an owner twice. `payoutWindowFor()` is the
+  only window arithmetic (day 1–15 due on the 20th, 16–month end due on the 5th
+  of the next month); do not compute a due day anywhere else.
+  `planPayout()` settles every unpaid row whose own window is due, which is how
+  the 50,000 MMK minimum carries over without a special case, and
+  `createPayoutRun()` returns null rather than paying short. A run stores the
+  row ids and the totals it settled them at, so `replayPayout()` is the §16D
+  Phase 3 gate: if a replay disagrees with the run, the ledger moved after the
+  money left. The rows live in `ownerLedgerStore.ts` (the
+  `owner_commission_settings` / `owner_ledger_rows` / `owner_payout_runs`
+  stand-in); never let a panel compute a statement itself — go through
+  `statementFor()`, which is scoped by `shopId` so an owner cannot read another
+  shop's money. Running a payout and setting a commission are both
+  Super Admin / Payment Admin only (§16B.1); Admin has `–`.
 - **Blog and Guide content has one store and one reader projection.**
   `src/lib/contentStore.ts` holds the admin rows (`useBlogPosts`, `useGuides`,
   `useRevisions`, `useContentAudit`); the panels write it, never `useState`.

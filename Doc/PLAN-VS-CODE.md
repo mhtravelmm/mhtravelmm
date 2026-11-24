@@ -204,6 +204,21 @@ instead of owning the data, and `estimateRental()` is the one pricing function
 behind both the estimate panel and the submitted amount. The remaining gap is
 storage: the record is browser-local until the catalog tables exist.
 
+A seventh gap row is closed: Plan §9 states the owner money rules — commission
+deducted at payment time with the rate snapshotted, twice-monthly payouts (1–15
+on the 20th, 16–end on the 5th), a 50,000 MMK minimum that carries over, and a
+rate that is Admin-discretion per shop including 0% — and §16D gates Phase 3 on
+"a payout run is reproducible from ledger rows". All of that is now code:
+`src/lib/ownerLedger.ts` (rules), `src/lib/ownerLedgerStore.ts` (rows),
+`src/features/superAdmin/OwnerPayoutsPanel.tsx` (Super Admin and Payment Admin),
+the Shop Owner Payments statement (`O (own earnings)`), and
+`20261127000100_owner_ledger.sql` with `run_owner_payout()` and
+`verify_owner_payout()`. The remaining gap is the same storage one as the other
+rows: the browser store is authoritative until the migration is applied and
+pointed at. What the Plan still leaves open in this area is the Main Owner
+consolidated and Branch Owner ledgers, which depend on the operator hierarchy
+in the second half of §9.
+
 A sixth gap row is closed: Plan §10 §4 names Schedule, Unpublish, Delete and
 Restore, and §7 acceptance 5 asks that two editors on one post never overwrite
 each other. The first was wired earlier; the rest now live in

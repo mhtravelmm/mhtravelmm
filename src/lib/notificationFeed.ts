@@ -22,6 +22,7 @@ export type FeedEventId =
   | 'campaign_ended'
   | 'guide_earning'
   | 'subscription_ending'
+  | 'owner_payout'
   | 'owner_application'
   | 'job_failed';
 
@@ -57,6 +58,7 @@ export const FEED_EVENTS: Record<FeedEventId, FeedEventDefinition> = {
   campaign_ended: { id: 'campaign_ended', recipients: [ADS_ADMIN], href: '/super-admin' },
   guide_earning: { id: 'guide_earning', recipients: [], href: '/super-admin' },
   subscription_ending: { id: 'subscription_ending', recipients: [], href: '/shop-owner' },
+  owner_payout: { id: 'owner_payout', recipients: [], href: '/shop-owner' },
   owner_application: { id: 'owner_application', recipients: [ADMIN, SUPER_ADMIN], href: '/super-admin' },
   job_failed: { id: 'job_failed', recipients: [SUPER_ADMIN], href: '/super-admin' },
 };

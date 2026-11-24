@@ -1,6 +1,6 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 26 November 2026
+**Last updated:** 27 November 2026
 **Verified against:** `main` plus the Rental catalog data module and Rental Admin
 panel, the per-account Favorites, notification, and review wiring, and the
 scheduled publishing seam that now sits between the Blog/Travel Guide editors
@@ -15,6 +15,58 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## Owner ledger and twice-monthly payouts (Plan §9, §16B.1, §16D Phase 3) — 27 November 2026
+
+The owner money path is now real rather than a mock wallet card. §9 says the
+commission is deducted at payment time, is fully Admin-discretion and differs
+shop by shop (0% included), and that payouts run twice a month with a 50,000 MMK
+minimum that carries over. §16D gates Phase 3 on one property: **a payout run is
+reproducible from ledger rows.**
+
+- **The rules are pure functions.** `src/lib/ownerLedger.ts` holds the window
+  arithmetic (`payoutWindowFor()`, `recentWindows()`, `latestDueWindow()`),
+  the commission snapshot (`createSaleRow()`, `commissionMmkFor()`), the run
+  planner (`planPayout()`, `duePayouts()`), the settlement (`createPayoutRun()`,
+  `markRowsPaid()`), the reproducibility check (`replayPayout()`), the owner
+  statement (`statementFor()`) and the next two due dates (`upcomingDueDays()`).
+- **The commission is frozen on the row.** A sale stores its own
+  `commissionPercent`, so changing a shop's rate today never rewrites a payment
+  taken last week. `createSaleRow()` refuses a `bookingRef` that already has a
+  row, so recording the same payment twice cannot pay the owner twice.
+- **The minimum carries over without a special case.** A run settles every
+  unpaid row whose own window is due by the run's due day; a shop under 50,000
+  MMK simply writes no run and its rows stay unpaid, so they are picked up by
+  the next one. `createPayoutRun()` returns null rather than paying a partial
+  amount.
+- **A run is reproducible by construction.** It stores the ids of the rows it
+  settled and the totals it settled them at, and `replayPayout()` recomputes
+  those totals from the rows. The panel shows the verdict per run, and
+  `verify_owner_payout()` is the same check in SQL.
+- **The panels.** `src/features/superAdmin/OwnerPayoutsPanel.tsx` is the new
+  Super Admin workspace section `payouts` (§16B.1: F for Super Admin and Payment
+  Admin, `–` for Admin, so `canRunPayouts()`/`canSetCommission()` gate both
+  writes). It shows owed vs carried vs paid, the shops due, the per-shop
+  commission editor, the run history and the replay verdict, and every run
+  writes an audit row plus a bilingual feed notice to the owner.
+- **The owner reads a statement, not the platform ledger.** The Shop Owner
+  Payments view (`OwnerEarningsPanel`) shows what the shop keeps after
+  commission, what has been paid, the carry-over state, the next two payout
+  dates and the sales and payout history — scoped by `shopId` through
+  `statementFor()`, so the panel cannot ask for another shop's money (§16B.1
+  `O (own earnings)`).
+- **Storage.** `src/lib/ownerLedgerStore.ts` is the browser stand-in for
+  `owner_commission_settings`, `owner_ledger_rows` and `owner_payout_runs`;
+  `20261127000100_owner_ledger.sql` is the table set, with RLS per §16B.1, a
+  unique index on `booking_ref`, a check that `net = gross - commission`, an
+  append-only trigger that freezes the amount columns and refuses a second
+  settlement, `run_owner_payout()` and `verify_owner_payout()`.
+- **Verified.** 30 unit tests cover the window boundaries (the 20th and the 5th,
+  a short February, the year roll-over), the frozen rate, the double-payment
+  refusal, the minimum, the carry-over, the two-shop separation, the replay
+  match and mismatch, and the owner statement. The panels were checked in the
+  browser: a run moved four rows to paid, the replay read "matches the ledger",
+  and the owner's statement showed 117,000 Ks still owed against 742,500 Ks paid.
 
 ## Owner and template subscriptions (Plan §9, §4, §16B.3, §16B.7) — 26 November 2026
 
