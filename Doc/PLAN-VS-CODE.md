@@ -387,22 +387,25 @@ record-level twin of the route test.
 
 Ordered by how much confusion each removes. None of these are code changes.
 The re-check at `abe2700` marked six of them done, because the Plan text was
-edited on 22–24 November; the four that remain are all inside the §2A audit
-record, which has not been touched since 2026-11-09.
+edited on 22–24 November. **All eleven are closed as of 24 November 2026:** the
+last five were inside the §2A audit record, which had not been touched since
+2026-11-09, so every claim in it was re-checked against the tree and rewritten.
+The §2A record now dates each correction and names the file or test that holds
+it.
 
 | # | Edit | State |
 |---|---|---|
 | 1 | Resolve §4.1 — pick one column rule | ~~Done 22 Nov~~: §4 now says five-column rows use `md` and only three-column rows may use `xl`, matching the code |
 | 2 | Delete the `/blogs/:id` stale claim | ~~Done~~: §2A now says the redirect forwards to the reader |
-| 3 | Name the Supabase-touching modules | **Open.** §2A still names three; nine modules import the client (§3.2) |
+| 3 | Name the Supabase-touching modules | ~~Done 24 Nov~~: §2A names all nine modules that import the client (§3.2) |
 | 4 | Add `/blogs/:storyId` to the route manifest | ~~Done~~: it is listed, and `routes.manifest.test.ts` keeps it there (§3.3) |
 | 5 | Rewrite the "five desktop columns" sentences | ~~Done~~: §16 now describes the width cap (§3.4) |
 | 6 | Add a Load More rule to §4 | ~~Done 22 Nov~~ |
 | 7 | Point the Plan at `Doc/STATUS.md` | ~~Done~~: the Plan's first line names it as the status view |
-| 8 | **Replace "no `supabase/` migration directory"** with "19 migrations committed, none applied" | **Open** (§3.6). This is the most misleading remaining claim: it makes the schema work look unstarted |
-| 9 | **Drop "no automated test runner"** and record `npm test` | **Open.** 868 tests in 71 files, including 15 that render a page under jsdom |
-| 10 | **Drop the 48-broken-links count** and the visual-CTA rows | **Open.** Both were fixed on 20 Nov and are test-guarded |
-| 11 | **Narrow "catalog data is not API"** to reads | **Open.** Writes already go through Supabase when configured (§5) |
+| 8 | **Replace "no `supabase/` migration directory"** with "19 migrations committed, none applied" | ~~Done 24 Nov~~: §2A lists all 19 migrations by table (§3.6) |
+| 9 | **Drop "no automated test runner"** and record `npm test` | ~~Done 24 Nov~~: §2A records 868 tests in 71 files, 15 of them rendering a page |
+| 10 | **Drop the 48-broken-links count** and the visual-CTA rows | ~~Done 24 Nov~~: §2A strikes both and says what guards them |
+| 11 | **Narrow "catalog data is not API"** to reads | ~~Done 24 Nov~~: §2A splits reads from writes (§5) |
 
 The only **code** items on this list are now closed: the seven detail hrefs that
 reached a page unable to resolve their id (§6a) and the three grid caps that
