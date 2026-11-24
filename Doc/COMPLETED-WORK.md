@@ -1,7 +1,7 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 28 November 2026 (latest pass: 24 November 2026 clock time —
-the system clock reads 24 November, so this pass is dated to it)
+**Last updated:** 29 November 2026 (latest pass: the §4 catalog growth to
+fifteen templates)
 **Verified against:** `main` plus the Shop Page template layer (the lazy
 template modules under `src/templates/`, the `/shops/:shopId` route and the
 `scripts/a11y-audit.mjs` gate), the Rental catalog data module and Rental Admin
@@ -18,6 +18,51 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## Template catalog growth to fifteen designs (Plan §4) — 29 November 2026
+
+§4 asked for about ten hotel designs and, after the hotel category, a paid
+alternative for the rest. This pass closes both.
+
+- **Hotel reached ten paid designs.** Four new lazy modules beside the free
+  default: `hotel_split_screen` (a fixed frame — icon rail, a half-screen photo
+  that never scrolls, the catalog as an accordion, the booking ask in the always
+  visible header), `hotel_board` (a masthead and a grid of bordered tiles, with
+  the booking ask as a full-width strip between the rooms and the reviews),
+  `hotel_panorama` (a full-screen hero with the name on the photo, an underlined
+  tab row, the rooms as a comparison matrix, and a booking bar pinned to the
+  bottom of the viewport) and `hotel_directory` (a directory entry — labelled
+  rows, dotted leaders on the price list, no hero image, the phone number and
+  address the most prominent things on the page).
+- **Each other category gained one paid design.** `restaurant_menu_board` reads
+  as a menu rather than a listing (dotted leaders, a dark header, a table-request
+  strip). `cafe_photo_grid` leads with a tiled photo wall and puts the menu in a
+  two-column chip grid. `attraction_ticket` replaces the catalog grid with a
+  numbered "what you will see" sequence and a fact strip of hours and ticket
+  price. `book_shop_shelf` is a shelf: a sticky sidebar of shop facts and a list
+  of rows with a coloured spine rule, so a long catalog reads like a catalogue.
+- **Every pair passes the axis test.** `templateProblems()` and the
+  `shopTemplates.test.ts` seed test check every live pair in a category, and the
+  migration trigger repeats the rule on the server. No design is a recolor: each
+  differs from every other live template of its category on at least four of the
+  seven axes.
+- **The catalog and the SQL seed cannot drift.** `shopTemplates.test.ts` now
+  reads `20261128000100_shop_templates.sql`, `20261128000200_shop_template_events.sql`
+  and the new `20261129000100_shop_template_catalog_growth.sql` and fails when a
+  template id, a category or a trait set exists on one side only.
+- **The fixture now covers every category.** `shopPageData.ts` gained
+  `yangon_teahouse` (restaurant), `bagan_roastery` (cafe) and
+  `shwedagon_pagoda` (attraction), so each category has a real shop to render,
+  and `shopTemplateStore.ts` seeds them alongside the hotel and the book shop.
+- **The rendered gate covers the whole catalog.** `scripts/a11y-audit.mjs` now
+  builds its cases from the catalog instead of a hard-coded hotel list: every
+  active template as a preview on its own category's fixture shop, plus each
+  shop on its served template, at 360/390/768/1440 in both themes. That is 192
+  combinations, clean. One contrast failure was found and fixed on the way —
+  `hotel_board` printed the contact line at `text-white/80` on the navy strip
+  (4.23:1); it is plain white now.
+- **Verification.** 67 test files, 849 tests pass; typecheck clean; lint 0 errors
+  (the 7 pre-existing warnings stand); production build succeeds.
 
 ## Template analytics and three more hotel designs (Plan §4) — 24 November 2026
 

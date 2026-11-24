@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   MIN_DIFFERING_AXES,
@@ -83,10 +85,10 @@ describe('seedTemplates (Plan §4 launch set)', () => {
     }
   });
 
-  it('gives hotels one free default and six paid designs that all pass the axis test', () => {
+  it('gives hotels one free default and ten paid designs that all pass the axis test', () => {
     const hotels = seedTemplates().filter((t) => t.category === 'hotel');
     expect(hotels.filter((t) => t.isFree)).toHaveLength(1);
-    expect(hotels.filter((t) => !t.isFree)).toHaveLength(6);
+    expect(hotels.filter((t) => !t.isFree)).toHaveLength(10);
     // §4 "genuinely different": every live pair differs on at least four axes.
     for (const a of hotels) {
       for (const b of hotels) {
@@ -512,5 +514,44 @@ describe('preview (§4 own data only)', () => {
   it('refuses another shop and a signed-out viewer', () => {
     expect(canPreviewTemplate('rangoon_house', 'mandalay_booknook')).toBe(false);
     expect(canPreviewTemplate(undefined, 'rangoon_house')).toBe(false);
+  });
+});
+
+/**
+ * The migration is the server copy of this catalog. Reading it here means a row
+ * added to `seedTemplates()` cannot be missing from the database, and a row that
+ * fails the axis trigger on the server cannot ship from the client.
+ */
+describe('shop template migrations match the client catalog', () => {
+  const dir = join(process.cwd(), 'supabase', 'migrations');
+  const sql = ['20261128000100_shop_templates.sql', '20261128000200_shop_template_events.sql',
+    '20261129000100_shop_template_catalog_growth.sql']
+    .map((file) => readFileSync(join(dir, file), 'utf8'))
+    .join('\n');
+
+  it('seeds every active template the client lists', () => {
+    for (const template of seedTemplates().filter((row) => row.status === 'active')) {
+      expect(sql).toContain(`('${template.id}', '${template.category}'`);
+    }
+  });
+
+  it('seeds no template the client catalog does not know', () => {
+    const known = new Set(seedTemplates().map((row) => row.id));
+    const seeded = [...sql.matchAll(/^ {2}\('([a-z0-9_]+)', '(hotel|restaurant|cafe|book_shop|attraction)'/gm)]
+      .map((match) => match[1]);
+    expect(seeded.filter((id) => !known.has(id))).toEqual([]);
+  });
+
+  it('writes the same trait set the client writes', () => {
+    for (const template of seedTemplates().filter((row) => row.status === 'active')) {
+      expect(sql).toContain(JSON.stringify(template.traits));
+    }
+  });
+
+  it('keeps the free default free and every paid design at the one price', () => {
+    const free = seedTemplates().filter((row) => row.isFree);
+    expect(free.length).toBeGreaterThan(0);
+    for (const template of free) expect(sql).toContain(`('${template.id}', '${template.category}'`);
+    expect(sql).toContain('price_mmk_month = 2000');
   });
 });

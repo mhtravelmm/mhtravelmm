@@ -1,6 +1,6 @@
 # MH Travel — Remaining Work Record
 
-**Last updated:** 24 November 2026
+**Last updated:** 29 November 2026
 **Verified against:** `main` plus the rental order rules
 (`src/lib/rentalOrderRules.ts`), the full Rental Admin panel (catalog,
 availability, rates, branches, terms, settings, orders) built to Plan §8.8, the
@@ -250,9 +250,9 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `shop_subscriptions`), the §4 rules and catalog
   (`src/lib/shopTemplates.ts`, `shop_templates`), the owner's preview/apply
   selector, the Super Admin catalog screen with invoice recording
-  (`payForTemplate()` in `ShopTemplatesPanel.tsx`), and the rendered layer — `/shops/:shopId` serving six lazy templates over one
+  (`payForTemplate()` in `ShopTemplatesPanel.tsx`), and the rendered layer — `/shops/:shopId` serving fifteen lazy templates over one
   `ShopPageData` fixture, with `scripts/a11y-audit.mjs` (`npm run a11y`) as the
-  gate: 72 combinations of template, width and theme, clean.
+  gate: 192 combinations of template, width and theme, clean.
   **Template analytics is built (24 November 2026):** `src/lib/templateStats.ts`
   holds the counting rules (one view per template per page view, an apply only
   when the switch actually moved the shop, a preview never counted, bot agents
@@ -262,18 +262,23 @@ folder rules, `src/lib/mediaApi.ts` compresses and posts, and
   `template_events_purge` in the §16B.7 registry and
   `20261128000200_shop_template_events.sql` as the table, its
   `template_usage()` report function and the purge.
-  **The hotel catalog grew to seven live designs (24 November 2026):** Booking
-  Focus, Map First and Story join Classic, Editorial, Compact and Gallery First,
-  each differing on at least four of the seven axes and checked by the seed test.
-  What is left: **storage** — apply `20261128000100_shop_templates.sql` and
-  `20261128000200_shop_template_events.sql`, then point
+  **The catalog reached the count §4 asks for (29 November 2026):** fifteen
+  templates render — the free hotel default plus ten paid hotel designs
+  (Classic, Editorial, Compact, Gallery First, Booking Focus, Map First, Story,
+  Split Screen, Board, Panorama, Directory) and one paid alternative beside the
+  free default in restaurant (Menu Board), cafe (Photo Grid), attraction
+  (Ticket) and book shop (Shelf). Every live pair in a category passes the
+  seven-axis test, the SQL seed is checked against the client catalog by
+  `shopTemplates.test.ts`, and `npm run a11y` covers every template of every
+  category — 192 combinations, clean.
+  What is left: **storage** — apply `20261128000100_shop_templates.sql`,
+  `20261128000200_shop_template_events.sql` and
+  `20261129000100_shop_template_catalog_growth.sql`, then point
   `src/lib/shopTemplateStore.ts` at the five tables, since the catalog, settings,
-  entitlements, invoices and events are browser rows today; **catalog growth** —
-  §4 asks for about ten hotel designs, so three more are still to design, and
-  Restaurant, Cafe, Book Shop and Attraction have only the free baseline, so no
-  other category has a paid alternative yet; and **the per-template review** — §4
-  requires the founder to approve each design against the four-of-seven test
-  before it goes `active`.
+  entitlements, invoices and events are browser rows today; and **the
+  per-template review** — §4 requires the founder to approve each design against
+  the four-of-seven test before it goes `active`, and the ten new designs of
+  24 and 29 November are still awaiting that review.
 - ~~Implement MH Platform wallet ledger, settlements and payouts.~~ **Built 27
   November 2026** for the Shop Owner path: `src/lib/ownerLedger.ts` snapshots
   the commission on each transaction, `planPayout()`/`createPayoutRun()` run the

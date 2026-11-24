@@ -14,33 +14,50 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import puppeteer from 'puppeteer-core';
 import { seedTemplates } from '../src/lib/shopTemplates.ts';
+import { SHOP_PAGES } from '../src/templates/shopPageData.ts';
 
 const AXE = readFileSync(join(process.cwd(), 'node_modules', 'axe-core', 'axe.min.js'), 'utf8');
 const CHROME = process.env.CHROME_PATH || '/usr/bin/chromium';
 
-/** The owner of the seeded hotel, so a `?preview=` run is allowed to render. */
-const OWNER = {
-  id: 'u1',
-  name: 'The Rangoon House',
-  username: 'rh',
-  email: 'a@b.c',
-  role: 'owner_admin',
-  createdAt: '2026-01-01T00:00:00.000Z',
-};
+/**
+ * An owner session, so a `?preview=` run is allowed to render. `name` must match
+ * the shop's `ownerName`, because that is how the store resolves who owns it.
+ */
+function ownerFor(name) {
+  return {
+    id: `u-${name}`,
+    name,
+    username: name.toLowerCase().replace(/[^a-z]+/g, ''),
+    email: 'a@b.c',
+    role: 'owner_admin',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  };
+}
 
 function arg(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
   return index === -1 ? fallback : process.argv[index + 1];
 }
 
-/** Every hotel template as a preview on the owner's own shop, plus the free shop. */
+/**
+ * Every template of every category, as a preview on its own category's fixture
+ * shop, plus each shop on its served template. §4 requires each template to
+ * render the fixture with every section — so no template may skip the gate.
+ */
 function defaultCases() {
-  const hotel = seedTemplates().filter((template) => template.category === 'hotel');
-  return [
-    { path: '/shops/rangoon_house', owner: false },
-    ...hotel.map((template) => ({ path: `/shops/rangoon_house?preview=${template.id}`, owner: true })),
-    { path: '/shops/mandalay_booknook', owner: false },
-  ];
+  const templates = seedTemplates().filter((template) => template.status === 'active');
+  const cases = [];
+  for (const shop of SHOP_PAGES) {
+    const own = templates.filter((template) => template.category === shop.category);
+    cases.push({ path: `/shops/${shop.shopId}`, owner: null });
+    for (const template of own) {
+      cases.push({
+        path: `/shops/${shop.shopId}?preview=${template.id}`,
+        owner: ownerFor(shop.nameEn),
+      });
+    }
+  }
+  return cases;
 }
 
 const base = arg('base', 'http://localhost:5173');
@@ -50,7 +67,7 @@ const widths = arg('widths', '360,390,768,1440').split(',').map(Number);
 const cases = arg('paths')
   ? arg('paths')
       .split(',')
-      .map((path) => ({ path, owner: path.includes('?preview=') }))
+      .map((path) => ({ path, owner: path.includes('?preview=') ? ownerFor('The Rangoon House') : null }))
   : defaultCases();
 
 const browser = await puppeteer.launch({ executablePath: CHROME, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -71,7 +88,7 @@ for (const theme of themes) {
           window.localStorage.setItem('mh-travel-auth-session', JSON.stringify(session));
           window.localStorage.setItem('mh-travel-authenticated', 'true');
         },
-        testCase.owner ? OWNER : null,
+        testCase.owner,
         theme,
       );
 

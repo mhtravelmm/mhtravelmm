@@ -35,7 +35,10 @@ describe('template registry', () => {
 describe('template modules', () => {
   const MODULES = ['hotel/HotelClassic', 'hotel/HotelEditorial', 'hotel/HotelCompact', 'hotel/HotelGalleryFirst',
     'hotel/HotelBookingFocus', 'hotel/HotelMapFirst', 'hotel/HotelStory',
-    'bookShop/BookShopClassic', 'generic/SimpleClassic'];
+    'hotel/HotelSplitScreen', 'hotel/HotelBoard', 'hotel/HotelPanorama', 'hotel/HotelDirectory',
+    'bookShop/BookShopClassic', 'bookShop/BookShopShelf',
+    'restaurant/RestaurantMenuBoard', 'cafe/CafePhotoGrid', 'attraction/AttractionTicket',
+    'generic/SimpleClassic'];
   const source = (file: string) => readFileSync(join(process.cwd(), 'src', 'templates', `${file}.tsx`), 'utf8');
 
   it.each(MODULES)('%s renders exactly one h1', (file) => {
@@ -48,8 +51,16 @@ describe('template modules', () => {
 });
 
 describe('shop page fixture', () => {
-  it('has a page for every seeded shop the owner panels use', () => {
-    expect(shopIds().sort()).toEqual(['mandalay_booknook', 'rangoon_house']);
+  it('has a page for every seeded shop the owner panels use, one per category', () => {
+    expect(shopIds().sort()).toEqual([
+      'bagan_roastery',
+      'mandalay_booknook',
+      'rangoon_house',
+      'shwedagon_pagoda',
+      'yangon_teahouse',
+    ]);
+    const categories = new Set(SHOP_PAGES.map((page) => page.category));
+    expect([...categories].sort()).toEqual(['attraction', 'book_shop', 'cafe', 'hotel', 'restaurant']);
   });
 
   it('carries every section a template must render', () => {

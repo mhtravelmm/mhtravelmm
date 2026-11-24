@@ -22,8 +22,26 @@ const MODULES: Record<string, ComponentType<TemplateProps>> = {
   ),
   hotel_map_first: lazy(() => import('./hotel/HotelMapFirst').then((module) => ({ default: module.HotelMapFirst }))),
   hotel_story: lazy(() => import('./hotel/HotelStory').then((module) => ({ default: module.HotelStory }))),
+  hotel_split_screen: lazy(() =>
+    import('./hotel/HotelSplitScreen').then((module) => ({ default: module.HotelSplitScreen })),
+  ),
+  hotel_board: lazy(() => import('./hotel/HotelBoard').then((module) => ({ default: module.HotelBoard }))),
+  hotel_panorama: lazy(() => import('./hotel/HotelPanorama').then((module) => ({ default: module.HotelPanorama }))),
+  hotel_directory: lazy(() =>
+    import('./hotel/HotelDirectory').then((module) => ({ default: module.HotelDirectory })),
+  ),
+  restaurant_menu_board: lazy(() =>
+    import('./restaurant/RestaurantMenuBoard').then((module) => ({ default: module.RestaurantMenuBoard })),
+  ),
+  cafe_photo_grid: lazy(() => import('./cafe/CafePhotoGrid').then((module) => ({ default: module.CafePhotoGrid }))),
+  attraction_ticket: lazy(() =>
+    import('./attraction/AttractionTicket').then((module) => ({ default: module.AttractionTicket })),
+  ),
   book_shop_classic: lazy(() =>
     import('./bookShop/BookShopClassic').then((module) => ({ default: module.BookShopClassic })),
+  ),
+  book_shop_shelf: lazy(() =>
+    import('./bookShop/BookShopShelf').then((module) => ({ default: module.BookShopShelf })),
   ),
   restaurant_classic: lazy(() =>
     import('./generic/SimpleClassic').then((module) => ({ default: module.SimpleClassic })),

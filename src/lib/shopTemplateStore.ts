@@ -40,6 +40,9 @@ const CHANGED_EVENT = 'mh-travel-shop-templates-changed';
 const SEEDED_SHOPS: { shopId: string; ownerName: string; category: TemplateCategory }[] = [
   { shopId: 'rangoon_house', ownerName: 'The Rangoon House', category: 'hotel' },
   { shopId: 'mandalay_booknook', ownerName: 'Mandalay Book Nook', category: 'book_shop' },
+  { shopId: 'yangon_teahouse', ownerName: 'Yangon Teahouse', category: 'restaurant' },
+  { shopId: 'bagan_roastery', ownerName: 'Bagan Roastery', category: 'cafe' },
+  { shopId: 'shwedagon_pagoda', ownerName: 'Shwedagon Pagoda', category: 'attraction' },
 ];
 
 function readJson<T>(key: string, fallback: T): T {

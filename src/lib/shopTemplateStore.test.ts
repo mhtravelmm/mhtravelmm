@@ -11,9 +11,11 @@ import {
   recordTemplateApply,
   recordTemplateView,
   resolveTemplateForShop,
+  shopCategory,
   setTemplateStatus,
   writeTemplates,
 } from './shopTemplateStore';
+import { seedTemplates } from './shopTemplates';
 
 function fakeWindow() {
   const map = new Map<string, string>();
@@ -37,11 +39,21 @@ const NOW = new Date('2026-11-28T06:00:00.000Z');
 beforeEach(() => { fakeWindow(); });
 
 describe('shopTemplateStore (Plan §4)', () => {
-  it('seeds the launch catalog and two shops on their free template', () => {
-    expect(readTemplates().length).toBeGreaterThanOrEqual(8);
+  it('seeds the catalog and one shop per category on its free template', () => {
+    expect(readTemplates().length).toBeGreaterThanOrEqual(15);
     const settings = readPageSettings();
-    expect(settings.map((row) => row.shopId).sort()).toEqual(['mandalay_booknook', 'rangoon_house']);
+    expect(settings.map((row) => row.shopId).sort()).toEqual([
+      'bagan_roastery',
+      'mandalay_booknook',
+      'rangoon_house',
+      'shwedagon_pagoda',
+      'yangon_teahouse',
+    ]);
     expect(settings.every((row) => row.ownerName !== '')).toBe(true);
+    for (const row of settings) {
+      const free = seedTemplates().find((template) => template.category === shopCategory(row.shopId) && template.isFree);
+      expect(row.activeTemplateId).toBe(free?.id);
+    }
   });
 
   it('seeds one live entitlement so the paid path has something to resolve', () => {

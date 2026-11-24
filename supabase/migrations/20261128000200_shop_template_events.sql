@@ -137,5 +137,5 @@ values
    '{"layout":"map_sidebar","navigation":"sticky_map","hero":"map_card","catalog":"definition_list","bookingCta":"sidebar_box","gallery":"side_thumbnails","mobile":"sidebar_collapsed"}'),
   ('hotel_story', 'hotel', 'ပုံပြင်', 'Story', 1, 'active',
    'templates/hotel-story.webp', 2000, false,
-   '{"layout":"long_read","navigation":"none","hero":"no_hero_typographic","catalog":"numbered_list","bookingCta":"end_of_story","gallery":"interleaved","mobile":"long_read"}')
+   '{"layout":"long_read","navigation":"none","hero":"no_hero_typographic","catalog":"numbered_list","bookingCta":"end_of_story","gallery":"interleaved","mobile":"long_read"})
 on conflict (id) do nothing;

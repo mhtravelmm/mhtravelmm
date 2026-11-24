@@ -376,21 +376,35 @@ selects one of them; a page never overrides the internal dimensions itself.
   (categories first, price, grace period) are decided in the specification
   below.
 - Status (2026-11-24): the system is built. `/shops/:shopId` renders the shop's
-  resolved template from a lazy module, nine templates render (the free hotel
+  resolved template from a lazy module, nine templates rendered (the free hotel
   default, six paid hotels, one book shop design, and one generic design behind
-  restaurant, cafe and attraction), the owner previews and applies from their
+  restaurant, cafe and attraction — fifteen after the 29 November growth pass), the owner previews and applies from their
   own panel, and Super Admin manages the catalog and records invoices.
   Template views and applies are counted: `src/lib/templateStats.ts` holds the
   rules (one view per template per page view, an apply only when the switch
   moved the shop, a preview never counted, bots refused, 180-day retention),
   `ShopPage.tsx` and `OwnerTemplatePanel.tsx` write the rows, the Super Admin
   catalog panel reads them, and `template_events_purge` runs daily in the
-  §16B.7 registry. What is not built is three more hotel designs to reach the
-  ten the founder expects, a paid alternative in the other four categories, and
-  the storage swap — so catalog rows, settings, entitlements, invoices and
-  events are still browser records behind `src/lib/shopTemplateStore.ts`, with
-  `20261128000100_shop_templates.sql` and
-  `20261128000200_shop_template_events.sql` waiting to be applied.
+  §16B.7 registry.
+- Status (2026-11-29): the catalog reached the count the founder expects.
+  Fifteen templates render: the free hotel default plus **ten** paid hotel
+  designs, and one paid alternative beside the free default in each of the
+  other four categories (restaurant, cafe, attraction, book shop). The four
+  hotel designs of this pass are Split Screen (`hotel_split_screen`), Board
+  (`hotel_board`), Panorama (`hotel_panorama`) and Directory
+  (`hotel_directory`); the four category designs are Menu Board
+  (`restaurant_menu_board`), Photo Grid (`cafe_photo_grid`), Ticket
+  (`attraction_ticket`) and Shelf (`book_shop_shelf`). Every pair of live
+  templates in a category passes the seven-axis test, and the catalog seed and
+  the SQL seed are now checked against each other by
+  `shopTemplates.test.ts` so a row cannot exist on one side only. The rendered
+  gate covers **192 combinations** — every template as a preview on its own
+  category's fixture shop, at 360/390/768/1440 in both themes — and is clean.
+  What is still not built is the storage swap: catalog rows, settings,
+  entitlements, invoices and events are browser records behind
+  `src/lib/shopTemplateStore.ts`, with `20261128000100_shop_templates.sql`,
+  `20261128000200_shop_template_events.sql` and
+  `20261129000100_shop_template_catalog_growth.sql` waiting to be applied.
 - **Specification (2026-11-22).** The build is deferred, but the system is defined so nothing built before it has to change.
 
   **Contract.** Every Shop Page template receives the same typed data (`ShopPageData`): business profile (name MM/EN, description, address, coordinates, open and close times, check-in and check-out for hotels), photos, catalog (rooms, menu items or products with prices under the owner's price-display mode), reviews, contact and booking CTA, and the booking-flow mode. A template only decides how that data is laid out. Switching templates never touches business data.
