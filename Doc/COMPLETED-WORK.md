@@ -1,7 +1,9 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 29 November 2026 (latest pass: the §4 catalog growth to
-nineteen templates; below it the 24 November component-test seam, then the
+**Last updated:** 30 November 2026 (latest pass: the migration chain run
+against a real Postgres, the four migrations that could never have applied
+fixed, and the §16C.2 `listings` table seeded; below it the §4 catalog growth
+to nineteen templates, the 24 November component-test seam, then the
 detail-link and grid-cap fixes of the same day)
 **Verified against:** `main` plus the Shop Page template layer (the lazy
 template modules under `src/templates/`, the `/shops/:shopId` route and the
@@ -19,6 +21,75 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## The migrations now apply — 30 November 2026
+
+The nineteen migrations had never been run. `Doc/PLAN-VS-CODE.md` recorded that
+as "none applied to a project yet", and every claim about the schema rested on
+reading the SQL rather than executing it. This pass ran the whole chain against
+a real Postgres 16 in Docker, with the Supabase `auth` schema, the three roles
+and `auth.uid()`/`auth.jwt()` stubbed, and found four migrations that could
+never have applied:
+
+  - **`bookings` was never created.** `src/lib/travelRequests.ts` inserts into
+    it on every Rental, Ticketing and Custom Plan submission, and
+    `rental_orders.sql` unions it into `my_bookings`. Both would have failed
+    against a fresh project. It is now
+    `20261122000150_bookings.sql`, ordered before the view that reads it.
+  - **`rental_cities` was never seeded.** Ten cities and five branches existed
+    only in `src/data/rentalCatalog.ts`, so every `city_id` reference had
+    nothing to point at. The seed is appended to the catalog migration.
+  - **`shop_template_events.sql` had a missing quote** in the `hotel_story`
+    traits JSON, which made the whole file a syntax error.
+  - **`ads_serving.sql` revoked `serve_ad(text)`** after dropping it, so the
+    revoke failed on a fresh project. Only the two-argument form is revoked now.
+
+All twenty-one files then applied in order with `ON_ERROR_STOP=1` and no
+errors.
+
+### Phase 2 begins: the shared `listings` table
+
+Plan §16C.2 puts one table under every module, and §16C.3 step 1 seeds it from
+the compiled catalog with the ids kept. `supabase/migrations/20261130000100_listings.sql`
+is that table: the §16C.2 columns, the category check, the price-display and
+booking-flow checks, and a 67-row seed covering attractions, hotels, guesthouses,
+restaurants, cafes, bars, markets, book shops, rentals, transport, travel
+guides and the six Nearby service categories.
+
+The seed is not hand-written. `src/lib/listingRows.ts` is the browser twin —
+`toListingRow()` reconciles a `CardListing` with the table shape and
+`toCardListing()` goes back, so a module can move from `src/data` to a query
+without changing its components. The 67 rows were generated from
+`SEED_LISTING_ROWS`, and `src/lib/listingRows.test.ts` reads the migration text
+to fail when the two drift: delete a row from one side and the suite names it.
+
+Two details worth keeping: MM names are seeded `null` rather than copying the
+English, so the reader falls back visibly instead of showing a fake
+translation; and the insert is `on conflict (id) do nothing` behind a
+`where exists (select 1 from public.rental_cities …)`, so a row an Admin has
+edited survives a rerun and a missing city skips its rows instead of aborting
+the migration.
+
+`listing_photos` is the second table §16C.2 asks for and it is written too
+(`20261130000200_listing_photos.sql`): one row per photo, `position` unique per
+listing so the gallery order cannot be ambiguous, and the Admin-set
+`photo_quota` on the listing row (default 20, the same
+`DEFAULT_SHOP_PHOTO_QUOTA` the browser rules use). A trigger refuses the insert
+that would take a listing past it — setting the quota to 2 and inserting a
+third photo raises `listing_photo_quota_reached: 2 of 2 photos`.
+
+### The RLS rules were executed, not assumed
+
+§16C.3's acceptance test is "an Owner changes only their own listing". Against
+the live database:
+
+  - `anon` reads 67 rows while every listing is active, and 0 once one is set
+    to Pending — a non-active row is invisible to the public.
+  - An owner updating their own Pending row to Active is rejected with
+    `new row violates row-level security policy`; the same owner editing its
+    name succeeds (`UPDATE 1`).
+  - A second owner's update of that row matches nothing (`UPDATE 0`).
+  - A Super Admin approving it succeeds (`UPDATE 1`).
 
 ## Pages that are now rendered by a test — 24 November 2026
 
@@ -51,7 +122,7 @@ so the tests can fail. `jsdom`, `@testing-library/react` and
 `@testing-library/user-event` are new dev dependencies; the react-refresh lint
 rule is switched off for test files only, so the warning count stays at seven.
 
-868 tests in 71 files pass; typecheck clean, lint 0 errors, build clean.
+885 tests in 72 files pass; typecheck clean, lint 0 errors, build clean.
 
 ## Detail links that resolve, and grids that compute their cap — 24 November 2026
 

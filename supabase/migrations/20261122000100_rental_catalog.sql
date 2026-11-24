@@ -142,3 +142,30 @@ create policy rental_settings_read on public.rental_settings for select using (t
 drop policy if exists rental_settings_write on public.rental_settings;
 create policy rental_settings_write on public.rental_settings for all
   using (public.is_rental_staff()) with check (public.is_rental_staff());
+
+-- ---------------------------------------------------------------------------
+-- The city and branch seed, taken from `src/data/rentalCatalog.ts`. Without it
+-- `rental_cities` is empty, and every row that references a city — a listing,
+-- a branch, an availability cell — has nothing to point at. `on conflict do
+-- nothing` so a renamed city survives a rerun.
+-- ---------------------------------------------------------------------------
+insert into public.rental_cities (id, name_mm, name_en, sort_order) values
+  ('yangon', 'ရန်ကုန်', 'Yangon', 10),
+  ('bagan', 'ပုဂံ', 'Bagan', 20),
+  ('mandalay', 'မန္တလေး', 'Mandalay', 30),
+  ('inle', 'အင်းလေး', 'Inle Lake', 40),
+  ('ngapali', 'ငပလီ', 'Ngapali', 50),
+  ('bago', 'ပဲခူး', 'Bago', 60),
+  ('mawlamyine', 'မော်လမြိုင်', 'Mawlamyine', 70),
+  ('kyaiktiyo', 'ကျိုက်ထီးရိုး', 'Kyaiktiyo (Golden Rock)', 80),
+  ('taunggyi', 'တောင်ကြီး', 'Taunggyi', 90),
+  ('kalaw', 'ကလော', 'Kalaw', 100)
+on conflict (id) do nothing;
+
+insert into public.rental_branches (id, city_id, name_mm, name_en, address, phone) values
+  ('yangon-downtown', 'yangon', 'ရန်ကုန် MH Travel ရုံးခွဲ — Downtown', 'Yangon MH Travel Branch — Downtown', 'No. 168, Sule Pagoda Road, Kyauktada Township, Yangon', '+95 9 770 000 101'),
+  ('bagan-nyaung-u', 'bagan', 'ပုဂံ MH Travel ရုံးခွဲ — Nyaung-U', 'Bagan MH Travel Branch — Nyaung-U', 'Thiripyitsaya Road, Nyaung-U, Bagan', '+95 9 770 000 102'),
+  ('mandalay-78', 'mandalay', 'မန္တလေး MH Travel ရုံးခွဲ — 78th Street', 'Mandalay MH Travel Branch — 78th Street', 'No. 22, 78th Street, Chanayethazan Township, Mandalay', '+95 9 770 000 103'),
+  ('inle-nyaung-shwe', 'inle', 'ညောင်ရွှေ MH Travel ရုံးခွဲ', 'Nyaung Shwe MH Travel Branch', 'Mingala Road, Nyaung Shwe, Shan State', '+95 9 770 000 104'),
+  ('ngapali-branch', 'ngapali', 'ငပလီ MH Travel ရုံးခွဲ', 'Ngapali MH Travel Branch', 'Main Road, Ngapali Beach, Thandwe, Rakhine State', '+95 9 770 000 105')
+on conflict (id) do nothing;

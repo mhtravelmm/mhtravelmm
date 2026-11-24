@@ -129,16 +129,20 @@ suite.
 **Plan says** (§2A audit, and it is listed as *confirmed* in §2 above): the
 checkout has no `supabase/` directory, so nothing on the server side exists.
 
-**Code says**: `supabase/migrations/` holds 19 committed migrations, from
-`create_user_profiles_and_auth_policies` through
-`20261129000100_shop_template_catalog_growth.sql`. What the Plan meant is still
-true in a narrower sense — **none of them is applied**, so the browser store
-remains the source of truth for every feature built on them — but "the directory
-is absent" is now wrong, and a reader who trusts it would conclude the schema
-work has not started.
+**Code says**: `supabase/migrations/` holds 22 committed migrations, from
+`20261122000050_rental_roles.sql` through
+`20261130000200_listing_photos.sql`. **None of them is applied to a Supabase
+project**, so the browser store remains the source of truth for every feature
+built on them — but the SQL itself is now known-good rather than only
+reviewed: the whole chain was executed against Postgres 16 in Docker on
+30 November 2026, and four files that could never have applied were fixed
+(`bookings` was missing entirely, `rental_cities` was never seeded,
+`shop_template_events.sql` had an unterminated string, and `ads_serving.sql`
+revoked a function it had already dropped).
 
-**Fix**: replace the row with "19 migrations committed, none applied", and keep
-the "not applied" fact, which is the part that matters.
+**Fix**: replace the row with "22 migrations committed, none applied, and the
+chain is verified to apply in order", and keep the "not applied" fact, which is
+the part that matters for what a page can query.
 
 ### 3.7 "Restaurant/Book Shop CTAs are visual only" and ":id is ignored"
 
@@ -403,7 +407,7 @@ it.
 | 6 | Add a Load More rule to §4 | ~~Done 22 Nov~~ |
 | 7 | Point the Plan at `Doc/STATUS.md` | ~~Done~~: the Plan's first line names it as the status view |
 | 8 | **Replace "no `supabase/` migration directory"** with "19 migrations committed, none applied" | ~~Done 24 Nov~~: §2A lists all 19 migrations by table (§3.6) |
-| 9 | **Drop "no automated test runner"** and record `npm test` | ~~Done 24 Nov~~: §2A records 868 tests in 71 files, 15 of them rendering a page |
+| 9 | **Drop "no automated test runner"** and record `npm test` | ~~Done 24 Nov~~: §2A records the suite, 15 tests of it rendering a page |
 | 10 | **Drop the 48-broken-links count** and the visual-CTA rows | ~~Done 24 Nov~~: §2A strikes both and says what guards them |
 | 11 | **Narrow "catalog data is not API"** to reads | ~~Done 24 Nov~~: §2A splits reads from writes (§5) |
 

@@ -121,7 +121,8 @@ as $$
 $$;
 
 -- The public calls `serve_ad` and nothing else: the ad tables stay closed.
-revoke all on function public.serve_ad(text) from public;
+-- Only the two-argument form exists by now: the one-argument version was
+-- dropped above, so revoking it here failed on a fresh project.
 revoke all on function public.serve_ad(text, text) from public;
 grant execute on function public.serve_ad(text, text) to anon, authenticated;
 
