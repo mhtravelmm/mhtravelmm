@@ -1,6 +1,11 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 30 November 2026 (latest pass: the dashboard navigation split
+**Last updated:** 30 November 2026 (latest pass: ticket O-71, partial — the four
+shared dashboard pieces, wired into the listing screen: the type-to-confirm
+dialog that always wants a reason and asks the heaviest actions for the object's
+typed name, the CSV exporter with a byte-order mark and a formula guard, the
+not-allowed state and the version-conflict notice. Below it the dashboard
+navigation split
 of Plan §3A.4 — tickets O-05 and O-60. Every sidebar entry now has its own
 section id, the aliases that made Tickets and Payments open Bookings, Cities
 and Reviews open Content and Reports open Overview are gone, the sidebar is
@@ -93,6 +98,51 @@ same acceptance checks on Postgres 16 — nine now, including that an Owner's ed
 goes live after approval and that the stamp survives it. Mutating either side
 fails the other: reverting the policy to `status = 'pending'` fails the script,
 and dropping the stamp from the panel fails the DOM test.
+
+## The shared dashboard pieces — 30 November 2026
+
+Ticket **O-71** (Plan §3A.14, §3A.2 rule 7, §3A.16 criterion 11), partial.
+
+Every dashboard section needs the same four behaviours, so they exist once.
+The rules are in `src/lib/dashboardPieces.ts` and are unit-tested; the
+components are in `src/features/superAdmin/shared/DashboardPieces.tsx` and are
+rendered-tested.
+
+**The confirm dialog.** §3A.2 rule 7 says every destructive action asks for a
+reason and the heaviest ask for the object's name. `checkConfirm()` is the single
+rule: a blank reason is `reason_missing`, one under eight characters is
+`reason_too_short`, and for `delete`, `suspend_owner` and `remove_admin` the
+typed name must match the object's. The name is compared trimmed and
+case-insensitively, because a trailing space is not a mistake worth blocking a
+correct action, but it is compared in full — a prefix is refused, so `U Aung`
+does not remove `U Aung Myint`. The reason is returned trimmed, which is what
+the audit summary stores.
+
+**The CSV export.** `buildCsv()` writes the header and rows the caller passes,
+so a filter cannot be widened by exporting. Three details make the file open
+correctly in a spreadsheet: the UTF-8 byte-order mark §3A.16 criterion 11 asks
+for, CRLF line endings, and a leading apostrophe on any cell that starts with
+`=`, `+`, `-` or `@` so a name cannot become a formula. Quoting follows RFC
+4180, so a comma, a quote or a newline inside a value survives. `csvFileName()`
+dates the file in Myanmar Time, because the screen does.
+
+**The not-allowed state** and **the version-conflict notice** are the two states
+§3A.14 names. The conflict notice offers Reload and nothing else: saving again
+would overwrite the other editor's work, which is exactly what the refusal
+exists to prevent.
+
+**Where they are used.** `ListingsPanel` adopts all of it — retiring a listing
+opens the dialog, and the confirmed reason lands in the audit summary; the
+header exports the rows the current search and filter show. The remaining
+sections take the same four pieces as O-62 to O-68 build them; the error-code
+mapping (`common_error_*`) belongs to O-00 and is not here yet.
+
+**Tests.** 983. `dashboardPieces.test.ts` (14) covers the confirm rule, the CSV
+quoting, the byte-order mark, the formula guard, the filter fidelity and the
+Myanmar file name; `dashboardPieces.dom.test.tsx` (9) renders the components
+through the provider stack; `listingsPanel.dom.test.tsx` grew three tests for
+the retire dialog and the filtered export. Lint stays at 0 errors, and the build
+succeeds.
 
 ## The dashboard navigation split — 30 November 2026
 

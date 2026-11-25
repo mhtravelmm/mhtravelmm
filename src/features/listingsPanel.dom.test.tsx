@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ListingsPanel } from './superAdmin/ListingsPanel';
 import { renderAt } from '../test/renderWithProviders';
@@ -135,5 +135,81 @@ describe('approval writes the stamp and an audit row', () => {
     }[];
     const entry = audit.find((row) => row.objectType === 'listing' && row.objectId === 'ph3');
     expect(entry?.action).toBe('approved');
+  });
+});
+
+describe('retiring a listing (§3A.2 rule 7)', () => {
+  it('asks for a reason and refuses to retire without one', async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(
+      LISTINGS_STORAGE_KEY,
+      JSON.stringify(SEED_LISTING_ROWS.map((row) => (row.id === 'ph3' ? { ...row, status: 'active' } : row))),
+    );
+    renderPanel();
+
+    await user.type(screen.getByRole('textbox', { name: text('li_search') }), 'Lotte');
+    await user.click(screen.getByRole('button', { name: text('li_retire') }));
+
+    const dialog = screen.getByRole('dialog', { name: text('confirm_title') });
+    expect(dialog).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: text('confirm_submit') }));
+    expect(screen.getByRole('alert').textContent).toBe(text('confirm_problem_reason_missing'));
+
+    // The row is still active: a refused dialog changes nothing (§3A.2 rule 2).
+    const saved = JSON.parse(window.localStorage.getItem(LISTINGS_STORAGE_KEY) ?? '[]') as {
+      id: string;
+      status: string;
+    }[];
+    expect(saved.find((row) => row.id === 'ph3')?.status).toBe('active');
+  });
+
+  it('retires the row and writes the reason into the audit summary', async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(
+      LISTINGS_STORAGE_KEY,
+      JSON.stringify(SEED_LISTING_ROWS.map((row) => (row.id === 'ph3' ? { ...row, status: 'active' } : row))),
+    );
+    window.localStorage.removeItem('mh-travel-admin-audit');
+    renderPanel();
+
+    await user.type(screen.getByRole('textbox', { name: text('li_search') }), 'Lotte');
+    await user.click(screen.getByRole('button', { name: text('li_retire') }));
+    const dialog = screen.getByRole('dialog', { name: text('confirm_title') });
+    await user.type(within(dialog).getByRole('textbox'), 'Shop closed permanently');
+    await user.click(screen.getByRole('button', { name: text('confirm_submit') }));
+
+    const saved = JSON.parse(window.localStorage.getItem(LISTINGS_STORAGE_KEY) ?? '[]') as {
+      id: string;
+      status: string;
+    }[];
+    expect(saved.find((row) => row.id === 'ph3')?.status).toBe('retired');
+
+    const audit = JSON.parse(window.localStorage.getItem('mh-travel-admin-audit') ?? '[]') as {
+      objectId: string;
+      summary: string;
+    }[];
+    const entry = audit.find((row) => row.objectId === 'ph3');
+    expect(entry?.summary).toContain('Shop closed permanently');
+  });
+
+  it('offers a CSV export of the filtered rows', async () => {
+    const user = userEvent.setup();
+    const blobs: Blob[] = [];
+    URL.createObjectURL = (blob: Blob) => {
+      blobs.push(blob);
+      return 'blob:test';
+    };
+    URL.revokeObjectURL = () => {};
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    renderPanel();
+
+    await user.type(screen.getByRole('textbox', { name: text('li_search') }), 'Lotte');
+    await user.click(screen.getByRole('button', { name: text('common_export_csv') }));
+
+    const body = await blobs[0].text();
+    expect(body).toContain('Lotte hotel Yangon');
+    // §3A.14: the export matches the filter, so a non-matching row is absent.
+    const other = SEED_LISTING_ROWS.find((row) => !row.name_en.includes('Lotte'))!;
+    expect(body).not.toContain(other.name_en);
   });
 });

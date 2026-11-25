@@ -32,7 +32,7 @@ What remains is the rest of §16C.3, module by module, in the §16C.1 order:
 | 4 | Booking or contact CTA per flow mode, with the voucher | **Partial.** Request records and references exist; the voucher is not built |
 | 5 | Reviews with the verification rule | **Partial.** Reviews are stored; the completed-booking check is not enforced |
 | 6 | Add the module to the search index and the notification events | **Not started** |
-| 7 | Tests: rules, RLS per role, one end-to-end booking, the route and link tests | **Partial.** 957 tests pass, including the listing rules, the step 2 screen and the seed's approval stamp, the §3A.4 permission table per role, the dashboard shell's deep links and empty state, the §16G.5 flags and the §16I layout guard; no booking test |
+| 7 | Tests: rules, RLS per role, one end-to-end booking, the route and link tests | **Partial.** 983 tests pass, including the listing rules, the step 2 screen and the seed's approval stamp, the §3A.4 permission table per role, the dashboard shell's deep links and empty state, the §16G.5 flags, the §16I layout guard and the four shared dashboard pieces (confirm, CSV, not-allowed, version conflict); no booking test |
 
 Two things must happen before step 3 can start on any module:
 

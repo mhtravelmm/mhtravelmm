@@ -14,6 +14,8 @@ import {
   type ListingRow,
   type ListingStatus,
 } from '../../lib/listingRows';
+import { ConfirmDialog, CsvExportButton } from './shared/DashboardPieces';
+import type { CsvColumn } from '../../lib/dashboardPieces';
 import {
   applyListingDraft,
   canApproveListings,
@@ -76,6 +78,20 @@ const PROBLEM_KEYS: Record<ListingProblem, TranslationKey> = {
   photo_quota_reached: 'li_problem_photo_quota_reached',
 };
 
+const CSV_COLUMNS: CsvColumn<ListingRow>[] = [
+  { header: 'id', value: (row) => row.id },
+  { header: 'name_en', value: (row) => row.name_en },
+  { header: 'name_mm', value: (row) => row.name_mm },
+  { header: 'category', value: (row) => row.category },
+  { header: 'city_id', value: (row) => row.city_id },
+  { header: 'status', value: (row) => row.status },
+  { header: 'price_from_mmk', value: (row) => row.price_from_mmk },
+  { header: 'price_from_usd', value: (row) => row.price_from_usd },
+  { header: 'photo_quota', value: (row) => row.photo_quota },
+  { header: 'first_approved_at', value: (row) => row.first_approved_at },
+  { header: 'updated_at', value: (row) => row.updated_at },
+];
+
 const PRICE_KEYS = {
   hidden: 'li_price_hidden',
   after_payment: 'li_price_after_payment',
@@ -124,6 +140,9 @@ export function ListingsPanel() {
   const [filter, setFilter] = useState<Filter>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ListingDraft | null>(null);
+  // §3A.2 rule 7: retiring a listing asks for a reason, so the audit row says
+  // why the shop left the catalog.
+  const [retiring, setRetiring] = useState<ListingRow | null>(null);
 
   const mayApprove = canApproveListings(adminRole);
   const mayEdit = canEditListing(adminRole);
@@ -155,6 +174,7 @@ export function ListingsPanel() {
     action: 'approved' | 'updated',
     noticeTitle: TranslationKey,
     noticeBody: TranslationKey,
+    reason?: string,
   ) {
     save(rows.map((row) => (row.id === next.id ? next : row)));
     // §16B.2: every admin write records one row.
@@ -164,7 +184,7 @@ export function ListingsPanel() {
       action,
       objectType: 'listing',
       objectId: next.id,
-      summary: `${next.name_en} · ${next.status}`,
+      summary: reason ? `${next.name_en} · ${next.status} · ${reason}` : `${next.name_en} · ${next.status}`,
       source: 'listings',
     });
     pushAdminNotice({
@@ -182,7 +202,7 @@ export function ListingsPanel() {
     }
   }
 
-  function setStatus(row: ListingRow, status: ListingStatus) {
+  function setStatus(row: ListingRow, status: ListingStatus, reason?: string) {
     // Approval stamps the row, which is what makes an owner's later edit stay
     // live (§9). Only staff reach this function.
     const next: ListingRow = {
@@ -199,6 +219,7 @@ export function ListingsPanel() {
       status === 'active' ? 'approved' : 'updated',
       status === 'active' ? 'li_notice_approved_title' : 'li_notice_updated_title',
       status === 'active' ? 'li_notice_approved_body' : 'li_notice_updated_body',
+      reason,
     );
   }
 
@@ -223,16 +244,20 @@ export function ListingsPanel() {
           <h1 className="mt-1 text-lg font-extrabold sm:text-3xl">{t('li_title')}</h1>
           <p className="mt-1 max-w-2xl text-sm text-slate-400">{t('li_intro')}</p>
         </div>
-        <label className="flex items-center gap-2 rounded-lg border border-[#2b527d] bg-[#0b203b] px-2.5 py-1.5">
-          <Search size={14} className="text-slate-400" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t('li_search')}
-            aria-label={t('li_search')}
-            className="min-w-0 flex-1 bg-transparent text-[11px] text-white outline-none placeholder:text-slate-500"
-          />
-        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 rounded-lg border border-[#2b527d] bg-[#0b203b] px-2.5 py-1.5">
+            <Search size={14} className="text-slate-400" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('li_search')}
+              aria-label={t('li_search')}
+              className="min-w-0 flex-1 bg-transparent text-[11px] text-white outline-none placeholder:text-slate-500"
+            />
+          </label>
+          {/* §3A.14: the export writes the filtered rows, not the whole table. */}
+          <CsvExportButton section="listings" columns={CSV_COLUMNS} rows={visible} />
+        </div>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-3">
@@ -323,7 +348,7 @@ export function ListingsPanel() {
                       {mayApprove && row.status !== 'retired' ? (
                         <button
                           type="button"
-                          onClick={() => setStatus(row, 'retired')}
+                          onClick={() => setRetiring(row)}
                           className="flex items-center gap-1 rounded border border-red-400/50 px-2 py-1 text-[10px] text-red-200 hover:bg-red-500/10"
                         >
                           <ShieldOff size={11} /> {t('li_retire')}
@@ -344,6 +369,17 @@ export function ListingsPanel() {
           </table>
         </div>
       </section>
+
+      <ConfirmDialog
+        open={retiring !== null}
+        action="retire_listing"
+        objectName={retiring?.name_en ?? ''}
+        onCancel={() => setRetiring(null)}
+        onConfirm={(reason) => {
+          if (retiring) setStatus(retiring, 'retired', reason);
+          setRetiring(null);
+        }}
+      />
 
       {draft && editingId ? (
         <section className="rounded-lg border border-[#294d76] bg-[#0b203b] p-3 shadow-xl">

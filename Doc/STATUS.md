@@ -1,6 +1,18 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 30 November 2026 (Plan §3A.4 and tickets O-05, O-60: the
+**Last audited:** 30 November 2026 (Ticket O-71, partial: the four pieces every
+dashboard section shares. `src/lib/dashboardPieces.ts` holds the rules and
+`src/features/superAdmin/shared/DashboardPieces.tsx` renders them — a
+type-to-confirm dialog that always wants a reason and, for deleting, suspending
+an owner or removing an admin, the object's typed name; a CSV exporter that
+quotes per RFC 4180, starts with a UTF-8 byte-order mark so Excel reads Myanmar,
+neutralises a cell a spreadsheet would run as a formula, and writes exactly the
+rows its caller filtered; a not-allowed state; and a version-conflict notice
+whose only action is Reload. The listing screen uses them: retiring a listing
+now asks for a reason and records it in the audit summary, and the header
+exports the filtered rows. The rest of the dashboard adopts them as O-62 to
+O-68 build each section.
+Before that, 30 November 2026 (Plan §3A.4 and tickets O-05, O-60: the
 dashboard navigation split. Every sidebar entry now has its own section id —
 `reports`, `tickets`, `payments`, `cities`, `plans`, `listings`, `reviews`,
 `search`, `announcements`, `support`, `settings` were aliases of another panel
