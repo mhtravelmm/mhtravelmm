@@ -2230,7 +2230,8 @@ absent, so a missing value can never reach the screen as a number. The card asks
 the rule, it does not re-derive it.
 
 **Where it applies.** The shared `ListingCard` (which every grid uses), and the
-page-level cards that draw their own meta row instead: `NearbyPlaceCard`,
+page-level cards that draw their own meta row instead: `NearbyPlaceCard` (later
+removed as an orphan — `/nearby` draws the shared card),
 `RentalsPage`, `PlaceDetailPage`, `RestaurantPage`, `BookShopPage`, `CityPage`
 and the Travel Plan hero. `BlogsPage` and `TravelGuidePage` already had the
 guard and were left alone.

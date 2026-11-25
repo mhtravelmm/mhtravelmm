@@ -23,9 +23,8 @@ const ALIAS_TABLE = 'search_aliases';
  *    names a target `listing`, `city`, `category` or `guide`. A listing alias and
  *    a guide alias are both a synonym to the function, which looks for the term
  *    in the query text and names an object.
- *  - a boost belongs to one index row (`kind` + `ref_id`), while the panel edits
- *    a scoring field (`listing.name`). A boost save with no chosen object stays
- *    local instead of inventing an index row.
+ *  - a boost belongs to one index row (`kind` + `ref_id`), so the panel's boost
+ *    rows carry both and every save names the object the function lifts.
  */
 
 /** The SQL kind for a panel kind: a listing and a guide are both synonyms. */
@@ -119,11 +118,14 @@ export type BoostSaveResult =
  * neither side clamps a number the Admin did not choose.
  */
 export async function saveBoostFor(
-  kind: string | null,
-  refId: string | null,
+  kind: string,
+  refId: string,
   weight: number,
 ): Promise<BoostSaveResult> {
-  if (!kind || !refId) return { ok: true, applied: 'local' };
+  // The server is the only writer: a boost with no object has nothing to lift,
+  // and with the flag off the caller keeps the weight in its own store.
+  if (!serverAvailable('search')) return { ok: true, applied: 'local' };
+  if (!kind || !refId) return { ok: false, code: 'common_error_not_found' };
   const outcome = await rpc('set_search_boost', { p_kind: kind, p_ref_id: refId, p_boost: weight });
   if (!outcome.ok) return { ok: false, code: outcome.code };
   return { ok: true, applied: 'server' };

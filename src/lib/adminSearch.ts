@@ -44,21 +44,29 @@ export const searchAliases = createCollection<SearchAliasRow>({
 export const BOOST_MIN = -20;
 export const BOOST_MAX = 50;
 
+/**
+ * §16H.7 and §16H.11: a boost belongs to **one index row**, which the server
+ * names by `kind` and `ref_id` — `set_search_boost(p_kind, p_ref_id, p_boost)`.
+ * It is not a weight on a scoring field, so the row carries the object it lifts
+ * and the id the function takes; a row with no object could never be sent.
+ */
 export interface SearchBoostRow {
   id: string;
-  /** The listing category, city or field the weight applies to. */
-  key: string;
+  /** The index kind, the first argument of `set_search_boost`. */
+  kind: string;
+  /** The object's id or slug inside that kind, the second argument. */
+  refId: string;
   label: string;
   weight: number;
   updated_at: string;
   updated_by: string;
 }
 
+/** Seeded from real index rows, so every row can be sent to the function. */
 export const SEED_BOOSTS: SearchBoostRow[] = [
-  { id: 'bo-1', key: 'listing.name', label: 'Listing name', weight: 20, updated_at: '2026-10-02T02:00:00.000Z', updated_by: 'Super Admin' },
-  { id: 'bo-2', key: 'listing.city', label: 'City', weight: 10, updated_at: '2026-10-02T02:00:00.000Z', updated_by: 'Super Admin' },
-  { id: 'bo-3', key: 'listing.description', label: 'Description', weight: 0, updated_at: '2026-10-02T02:00:00.000Z', updated_by: 'Super Admin' },
-  { id: 'bo-4', key: 'blog.title', label: 'Blog title', weight: 5, updated_at: '2026-10-02T02:00:00.000Z', updated_by: 'Super Admin' },
+  { id: 'bo-1', kind: 'hotels', refId: 'ph1', label: 'Sedona hotel Yangon', weight: 20, updated_at: '2026-10-02T02:00:00.000Z', updated_by: 'Super Admin' },
+  { id: 'bo-2', kind: 'attractions', refId: 'ta1', label: 'Shwedagon pagoda', weight: 10, updated_at: '2026-10-02T02:00:00.000Z', updated_by: 'Super Admin' },
+  { id: 'bo-3', kind: 'restaurants', refId: 'pr1', label: 'The Rangoon house', weight: 0, updated_at: '2026-10-02T02:00:00.000Z', updated_by: 'Super Admin' },
 ];
 
 export const searchBoosts = createCollection<SearchBoostRow>({
@@ -68,7 +76,9 @@ export const searchBoosts = createCollection<SearchBoostRow>({
   isRow: (value): value is SearchBoostRow => {
     if (!value || typeof value !== 'object') return false;
     const row = value as Partial<SearchBoostRow>;
-    return typeof row.id === 'string' && typeof row.key === 'string' && typeof row.weight === 'number';
+    // A stored row from the old field-keyed shape is not a boost we can send,
+    // so it is dropped rather than shown with a weight that does nothing.
+    return typeof row.id === 'string' && typeof row.kind === 'string' && typeof row.refId === 'string' && typeof row.weight === 'number';
   },
   normalize: (row, seed) => ({ ...(seed ?? row), ...row }),
 });

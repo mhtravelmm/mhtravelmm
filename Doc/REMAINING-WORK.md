@@ -53,7 +53,10 @@ fix.
 - **Search tuning (O-52)** has its rules in `src/lib/adminSearch.ts` but no
   server: `search_aliases`, `set_search_boost` and `get_search_report` wait on
   M-50 and M-66. The page's `suggest()` and the alias table read the same seed
-  rows, so an Admin edit will move both once the table exists.
+  rows, so an Admin edit will move both once the table exists. Boost rows now
+  carry the index object they lift (`kind` + `refId`), so a save sends
+  `set_search_boost(p_kind, p_ref_id, p_boost)` the moment the function exists;
+  nothing is sent as `null, null`.
 - **`search_log` (§16H.11)** is not written: no page records a query yet, so the
   report has nothing to read. The stored text is already the normalized query —
   `rememberSearch()` keeps the same form — so the writer can reuse it.

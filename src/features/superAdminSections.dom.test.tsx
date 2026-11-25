@@ -9,6 +9,7 @@ import { SearchTuningPanel } from './superAdmin/SearchTuningPanel';
 import { SettingsPanel } from './superAdmin/SettingsPanel';
 import { renderAt } from '../test/renderWithProviders';
 import { translatePair } from '../lib/translations';
+import { SEED_BOOSTS } from '../lib/adminSearch';
 
 /**
  * Plan §3A.2 rules 4 and 7, §3A.5, §3A.6, §3A.8, §3A.9, §3A.12 and §3A.13,
@@ -163,13 +164,25 @@ describe('Search tuning (O-67, §3A.12)', () => {
     renderAt('/super-admin?section=search', <SearchTuningPanel />);
     await user.click(screen.getByRole('button', { name: text('sr_tab_boosts') }));
 
-    const field = screen.getByLabelText('Listing name');
+    // The rows name a real index object, because `set_search_boost` takes one.
+    const field = screen.getByLabelText('Sedona hotel Yangon');
     await user.clear(field);
     await user.type(field, '99');
 
     const row = field.closest('tr') as HTMLElement;
     expect(within(row).getByText(text('sr_boost_problem'))).toBeTruthy();
     expect((within(row).getByRole('button', { name: text('sec_save') }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('names the index object a boost lifts, so a save can be sent', async () => {
+    const user = userEvent.setup();
+    renderAt('/super-admin?section=search', <SearchTuningPanel />);
+    await user.click(screen.getByRole('button', { name: text('sr_tab_boosts') }));
+
+    for (const row of SEED_BOOSTS) {
+      expect(screen.getByText(`${row.kind}/${row.refId}`)).toBeTruthy();
+      expect((screen.getByLabelText(row.label) as HTMLInputElement).value).toBe(String(row.weight));
+    }
   });
 });
 

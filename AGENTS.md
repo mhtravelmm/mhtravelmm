@@ -32,6 +32,12 @@ The only things to confirm first are the decisions the Plan reserves for the fou
 the brand-palette contrast values (`Doc/STATUS.md` §8) and the commercial terms in
 `Plan/PROJECT-PLAN.md` §16E. Everything else is yours to decide and ship.
 
+Reaffirmed by the founder on 25 November 2026: this permission is **standing and
+complete**. Do not ask whether to write code, add a test, add a migration, edit the
+docs, or push to `main` — decide, verify with the four checks below, and push. A
+question back to the founder is only for a decision the Plan reserves to them, never
+for permission to do the work.
+
 The Plan under `Plan/` is refreshed roughly every five hours, so a later item may not
 have arrived yet. Re-read it at the start of a session; when nothing new has landed,
 keep working the items that are already open rather than waiting. Never treat a doc

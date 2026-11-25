@@ -133,6 +133,37 @@ describe('the Nearby page (§16H.9)', () => {
     await waitFor(() => expect(url()).not.toContain('quick='));
   });
 
+  it('badges each visible card with the open state the function reported', async () => {
+    render();
+    await waitFor(() => expect(nearest().textContent).not.toContain(text('nearby_no_results')));
+
+    // §16H.9 puts `open_now` and `closes_at` on every item, so the badge reads
+    // the answer rather than running a second clock on the client. The page
+    // draws the six nearest, so the expectation is built from those six.
+    const visible = previewNearby({
+      lat: FALLBACK_LOCATION.point.lat,
+      lng: FALLBACK_LOCATION.point.lng,
+      radiusKm: 10,
+      kinds: NEARBY_KINDS,
+      limit: 50,
+    })
+      .items.sort((a, b) => a.distance_km - b.distance_km || (b.rating ?? 0) - (a.rating ?? 0))
+      .slice(0, 6);
+
+    const section = nearest().textContent ?? '';
+    for (const item of visible) {
+      if (item.open_now && item.closes_at) {
+        expect(section).toContain(text('nearby_open_until').replace('{time}', item.closes_at));
+      } else if (item.open_now) {
+        expect(section).toContain(text('nearby_open_now_label'));
+      } else if (item.closes_at) {
+        expect(section).toContain(text('nearby_closed_label'));
+      }
+      // An unknown schedule carries no badge, so a card never claims a state
+      // the function did not report.
+    }
+  });
+
   it('says no place matches when the filters leave nothing', async () => {
     const user = userEvent.setup();
     render();

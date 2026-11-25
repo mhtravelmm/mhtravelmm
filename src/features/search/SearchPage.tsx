@@ -281,7 +281,9 @@ export function SearchPage() {
   const rotatingCities = useMemo(() => {
     const start = cityWindow.current % CITY_IDS.length;
     return Array.from({ length: CITY_WINDOW_SIZE }, (_, offset) => CITY_IDS[(start + offset) % CITY_IDS.length]);
-    // `cityTick` is the clock: the window moves when it changes.
+    // `cityTick` is the clock: the window moves when it changes. The start
+    // offset lives in a ref, so the linter cannot see why this must re-run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cityTick]);
 
   const interpreted = result?.interpreted;

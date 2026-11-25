@@ -96,8 +96,13 @@ const chipClass = (active: boolean) =>
       : 'border-border bg-bg text-text-secondary hover:border-brand-blue/30 hover:bg-bg-cardAlt'
   }`;
 
-/** One `NearbyItem` as the shared card draws it. */
-function toCardListing(item: NearbyItem): CardListing {
+/**
+ * One `NearbyItem` as the shared card draws it. §16H.9 puts `open_now` and
+ * `closes_at` on the item, so the badge names the state rather than leaving the
+ * reader to compare a time: an open place says until when, and a closed one says
+ * so plainly instead of showing nothing.
+ */
+function toCardListing(item: NearbyItem, t: (key: TranslationKey) => string): CardListing {
   return {
     id: item.ref_id,
     title: item.title,
@@ -108,7 +113,17 @@ function toCardListing(item: NearbyItem): CardListing {
     isFavorited: false,
     views: 0,
     href: item.href,
+    badgeLabel: openBadge(item, t),
   };
+}
+
+/** The card's corner badge: open until a time, open, or closed. */
+function openBadge(item: NearbyItem, t: (key: TranslationKey) => string): string | undefined {
+  if (item.open_now && item.closes_at) {
+    return t('nearby_open_until').replace('{time}', item.closes_at);
+  }
+  if (item.open_now) return t('nearby_open_now_label');
+  return item.closes_at ? t('nearby_closed_label') : undefined;
 }
 
 export function NearbyPage() {
@@ -330,7 +345,7 @@ export function NearbyPage() {
         {visible.length > 0 ? (
           <div className="grid grid-cols-2 justify-items-center gap-2.5 sm:grid-cols-3 lg:grid-cols-5" style={cardGridStyle(5, 'md')}>
             {visible.map((item) => (
-              <ListingCard key={`${item.kind}-${item.ref_id}`} listing={toCardListing(item)} size="md" />
+              <ListingCard key={`${item.kind}-${item.ref_id}`} listing={toCardListing(item, t)} size="md" />
             ))}
           </div>
         ) : <EmptyState text={t('nearby_no_results')} />}
@@ -368,7 +383,7 @@ export function NearbyPage() {
         <div className="flex gap-2 overflow-x-auto pb-2">
           {visiblePopular.map((item) => (
             <div key={`popular-${item.ref_id}`} className="w-36 shrink-0">
-              <ListingCard listing={toCardListing(item)} size="sm" />
+              <ListingCard listing={toCardListing(item, t)} size="sm" />
             </div>
           ))}
         </div>

@@ -114,8 +114,8 @@ describe('the seam with the flag off', () => {
     expect(outcome).toEqual({ ok: true, row });
   });
 
-  it('applies a boost with no chosen object locally', async () => {
-    expect(await saveBoostFor(null, null, 10)).toEqual({ ok: true, applied: 'local' });
+  it('keeps a boost locally while the flag is off, naming the object it lifts', async () => {
+    expect(await saveBoostFor('hotels', 'ph1', 10)).toEqual({ ok: true, applied: 'local' });
   });
 
   it('reads the report from the preview callback', async () => {

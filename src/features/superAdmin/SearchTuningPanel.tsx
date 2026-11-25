@@ -18,6 +18,7 @@ import {
   type AliasKind,
   type AliasProblem,
   type SearchAliasRow,
+  type SearchBoostRow,
 } from '../../lib/adminSearch';
 import {
   readAliasRows,
@@ -177,15 +178,17 @@ export function SearchTuningPanel() {
     if (!boostValid(weight)) return;
     const row = boosts.rows.find((entry) => entry.id === id);
     if (!row) return;
-    const next = { ...row, weight, updated_at: new Date().toISOString(), updated_by: user?.name ?? 'Super Admin' };
-    const outcome = await saveBoostFor(null, null, weight);
+    // §16H.11: `set_search_boost` takes the object, so the panel sends the row's
+    // kind and ref id. A row with neither is refused above, never sent as nulls.
+    const outcome = await saveBoostFor(row.kind, row.refId, weight);
     if (!outcome.ok) {
       setError(outcome.code);
       return;
     }
     setError(null);
+    const next = { ...row, weight, updated_at: new Date().toISOString(), updated_by: user?.name ?? 'Super Admin' };
     boosts.save(boosts.rows.map((entry) => (entry.id === id ? next : entry)));
-    audit({ action: 'updated', objectType: 'search_boost', objectId: id, summary: `${row.key} · ${row.weight} → ${weight}`, source: 'search' });
+    audit({ action: 'updated', objectType: 'search_boost', objectId: id, summary: `${row.kind}/${row.refId} · ${row.weight} → ${weight}`, source: 'search' });
     pushAdminNotice({ title: t('sr_notice_boost_title'), message: t('sr_notice_boost_body').replace('{name}', row.label).replace('{value}', String(weight)) });
   }
 
@@ -387,7 +390,7 @@ export function SearchTuningPanel() {
   );
 }
 
-function BoostRow({ row, onSave }: { row: { id: string; key: string; label: string; weight: number; updated_at: string; updated_by: string }; onSave: (id: string, weight: number) => void }) {
+function BoostRow({ row, onSave }: { row: SearchBoostRow; onSave: (id: string, weight: number) => void }) {
   const { t } = useLanguage();
   const [value, setValue] = useState(row.weight);
   const valid = boostValid(value);
@@ -395,7 +398,7 @@ function BoostRow({ row, onSave }: { row: { id: string; key: string; label: stri
     <TableRow>
       <Td>
         <span className="font-semibold text-white">{row.label}</span>
-        <span className="block font-mono text-[10px] text-slate-500">{row.key}</span>
+        <span className="block font-mono text-[10px] text-slate-500">{row.kind}/{row.refId}</span>
       </Td>
       <Td>
         <input
