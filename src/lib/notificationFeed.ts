@@ -3,6 +3,7 @@ import type { NotificationItem } from '../data/notifications';
 import type { AdminRole } from './adminRoles';
 import type { LocalizedTextLike } from './translationCache';
 import { readScoped, writeScoped } from './userScope';
+import { readRemoteFeed } from './feedApi';
 
 /**
  * Plan §16B.3: one service, a shared `notification_feed` and per-user read
@@ -231,6 +232,22 @@ export function useFeedRows(viewer: FeedViewer): {
       window.removeEventListener(CHANGED_EVENT, sync);
       window.removeEventListener('storage', sync);
     };
+  }, [key]);
+
+  // O-02: `notification_feed` is the shared table once Supabase can answer. The
+  // two sources are merged by id rather than replaced, because a row written in
+  // this browser and not yet delivered to the table is still worth showing. A
+  // `null` answer means the table could not be read, so nothing changes.
+  useEffect(() => {
+    let active = true;
+    void readRemoteFeed().then((remote) => {
+      if (!active || !remote) return;
+      const byId = new Map<string, FeedRow>();
+      for (const row of remote) byId.set(row.id, row);
+      for (const row of readFeed()) if (!byId.has(row.id)) byId.set(row.id, row);
+      setRows([...byId.values()]);
+    });
+    return () => { active = false; };
   }, [key]);
 
   const visible = useMemo(() => feedFor(rows, viewer), [rows, viewer]);

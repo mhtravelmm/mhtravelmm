@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { isSupabaseConfigured, supabase } from './supabase';
 import type { AdminRole } from './adminRoles';
-import { adminRoleFrom, normalizeStoredRole } from './roleMapping';
+import { adminRoleFrom, normalizeStoredRole, roleFromProfile } from './roleMapping';
 
 export type AuthRole = 'traveler' | 'super_admin' | 'owner_admin' | 'admin_staff';
 export type OAuthProvider = 'google' | 'facebook';
@@ -86,12 +86,9 @@ function readSession(): AuthUser | null {
 function emitAuthChange() { window.dispatchEvent(new Event(AUTH_EVENT)); }
 function clearLocalSession() { window.localStorage.removeItem(SESSION_KEY); window.localStorage.removeItem('mh-travel-authenticated'); }
 function mapRole(value: unknown): AuthRole {
-  const role = adminRoleFrom(value);
-  if (role === 'Super Admin') return 'super_admin';
-  if (role === 'Owner Admin') return 'owner_admin';
-  // Plan §3: the remaining six product roles share the admin workspace, so any
-  // recognised staff role signs in as one instead of falling back to `traveler`.
-  return role ? 'admin_staff' : 'traveler';
+  // Plan §16G.5 and ticket O-01: one mapping, in `roleMapping.ts`, so the
+  // coarse role and the product role a profile row yields cannot disagree.
+  return roleFromProfile(value).authRole;
 }
 function setLocalSession(user: StoredUser, setUser: (user: AuthUser) => void) { const safeUser = publicUser(user); window.localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser)); window.localStorage.setItem('mh-travel-authenticated', 'true'); setUser(safeUser); emitAuthChange(); }
 

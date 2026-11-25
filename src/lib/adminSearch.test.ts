@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BOOST_MAX, BOOST_MIN, aliasProblem, boostValid, searchReport, type SearchAliasRow } from './adminSearch';
+import { BOOST_MAX, BOOST_MIN, aliasProblem, boostValid, searchReport, statsFromLog, type SearchAliasRow } from './adminSearch';
 
 /**
  * Plan §16H.11 and §3A.12. An alias that duplicates another would make the
@@ -68,5 +68,30 @@ describe('the search report (§16H.11)', () => {
       { query: 'b', results: 50, clicks: 15 },
     ]);
     expect(report.ctr).toBe(20);
+  });
+});
+
+describe('the log as report rows (§16H.11)', () => {
+  it('folds repeated searches into one row per query', () => {
+    const stats = statsFromLog([
+      { q_normalized: 'bagan', result_count: 3, clicked_ref: null },
+      { q_normalized: 'bagan', result_count: 3, clicked_ref: 'cities:bagan' },
+      { q_normalized: 'inle', result_count: 0, clicked_ref: null },
+    ]);
+    expect(stats).toEqual([
+      { query: 'bagan', results: 6, clicks: 1 },
+      { query: 'inle', results: 0, clicks: 0 },
+    ]);
+  });
+
+  it('counts only a row that names what was clicked', () => {
+    const stats = statsFromLog([{ q_normalized: 'hotels', result_count: 5, clicked_ref: '' }]);
+    expect(stats[0].clicks).toBe(0);
+  });
+
+  it('feeds the report: a query with no results lands in the zero list', () => {
+    const report = searchReport(statsFromLog([{ q_normalized: 'hot air balloon', result_count: 0, clicked_ref: null }]));
+    expect(report.zero.map((row) => row.query)).toEqual(['hot air balloon']);
+    expect(report.ctr).toBe(0);
   });
 });

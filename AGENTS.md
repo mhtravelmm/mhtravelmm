@@ -9,6 +9,10 @@ most traveler features run on seeded data (`src/data/*`) until the backend wirin
 - `npm test` — vitest; guards seed links, the route manifest, and the domain rules.
 - `npm run lint` — 0 errors; 7 warnings are pre-existing.
 - `npm run build` — Vite production build.
+- `./scripts/verify-migrations.sh` — applies every `SQL/` file to a throwaway
+  `postgres:16-alpine` and asserts the Plan's database-side acceptance rules
+  (§9, §16C.3 and §16H.13). Needs Docker. Run it after touching `SQL/`; it is the
+  only check that reads the functions rather than the client's twin of them.
 - Dev server on `http://localhost:5173`. Browser checks use `puppeteer-core` with
   `/usr/bin/chromium`; axe-core is available in `node_modules` for a11y passes.
 
@@ -55,6 +59,20 @@ claim as true without checking the code.
   mock can still break in the app. Only `*.dom.test.tsx` gets jsdom, so keep node-only
   logic in the plain `*.test.ts` files. Break the code once and watch the new test fail
   before committing it — a test that cannot fail guards nothing.
+- **Search asks one seam, and the seam answers in one shape.** `src/lib/searchApi.ts`
+  is the only place that knows whether `search_all` or the preview answered:
+  `searchRpcArgs()` spells the function's parameters, `previewPayload()` returns the
+  preview's answer in the function's own envelope, and `fromRemoteSearch()` maps that
+  envelope to one `SearchResult`. Never match text in a page or read the seed modules
+  directly — `src/lib/searchIndex.ts` owns the index, the scoring and the sorts, and
+  `src/lib/searchText.ts` owns `normalizeSearchText()`. A refusal travels as an
+  `ErrorCode` for `t()`, never as an empty list, which would read as "no matches".
+  A new string is `mm` and `en` in `translations.ts`, and a new behaviour gets a test:
+  node for the rules, `*.dom.test.tsx` for the page.
+  Two rules inside the index: a row is one object, so `buildSearchIndex()` keys on
+  both `id` and `href` (the Populars row and the catalogue row share a URL); and
+  `searchAll()` promotes a category query plus an explicit `city` to
+  `city_category`, so a city card drills in instead of returning the same cards.
 - **`public/manus-routes.json` must match `allPaths()`.** Insert the new entry in place;
   do not re-sort the file.
 - **Every UI string goes through `t()`**, and both `mm` and `en` must be filled. The

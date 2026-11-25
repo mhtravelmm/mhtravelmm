@@ -97,9 +97,9 @@ export function ShopTemplatesPanel() {
   return (
     <div className="mx-auto max-w-[1150px] space-y-3">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">{t('st_kicker')}</p>
-        <h1 className="mt-1 text-lg font-extrabold sm:text-3xl">{t('st_title')}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-slate-400">{t('st_intro')}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">{t('shop_tpl_kicker')}</p>
+        <h1 className="mt-1 text-lg font-extrabold sm:text-3xl">{t('shop_tpl_title')}</h1>
+        <p className="mt-1 max-w-2xl text-sm text-slate-400">{t('shop_tpl_intro')}</p>
       </div>
 
       {notice && <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-200">{notice}</p>}

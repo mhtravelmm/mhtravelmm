@@ -159,8 +159,8 @@ export function RentalVoucherPage() {
       <article className="overflow-hidden rounded-2xl border border-border bg-bg-card shadow-sm">
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-bg-cardAlt px-4 py-3">
           <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-brand-blue">{t('rv_kicker')}</p>
-            <h1 className="mt-0.5 text-lg font-extrabold text-text-primary">{t('rv_title')}</h1>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-brand-blue">{t('voucher_kicker')}</p>
+            <h1 className="mt-0.5 text-lg font-extrabold text-text-primary">{t('voucher_title')}</h1>
             <p className="mt-1 font-mono text-xs text-text-secondary">{order.requestCode}</p>
           </div>
           <div className="flex items-center gap-3">

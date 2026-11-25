@@ -1,6 +1,34 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 1 December 2026 (Plan §3A.5 to §3A.14, tickets O-61 to O-68,
+**Last audited:** 2 December 2026 (Plan §16H, tickets O-50 and O-51, partial
+Search and Nearby on one seam. `src/lib/searchText.ts` is the shared normalizer —
+Zawgyi detection and conversion, zero-width removal, Myanmar mark ordering,
+Myanmar digits, the separator set — with the Plan's test vectors in
+`searchText.test.ts`. `src/lib/searchIndex.ts` builds one row per object with
+`lat`/`lng`, lifts a city alias and a category alias out of the query
+longest-first, scores on the §16H.7 table, sorts on `relevance`, `rating`,
+`nearest` or `newest`, and counts per kind after filtering so a chip never
+promises more than its list. `src/lib/searchApi.ts` is the one seam: it spells
+`search_all`'s parameters, returns the preview's answer in the same envelope the
+function returns, maps that envelope back to one `SearchResult`, refuses an
+over-long query and `nearest` without a point as a code for `t()`, and goes
+through `rpcOrLocal('search', …)` so `VITE_BACKEND_SEARCH` off keeps the
+preview. `SearchPage.tsx` holds its state in `?q=&city=&kind=&sort=`, debounces
+250 ms without firing mid-composition, suggests after two characters, keeps the
+last eight searches on the device, shows the interpreted city and kind as
+removable chips, turns a category query into city cards rotating every ten
+seconds, and offers "did you mean" with popular cities and categories on zero
+results. `src/lib/location.ts` holds the city centres, the haversine distance and
+the remembered reader location; GPS is asked for silently and a refusal leaves
+the Yangon centre. Checking the running page found four defects the unit tests
+had missed, all fixed and now guarded: a single mistyped letter did not name its
+alias (`hotle` ranked a motorbike rental first), a city card on a category query
+did not drill in, one hotel appeared twice because two seed ids share a URL, and
+every Yangon hotel sat at the same 1.7 km so `nearest` was one flat tie. Criteria
+1, 2, 4, 5, 6, 8, 10, 12 and 13 of §16H.13 are checked; 3, 7, 9 and 11 need the
+database and wait for M-50. 1220 tests across 96 files, typecheck, lint and build
+clean.
+Before that, 1 December 2026 (Plan §3A.5 to §3A.14, tickets O-61 to O-68,
 O-70: the twelve Super Admin sections. Each sidebar entry now has its own panel
 instead of a placeholder: Overview computes every KPI, chart and Needs attention
 count from the stores (`src/lib/adminOverview.ts`), Users, Bookings, Payments,
@@ -193,7 +221,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/` Home | **PREVIEW** | 12 sections, seed data, ad slots wired to local pipeline |
 | `/cities` | **PREVIEW** | City grid + category explorer |
 | `/cities/:cityId` | **PREVIEW** | Hero, facts, recommendations, category explorer |
-| `/nearby` | **PREVIEW** | Geolocation with Yangon fallback, 13 categories |
+| `/nearby` | **PREVIEW** | §16H.9 on one seam: `src/lib/nearbyApi.ts` spells `search_nearby`'s parameters and answers from the seeded index while `VITE_BACKEND_SEARCH` is off, so the page no longer reads `NEARBY_LISTINGS`. GPS is asked for silently with the Yangon centre as fallback, the 13 categories and the Quick Filters (distance bands, Top Rated, Open Now) work inside the function's answer, and Open Now comes from `open_time`/`close_time` in Myanmar Time with `closes_at` on the card. The List/Map toggle is in: `MapView.tsx` imports Leaflet inside an effect, so the list view ships none of it, and it draws the returned pins as circle markers. `TILE_URL` is empty until the launch-readiness tile decision (§16H.9, Phase 6), so the pins sit on a plain background rather than an unagreed provider. What is left is the applied `search_nearby` and that tile choice |
 | `/rentals` | **PARTIAL** | Categories come from `src/data/rentalCatalog.ts` with the Plan §8.2 decisions applied: Yangon offers no motorbike or scooter, self-drive car is retired, car types and bicycle types are data. The selector lists only what the chosen city offers. A signed-in traveler submits an order with a `RNT-YYMMDD-####` code and opens `/account/bookings/<code>` for the printable voucher. Rental Admin → Orders drives the lifecycle (accept, record payment, complete, expire, cancel), filters by status/city/type/date, searches code, name and phone, and requires a reason to cancel. The Rental Admin panel covers all seven Plan §8.8 sections: catalog, availability, rates by city × type × variant with effective dates and history, branches with address and phone, published terms versions, and settings. Rental notifications fire on every status change: Requested to staff, Accepted/Paid/Expired/Cancelled to the traveler, reschedules back to staff. Rental Admin → Rental reports adds status, city, type and day tallies, paid conversion, median accept time, settled value and a CSV export. Every catalog save and every order status change writes an audit-log row, the five-minute expiry job moves unpaid Accepted orders to Expired, and a travel guide's lodging, food and travel costs are added as lines on the order (§16). Order submission now mirrors the §8.7 server rules on the client: `src/lib/rentalOrderRules.ts` validates city availability, variant, branch, the Myanmar Time start, minimum days, name, phone, address, participants, terms version and the per-account hourly limit, and recomputes the total from the catalog so a tampered form cannot create a cheap order. Every rejection returns a `rental_error_*` code that the page shows in MM and EN — all 23 codes the migrations raise now have both texts, guarded by `src/lib/rentalErrorMessages.test.ts`. The voucher lookup is scoped to the viewer, so a guessed `/account/bookings/<code>` no longer reveals another traveller's order, and the reschedule notice and the request-code day are counted in Myanmar Time. Still browser storage rather than the catalog and order tables; migrations are committed but not applied |
 | `/restaurants` | **PREVIEW** | Menu, category filter, reviews, photos, CTA links |
 | `/restaurants/:id` | **PREVIEW** | Resolves the record from `:id` |
@@ -211,7 +239,7 @@ by `src/routes.manifest.test.ts`. Every page below renders without a crash.
 | `/blogs` | **PREVIEW** | Listing + in-page reader via `?story=`; reads what Admin published through `src/lib/contentReader.ts`, so a post the `publish_due_content` job releases appears without a reload |
 | `/blogs/:storyId` | **DONE** | Legacy path redirects to `/blogs?story=:id` |
 | `/foreign-tourist` | **DONE** | Post-arrival help: emergency numbers, SIM, etiquette, money (Plan §13) |
-| `/search` | **PREVIEW** | City/category/combined query modes |
+| `/search` | **PREVIEW** | §16H on the seeded index: the shared normalizer with the Plan's vectors, city / category / combined / text modes, interpreted chips, per-kind counts, suggestions after two characters, the last eight searches on the device, `?q=&city=&kind=&sort=` in the URL, "did you mean", and a location bar that falls back to the Yangon centre. `src/lib/searchApi.ts` is the seam, so `VITE_BACKEND_SEARCH` on swaps in `search_all` without touching the page. Criteria 3, 7, 9 and 11 of §16H.13 need the database |
 | `/favorites` | **PREVIEW** | localStorage-backed |
 | `/account` | **PREVIEW** | Dashboard shell, sample state |
 | `/notifications` | **PREVIEW** | All/Unread/Read filters, Today/Yesterday/Earlier by Myanmar day, age translated in the reader's language |

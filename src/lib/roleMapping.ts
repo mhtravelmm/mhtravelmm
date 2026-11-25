@@ -52,3 +52,33 @@ export function normalizeStoredRole(role: unknown): string | undefined {
 export function isAdminRole(value: unknown): boolean {
   return adminRoleFrom(value) !== undefined;
 }
+
+/**
+ * Plan §16G.5, ticket O-01. The coarse role the app signs a person in as. It is
+ * derived from the product role, never stored separately, so a profile row
+ * cannot disagree with the workspace it opens.
+ */
+export type AuthRoleName = 'traveler' | 'super_admin' | 'owner_admin' | 'admin_staff';
+
+export interface RoleFromProfile {
+  authRole: AuthRoleName;
+  /** Absent for a traveler; the eight product roles otherwise. */
+  adminRole?: AdminRole;
+}
+
+/**
+ * The one mapping from a `profiles.role` value to both vocabularies (§16G.5).
+ * `content_admin` is not a database value and is retired here: a row that still
+ * holds it resolves to no product role, so it signs in as a traveler instead of
+ * silently gaining the whole admin workspace.
+ */
+export function roleFromProfile(value: unknown): RoleFromProfile {
+  if (typeof value === 'string' && value.trim().toLowerCase() === 'traveler') {
+    return { authRole: 'traveler' };
+  }
+  const adminRole = adminRoleFrom(value);
+  if (!adminRole) return { authRole: 'traveler' };
+  if (adminRole === 'Super Admin') return { authRole: 'super_admin', adminRole };
+  if (adminRole === 'Owner Admin') return { authRole: 'owner_admin', adminRole };
+  return { authRole: 'admin_staff', adminRole };
+}

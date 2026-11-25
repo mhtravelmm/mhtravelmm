@@ -16,7 +16,7 @@ where it contradicts itself. It does not change any code or any plan text.
 | Result | Count |
 |---|---|
 | Plan claim **confirmed** by code | 5 (§2 rows 1, 2, 6, 8, 9) |
-| Plan claim **stale** (code moved on) | 10 (§3.1–§3.10, one each) |
+| Plan claim **stale** (code moved on) | 11 (§3.1–§3.11, one each) |
 | Plan **internally contradictory** | 2 (§4.1 resolved 22 Nov; §4.2 still open) |
 | Plan claim **still open / accurate as a gap** | 2 (one narrowed to reads) |
 | Server functions behind the dashboard sections | 0 of 11 applied (M-60 to M-69) |
@@ -194,6 +194,33 @@ so the two numbers cannot diverge.
 `"tomorrow"` sorted after every real day and widened the window silently.
 
 **Fix**: both ends must now match `YYYY-MM-DD` before the comparison.
+
+---
+
+### 3.11 "§16H.2 As built (PREVIEW)" — stale since 2 December 2026
+
+**Plan says** (§16H.2): the page searches an in-memory `SEARCH_ENTRIES`, lower-
+cases the query, turns `,` and `၊` into spaces, applies a `CATEGORY_ALIASES` /
+`CITY_ALIASES` filter, and does a plain substring test. It has "no ranking, no
+typo tolerance, no Myanmar-specific handling, no backend, no suggestions and no
+recent searches".
+
+**Code now**: `SEARCH_ENTRIES` is gone. `src/lib/searchText.ts` is the shared
+normalizer of §16H.5 (NFC, Zawgyi conversion, zero-width removal, Myanmar mark
+ordering, Myanmar digits, the separator set) with the Plan's vectors as tests;
+`src/lib/searchIndex.ts` builds one row per object and scores on the §16H.7
+table with trigram similarity, so `hotle` finds hotels (a word one edit from an
+alias names it, §16H.6 "common variants"); the aliases are
+`SEED_SEARCH_ALIASES` data, lifted out longest-first and returned as
+`interpreted`;
+`src/lib/searchApi.ts` is the seam onto `search_all`, gated by
+`VITE_BACKEND_SEARCH`; suggestions after two characters, the last eight
+searches on the device, the 250 ms debounce and the "did you mean" offer are in
+`SearchPage.tsx`.
+
+**Still true**: no backend, because `search_all` is not applied, so the page
+reads the seeded index. §16H.2 should be rewritten to name the seam and to say
+that the preview answers in the function's own envelope.
 
 ---
 

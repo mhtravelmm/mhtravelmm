@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { RefreshCw, Search, Plus } from 'lucide-react';
 import { useLanguage } from '../../lib/i18n';
 import { useAuth } from '../../lib/auth';
 import { useAuditRecorder } from '../../lib/adminAudit';
@@ -14,11 +14,20 @@ import {
   searchAliases,
   searchBoosts,
   searchReport,
+  statsFromLog,
   type AliasKind,
   type AliasProblem,
   type SearchAliasRow,
 } from '../../lib/adminSearch';
+import {
+  readAliasRows,
+  readSearchReport,
+  rebuildIndex,
+  saveAliasRow,
+  saveBoostFor,
+} from '../../lib/searchTuningApi';
 import { newId, useCollection } from '../../lib/collection';
+import { recentLogRows, searchLog } from '../../lib/searchLog';
 import { CsvExportButton, NotAllowedState } from './shared/DashboardPieces';
 import type { CsvColumn } from '../../lib/dashboardPieces';
 import {
@@ -78,19 +87,56 @@ export function SearchTuningPanel() {
   const audit = useAuditRecorder();
   const aliases = useCollection(searchAliases);
   const boosts = useCollection(searchBoosts);
+  const log = useCollection(searchLog);
 
   const [tab, setTab] = useState<'aliases' | 'boosts' | 'report'>('aliases');
   const [draft, setDraft] = useState<{ id: string; term: string; target: string; kind: AliasKind } | null>(null);
+  const [error, setError] = useState<TranslationKey | null>(null);
+  const [rebuilt, setRebuilt] = useState<number | null>(null);
+  const [report, setReport] = useState(() => searchReport(statsFromLog(recentLogRows(log.rows))));
 
   const allowed = canOpenSection(adminRole, 'search' as WorkspaceSection);
   const problem = draft ? aliasProblem(draft, aliases.rows) : null;
-  // The report reads `search_events`, which the server fills; no events means
-  // an empty table rather than invented numbers (§3A.2 rule 4).
-  const report = searchReport([]);
+
+  // §16H.11: the report is the server's when `get_search_report` answers, and
+  // the browser log's otherwise. No events means no rows, never a sample
+  // (§3A.2 rule 4) — an empty log still shows an empty table.
+  useEffect(() => {
+    if (!allowed) return;
+    let active = true;
+    const today = new Date().toISOString().slice(0, 10);
+    const from = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    void readSearchReport(from, today, () => {
+      const preview = searchReport(statsFromLog(recentLogRows(log.rows)));
+      return { rows: preview.top, ctr: preview.ctr };
+    }).then((outcome) => {
+      if (!active) return;
+      if (!outcome.ok) {
+        setError(outcome.code);
+        return;
+      }
+      setReport({ top: outcome.rows, zero: report.zero, ctr: outcome.ctr });
+    });
+    return () => { active = false; };
+    // `report.zero` is deliberately not a dependency: re-reading on every log
+    // write would refetch the report for each keystroke in the search box.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowed, log.rows.length]);
+
+  // The alias table is the server's when M-50 is applied and the flag is on.
+  useEffect(() => {
+    if (!allowed) return;
+    let active = true;
+    void readAliasRows().then((rows) => {
+      if (active && rows) aliases.save(rows);
+    });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allowed]);
 
   if (!allowed) return <NotAllowedState />;
 
-  function saveAlias() {
+  async function saveAlias() {
     if (!draft || problem) return;
     const exists = aliases.rows.some((row) => row.id === draft.id);
     const next: SearchAliasRow = {
@@ -102,26 +148,56 @@ export function SearchTuningPanel() {
       updated_at: new Date().toISOString(),
       updated_by: user?.name ?? 'Super Admin',
     };
-    aliases.save(exists ? aliases.rows.map((row) => (row.id === draft.id ? next : row)) : [...aliases.rows, next]);
-    audit({ action: exists ? 'updated' : 'created', objectType: 'search_alias', objectId: next.id, summary: `${next.term} → ${next.target}`, source: 'search' });
-    pushAdminNotice({ title: t('sr_notice_alias_title'), message: t('sr_notice_alias_body').replace('{term}', next.term).replace('{target}', next.target) });
+    const outcome = await saveAliasRow(next, user?.id ?? null);
+    if (!outcome.ok) {
+      setError(outcome.code);
+      return;
+    }
+    setError(null);
+    const saved = outcome.row;
+    aliases.save(exists ? aliases.rows.map((row) => (row.id === saved.id ? saved : row)) : [...aliases.rows, saved]);
+    audit({ action: exists ? 'updated' : 'created', objectType: 'search_alias', objectId: saved.id, summary: `${saved.term} → ${saved.target}`, source: 'search' });
+    pushAdminNotice({ title: t('sr_notice_alias_title'), message: t('sr_notice_alias_body').replace('{term}', saved.term).replace('{target}', saved.target) });
     setDraft(null);
   }
 
-  function toggleAlias(row: SearchAliasRow) {
+  async function toggleAlias(row: SearchAliasRow) {
     const next = { ...row, active: !row.active, updated_at: new Date().toISOString(), updated_by: user?.name ?? 'Super Admin' };
-    aliases.save(aliases.rows.map((entry) => (entry.id === row.id ? next : entry)));
+    const outcome = await saveAliasRow(next, user?.id ?? null);
+    if (!outcome.ok) {
+      setError(outcome.code);
+      return;
+    }
+    setError(null);
+    aliases.save(aliases.rows.map((entry) => (entry.id === row.id ? outcome.row : entry)));
     audit({ action: 'updated', objectType: 'search_alias', objectId: row.id, summary: `${row.term} · active ${row.active} → ${next.active}`, source: 'search' });
   }
 
-  function saveBoost(id: string, weight: number) {
+  async function saveBoost(id: string, weight: number) {
     if (!boostValid(weight)) return;
     const row = boosts.rows.find((entry) => entry.id === id);
     if (!row) return;
     const next = { ...row, weight, updated_at: new Date().toISOString(), updated_by: user?.name ?? 'Super Admin' };
+    const outcome = await saveBoostFor(null, null, weight);
+    if (!outcome.ok) {
+      setError(outcome.code);
+      return;
+    }
+    setError(null);
     boosts.save(boosts.rows.map((entry) => (entry.id === id ? next : entry)));
     audit({ action: 'updated', objectType: 'search_boost', objectId: id, summary: `${row.key} · ${row.weight} → ${weight}`, source: 'search' });
     pushAdminNotice({ title: t('sr_notice_boost_title'), message: t('sr_notice_boost_body').replace('{name}', row.label).replace('{value}', String(weight)) });
+  }
+
+  async function rebuild() {
+    const outcome = await rebuildIndex();
+    if (!outcome.ok) {
+      setError(outcome.code);
+      return;
+    }
+    setError(null);
+    setRebuilt(outcome.rows);
+    audit({ action: 'updated', objectType: 'search_index', objectId: 'all', summary: `rebuilt ${outcome.rows} rows`, source: 'search' });
   }
 
   return (
@@ -136,8 +212,22 @@ export function SearchTuningPanel() {
             <Plus size={14} /> {t('sr_alias_add')}
           </button>
         )}
+        <button type="button" onClick={rebuild} className={GHOST_BUTTON}>
+          <RefreshCw size={14} /> {t('sr_rebuild')}
+        </button>
         <CsvExportButton section="search-aliases" columns={ALIAS_CSV} rows={aliases.rows} />
       </SectionHeader>
+
+      {error && (
+        <p role="alert" className="rounded border border-red-400/30 bg-red-400/10 px-3 py-2 text-[11px] text-red-200">
+          {t(error)}
+        </p>
+      )}
+      {rebuilt !== null && (
+        <p role="status" className="rounded border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-[11px] text-emerald-200">
+          {t('sr_rebuild_done').replace('{rows}', String(rebuilt))}
+        </p>
+      )}
 
       <div className="flex gap-1">
         {(['aliases', 'boosts', 'report'] as const).map((value) => (
@@ -277,6 +367,16 @@ export function SearchTuningPanel() {
                 ))}
               </tbody>
             </TableWrap>
+          )}
+          {report.zero.length > 0 && (
+            <div className="border-t border-[#244668] px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{t('sr_report_zero')}</p>
+              <ul className="mt-1 space-y-0.5">
+                {report.zero.map((row) => (
+                  <li key={row.query} className="font-mono text-[11px] text-slate-300">{row.query}</li>
+                ))}
+              </ul>
+            </div>
           )}
           <p className="px-3 pb-2 text-[10px] text-slate-500">
             {t('sr_report_ctr')}: {report.ctr}%

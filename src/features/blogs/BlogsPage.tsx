@@ -26,6 +26,7 @@ import { BLOG_POSTS, type BlogBlock, type BlogCategory, type BlogPost } from '..
 import { ADDITIONAL_BLOG_POSTS } from '../../data/additionalBlogPosts';
 import { useBlogPosts } from '../../lib/contentStore';
 import { publishedBlogPosts } from '../../lib/contentReader';
+import { useRemoteContent } from '../../lib/contentApi';
 import { POPULAR_CAFES, POPULAR_HOTELS, POPULAR_RESTAURANTS, TOP_ATTRACTIONS } from '../../data/cityPageData';
 import { ListingGridSection } from '../home/sections/ListingGridSection';
 import { useToggleFavorite } from '../../hooks/useToggleFavorite';
@@ -408,7 +409,18 @@ export function BlogsPage() {
   // Plan §10 §4: the reader shows what Admin published, and a post the job
   // publishes appears here without a reload because both read the same store.
   const [adminPosts] = useBlogPosts();
-  const allPosts = useMemo(() => publishedBlogPosts(adminPosts, SEEDED_BLOG_POSTS), [adminPosts]);
+  // O-21: the table is the reader's source once it answers, so a post published
+  // by another Admin shows without this browser having the editor open. The
+  // store stays the fallback, and the two are merged by id rather than replaced
+  // so a post written here and not yet saved to the table is still listed.
+  const remotePosts = useRemoteContent('blog');
+  const mergedPosts = useMemo(() => {
+    if (!remotePosts) return adminPosts;
+    const byId = new Map(remotePosts.map((post) => [post.id, post]));
+    for (const post of adminPosts) if (!byId.has(post.id)) byId.set(post.id, post);
+    return [...byId.values()];
+  }, [remotePosts, adminPosts]);
+  const allPosts = useMemo(() => publishedBlogPosts(mergedPosts, SEEDED_BLOG_POSTS), [mergedPosts]);
   // A link may carry the slug or the id, so an older link still opens its story.
   const selectedPost = allPosts.find((post) => post.slug === storySlug || post.id === storySlug) ?? null;
   const countedStoryRef = useRef<string | null>(null);

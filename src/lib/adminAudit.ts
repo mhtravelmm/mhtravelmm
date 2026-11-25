@@ -46,6 +46,7 @@ export type AdminAuditObject =
   | 'announcement'
   | 'search_alias'
   | 'search_boost'
+  | 'search_index'
   | 'report_run'
   | 'city'
   | 'plan';

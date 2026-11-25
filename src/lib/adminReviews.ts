@@ -138,7 +138,7 @@ export function listingReports(rows: AdminReviewRow[]): ListingReportRow[] {
       reports: entry.reports,
       adjustment: 0,
       effective_rating: Math.round((entry.ratings.reduce((sum, value) => sum + value, 0) / entry.ratings.length) * 10) / 10,
-      last_report_day: entry.days.sort().at(-1) ?? '',
+      last_report_day: entry.days.sort()[entry.days.length - 1] ?? '',
     }))
     .filter((entry) => entry.reports > 0)
     .sort((a, b) => b.reports - a.reports);

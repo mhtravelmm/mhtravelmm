@@ -20,17 +20,17 @@ import {
 
 function city(overrides: Partial<AdminCityRow> = {}): AdminCityRow {
   return {
-    id: 'c1', name_en: 'Yangon', name_mm: 'ရန်ကုန်', slug: 'yangon', cover: '',
-    description_en: '', description_mm: '', lat: 16.8, lng: 96.1, active: true,
-    sort_order: 1, views: 0, created_at: '2026-01-01T00:00:00.000Z',
+    id: 'c1', name_en: 'Yangon', name_mm: 'ရန်ကုန်', slug: 'yangon', cover_url: '',
+    description_en: '', description_mm: '', latitude: 16.8, longitude: 96.1, active: true,
+    sort_order: 1, views: 0, listing_count: 0,
     ...overrides,
   };
 }
 
 function request(overrides: Partial<PlanRequestRow> = {}): PlanRequestRow {
   return {
-    id: 'pr-1', traveler_name: 'Moe Thu', phone: '+95 9 771 100 001', email: 'moe@example.com',
-    days: 4, budget_mmk: 800000, notes: 'Two adults', status: 'new', handled_by: null,
+    id: 'pr-1', traveler_name: 'Moe Thu', phone: '+95 9 771 100 001', cities: 'Yangon',
+    days: 4, budget_usd: 400, note: 'Two adults', status: 'new', handled_by: null,
     created_at: '2026-11-19T02:00:00.000Z', updated_at: '2026-11-19T02:00:00.000Z',
     ...overrides,
   };

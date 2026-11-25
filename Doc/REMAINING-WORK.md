@@ -1,6 +1,6 @@
 # MH Travel — Remaining Work Record
 
-**Last updated:** 1 December 2026
+**Last updated:** 2 December 2026
 **Verified against:** `main` plus the rental order rules
 (`src/lib/rentalOrderRules.ts`), the full Rental Admin panel (catalog,
 availability, rates, branches, terms, settings, orders) built to Plan §8.8, the
@@ -16,6 +16,47 @@ The application currently provides a substantial frontend and local-preview expe
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file expands its **NOT DONE** and
 **PARTIAL** items.
+
+## Search and Nearby (§16H) — 2 December 2026
+
+The client half of §16H is built and the seam is in place, so what is left is the
+database side and one page. A pass over the running page on 2 December fixed four
+defects the unit tests had missed (typo-to-alias, city-card drill-down, a
+duplicate row, and a flat `nearest` tie); each has a test that fails without its
+fix.
+
+- **M-50** is the blocker for everything else: `pg_trgm` and `unaccent`,
+  `search_index`, `search_aliases` and `search_log`, `normalize_search_text` with
+  the same vectors as `searchText.test.ts`, a trigger per source table, and
+  `search_all`, `search_suggest`, `search_nearby`, `rebuild_search_index`,
+  `set_search_boost` and `get_search_report`. Until it is applied,
+  `src/lib/searchApi.ts` answers from the seeded index, so turning
+  `VITE_BACKEND_SEARCH` on would call a function that does not exist yet.
+- **The four criteria the client cannot check** (§16H.13) were run on 2 December
+  against a real Postgres and three hold: 3 (a draft is never indexed, and a
+  publish or unpublish changes the row in the same statement, which is 9), 7
+  (Open Now on the Yangon clock, overnight and unknown-hours cases included) and
+  11 (33–53 ms for `search_all` on a 10,000-row index). Criterion 2, Zawgyi
+  equals Unicode, stays a client rule: `normalizeSearchText()` converts and
+  `searchRpcArgs()` sends the result, because the general conversion needs the
+  syllable grammar SQL does not have. All of it is now asserted in
+  `scripts/verify-migrations.sh`, so it runs with the chain rather than once.
+- **`/nearby` (O-51)** is on the seam: `src/lib/nearbyApi.ts` calls
+  `search_nearby` when the flag is on and answers from the seeded index
+  otherwise, so the page reads neither `NEARBY_LISTINGS` nor its own rules. GPS,
+  the Yangon fallback, the 13 categories, the Quick Filters, Open Now with
+  `closes_at` and the List/Map toggle are all in. `MapView.tsx` imports Leaflet
+  inside an effect, so the list view carries none of it, and draws the returned
+  pins as circle markers. What remains is the applied function (M-50) and the
+  tile provider: `TILE_URL` is empty until the Phase 6 launch-readiness decision,
+  so the pins sit on a plain background rather than an unagreed provider.
+- **Search tuning (O-52)** has its rules in `src/lib/adminSearch.ts` but no
+  server: `search_aliases`, `set_search_boost` and `get_search_report` wait on
+  M-50 and M-66. The page's `suggest()` and the alias table read the same seed
+  rows, so an Admin edit will move both once the table exists.
+- **`search_log` (§16H.11)** is not written: no page records a query yet, so the
+  report has nothing to read. The stored text is already the normalized query —
+  `rememberSearch()` keeps the same form — so the writer can reuse it.
 
 ## Phase 2 (Plan §16C) — started 30 November 2026
 

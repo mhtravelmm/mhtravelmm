@@ -58,6 +58,133 @@ For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
 
+## Search and Nearby on one seam — 2 December 2026
+
+Tickets O-50 and O-51, partial: the parts of Plan §16H that do not need the
+database. The page no longer matches text itself; it asks one seam and renders
+what comes back.
+
+**The normalizer.** `src/lib/searchText.ts` holds `normalizeSearchText()` — NFC,
+Latin lower-casing and accent stripping, Zawgyi detection and conversion,
+zero-width removal, Myanmar mark ordering, Myanmar digits to ASCII, and the
+separator set to spaces — with `src/lib/zawgyi.ts` for the rule-based detector.
+`MAX_QUERY_LENGTH` and `queryProblem()` live here too, so the 80-character
+refusal has one definition. `searchText.test.ts` carries the Plan's vectors: the
+same word in Zawgyi and Unicode, the same word with its marks reordered,
+`ပုဂံ` / `bagan` / `pagan`, a Myanmar number beside its ASCII form, and a pasted
+zero-width space.
+
+**The index and the query.** `src/lib/searchIndex.ts` builds one row per object
+from the seed modules (`buildSearchIndex()`), so a listing that appears in two
+modules is still one result. Each row carries `lat`/`lng` — a city centre plus a
+stable offset derived from the id, because the seed modules carry no
+coordinates — so `nearest` has something real to sort on. `interpretQuery()`
+lifts a city alias and a category alias out of the query, longest-first so
+`hotels` leaves no stray `s`, and returns `mode` as `city`, `category`,
+`city_category`, `text` or `browse`. `searchAll()` filters, scores on the §16H.7
+table, sorts (`relevance`, `rating`, `nearest`, `newest`) and counts per kind
+after filtering, so a chip never promises more than its list. A `category` query
+returns `cityCounts`, which is what the city cards render. Ties go to the higher
+rating, then the title; with a location, distance breaks them first.
+
+**The seam.** `src/lib/searchApi.ts` is the only place that knows whether the
+server answers. `searchRpcArgs()` spells `search_all`'s parameters
+(`p_q`, `p_lang`, `p_city`, `p_kinds`, `p_sort`, `p_lat`, `p_lng`, `p_limit`,
+`p_offset`); `previewPayload()` returns the preview's answer in the same envelope
+the function returns, and `fromRemoteSearch()` maps that envelope back to one
+`SearchResult`, so one mapper serves both and a shape change cannot pass
+unnoticed. `refusalFor()` catches the two refusals a page can know without
+asking — a query over 80 characters and `nearest` without a point — and returns
+a code for `t()` rather than an empty list that would read as "no matches".
+`runSearch()` goes through `rpcOrLocal('search', ...)`, so `VITE_BACKEND_SEARCH`
+off keeps the preview and a real server refusal is never papered over.
+
+**The page.** `SearchPage.tsx` keeps its state in `?q=&city=&kind=&sort=`, so a
+reload or a shared link returns to the same page; a 250 ms debounce commits the
+draft and never fires mid-composition; suggestions open after two characters and
+take the arrow keys, Enter and Escape; the last eight searches stay on the device
+with a Clear button; the interpreted city and kind show as removable chips; a
+`category` query shows one card per city with the chips rotating every ten
+seconds; zero results offer "did you mean", then popular cities and categories;
+cards are the shared `ListingCard` at `md` under a computed grid cap. Every
+string goes through `t()`.
+
+**Location.** `src/lib/location.ts` holds the city centres, the haversine
+`distanceKm()`, and a reader location remembered on the device. GPS is asked for
+silently; a refusal or a missing API leaves the Yangon centre and the page keeps
+working, and the location bar says which of the three points the distances come
+from and lets the reader pick a city instead.
+
+**What the browser found, and what it changed.** Four defects only showed on the
+running page, and each now has a test that fails without its fix.
+
+- A single mistyped letter did not name its alias. `hotle` was a text word that
+  matched no title, so the page ranked a motorbike rental first. `interpretQuery`
+  now accepts a word one edit away from an alias when that target is unique
+  (§16H.6 "common variants"), so `hotle` is the hotels category and `bagam` is
+  Bagan. A word one edit from two different targets is still left as text.
+- Choosing a city card did not drill in. The query still read `hotels`, so the
+  page came back as the same city cards and the click looked broken.
+  `searchAll` now promotes `category` plus an explicit `city` to
+  `city_category`, which is the mode §16H.6 describes for "typing both".
+- One hotel was listed twice. The Populars row and the hotel catalogue row share
+  a URL under two ids, and the index keyed on the id alone. `buildSearchIndex`
+  now also keys on `href`, so one URL is one result.
+- `nearest` was one flat tie: the preview hash put every Yangon hotel at 1.7 km.
+  `previewPoint` uses FNV-1a with a finalizer and a 1.5 km spread, so the sort
+  has something real to order.
+
+**What is checked where.** Criteria 1, 2, 4, 5, 6, 8, 10, 12 and 13 of §16H.13
+are checked in `searchIndex.test.ts` (39), `searchText.test.ts` (15),
+`searchApi.test.ts` (19), `location.test.ts` (9) and
+`SearchPage.dom.test.tsx` (12). Criteria 3, 7, 9 and 11 belong to the database —
+drafts never indexed, Open Now in Myanmar Time, the 5-second trigger, and the
+10,000-row latency — and wait for M-50.
+
+## The search criteria the database owns, checked — 2 December 2026
+
+Tickets O-50, O-51 and O-52. The four §16H.13 criteria the client could not
+check were run against a real Postgres: every migration in `SQL/` applied to an
+empty `postgres:16-alpine`, then the function called directly. Three hold; the
+one that does not is a client rule, as designed.
+
+- **3, a draft never appears.** Inserting a `Draft` `blog_posts` row writes no
+  `search_index` row. Publishing it (with the `version` the lifecycle trigger
+  demands) adds exactly one, and setting it back to `Draft` removes it. The same
+  run is criterion 9 seen from the other side: the trigger fires in the same
+  statement, so the five seconds §16H.4 allows is not used.
+- **7, Open Now in Myanmar Time.** `private.is_open_now()` answers on the Yangon
+  clock: 11:00 MMT inside 09:00–17:00 is open, 21:00 is not, a 20:00–02:00
+  listing is open at 01:00, a null schedule is closed, and equal times are a
+  24-hour listing.
+- **11, latency.** 10,000 extra rows in `search_index` and an `analyze`:
+  `search_all` answers in 33–53 ms for `hotels`, `ဟိုတယ်`, `rating` and
+  `nearest`, `search_nearby` in 5 ms and `search_suggest` in 17 ms — all inside
+  the 200 ms at the 95th percentile the Plan sets for a 10,000-row index.
+- **2, Zawgyi equals Unicode.** Not a database criterion in this design: the
+  general Zawgyi conversion needs the syllable grammar and detector that
+  `src/lib/zawgyi.ts` has, and `normalize_search_text()` deliberately converts
+  only the unambiguous extended code points. `searchRpcArgs()` normalizes before
+  it calls, so the server receives the Unicode form; `normalizeSearchText('ဟိုတယ္')`
+  and `normalizeSearchText('ဟိုတယ်')` are both `ဟိုတယ်`, which
+  `searchText.test.ts` already asserts.
+
+**Two defects this run found and closed.** `search_nearby` returned the raw
+`search_index` row, so a card had `title_en` where it read `title`, no `ref_id`
+and no `distance_km` — every Nearby card would have drawn blank. It now builds
+the same item `search_all` does, plus `distance_km`, `open_now` and `closes_at`,
+and takes `p_lang` so the title comes back in the reader's language. Separately,
+a seed row that shared a `href` with another row under a different id could
+delete the pin and the opening hours when it replaced it; `search_put` now
+carries them over from the row it replaces.
+
+**The checks are kept.** `scripts/verify-migrations.sh` gained twelve assertions
+under "checking Plan §16H.13": the alias resolution for `bagan` / `pagan` /
+`ပုဂံ`, `hotels yangon` as one mode, the draft → publish → unpublish round trip,
+the five Open Now cases, counts equal to the list, the two refusal codes, and the
+Nearby item's shape and distance. They run with the migration chain, so a later
+change to either function fails the same command that proves the schema applies.
+
 ## The twelve Super Admin sections — 1 December 2026
 
 Tickets O-61 to O-68 and O-70. The shell already had one section id per sidebar

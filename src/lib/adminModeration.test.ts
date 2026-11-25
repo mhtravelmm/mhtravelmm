@@ -32,7 +32,7 @@ function review(overrides: Partial<AdminReviewRow> = {}): AdminReviewRow {
   return {
     id: 'r1', listing_id: 'l1', listing_name: 'Inya Hotel', author_name: 'Moe Thu',
     rating: 4, body: 'Lovely stay', status: 'visible', reports: 0, reasons: [],
-    auto_hidden: false, moderated_by: '', moderated_at: null, adjustment: 0,
+    auto_hidden: false, moderated_by: null, moderated_at: null, moderation_note: '',
     created_at: '2026-11-19T02:00:00.000Z',
     ...overrides,
   };

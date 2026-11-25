@@ -187,7 +187,9 @@ export function OwnersPanel() {
   return (
     <div className="mx-auto max-w-[1200px] space-y-3">
       <SectionHeader kickerKey="ow_kicker" titleKey="ow_title" introKey="ow_intro">
-        <CsvExportButton section="owners" columns={tab === 'applications' ? APPLICATION_CSV : OWNER_CSV} rows={tab === 'applications' ? visibleApplications : visibleOwners} />
+        {tab === 'applications'
+          ? <CsvExportButton section="owner-applications" columns={APPLICATION_CSV} rows={visibleApplications} />
+          : <CsvExportButton section="owners" columns={OWNER_CSV} rows={visibleOwners} />}
       </SectionHeader>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -24,21 +24,80 @@ export const COMMON_ERROR_CODES = [
 
 export type CommonErrorCode = (typeof COMMON_ERROR_CODES)[number];
 
+/**
+ * §16G.2: a module raises `<module>_error_<code>` — `rental_error_start_date`,
+ * `blog_error_publish_blocked`, `search_error_query_too_long`. Each module's
+ * codes are listed in the Plan next to its functions, so the client can only
+ * accept one the Plan names. A code the Plan does not list is a refusal.
+ */
+export const MODULE_ERROR_CODES = [
+  'rental_error_not_signed_in',
+  'rental_error_category',
+  'rental_error_city_availability',
+  'rental_error_variant',
+  'rental_error_branch',
+  'rental_error_start_date',
+  'rental_error_end_date',
+  'rental_error_min_days',
+  'rental_error_name',
+  'rental_error_phone',
+  'rental_error_address',
+  'rental_error_participants',
+  'rental_error_terms',
+  'rental_error_rate_limit',
+  'rental_error_rate_missing',
+  'rental_error_forbidden',
+  'rental_error_order_missing',
+  'rental_error_status_transition',
+  'rental_error_payment_method',
+  'rental_error_reschedule_not_paid',
+  'rental_error_reschedule_limit',
+  'rental_error_reschedule_too_late',
+  'rental_error_reschedule_unchanged',
+  'blog_error_publish_blocked',
+  'blog_error_version_conflict',
+  'guide_error_publish_blocked',
+  'guide_error_version_conflict',
+  'ads_error_forbidden',
+  'ads_error_invalid_transition',
+  'ads_error_creative_not_approved',
+  'search_error_query_too_long',
+  'search_error_bad_sort',
+  'search_error_location_required',
+  'media_error_forbidden',
+  'media_error_rate_limit',
+] as const;
+
+export type ModuleErrorCode = (typeof MODULE_ERROR_CODES)[number];
+
+/** Every code a screen may render, common first because those come up most. */
+export type ErrorCode = CommonErrorCode | ModuleErrorCode;
+
 const FALLBACK_CODE: CommonErrorCode = 'common_error_forbidden';
 
 export function isCommonErrorCode(value: string): value is CommonErrorCode {
   return (COMMON_ERROR_CODES as readonly string[]).includes(value);
 }
 
+export function isModuleErrorCode(value: string): value is ModuleErrorCode {
+  return (MODULE_ERROR_CODES as readonly string[]).includes(value);
+}
+
+export function isErrorCode(value: string): value is ErrorCode {
+  return isCommonErrorCode(value) || isModuleErrorCode(value);
+}
+
 /**
- * The key a screen shows for whatever came back. A known code is itself; a
- * `23505` (unique violation) means the row already exists, which reads as a
- * refusal; everything else is a refusal too. Nothing raw survives this.
+ * The key a screen shows for whatever came back. A code the Plan lists is
+ * itself — a module's own code is more useful than a generic refusal, because
+ * it names the field that failed. A `23505` (unique violation) means the row
+ * already exists, which reads as a refusal; everything else is a refusal too.
+ * Nothing raw survives this.
  */
-export function errorKeyFor(message: string | null | undefined): CommonErrorCode {
+export function errorKeyFor(message: string | null | undefined): ErrorCode {
   const trimmed = (message ?? '').trim();
-  if (isCommonErrorCode(trimmed)) return trimmed;
-  if (/duplicate key|already exists|unique constraint/i.test(trimmed)) return 'common_error_forbidden';
+  if (isErrorCode(trimmed)) return trimmed;
+  if (/duplicate key|already exists|unique constraint/i.test(trimmed)) return FALLBACK_CODE;
   return FALLBACK_CODE;
 }
 
@@ -56,19 +115,19 @@ export interface RpcErrorLike {
  * the message may carry a trailing detail after a colon, so the first token is
  * what is matched.
  */
-export function codeFromRpcError(error: RpcErrorLike | null | undefined): CommonErrorCode {
+export function codeFromRpcError(error: RpcErrorLike | null | undefined): ErrorCode {
   if (!error) return FALLBACK_CODE;
   const message = (error.message ?? '').trim();
-  if (isCommonErrorCode(message)) return message;
+  if (isErrorCode(message)) return message;
   const firstToken = message.split(/[:\s]/, 1)[0];
-  if (isCommonErrorCode(firstToken)) return firstToken;
-  if (error.code === '23505') return 'common_error_forbidden';
+  if (isErrorCode(firstToken)) return firstToken;
+  if (error.code === '23505') return FALLBACK_CODE;
   return errorKeyFor(message);
 }
 
 export type RpcResult<T> =
   | { ok: true; data: T }
-  | { ok: false; code: CommonErrorCode };
+  | { ok: false; code: ErrorCode };
 
 /**
  * §16G.5: a module uses the server only when its flag is `on` **and** Supabase
@@ -119,6 +178,6 @@ export async function rpcOrLocal<T>(
  * that receives a code renders `t(code)`; this helper exists so a caller that
  * holds a raw message cannot accidentally render it.
  */
-export function messageKey(message: string | null | undefined): CommonErrorCode {
+export function messageKey(message: string | null | undefined): ErrorCode {
   return errorKeyFor(message);
 }

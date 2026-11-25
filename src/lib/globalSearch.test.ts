@@ -28,7 +28,7 @@ describe('the header global search (§3A.14)', () => {
     expect(new Set(groups.map((group) => group.group)).size).toBe(groups.length);
     for (const group of groups) {
       for (const hit of group.hits) {
-        expect(hit.href.startsWith('/')).toBe(true);
+        expect(hit.href?.startsWith('/')).toBe(true);
         expect(hit.label.length).toBeGreaterThan(0);
       }
     }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   Bell,

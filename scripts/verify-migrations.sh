@@ -132,6 +132,72 @@ check() { # label expected actual
 # `set role` echoes `SET` on stdout, so keep only the number psql prints.
 as_anon() { psql_t -c "set role anon; $1" 2>&1 | grep -oE '^[0-9]+$' | head -1; }
 
+echo "== checking Plan §16H.13, the search criteria the database owns"
+
+# 1 and 5: the aliases resolve, so `bagan`, `pagan` and `ပုဂံ` are one city and
+# `hotels yangon` is one kind in one city. The text is normalized on the way in,
+# which is what `searchRpcArgs()` does before it calls the function.
+search_title() { psql_t -c "select public.search_all('$1','$2',null,null,'relevance',null,null,5,0)::jsonb->'items'->0->>'title'"; }
+check "bagan finds Bagan" \
+  "$(search_title bagan en)" "$(search_title pagan en)"
+check "ပုဂံ finds the same" \
+  "$(search_title bagan en)" "$(search_title 'ပုဂံ' mm)"
+check "hotels yangon is one kind in one city" "city_category" \
+  "$(psql_t -c "select public.search_all('hotels yangon','en',null,null,'relevance',null,null,5,0)::jsonb->'interpreted'->>'mode'")"
+
+# 3: a draft never enters the index, and publishing puts it there and takes it
+# back out — 9 is the same trigger seen from the other side.
+psql_q >/dev/null <<'SQL'
+insert into public.blog_posts (id, slug, status, category, title_en, title_mm, excerpt_en,
+  excerpt_mm, author_name, author_name_mm, location, location_mm, cover_url, seo_tags, version)
+values ('search-probe','search-probe','Draft','nature','Search Probe','ရှာဖွေ','','','MH','',
+  'Myanmar','','','',1);
+SQL
+check "a draft is not indexed" "0" \
+  "$(psql_t -c "select count(*) from public.search_index where ref_id = 'search-probe'" | tr -d '[:space:]')"
+psql_q >/dev/null -c "update public.blog_posts set status='Published', published_at='2026-11-01', version=2 where id='search-probe'"
+check "publishing indexes it" "1" \
+  "$(psql_t -c "select count(*) from public.search_index where ref_id = 'search-probe'" | tr -d '[:space:]')"
+psql_q >/dev/null -c "update public.blog_posts set status='Draft', version=3 where id='search-probe'"
+check "unpublishing removes it" "0" \
+  "$(psql_t -c "select count(*) from public.search_index where ref_id = 'search-probe'" | tr -d '[:space:]')"
+
+# 7: Open Now is judged on the Myanmar clock, an overnight close crosses
+# midnight, an unknown schedule is never open, and equal times mean 24 hours.
+check "Open Now reads the Myanmar clock" "true|false|true|false|true" \
+  "$(psql_t -c "select private.is_open_now('09:00','17:00','2026-11-20 04:00:00+00') || '|' ||
+                      private.is_open_now('09:00','17:00','2026-11-20 14:00:00+00') || '|' ||
+                      private.is_open_now('20:00','02:00','2026-11-20 18:00:00+00') || '|' ||
+                      private.is_open_now(null,null,now()) || '|' ||
+                      private.is_open_now('00:00','00:00',now())")"
+
+# 10: a chip's count is the list's length, taken after the same filters. The
+# page asks for 50 at a time, so the answer is compared with itself rather than
+# with a number that moves whenever a seed row is added.
+check "counts equal the list" "t" \
+  "$(psql_t -c "with r as (select public.search_all('','en','yangon',null,'relevance',null,null,50,0)::jsonb as j)
+                select (select coalesce(sum(value::int),0) from jsonb_each_text(j->'counts'))
+                     = jsonb_array_length(j->'items') from r" | tr -d '[:space:]')"
+
+# 6 and 8: the two refusals the function must make, as codes for `t()`.
+check "nearest without a point is refused" "search_error_location_required" \
+  "$(psql_t -c "do \$\$ begin perform public.search_all('hotels','en',null,null,'nearest',null,null,5,0);
+                exception when others then raise notice '%', sqlerrm; end \$\$" 2>&1 | grep -oE 'search_error_[a-z_]+' | head -1)"
+check "an over-long query is refused" "search_error_query_too_long" \
+  "$(psql_t -c "do \$\$ begin perform public.search_all(repeat('a',81),'en',null,null,'relevance',null,null,5,0);
+                exception when others then raise notice '%', sqlerrm; end \$\$" 2>&1 | grep -oE 'search_error_[a-z_]+' | head -1)"
+
+# `search_nearby` answers in `search_all`'s shape plus the distance fields. It
+# used to hand back the raw row — `title_en` and no `title`, no `ref_id` — so a
+# card drew no name.
+check "a Nearby item has the documented shape" "0" \
+  "$(psql_t -c "select count(*) from jsonb_array_elements(public.search_nearby(16.8,96.1,10,null,false,50,0)::jsonb->'items') e
+                where e->>'title' is null or e->>'title' = '' or e->>'ref_id' is null or e->>'kind' is null" | tr -d '[:space:]')"
+check "a Nearby item carries its distance and hours" "0" \
+  "$(psql_t -c "select count(*) from jsonb_array_elements(public.search_nearby(16.8,96.1,10,null,false,50,0)::jsonb->'items') e
+                where (e->>'distance_km')::numeric > 10 or e->>'open_now' is null" | tr -d '[:space:]')"
+
+
 # The probe is Pending, so the public sees the other 66.
 check "anon reads only active rows" "66" \
   "$(as_anon 'select count(*) from public.listings')"

@@ -20,8 +20,10 @@ export type SearchGroup = 'users' | 'bookings' | 'owners' | 'listings' | 'blogs'
 export interface SearchHit {
   id: string;
   label: string;
-  detail: string;
-  href: string;
+  /** The line under the label; a row without one shows the label alone. */
+  detail?: string;
+  /** Where the hit goes. A row without a route is not a link. */
+  href?: string;
 }
 
 export interface SearchGroupResult {

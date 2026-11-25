@@ -65,11 +65,11 @@ const ROLE_CHANGE_KEYS: Record<string, TranslationKey> = {
   not_super_admin: 'common_error_forbidden',
   self: 'common_error_forbidden',
   super_admin_locked: 'common_error_forbidden',
-  unchanged: 'sa_saved',
+  unchanged: 'adm_role_unchanged',
   unknown_role: 'common_error_forbidden',
 };
 
-type DirectoryRow = AdminRow & { id: string; status: AdminInviteRow['status'] };
+type DirectoryRow = Omit<AdminRow, 'status'> & { id: string; status: AdminInviteRow['status'] };
 
 export function AdminManagementPanel({ onOpenAudit }: { onOpenAudit?: () => void }) {
   const { t } = useLanguage();

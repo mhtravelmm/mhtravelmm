@@ -93,6 +93,24 @@ export interface SearchQueryStat {
   clicks: number;
 }
 
+/**
+ * `search_log` rows as the report's per-query rows: one row per normalized
+ * query, the results it produced and how often it was clicked. Aggregating here
+ * rather than in the panel keeps the preview and the server report on one shape.
+ */
+export function statsFromLog(
+  rows: { q_normalized: string; result_count: number; clicked_ref: string | null }[],
+): SearchQueryStat[] {
+  const byQuery = new Map<string, SearchQueryStat>();
+  for (const row of rows) {
+    const entry = byQuery.get(row.q_normalized) ?? { query: row.q_normalized, results: 0, clicks: 0 };
+    entry.results += Math.max(0, row.result_count);
+    if (row.clicked_ref) entry.clicks += 1;
+    byQuery.set(row.q_normalized, entry);
+  }
+  return [...byQuery.values()];
+}
+
 /** The report rows. No events yet means no rows, never a sample (§3A.2 rule 4). */
 export function searchReport(rows: SearchQueryStat[]): {
   top: SearchQueryStat[];

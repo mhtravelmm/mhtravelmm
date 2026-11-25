@@ -8,6 +8,7 @@ import {
   effectiveMmkPerUsd,
   readExchangeRates,
 } from './exchangeRates';
+import { appendRemoteRate, readRemoteRate } from './exchangeRateApi';
 
 interface CurrencyContextValue {
   currency: Currency;
@@ -80,10 +81,25 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // §16B.5 and O-02: the table is the authority once it has a row. A failed or
+  // empty read leaves the browser rate alone, so an unreachable server cannot
+  // reprice the whole site.
+  useEffect(() => {
+    let active = true;
+    void readRemoteRate().then((rate) => {
+      if (active && rate !== null) setExchangeRateState(rate);
+    });
+    return () => { active = false; };
+  }, []);
+
   const toggleCurrency = () => setCurrency((current) => (current === 'MMK' ? 'USD' : 'MMK'));
   const setExchangeRate = (rate: number, options?: { setBy?: string; note?: string }) => {
     if (!Number.isFinite(rate) || rate <= 0) return;
+    // §16B.5: the browser row is appended first so the screen updates at once,
+    // then the table gets the same row. The server's policy decides who may
+    // write; a refusal leaves the browser row, which is the preview's job.
     appendExchangeRate({ mmkPerUsd: rate, setBy: options?.setBy ?? 'Super Admin', note: options?.note });
+    void appendRemoteRate({ mmkPerUsd: rate, note: options?.note });
     setExchangeRateState(Math.round(rate * 100) / 100);
   };
   const formatCurrencyAmount = (usd: number, targetCurrency: Currency) => formatMoney(usd, targetCurrency, exchangeRate);

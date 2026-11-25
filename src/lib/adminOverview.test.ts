@@ -13,7 +13,7 @@ function user(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
   return {
     id: 'u1', name: 'Moe Thu', username: 'moe', email: 'moe@example.com', phone: '',
     joined_at: '2026-11-20', last_sign_in_at: null, language: 'en', status: 'active',
-    bookings: 0, reviews: 0, favorites: 0, reports_against: 0, suspended_reason: '',
+    bookings: 0, reviews: 0, favorites: 0, reports_against: 0, suspended_reason: null, suspended_at: null,
     ...overrides,
   };
 }

@@ -21,6 +21,15 @@ export interface AdminRow {
   stored?: boolean;
 }
 
+/**
+ * A row after Admin Management has widened the two-value status into the four
+ * invitation states. The summary reads only the columns both shapes share.
+ */
+export interface DirectoryLikeRow {
+  permissions: string;
+  status: string;
+}
+
 /** The permission group a role starts with, which is what the form pre-selects. */
 export function permissionsForRole(role: AdminRole): string {
   return DEFAULT_PERMISSION_GROUP[role] ?? 'All permissions';
@@ -52,12 +61,12 @@ export function mergeAdminRows(seeded: AdminRow[], users: AuthUser[]): AdminRow[
   });
 }
 
-export function adminSummary(rows: AdminRow[]): { total: number; active: number; pending: number; groups: number } {
+export function adminSummary(rows: AdminRow[] | DirectoryLikeRow[]): { total: number; active: number; pending: number; groups: number } {
   const groups = new Set(rows.map((row) => row.permissions));
   return {
     total: rows.length,
-    active: rows.filter((row) => row.status === 'Active').length,
-    pending: rows.filter((row) => row.status === 'Pending invite').length,
+    active: rows.filter((row) => row.status === 'Active' || row.status === 'active').length,
+    pending: rows.filter((row) => row.status === 'Pending invite' || row.status === 'pending_invite').length,
     groups: groups.size,
   };
 }

@@ -178,11 +178,9 @@ export function PlansPanel() {
             <Plus size={14} /> {t('pl_action_new')}
           </button>
         )}
-        <CsvExportButton
-          section={tab === 'catalog' ? 'plans' : 'plan-requests'}
-          columns={tab === 'catalog' ? PLAN_CSV : REQUEST_CSV}
-          rows={tab === 'catalog' ? plans.rows : visibleRequests}
-        />
+        {tab === 'catalog'
+          ? <CsvExportButton section="plans" columns={PLAN_CSV} rows={plans.rows} />
+          : <CsvExportButton section="plan-requests" columns={REQUEST_CSV} rows={visibleRequests} />}
       </SectionHeader>
 
       <div className="grid grid-cols-3 gap-2">

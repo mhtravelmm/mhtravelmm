@@ -61,6 +61,41 @@ describe('the common error codes (§16B.8)', () => {
   });
 });
 
+describe('the module error codes (§16G.2)', () => {
+  it('passes a module code through, so the message names the failing field', async () => {
+    const { errorKeyFor } = await loadBackend();
+    expect(errorKeyFor('rental_error_start_date')).toBe('rental_error_start_date');
+    expect(errorKeyFor('search_error_location_required')).toBe('search_error_location_required');
+    expect(errorKeyFor('  blog_error_publish_blocked ')).toBe('blog_error_publish_blocked');
+  });
+
+  it('refuses a code the Plan does not list', async () => {
+    const { errorKeyFor } = await loadBackend();
+    expect(errorKeyFor('rental_error_made_up')).toBe('common_error_forbidden');
+    expect(errorKeyFor('shop_error_whatever')).toBe('common_error_forbidden');
+  });
+
+  it('reads a module code out of a P0001 raise, detail and all', async () => {
+    const { codeFromRpcError } = await loadBackend();
+    expect(codeFromRpcError({ code: 'P0001', message: 'rental_error_min_days: 2' }))
+      .toBe('rental_error_min_days');
+    expect(codeFromRpcError({ code: 'P0001', message: 'ads_error_creative_not_approved' }))
+      .toBe('ads_error_creative_not_approved');
+  });
+
+  it('has a translation in both languages for every code it accepts', async () => {
+    const { MODULE_ERROR_CODES, COMMON_ERROR_CODES } = await loadBackend();
+    const { translatePair } = await import('./translations');
+    for (const code of [...COMMON_ERROR_CODES, ...MODULE_ERROR_CODES]) {
+      const pair = translatePair(code);
+      // An untranslated key comes back as the key itself, which a reader would
+      // see as `rental_error_start_date` on screen.
+      expect(pair.mm, code).not.toBe(code);
+      expect(pair.en, code).not.toBe(code);
+    }
+  });
+});
+
 describe('reading a Supabase function error (§16G.3)', () => {
   it('reads the message a P0001 raise carries', async () => {
     const { codeFromRpcError } = await loadBackend();

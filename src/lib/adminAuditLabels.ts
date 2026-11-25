@@ -6,7 +6,7 @@ import type { AdminAuditAction, AdminAuditEntry, AdminAuditObject } from './admi
  * rather than in the panel so a new type cannot ship without a translation —
  * `adminAuditLabels.test.ts` walks every member of each union.
  */
-export const AUDIT_ACTIONS: AdminAuditAction[] = ['created', 'updated', 'deleted', 'published', 'approved', 'payment', 'preview', 'role_change'];
+export const AUDIT_ACTIONS: AdminAuditAction[] = ['created', 'updated', 'deleted', 'published', 'approved', 'payment', 'preview', 'exported', 'role_change'];
 
 export const ACTION_KEYS: Record<AdminAuditAction, TranslationKey> = {
   created: 'sa_audit_action_created',
@@ -16,6 +16,7 @@ export const ACTION_KEYS: Record<AdminAuditAction, TranslationKey> = {
   approved: 'sa_audit_action_approved',
   payment: 'sa_audit_action_payment',
   preview: 'sa_audit_action_preview',
+  exported: 'sa_audit_action_exported',
   role_change: 'sa_audit_action_role_change',
 };
 
@@ -36,6 +37,20 @@ export const OBJECT_KEYS: Record<AdminAuditObject, TranslationKey> = {
   shop_template: 'sa_audit_object_shop_template',
   template_entitlement: 'sa_audit_object_template_entitlement',
   listing: 'sa_audit_object_listing',
+  user: 'sa_audit_object_user',
+  admin_invite: 'sa_audit_object_admin_invite',
+  owner_application: 'sa_audit_object_owner_application',
+  booking: 'sa_audit_object_booking',
+  review: 'sa_audit_object_review',
+  support_thread: 'sa_audit_object_support_thread',
+  app_setting: 'sa_audit_object_app_setting',
+  announcement: 'sa_audit_object_announcement',
+  search_alias: 'sa_audit_object_search_alias',
+  search_boost: 'sa_audit_object_search_boost',
+  search_index: 'sa_audit_object_search_index',
+  report_run: 'sa_audit_object_report_run',
+  city: 'sa_audit_object_city',
+  plan: 'sa_audit_object_plan',
 };
 
 export const SOURCE_KEYS: Record<AdminAuditEntry['source'], TranslationKey> = {
@@ -50,6 +65,17 @@ export const SOURCE_KEYS: Record<AdminAuditEntry['source'], TranslationKey> = {
   payouts: 'sa_audit_source_payouts',
   templates: 'sa_audit_source_templates',
   listings: 'sa_audit_source_listings',
+  users: 'sa_audit_source_users',
+  admins: 'sa_audit_source_admins',
+  owners: 'sa_audit_source_owners',
+  bookings: 'sa_audit_source_bookings',
+  payments: 'sa_audit_source_payments',
+  reviews: 'sa_audit_source_reviews',
+  support: 'sa_audit_source_support',
+  settings: 'sa_audit_source_settings',
+  announcements: 'sa_audit_source_announcements',
+  search: 'sa_audit_source_search',
+  reports: 'sa_audit_source_reports',
 };
 
 export const ACTION_TONES: Record<AdminAuditAction, string> = {
@@ -60,5 +86,6 @@ export const ACTION_TONES: Record<AdminAuditAction, string> = {
   approved: 'bg-teal-500/20 text-teal-200',
   payment: 'bg-amber-500/20 text-amber-200',
   preview: 'bg-cyan-500/20 text-cyan-200',
+  exported: 'bg-slate-500/20 text-slate-200',
   role_change: 'bg-purple-500/20 text-purple-200',
 };
