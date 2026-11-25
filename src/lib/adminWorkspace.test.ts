@@ -18,7 +18,7 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
     expect(sectionsForRole('Super Admin')).toEqual([
       'overview', 'users', 'admins', 'owners', 'bookings', 'content', 'blogs',
       'guides', 'guideEarnings', 'payouts', 'templates', 'ads', 'currency', 'rentals', 'rentalOrders',
-      'rentalReports', 'audit', 'jobs', 'translations',
+      'rentalReports', 'listings', 'audit', 'jobs', 'translations',
     ]);
   });
 

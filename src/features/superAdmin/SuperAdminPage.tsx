@@ -61,6 +61,7 @@ import {
 } from '../../lib/rentalNotifications';
 import { ADMIN_ROLES, CREATABLE_ADMIN_ROLES, DEFAULT_PERMISSION_GROUP, PERMISSION_GROUPS, type AdminRole } from '../../lib/adminRoles';
 import { sectionsForRole } from '../../lib/adminWorkspace';
+import { ListingsPanel } from './ListingsPanel';
 import { adminSummary, mergeAdminRows, type AdminRow } from '../../lib/adminAccounts';
 import { recordAdminAudit, useAuditRecorder } from '../../lib/adminAudit';
 import { planRoleChange, roleChangeSummary, type RoleChangeRefusal } from '../../lib/adminRoleChange';
@@ -69,7 +70,7 @@ import { pushAdminNotice } from '../../lib/adminNotices';
 import { pushFeedEvent, useFeedRows } from '../../lib/notificationFeed';
 import { localizedOrFallback } from '../../lib/translationCache';
 
-type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'payouts' | 'templates' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports' | 'audit' | 'jobs' | 'translations';
+type AdminView = 'overview' | 'users' | 'admins' | 'owners' | 'bookings' | 'content' | 'blogs' | 'guides' | 'guideEarnings' | 'payouts' | 'templates' | 'ads' | 'currency' | 'rentals' | 'rentalOrders' | 'rentalReports' | 'listings' | 'audit' | 'jobs' | 'translations';
 type Accent = 'blue' | 'green' | 'purple' | 'amber' | 'cyan';
 type AdminNotification = StaffNotification;
 
@@ -99,6 +100,7 @@ const navItems: NavItem[] = [
   { id: 'rentals', labelKey: 'sa_nav_rentals', icon: Building2 },
   { id: 'rentalOrders', labelKey: 'sa_nav_rental_orders', icon: CalendarDays },
   { id: 'rentalReports', labelKey: 'sa_nav_rental_reports', icon: TrendingUp },
+  { id: 'listings', labelKey: 'sa_nav_listings', icon: Building2 },
   { id: 'bookings', labelKey: 'sa_nav_tickets', icon: Plane },
   { id: 'guides', labelKey: 'sa_nav_guides', icon: BookOpen },
   { id: 'guideEarnings', labelKey: 'sa_nav_guide_earnings', icon: Coins },
@@ -283,7 +285,7 @@ export function SuperAdminPage() {
 
           <main className="p-1.5 sm:p-2 lg:p-3">
             {notice && <div role="status" className="fixed right-4 top-20 z-50 rounded-lg border border-cyan-300/30 bg-[#102e51] px-3 py-2 text-xs text-cyan-100 shadow-2xl">{notice}</div>}
-            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} onOpenAudit={() => setView('audit')} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'guideEarnings' ? <GuideEarningsPanel /> : activeView === 'payouts' ? <OwnerPayoutsPanel /> : activeView === 'templates' ? <ShopTemplatesPanel /> : activeView === 'audit' ? <AuditLogPanel /> : activeView === 'jobs' ? <JobsPanel /> : activeView === 'translations' ? <TranslationReviewPanel /> : activeView === 'ads' ? <AdsManagementPanel /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : activeView === 'rentals' ? <RentalAdminPanel runAction={runAction} /> : activeView === 'rentalOrders' ? <RentalOrdersPanel /> : activeView === 'rentalReports' ? <RentalReportsPanel /> : <AdminSection view={activeView} runAction={runAction} />}
+            {activeView === 'overview' ? <Overview period={period} setPeriod={setPeriod} runAction={runAction} onOpenAdmins={() => setView('admins')} onOpenOwners={() => setView('owners')} onOpenBlogs={() => setView('blogs')} /> : activeView === 'admins' ? <AdminManagementPanel runAction={runAction} onOpenAudit={() => setView('audit')} /> : activeView === 'owners' ? <ShopOwnersPanel runAction={runAction} onOwnerApplication={addOwnerApplicationNotification} /> : activeView === 'blogs' ? <BlogPostsPanel runAction={runAction} /> : activeView === 'guides' ? <TravelGuidesPanel runAction={runAction} /> : activeView === 'guideEarnings' ? <GuideEarningsPanel /> : activeView === 'payouts' ? <OwnerPayoutsPanel /> : activeView === 'templates' ? <ShopTemplatesPanel /> : activeView === 'audit' ? <AuditLogPanel /> : activeView === 'jobs' ? <JobsPanel /> : activeView === 'translations' ? <TranslationReviewPanel /> : activeView === 'ads' ? <AdsManagementPanel /> : activeView === 'currency' ? <CurrencySettingsPanel runAction={runAction} /> : activeView === 'rentals' ? <RentalAdminPanel runAction={runAction} /> : activeView === 'rentalOrders' ? <RentalOrdersPanel /> : activeView === 'rentalReports' ? <RentalReportsPanel /> : activeView === 'listings' ? <ListingsPanel /> : <AdminSection view={activeView} runAction={runAction} />}
           </main>
           <footer className="mt-auto flex flex-col gap-1 border-t border-[#214263] bg-[#071a32] px-3 py-2 text-center text-xs text-slate-300 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:text-left"><div><p className="text-base font-bold text-[#27c2ff]">MH Travel</p><p className="mt-1">{t('sa_footer_tagline')}</p></div><p>{t('sa_copyright')}</p><div className="flex justify-center gap-2 text-cyan-300 sm:justify-end"><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">f</span><span className="rounded-full border border-cyan-300/30 px-1.5 py-0.5 text-[10px]">▶</span></div></footer>
         </div>

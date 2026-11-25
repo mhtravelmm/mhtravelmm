@@ -24,7 +24,8 @@ export type FeedEventId =
   | 'subscription_ending'
   | 'owner_payout'
   | 'owner_application'
-  | 'job_failed';
+  | 'job_failed'
+  | 'listing_status';
 
 /** Who a row is for. `everyone` is the signed-in traveler feed. */
 export type FeedRecipient =
@@ -61,6 +62,8 @@ export const FEED_EVENTS: Record<FeedEventId, FeedEventDefinition> = {
   owner_payout: { id: 'owner_payout', recipients: [], href: '/shop-owner' },
   owner_application: { id: 'owner_application', recipients: [ADMIN, SUPER_ADMIN], href: '/super-admin' },
   job_failed: { id: 'job_failed', recipients: [SUPER_ADMIN], href: '/super-admin' },
+  // The owner is named on the row, so the definition lists no default recipient.
+  listing_status: { id: 'listing_status', recipients: [], href: '/shop-owner' },
 };
 
 export const FEED_RETENTION_DAYS = 90;

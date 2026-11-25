@@ -56,6 +56,17 @@ describe('listings migration', () => {
     expect(sql).toContain('on conflict (id) do nothing');
   });
 
+  // Plan §9 reads the stamp, not the status, so the two copies have to agree on
+  // which rows carry one. A row seeded active without a stamp would drop back to
+  // Pending on the Owner's first edit.
+  it('stamps exactly the rows it seeds as active', () => {
+    expect(sql).toContain("case when seed.status = 'active' then now() else null end");
+    for (const row of SEED_LISTING_ROWS) {
+      if (row.status === 'active') expect(row.first_approved_at, row.id).not.toBeNull();
+      else expect(row.first_approved_at, row.id).toBeNull();
+    }
+  });
+
   it('skips a seed row whose city is missing rather than failing the migration', () => {
     expect(sql).toContain('where exists (select 1 from public.rental_cities c where c.id = seed.city_id)');
   });
@@ -125,5 +136,47 @@ describe('listing rows', () => {
   it('holds one row per id', () => {
     const ids = SEED_LISTING_ROWS.map((row) => row.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+/**
+ * Plan §9: "Every listing has open and close times; hotels also have check-in
+ * and check-out times." The seed is written twice — `SEED_LISTING_ROWS` and the
+ * SQL values list — so both are checked, and against each other.
+ */
+describe('every seeded listing satisfies Plan §9 hours', () => {
+  it('gives every row an open and a close time', () => {
+    for (const row of SEED_LISTING_ROWS) {
+      expect(row.open_time, `${row.id} open_time`).toMatch(/^\d{2}:\d{2}$/);
+      expect(row.close_time, `${row.id} close_time`).toMatch(/^\d{2}:\d{2}$/);
+    }
+  });
+
+  it('gives every hotel and guesthouse both stay times', () => {
+    const stays = SEED_LISTING_ROWS.filter((row) => row.category === 'hotel' || row.category === 'guesthouse');
+    expect(stays.length).toBeGreaterThan(0);
+    for (const row of stays) {
+      expect(row.checkin_time, `${row.id} checkin_time`).toMatch(/^\d{2}:\d{2}$/);
+      expect(row.checkout_time, `${row.id} checkout_time`).toMatch(/^\d{2}:\d{2}$/);
+    }
+  });
+
+  it('leaves the stay times off everything that is not a hotel or guesthouse', () => {
+    const others = SEED_LISTING_ROWS.filter((row) => row.category !== 'hotel' && row.category !== 'guesthouse');
+    for (const row of others) {
+      expect(row.checkin_time, `${row.id} checkin_time`).toBeNull();
+      expect(row.checkout_time, `${row.id} checkout_time`).toBeNull();
+    }
+  });
+
+  it('carries the same hours in the SQL seed as in the catalog', () => {
+    for (const row of SEED_LISTING_ROWS) {
+      const line = sql.split('\n').find((text) => text.trim().startsWith(`('${row.id}',`));
+      expect(line, `${row.id} missing from the SQL seed`).toBeTruthy();
+      expect(line).toContain(`'${row.open_time}'`);
+      expect(line).toContain(`'${row.close_time}'`);
+      if (row.checkin_time) expect(line).toContain(`'${row.checkin_time}'`);
+      expect(line).toContain(`'${row.price_display}'`);
+    }
   });
 });

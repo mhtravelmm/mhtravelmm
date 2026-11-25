@@ -1,6 +1,19 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 29 November 2026 (the catalog growth pass: `/shops/:shopId`
+**Last audited:** 30 November 2026 (Plan §16C.3 step 2: the Admin and Owner
+listing screen. `src/lib/listingStore.ts` holds the §9 approval rule, the
+draft validation and the photo quota, and
+`src/features/superAdmin/ListingsPanel.tsx` renders it in a new `listings`
+workspace section — create/edit, price display, open and stay times, approve,
+suspend and retire. The rules are mirrored in the migration and proven both
+ways: `listingStore.test.ts` reads the SQL, and
+`scripts/verify-migrations.sh` runs the same nine checks against Postgres 16.
+The seeded catalog rows are written as active **and** stamped with the §9
+approval date, because the update policy reads the stamp rather than the
+status: an active row without one would fall back to Pending on the Owner's
+first edit. `normalizeRow()` therefore treats a stored `null` stamp as a real
+value instead of an absent one.
+Before that, 29 November 2026 (the catalog growth pass: `/shops/:shopId`
 renders **nineteen** lazy templates from the §4 catalog over one typed fixture —
 the free hotel default plus ten paid hotel designs, and one paid alternative
 beside the free default in restaurant, cafe, attraction and book shop. The owner

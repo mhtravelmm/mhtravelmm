@@ -1,4 +1,5 @@
 import type { CardListing, BookingFlowMode, PriceDisplayMode } from '../types';
+import { DEFAULT_SHOP_PHOTO_QUOTA } from './mediaRules';
 import {
   CITY_TRAVEL_GUIDES,
   POPULAR_BOOK_SHOPS,
@@ -68,6 +69,15 @@ export interface ListingRow {
   views: number;
   image_url: string | null;
   href: string;
+  /** Admin-set bound on `listing_photos`; §16C.2, defaulted by the migration. */
+  photo_quota: number;
+  /**
+   * Plan §9: set once, when the first Admin approval makes the row live. An
+   * owner's later edit keeps the row live instead of dropping it to Pending.
+   */
+  first_approved_at: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /**
@@ -152,6 +162,33 @@ const GROUPS: SeedGroup[] = [
   { category: 'rental', items: NEARBY_LISTINGS.filter((item) => item.category === 'rental'), bookingFlow: 'full_manual', priceDisplay: 'public' },
 ];
 
+/**
+ * Plan §9: "Every listing has open and close times; hotels also have check-in
+ * and check-out times." The compiled catalog carries no hours, so each category
+ * gets the hours a traveler would expect from it. An Owner edits these; the
+ * point is that a seeded row is valid the moment it is opened.
+ */
+const OPEN_CLOSE_BY_CATEGORY: Partial<Record<ListingCategory, { open: string; close: string }>> = {
+  attraction: { open: '08:00', close: '17:00' },
+  hotel: { open: '00:00', close: '23:59' },
+  guesthouse: { open: '00:00', close: '23:59' },
+  restaurant: { open: '10:00', close: '22:00' },
+  cafe: { open: '07:00', close: '20:00' },
+  bar: { open: '17:00', close: '23:30' },
+  market: { open: '08:00', close: '18:00' },
+  book_shop: { open: '09:00', close: '19:00' },
+  rental: { open: '08:00', close: '18:00' },
+  transport: { open: '05:00', close: '21:00' },
+  travel_guide: { open: '08:00', close: '18:00' },
+  exchange: { open: '09:00', close: '17:00' },
+  hospital: { open: '00:00', close: '23:59' },
+  clinic: { open: '08:00', close: '17:00' },
+  gym: { open: '06:00', close: '22:00' },
+};
+
+/** A hotel's stay times; Plan §9 requires both on every hotel and guesthouse. */
+const STAY_TIMES = { checkin: '14:00', checkout: '12:00' } as const;
+
 function nearbyDetails(id: string): { address: string; latitude: number; longitude: number } | null {
   const record = NEARBY_LISTINGS.find((item) => item.id === id);
   return record ? { address: record.address, latitude: record.lat, longitude: record.lng } : null;
@@ -164,6 +201,8 @@ function nearbyDetails(id: string): { address: string; latitude: number; longitu
  */
 export function toListingRow(item: CardListing, group: SeedGroup): ListingRow {
   const details = nearbyDetails(item.id);
+  const hours = OPEN_CLOSE_BY_CATEGORY[group.category];
+  const stays = group.category === 'hotel' || group.category === 'guesthouse' ? STAY_TIMES : null;
   return {
     id: item.id,
     category: group.category,
@@ -176,11 +215,14 @@ export function toListingRow(item: CardListing, group: SeedGroup): ListingRow {
     address: details?.address ?? null,
     latitude: details?.latitude ?? null,
     longitude: details?.longitude ?? null,
-    open_time: null,
-    close_time: null,
-    checkin_time: null,
-    checkout_time: null,
-    price_display: group.priceDisplay ?? 'hidden',
+    open_time: hours?.open ?? null,
+    close_time: hours?.close ?? null,
+    checkin_time: stays?.checkin ?? null,
+    checkout_time: stays?.checkout ?? null,
+    // Plan §9 lets an Owner choose hidden, after payment or public. A mode that
+    // shows a price needs one, so a record the catalog has no price for is
+    // hidden rather than public — otherwise the row fails its own validation.
+    price_display: item.priceUsd === undefined ? 'hidden' : (group.priceDisplay ?? 'hidden'),
     price_from_mmk: null,
     price_from_usd: item.priceUsd ?? null,
     booking_flow_mode: group.bookingFlow ?? 'full_manual',
@@ -191,8 +233,17 @@ export function toListingRow(item: CardListing, group: SeedGroup): ListingRow {
     views: item.views,
     image_url: item.imageUrl ?? null,
     href: item.href ?? '/',
+    photo_quota: DEFAULT_SHOP_PHOTO_QUOTA,
+    // The seed inserts every catalog row as active, and the SQL writes the §9
+    // stamp for exactly those, so the twin has to agree or the browser would
+    // treat a live row as never approved and a later Owner edit would drop it
+    // back to Pending.
+    first_approved_at: SEED_APPROVED_AT,
   };
 }
+
+/** A fixed stamp so the fixture is deterministic; the SQL uses its own `now()`. */
+const SEED_APPROVED_AT = '2026-11-30T00:00:00.000Z';
 
 /** Every row the migration seeds, in insertion order, deduplicated by id. */
 export const SEED_LISTING_ROWS: ListingRow[] = GROUPS.flatMap((group) =>

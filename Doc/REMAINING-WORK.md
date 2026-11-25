@@ -27,12 +27,12 @@ What remains is the rest of §16C.3, module by module, in the §16C.1 order:
 | # | Step (§16C.3) | State |
 |---|---|---|
 | 1 | Seed `listings` and the detail tables from the compiled catalog, keeping ids | **Listings done.** Hotel rooms, menus, book-shop products and market stalls have no detail table yet |
-| 2 | Admin and Owner management: create, edit, photo quota, price display, open times, approval | **Not started.** The table and its RLS rules exist; no screen reads them |
+| 2 | Admin and Owner management: create, edit, photo quota, price display, open times, approval | **Done in the browser layer.** `src/lib/listingStore.ts` holds the rules and `src/features/superAdmin/ListingsPanel.tsx` is the screen (Admin and Super Admin, reached from the `listings` workspace section). Reads and writes go to `localStorage` until step 3 points the same store at the table |
 | 3 | Switch the module's pages from compiled data to Supabase queries, scoped by city, with pagination | **Not started.** Every page still reads `src/data` |
 | 4 | Booking or contact CTA per flow mode, with the voucher | **Partial.** Request records and references exist; the voucher is not built |
 | 5 | Reviews with the verification rule | **Partial.** Reviews are stored; the completed-booking check is not enforced |
 | 6 | Add the module to the search index and the notification events | **Not started** |
-| 7 | Tests: rules, RLS per role, one end-to-end booking, the route and link tests | **Partial.** 881 tests pass and the listing seed is guarded; no booking test |
+| 7 | Tests: rules, RLS per role, one end-to-end booking, the route and link tests | **Partial.** 931 tests pass, including the listing rules, the step 2 screen and the seed's approval stamp; no booking test |
 
 Two things must happen before step 3 can start on any module:
 
@@ -41,8 +41,9 @@ Two things must happen before step 3 can start on any module:
     that does not exist yet.
   - **`listing_photos`** is written (`20261130000200_listing_photos.sql`) with
     the Admin-set `photo_quota` on the listing row and a trigger that refuses
-    the insert past it, but no page uploads through it yet — the owner editor
-    in step 2 is what connects the two.
+    the insert past it. The step 2 screen shows and honours the quota
+    (`canAddPhoto()`); the upload itself still goes through no page, so
+    `mediaRules.ts` and the photo table are not joined yet.
 
 The order stays as §16C.1 sets it: Hotels first, because it settles the booking
 and voucher work that every module after it reuses.

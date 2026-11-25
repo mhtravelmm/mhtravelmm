@@ -1,8 +1,9 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 30 November 2026 (latest pass: the migration chain run
-against a real Postgres, the four migrations that could never have applied
-fixed, and the §16C.2 `listings` table seeded; below it the §4 catalog growth
+**Last updated:** 30 November 2026 (latest pass: the §16C.3 step 2 Admin and
+Owner listing screen; below it the migration chain run against a real Postgres,
+the four migrations that could never have applied fixed, and the §16C.2
+`listings` table seeded; below that the §4 catalog growth
 to nineteen templates, the 24 November component-test seam, then the
 detail-link and grid-cap fixes of the same day)
 **Verified against:** `main` plus the Shop Page template layer (the lazy
@@ -21,6 +22,68 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## The Admin and Owner listing screen — 30 November 2026
+
+Plan §16C.3 step 2. The `listings` table existed and its policies were verified,
+but nothing read it, so an Admin could not approve a listing and an Owner could
+not edit one. This pass adds the browser layer.
+
+`src/lib/listingStore.ts` holds every rule the screen applies:
+
+  - `listingDraftProblems()` — an English name (the card's fallback), a city
+    (every page is city-scoped), a price behind a visible price mode, one
+    currency and not two, a non-negative price, and both stay times on a hotel
+    or guesthouse.
+  - `statusAfterEdit()` — Plan §9. An Owner's edit before the first approval
+    stays Pending; after it, the row stays live. An Admin edit never moves the
+    status, and a retired row is never resurrected.
+  - `applyListingDraft()` — takes `views`, `rating`, `review_count` and
+    `first_approved_at` from the stored row, never from the draft, so a form
+    cannot write them. The SQL trigger pins the stamp for the same reason.
+  - `listingsForViewer()` — staff read every row, an Owner reads only their own,
+    a signed-out visitor reads none.
+  - `canApproveListings()` / `canEditListing()` — the §16B.1 rows: approve is
+    `F` for Super Admin and Admin and `-` elsewhere; an Owner may edit but never
+    approve.
+
+`src/features/superAdmin/ListingsPanel.tsx` is the screen, reached from a new
+`listings` workspace section. It lists with a search box and a status filter,
+shows the price through the shared formatter, the photo quota and the approval
+date, and offers edit, approve, suspend and retire per row. Every write records
+an `admin_audit_logs` row through the existing recorder (`objectType:
+'listing'`, `source: 'listings'`) and, when the row has an owner, a
+`listing_status` feed event in both languages.
+
+The pass also found a gap in the seed. Plan §9 says "Every listing has open and
+close times; hotels also have check-in and check-out times", but the compiled
+catalog carries no hours, so all 67 seeded rows had `null` in all four columns.
+Enforcing the rule would have made every seeded listing unsaveable. The
+generator now assigns the hours a traveler expects from each category and both
+stay times to hotels and guesthouses, and the SQL values list was regenerated to
+match. `listingRows.test.ts` asserts both copies agree, so the two cannot drift
+again.
+
+A second gap surfaced when the panel was opened in the browser: every row read
+"Active" and "not yet approved" at the same time. The seed inserted all 67 rows
+as `active` but left `first_approved_at` null, and the §9 update policy reads
+the stamp, not the status — so the first edit by any owner would have dropped a
+live listing back to Pending, and the panel was telling the truth about a row
+the policy would reject. The insert now stamps the rows it writes as active
+(`case when seed.status = 'active' then now() end`), the TypeScript twin carries
+the same fixed stamp, and `normalizeRow()` treats a stored `null` as a real
+value rather than an absent one, which the old `??` fallback had silently
+replaced with the seed's stamp. Both directions are guarded: one test refuses an
+active row with no stamp, another refuses a non-active row that has one, and the
+DOM test asserts an unstamped row renders "Not yet approved" and nothing else.
+
+The two halves are proven against each other. `listingStore.test.ts` reads
+`20261130000100_listings.sql` and asserts the policy text it depends on, so a
+rule cannot change on one side alone. `scripts/verify-migrations.sh` runs the
+same acceptance checks on Postgres 16 — nine now, including that an Owner's edit
+goes live after approval and that the stamp survives it. Mutating either side
+fails the other: reverting the policy to `status = 'pending'` fails the script,
+and dropping the stamp from the panel fails the DOM test.
 
 ## The migrations now apply — 30 November 2026
 

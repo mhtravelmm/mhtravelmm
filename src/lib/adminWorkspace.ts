@@ -23,6 +23,7 @@ export type WorkspaceSection =
   | 'rentals'
   | 'rentalOrders'
   | 'rentalReports'
+  | 'listings'
   | 'audit'
   | 'jobs'
   | 'translations';
@@ -44,6 +45,7 @@ const ALL_SECTIONS: WorkspaceSection[] = [
   'rentals',
   'rentalOrders',
   'rentalReports',
+  'listings',
   'audit',
   'jobs',
   'translations',
@@ -62,7 +64,7 @@ const ALL_SECTIONS: WorkspaceSection[] = [
 const SECTIONS_BY_ROLE: Record<AdminRole, WorkspaceSection[]> = {
   'Super Admin': ALL_SECTIONS,
   'Ads Admin': ['ads'],
-  Admin: ['users', 'owners', 'bookings', 'content', 'blogs', 'guides', 'guideEarnings', 'rentals', 'rentalOrders', 'rentalReports', 'translations'],
+  Admin: ['users', 'owners', 'bookings', 'content', 'blogs', 'guides', 'guideEarnings', 'rentals', 'rentalOrders', 'rentalReports', 'listings', 'translations'],
   'Rental Admin': ['rentals', 'rentalOrders', 'rentalReports'],
   'Payment Admin': ['rentalOrders', 'rentalReports', 'currency', 'guideEarnings', 'payouts', 'templates', 'ads'],
   'Travel Guide Content Admin': ['guides', 'guideEarnings'],
