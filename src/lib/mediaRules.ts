@@ -2,7 +2,7 @@
  * Plan §16B.6: every upload lands in one of five R2 folders, and the folder
  * decides the type, the size and the dimensions. The rules live here, not in
  * the upload call, so the editor, the Worker contract and the tests read one
- * table. `mediaApi.ts` is the caller; `supabase/migrations/
+ * table. `mediaApi.ts` is the caller; `SQL/
  * 20261123000500_media_objects.sql` repeats the size limits as a check.
  */
 

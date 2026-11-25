@@ -62,7 +62,7 @@ claim as true without checking the code.
   `TranslationKey` is derived from the dictionary, so a typo is a type error.
 - **Every `rental_error_*` the SQL functions raise needs MM and EN.** `translate()` takes a
   plain string so a code newer than this build reads as missing, and
-  `src/lib/rentalErrorMessages.test.ts` reads the codes out of `supabase/migrations` and
+  `src/lib/rentalErrorMessages.test.ts` reads the codes out of `SQL/` and
   fails on any without both texts.
 - **`CardListing` requires rating, distance, favourite, and views** (`src/types/index.ts`).
   Cards show all four; there are exactly five card sizes.
@@ -189,8 +189,12 @@ claim as true without checking the code.
 - Full footer is Home-only; other routes render `PageCopyright`. Dashboards use
   `DashboardCopyright`.
 - Docs live in `Doc/`: `STATUS.md` is the single status view, `COMPLETED-WORK.md` and
-  `REMAINING-WORK.md` hold the detail, `PLAN-VS-CODE.md` records Plan drift. The
-  authoritative product plan is `Plan/PROJECT-PLAN.md` — update it when a section ships.
+  `REMAINING-WORK.md` hold the detail, `PLAN-VS-CODE.md` records Plan drift, `TICKETS.md`
+  tracks the build tickets. The authoritative product plan is `Plan/PROJECT-PLAN.md`; it is
+  changed only by Claude. When a section ships, record it in `Doc/` (what was built and how
+  in `COMPLETED-WORK.md`; the ticket in `TICKETS.md`). When the code must differ from the Plan,
+  or the Plan is unclear, write it under "Questions for the Plan" in `Doc/PLAN-VS-CODE.md` and
+  keep building to the Plan.
 - Roles have two spellings: `profiles.role` stores a slug (`rental_admin`), the UI
   and RLS speak the product name (`Rental Admin`). Resolve both through
   `roleMapping.ts`; never compare a raw profile value to a product name. The admin
@@ -277,6 +281,16 @@ claim as true without checking the code.
   and `stage: 'final'` holds the compressed result to the folder ceiling, so do
   not "simplify" that into one pass or a 5 MB photo is refused before it is
   shrunk. The success message reads `cw_upload_target_r2` with `{folder}`.
+
+## Repository layout (Plan section 16I)
+
+- `Plan/` holds one file, `PROJECT-PLAN.md`. `Doc/` holds only the files listed in
+  `Doc/README.md`. `SQL/` holds only `.sql` files named `<YYYYMMDDHHMMSS>_<slug>.sql`,
+  forward-only. `Worker/` holds one file, `index.ts` (only `.gitkeep` until it exists).
+- Never create `supabase/`, `docs/`, `workers/` or `migrations/` folders, a second plan, or
+  `.md` / `.sql` files elsewhere. `src/repoLayout.test.ts` (ticket O-05) fails on any of these.
+- Roles: OpenHands writes `src/` and its tests; Manus AI applies `SQL/` and owns Supabase and
+  Cloudflare; Claude writes the Plan. The contracts you code against are Plan section 16G.
 
 ## Pushing to origin
 

@@ -189,7 +189,7 @@ describe('orphan cleanup', () => {
 
 /** The Worker and this module must not disagree about a limit; the SQL is the copy. */
 describe('the media migration repeats these limits', () => {
-  const sql = readFileSync(join(process.cwd(), 'supabase', 'migrations', '20261123000500_media_objects.sql'), 'utf8');
+  const sql = readFileSync(join(process.cwd(), 'SQL', '20261123000500_media_objects.sql'), 'utf8');
 
   it('lists the same five folders', () => {
     for (const folder of MEDIA_FOLDERS) {

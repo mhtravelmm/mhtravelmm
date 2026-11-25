@@ -3,7 +3,7 @@
  * row last referenced it. The nightly job removes what nothing has referenced
  * for 30 days (`orphanCandidates` in `mediaRules.ts`). This module is the
  * browser stand-in for that table, so the job does real work before
- * `supabase/migrations/20261123000500_media_objects.sql` is applied; the same
+ * `SQL/20261123000500_media_objects.sql` is applied; the same
  * three calls become `register_media_object()`, `touch_media_object()` and
  * `orphan_media_objects(days)`.
  */

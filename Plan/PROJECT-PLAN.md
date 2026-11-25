@@ -1,21 +1,15 @@
 # MH Travel — Consolidated Project Plan
-> **Authoritative single-file plan.** Consolidated on 16 November 2026 from the root roadmap, Plan notes, backend handoff, daily records, and implementation worklog.
+> **Authoritative single-file plan.** Consolidated on 16 November 2026; every section revised against `Doc/` and the code on 23 November 2026. Claude is the only editor.
 ## Document organization
 
-- `Plan/PROJECT-PLAN.md` is now the single source of truth for product requirements, implementation history, backend handoff, and remaining plan context.
+- `Plan/PROJECT-PLAN.md` is the single source of truth for product requirements, decisions, system specifications and the backend handoff. Implementation history and dated work records live in `Doc/HISTORY.md`.
 - `Doc/COMPLETED-WORK.md` records completed work in a concise delivery-oriented format.
 - `Doc/REMAINING-WORK.md` records open production, backend, UX, and configuration work.
 - `Doc/STATUS.md` is the one-page DONE / PARTIAL / PREVIEW / NOT DONE view and the place to start; `Doc/PLAN-VS-CODE.md` checks this Plan against the code.
-- Division of roles: this Plan holds product requirements and decisions; `Doc/` holds what is done and open. Working order: read `Doc/` (STATUS first), then this Plan, then write the Plan additions and improvements; code is written from the Plan; afterwards `Doc/` records the completed parts and how they were implemented.
-- Supporting non-plan documentation such as blog image licensing remains outside this consolidated plan.
+- Division of roles: this Plan holds product requirements and decisions; `Doc/` holds what is done and open. Claude writes only this Plan, OpenHands writes the application code, and Manus AI does the Supabase and Cloudflare work (section 16F). Working order: read `Doc/` (STATUS first), then this Plan, then write the Plan additions and improvements; code is written from the Plan; afterwards `Doc/` records the completed parts and how they were implemented.
+- Every kind of file has one home: `Plan/` one file, `Doc/` a fixed list, `SQL/` only SQL, `Worker/` one Worker file (section 16I). `Doc/TICKETS.md` is where ticket status lives.
+- Supporting non-plan documentation such as blog image licensing is `Doc/BLOG-IMAGE-SOURCES.md`.
 
-
----
-
-## Consolidated source: Product roadmap and verified implementation inventory
-
-> Living document. Added to section by section, and refined further as
-> decisions develop during actual development.
 
 ---
 
@@ -26,7 +20,8 @@
 - Mobile app stays synced with the web app through a shared backend.
 - Development approach: finish the user-facing side completely before
   designing Owner/Admin dashboards, since user-facing requirements define
-  what the dashboards need to manage.
+  what the dashboards need to manage. The MH-owned modules are the exception:
+  for them the user side and the Admin side are built together (below).
 - Home Page design is complete (confirmed 2026-11-21); it no longer blocks
   other modules and fills out as they arrive.
 - Build priority (2026-11-21): MH Travel's own modules first: **Rentals**,
@@ -39,130 +34,77 @@
   outside businesses (section 9) are planned capabilities, built in Phases 3
   and 4 of the roadmap (section 16D), after the MH-owned modules and the core
   listings. Decisions made on the founder's behalf are listed in section 16E
-  for review after testing.
+  for review after testing. Agent roles, tickets and contracts are in sections
+  16F and 16G, Search in 16H, and the repository layout in 16I.
+
+### Who uses MH Travel
+
+| Group | What they do | Where it is specified |
+|---|---|---|
+| Foreign tourists | Plan and book a trip, find help after arrival | Sections 5 to 8, 13 |
+| Local Myanmar travelers | Same, in Myanmar and in MMK | Sections 5 to 8, 14 |
+| Business owners (Owner Admin) | Run a listing, take bookings, get paid | Sections 4, 6, 9 |
+| Ticket operators (Main Owner, Branch Owner) | Sell tickets through their own system | Sections 7 and 9 |
+| MH Travel staff (the admin roles) | Run the platform | Sections 3, 8, 10, 16A, 16B |
+
+### Principles that apply everywhere
+
+1. **Bilingual by default.** Every visible string exists in Myanmar and English. Stored content is Unicode only; Zawgyi is converted on the way in (16H.5).
+2. **USD base, MMK or USD display.** Prices are stored in USD and formatted live by the selected currency (16B.5).
+3. **The server is the authority.** The browser never decides a price, a role, a date window or a status; it only asks (16B.8).
+4. **One home for each fact.** Requirements live in this Plan; what is done lives in `Doc/` (16I).
+5. **Simple first.** Fewer filters and fewer screens, with each screen doing one job.
+6. **Share the minimum.** Personal data goes only where a feature needs it, and operator data stays with the operator (section 9).
+
+### Section map
+
+1 Overview · 2 Tech and architecture · 3 Roles and accounts · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout.
 
 ---
 
-## 2. Tech Stack and Workflow
+## 2. Tech Stack and Architecture
 
-- Frontend: Vite + React + TypeScript + Tailwind CSS.
-- Backend, database and auth: Supabase.
-- Deployment: Cloudflare Worker serving the built site as static assets
-  (`wrangler.jsonc`, `assets.directory = ./dist`,
-  `not_found_handling = single-page-application`). Pushes to `main` on
-  GitHub deploy automatically.
-- Cloudflare Workers/static hosting are part of the target deployment architecture.
-  The checked-out repository currently contains the static Wrangler asset
-  configuration, but no Worker JSON API or R2 data-access implementation.
-- Application code is written in Cursor, step by step. Claude's job is the
-  Plan: read `Doc/` first, then this Plan, then write the additions and
-  improvements the Plan needs. Claude does not write application code.
-  (This replaces the earlier line saying Claude writes the code directly.)
+- Frontend: Vite + React + TypeScript + Tailwind CSS, a single-page app.
+- Backend, database and auth: Supabase (Postgres with RLS, Auth, Realtime).
+- Hosting: one Cloudflare deployment. `wrangler.jsonc` serves the built site
+  as static assets (`assets.directory = ./dist`,
+  `not_found_handling = single-page-application`). Pushes to `main` on GitHub
+  deploy automatically.
+- The one Worker (`Worker/index.ts`, section 16G.4) is planned and not built
+  yet (ticket M-06). It will serve `/api/*` and run the scheduled jobs; the
+  static site keeps every other path. Until it exists the repository has no
+  Worker API and no R2 data access.
+- Files go where section 16I says. Code is written by OpenHands; Supabase and
+  Cloudflare (the one Worker, R2, cron) are done by Manus AI; Claude writes
+  only this Plan (section 16F). Claude reads `Doc/` first, then this Plan,
+  then writes the additions and improvements the Plan needs.
 - Secrets (Supabase keys, tokens) live in a local, gitignored `.env` and in
-  Cloudflare's build environment variables. They are never committed.
+  Cloudflare's and Supabase's secret stores. They are never committed.
+
+### How the parts talk to each other
+
+| From | To | What for |
+|---|---|---|
+| Browser | Supabase | Sign-in, reads through RLS-protected tables and views, calls to the functions in 16G.3, Realtime for notifications and chat |
+| Browser | the Worker (`/api/...`) | Image upload, ad click and impression, translation, weather |
+| Worker | Supabase | Verifies the user's token, writes ad events, reads and writes the translation cache |
+| Worker | R2 (`MEDIA`) | Stores and reads media objects |
+| Supabase `pg_cron` and the Worker's scheduled handler | the database | The jobs in 16B.7 |
+| MH Travel hub | each operator system | Trips, live seat maps, holds and confirms (section 9) |
+
+### Environments and delivery
+
+Three environments (local, staging, production) as in 16B.9. Every push runs `npm run typecheck`, `npm test`, `npm run lint` and `npm run build`; a ticket is done only when they pass (16F.1 rule 7). SQL migrations are applied to staging first and then to production by Manus. The Home-only full footer, the fixed five-tab phone navigation and the `public/_redirects` ban in section 15 stay in force.
 
 ---
 
-## 2A. Completed Implementation Inventory (verified 2026-11-10)
+## 2A. Implementation inventory
 
-This section records what is already implemented in the repository. It is intentionally separate from the roadmap below so that completed work is not mistaken for planned work.
-
-### Application foundation and shared UI
-
-- Vite + React + TypeScript + Tailwind CSS, React Router, Lucide icons, dark-first theme tokens, light-mode toggle, currency formatting, and Burmese/English translations are in use.
-- The responsive shell, sticky header, mobile partial-width sidebar, fixed mobile bottom navigation, full Home footer, inner-page copyright footer, and standalone Admin layout are implemented.
-- Shared `CardListing`, `ListingCard`, ad-slot, currency, language, theme, authentication, and Favorites primitives are used across feature pages.
-- Header, mobile menu, account access, search entry point, notifications, language, currency, theme, Favorites, and logout interactions are wired to routes or shared state.
-
-### Traveler-facing pages
-
-- Home is implemented with categories, marquee discovery, travel plans, Travel Guide, Blogs, Populars, reviews, awards, partners, ads, Top Attractions, Restaurants, Cafes, and the requested responsive card sizing.
-- Cities includes a persistent bilingual Shwedagon hero banner with an Explore cities anchor CTA, followed by discovery sections for attractions, hotels, restaurants, book shops, rentals, transport, cafes, and markets. The hero is independent of the optional ad response so it cannot disappear when no ad creative is returned.
-- Nearby supports browser location permission, fallback distance, direct search, category, rating, distance filters, closest results, and higher-rated recommendations.
-- Blogs has a bilingual listing and in-app article reader, compact cards, categories, search, sorting, share, view count, rating, geolocation-gated distance, related stories, related hotels, and ad slots.
-- Travel Plans has search, duration filtering, sorting, compact route cards, currency-aware prices, Favorites, and a detailed Custom Plan builder covering start point, MH Travel destinations, days, travelers, nationality, budget, transport, accommodation, optional hotel selection, and notes.
-- Custom Plan messaging explains that MH Travel reviews the request, calculates the quotation, contacts the traveler, and negotiates destinations/services.
-- Restaurants and Book Shops have listing/detail experiences based on the supplied references, including hero/info sections, photos, services or menus, reviews, nearby attractions, and CTAs.
-- Rentals has a bilingual city-first flow with city-specific availability, motorbike, bicycle, car, horse carriage, camping tent, motorboat, and guide categories where available; car seat-size options; citizen/foreigner pricing; start/end date duration calculation; advance-date rules; delivery or branch pickup; phone validation; estimates; and MH Travel follow-up confirmation.
-- Ticketing has Bus, Train, Events, and Cinema categories with city/township or venue search, two-step result-to-booking flow, route/venue matching, bus passenger count, nationality, time, boarding point, drop-off point, seat selection, cinema movie/hall/seat selection, currency-aware prices, validation, and order confirmation state.
-- Travel Guide now has a bilingual catalog, categories, search, compact responsive cards, Favorites, guide detail routes, itinerary stops, maps/directions links, metrics, related content, and discovery rows.
-- Search now has a bilingual aggregated search page across Travel Plans, Guides, Blogs, and Popular listings with category filters, clearable query input, result counts, empty state, and shared Favorites cards.
-- Account Dashboard and Notifications pages are implemented with bookings, custom plans, Favorites, reviews, messages, settings, support/legal, recent activity, read/unread notification filters, and logout behavior.
-
-### Favorites and shared interactions
-
-- Favorites persist in localStorage through a shared provider and are used by Home, Travel Plans, Nearby, Blogs, Travel Guide, related listings, Restaurant, Book Shop, and detail cards.
-- The `/favorites` page has an All tab and grouped tabs for Blogs, Travel Plans, Guides, Hotels, Restaurants, Book Shops, Rentals, Transport, Cafes, Markets, and Attractions, with live item counts and bilingual labels.
-- Unsave removes a card immediately from the active list and updates category/All counts. Saving a card from another page or browser tab synchronizes into an open Favorites page through same-tab and browser storage events.
-
-### Authentication and Super Admin
-
-- Traveler Login and Signup are separate routes. Signup supports username, display name, email, password, confirmation, and branded Google/Facebook entry points; Login accepts username or email plus password.
-- Traveler logout clears session/local state and returns to Login. Traveler access and Super Admin access are kept separate.
-- `/admin/login` is a standalone protected entry point and `/super-admin` is a role-protected dashboard with metrics, users, content/listings, bookings, settings, activity, Ads Management, Shop Owner creation, Admin Management, language toggle, dark/light toggle, and visible logout. The separate `/shop-owner` frontend dashboard route is also implemented for Owner Admin preview.
-- Supabase session hydration, auth-state listening, email signup/login, sign-out, OAuth calls, profile-role checks, and signup metadata wiring exist in the frontend.
-
-### Supabase/backend work already applied
-
-- `public.profiles` exists with Auth-user linkage, username uniqueness, display name, role, avatar URL, timestamps, RLS, own-profile policies, and Super Admin management policies.
-- Signup profile trigger, username derivation, role checks, and Super Admin role-management protections were applied through migrations.
-- The repository keeps backend handoff notes and does not store OAuth secrets or raw SQL in the Plan notes.
-
-### Verified delivery
-
-- Recent feature work has been committed and pushed to GitHub `main`, including categorized Favorites, real-time Favorites synchronization, Ticketing completion, Travel Guide completion, and Search completion.
-- TypeScript typecheck, Vite production builds, and whitespace checks have passed for the latest feature work. The existing `caniuse-lite` freshness message is a non-blocking warning.
-
-### Not yet production-complete
-
-- Favorites, bookings, custom-plan requests, notifications, reviews, views, and Ticketing inventory/seat locking still need real user-scoped Supabase tables, RLS, or provider APIs.
-- Ticketing availability, payment, final booking persistence, and live seat locking are still preview/handoff behavior.
-- Google and Facebook OAuth provider credentials and callback configuration still need to be completed in the Supabase Dashboard.
-- Username-to-auth identity lookup/login and real traveler/Super Admin account provisioning still need production verification.
-- Admin-managed content, rental ads, owner/admin account provisioning, audit-log persistence, payouts, and the broader Owner/Admin business model still need backend/API integration. Their frontend dashboard workflows and preview states are implemented and documented in the 2026-11-10 dashboard work record below.
-
-### Code-level audit record (2026-11-09)
-
-The following findings were checked against the source files, not inferred from screenshots or earlier notes.
-
-#### Runtime and route verification
-
-- `src/App.tsx` is the authoritative route table. It currently declares the Home, Cities, Nearby, Rentals, Restaurants (including `:id`), Book Shops (including `:id`), Ticketing, Travel Plans (including `:planId` details), Travel Guide (including `:guideId`), Blogs, Search, Account, Login, Signup, Admin Login, Super Admin, Shop Owner, Notifications, Account Notifications, and Favorites routes, plus a wildcard Not Found page.
-- `public/manus-routes.json` lists the concrete routes except the legacy redirect `/blogs/:storyId` (25 of 26 on 2026-11-20, `Doc/PLAN-VS-CODE.md` §3.3). It intentionally does not describe the wildcard route. Either add `/blogs/:storyId` to it or record that redirect paths are intentionally omitted.
-- ~~City cards resolve; the remaining catalog paths are undeclared.~~ **Corrected 24 November 2026.** Every path this bullet listed is now declared: the category routes (`/hotels`, `/markets`, `/cafes`, `/attractions`) come from `CATEGORY_SLUGS`, the detail routes (`/hotels/:id`, `/cafes/:id`, `/markets/:id`, `/rentals/:id`, `/ticketing/:id`) from `PLACE_SLUGS`, and `/travel-plans/:planId` is in `PARAM_PATHS`. `src/data/links.test.ts` fails on any seed href that resolves to neither.
-- `src/features/blogs/BlogsPage.tsx` uses the implemented query-string reader format `/blogs?story=<slug>`. Legacy `/blogs/<id>` hrefs still in `CardListing` data work: `src/App.tsx` registers `/blogs/:storyId` and `LegacyBlogRedirect` forwards it to `/blogs?story=<id>`.
-- ~~Restaurant and Book Shop dynamic URLs ignore their `:id`.~~ **Fixed 24 November 2026.** Both read `useParams()` and resolve the record through `src/features/place/placeCatalog.ts`; an unknown id renders the not-found state in MM and EN, held by `src/features/place/PlaceDetailPage.dom.test.tsx`.
-
-#### Persistence and backend boundary
-
-- ~~The app contains no `supabase/` migration directory or SQL source.~~ **Corrected 24 November 2026.** `supabase/migrations/` holds **22 committed migrations, none applied to a project yet** — `rental_roles`, `rental_catalog`, `rental_orders`, `rental_functions`, `rental_role_slugs`, `exchange_rates`, `job_runs`, `notification_feed`, `translation_cache`, `media_objects`, `scheduled_publishing`, `content_lifecycle`, `ads`, `ads_serving`, `shop_subscriptions`, `owner_ledger`, `shop_templates`, `shop_template_events` and `shop_template_catalog_growth`. Between them they define the rental catalog (categories, variants, cities, branches, availability, rates, terms), the rental order tables with extras and events, the `my_bookings` view and the four rental server functions, role-slug normalisation, the exchange-rate table, `job_runs` with its `pg_cron` entry, the notification feed, the translation cache, media objects, scheduled publishing (`blog_posts`, `travel_guides`), the content lifecycle, the ads schema, shop subscriptions, the owner ledger and the shop-template catalog. They are reproducible from the checkout, and the schema work is started rather than unstarted. What remains is applying them and moving each browser store onto its table — see `Doc/REMAINING-WORK.md`.
-- ~~Application Supabase/API calls in source are limited to three modules.~~ **Corrected 24 November 2026: nine modules import the client** (`src/lib/supabase.ts`) — `auth.tsx` (Auth session and `public.profiles`), `favorites.tsx` (`public.favorites`), `notifications.ts` (`public.notifications`), `reviews.ts` (`public.reviews`), `travelRequests.ts` (`public.bookings`), `rentalOrders.ts` (the rental tables and server functions), `adServingApi.ts` and `adClickApi.ts` (the ads schema), and `mainOwnerApi.ts` (branch-account work). `src/lib/mediaApi.ts` separately fetches the R2 upload endpoint. Every call is optional: it runs only when the environment is configured, and the browser store leads otherwise. What still does not call a backend: the seeded catalogs, views, Ticketing inventory, payments, and admin metrics.
-- Home, City, Nearby, Travel Plan, Blog, Restaurant, Book Shop, Rental, Travel Guide and Ticketing **reads** are compiled TypeScript data or page-local arrays, and Search deliberately searches only the imported Travel Plans, Travel Guides, Blogs and Popular arrays. **Writes** are not: favorites, notification read-state, reviews, request records, rental orders and ad events go to Supabase when it is configured.
-- ~~Favorites are shared but not user-scoped.~~ **Corrected 24 November 2026.** Favorites are scoped per account and write through to `public.favorites` when Supabase is configured; the browser key is the fallback for an unconfigured build. What is still open is the anonymous-access policy, not the scoping.
-- ~~Custom Plan, Rental and Ticketing submissions change local state only.~~ **Corrected 24 November 2026.** Each submission now writes an account-scoped request record with a reference (`MHR-…`, `RNT-…`), shows it on the confirmation screen, lists it under Account → Bookings / Travel Plans, and makes a best-effort `public.bookings` insert. Still open: reading requests back from the table, the traveler notification, persisting the contact handoff, and payment, voucher or ticket issuance. Nothing reserves inventory or locks seats yet.
-- Blog views use local storage and seeded metrics. Blog geolocation permission gates display behavior, but the code does not calculate a distance from the user to each article; displayed distances are seeded data.
-- Currency uses a persisted MMK/USD choice with a hard-coded `MMK_PER_USD = 4500` in `src/lib/currency.tsx`; there is no Admin-managed exchange-rate read/write path.
-
-#### Auth and admin verification
-
-- `src/lib/auth.tsx` is hybrid: configured Supabase environments use Auth session hydration, email/password auth, OAuth initiation, profile lookup, role checks, and sign-out; unconfigured environments use a localStorage preview store.
-- The local preview store keeps demo users and plaintext passwords in localStorage and contains a frontend demo Super Admin credential. This path is not production authentication.
-- Configured Supabase login supports an email identifier; username-only login still falls back to local preview lookup. Secure username-to-email resolution is not implemented.
-- `/super-admin` is client-side role guarded. `/admin/login` is a public login form in a standalone layout, not itself a protected route. The Super Admin dashboard metrics and management sections are frontend preview/local state and are not wired to management APIs yet.
-- The frontend role type now includes `traveler | super_admin | owner_admin`; scoped platform-admin roles documented by the backend handoff are still not separately authorized in the UI. `/shop-owner` uses a local `owner_admin` guard until production Supabase authorization is connected.
-- Google and Facebook buttons call `signInWithOAuth` only when Supabase is configured. Provider credentials, callback configuration, OAuth username completion, and production verification remain external setup work.
-
-#### Verified source-level issues to keep in the backlog
-
-- ~~48 broken links across Home, Blog, Nearby, ads and the static catalogs.~~ **Fixed 20 November 2026 and test-guarded.** Every declared route resolves, `src/data/links.test.ts` walks the seed data and fails on an unknown path, and record-level hrefs resolve through `resolveDetailHref()` (`Doc/STATUS.md` §5, `Doc/PLAN-VS-CODE.md` §6a).
-- ~~The Restaurant menu and Book Shop category selectors change state without filtering.~~ **Fixed.** Both run their rows through `filterByCategory()` and render an empty state when a category matches nothing.
-- ~~Restaurant and Book Shop CTAs are visual buttons with no handlers.~~ **Fixed.** Directions and view-map open `mapSearchUrl()` in a new tab, call uses `telHref()`, and save toggles the real favorites store (`src/lib/placeActions.ts`).
-- Account, Notifications and Super Admin screens render real UI sections over partly seeded data. Favorites, notification read-state, the review list, the request records and the rental order lifecycle are wired; metrics, admin accounts, menus, campaigns, revenue and the catalog reads are still sample state until their tables are applied (`Doc/REMAINING-WORK.md`).
-- ~~No automated test runner is defined in `package.json`.~~ **Corrected 24 November 2026.** `npm test` runs Vitest: **885 tests in 72 files**, guarding seed links, the route manifest, the domain rules, the MM/EN dictionary, and — in 15 jsdom tests — pages rendered for real. Typecheck, lint and build are clean. The Browserslist and bundle-size warnings are non-blocking.
+The verified implementation inventory of 2026-11-10 and every dated work record moved to `Doc/HISTORY.md` (section 16I). The current state is `Doc/STATUS.md`; the Plan carries requirements and specifications only.
 
 ---
 
-## 3. Roles
+## 3. Roles and Accounts
 
 Super Admin, Ads Admin, Admin, Rental Admin, Payment Admin,
 Travel Guide Content Admin, Blog Post Admin, Owner Admin.
@@ -201,6 +143,40 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   name (`Rental Admin`). `src/lib/roleMapping.ts` and the server's
   `current_role_name()` resolve either spelling, so a new role must be added to
   both or it signs in as a traveler and fails every write.
+
+### 3.1 Account types
+
+| Account | `profiles.role` | Created by | Signs in with |
+|---|---|---|---|
+| Traveler | `traveler` | Themselves (sign-up) | Email and password, or Google (phase 1); phone, Apple, Facebook later (section 14) |
+| Super Admin | `super_admin` | Another Super Admin, or the one-time first-account step | Email and password, or Google |
+| Ads Admin, Admin, Rental Admin, Payment Admin, Travel Guide Content Admin, Blog Post Admin | `ads_admin`, `admin`, `rental_admin`, `payment_admin`, `travel_guide_admin`, `blog_admin` | Super Admin, by invitation | Email and password (set through the invitation link) |
+| Owner Admin | `owner_admin` | An Admin, after the field visit | Username or email and password |
+| Main Owner, Branch Owner | `main_owner`, `branch_owner` (added in Phase 4) | Admin for a Main Owner; the Main Owner for its Branch Owners | Username or email and password |
+
+The roles other than the first row are never self-service. A traveler cannot raise their own role (a database trigger already blocks it); only Super Admin changes a role, and each change is audited.
+
+### 3.2 Flows
+
+- **Traveler sign-up:** email, password, username and display name. The username is 3 to 24 characters of lower-case letters, digits and underscore, unique, stored lower-case. A Google sign-up without a username goes through a username-completion step before the account is fully usable. Password: at least 8 characters, reset by email.
+- **Username login:** the browser sends the username to a server resolver that returns a sign-in session without ever exposing the account's email (ticket M-09).
+- **Admin and Owner invitations:** the creator enters name, email and role; Supabase Auth emails an invitation; the person sets a password. No plaintext password is shown or stored anywhere in production. The local preview's plaintext-password store is for development only and is off whenever Supabase is configured.
+- **Owner application:** a business that wants to join sends the application form (business name, category, city, address, phone, notes) through `submit_owner_application`, rate-limited and protected by Cloudflare Turnstile. Admin and Super Admin are notified and handle it by field visit, as section 9 says. Approval is the Admin creating the Owner Admin account. The application row records its status (new, contacted, approved, rejected) and who handled it.
+- **Sessions:** Supabase sessions with refresh. An admin-role session needs a fresh sign-in after 12 hours of inactivity; travelers stay signed in until they sign out.
+- **Profile:** username, display name, avatar, role (read-only), preferred language and currency (saved when signed in), optional phone.
+- **Account deletion and export:** a traveler asks in Settings. Admin carries out deletion within 30 days. Bookings are kept 24 months for accounting with the name replaced by "Deleted user", and reviews are kept anonymized. A traveler can ask for a JSON export of their own data.
+
+### 3.3 Data and access
+
+`profiles` exists with RLS (own-profile and Super Admin policies and the role-protection trigger). Add `owner_applications` (`id`, `applicant_name`, `phone`, `business_name`, `category`, `city`, `address`, `notes`, `status`, `handled_by`, `created_at`, `updated_at`) in Phase 2: insert only through the function, read and update by Admin and Super Admin. The database role values and their frontend names are in 16G.5, and the first Super Admin was created through the dashboard and promoted by a one-time SQL role update.
+
+### 3.4 Acceptance criteria
+
+1. A traveler cannot change their own role by any request.
+2. Signing in by username never reveals the email.
+3. An invited admin sets their own password and signs in with the invited role; no password is stored anywhere in clear.
+4. An application can be submitted once per minute per IP and appears to Admin.
+5. Each role change, invitation and deletion is in the audit log.
 
 ---
 
@@ -458,6 +434,34 @@ footer.
 - All visible text goes through the translation system (EN/MM), including
   the full footer.
 
+### 5.1 Content and data for each part
+
+The order of the parts is the one in `src/features/home/HomePage.tsx`; this table adds what each part shows and where it comes from, not a second order.
+
+| Part | Source when the backend is on | Items and order | Notes |
+|---|---|---|---|
+| Hero ad | `serve_ad('home_hero')` | one creative | Collapses when there is nothing to show |
+| Categories | the fixed category list | all, in the marquee | Reduced-motion users get a static, manually scrollable row. Each item links to its category page |
+| Travel Plans | active travel plans | up to 8, newest first | "View all" opens `/travel-plans` |
+| Travel Guide | `travel_guides` (published) | up to 8, newest first | Compact circular-image treatment |
+| Blogs | `blog_posts_public` | up to 6, newest first | Sponsored slots follow the Ads rules |
+| Populars | `listings`, all categories | up to 12 by rating then views | Six per row on wide screens, size `xs` |
+| Reviews | platform-level reviews (section 11) | up to 6, newest among 4 stars and above | |
+| Awards, Partners | static content | as designed | Edited with the code until a content table exists |
+| Discovery rows | `listings` by category: Popular Hotels, Restaurants, Book Shops, Rentals, Transport, Cafes, Markets, Top Attractions | up to 5 per row, by rating then views | Five across on wide screens, size `md`, row width capped at five cards plus gaps |
+| Popular Searches | `get_search_report` top queries | up to 8 | Falls back to the seeded list until the report has data |
+| Ad slots | `serve_ad` with `home_after_travel_plans`, `home_after_hotels`, `home_after_blogs`, `home_after_reviews`, `home_after_partners` | one each | Same collapse rule |
+
+States: a loading skeleton for each row; an empty row is hidden; a failed row is hidden and logged, never shown as an error box. Favorites hearts read and write the favorites table once the backend is on (Phase 2). When the modules are on the backend, one `get_home_feed` function replaces the separate calls (a Phase 2 ticket). Nothing on Home needs the user to be signed in.
+
+### 5.2 Acceptance criteria
+
+1. With the backend off, Home looks and behaves exactly as today.
+2. With it on, every row shows live data and never blocks the others.
+3. A row with no items is not rendered; an ad with nothing to show leaves no gap.
+4. Prices follow the selected currency; the language switch changes every string including the footer.
+5. The marquee stops moving for users who prefer reduced motion.
+
 ---
 
 ## 6. Booking Flow
@@ -484,6 +488,65 @@ Common rules:
 - Hotel detail uses progressive disclosure: the hero shows only
   "From $X/night + Book Now"; tapping reveals the date and guest form, then
   the price breakdown, then confirm.
+
+### 6.1 Statuses (the same set everywhere; the rental functions already use it)
+
+| Status | Meaning | Who moves it | Next |
+|---|---|---|---|
+| `requested` | The traveler asked (Full Manual) | the traveler's submit | accepted, cancelled; expired if the Owner does nothing for 24 hours |
+| `accepted` | The Owner accepted; the 12-hour payment window is open (`payment_deadline = accepted_at + 12 hours`) | Owner or staff | paid, expired, cancelled |
+| `paid` | Payment confirmed by the Owner or staff; the voucher is issued | Owner or staff (or the system for Instant) | completed, cancelled |
+| `completed` | The stay, rental or event has ended | Owner or staff | none |
+| `expired` | The window passed unpaid, or the Owner never answered | the system | none |
+| `cancelled` | Cancelled with a reason by the Owner or staff. **Never by the traveler** | Owner or staff | none |
+
+Instant bookings are created directly as `paid`. A move that is not in the table is refused with `<module>_error_status_transition`. Rescheduling is an event on a `paid` booking, not a status.
+
+### 6.2 Payment
+
+- In this phase payments are recorded by staff or the Owner with a method (`cash`, `bank_transfer`, `mobile_wallet`) and a time; there is no online gateway. Each gateway (KBZPay, AYA Pay and others) later plugs in behind one adapter (`createPayment`, `verifyPayment`, `refund`, a signed webhook, idempotency keys), so the statuses never change.
+- When a booking becomes `paid`, the Owner's commission rate is read and **snapshotted on the transaction**: gross, rate, commission, net (section 9). A rate change never alters an old transaction.
+- A listing whose Owner subscription has expired cannot take bookings: the booking functions refuse with a message asking the traveler to choose another option (section 9).
+- A refund is recorded as its own row linked to the booking, with an amount, a reason and who made it; the money movement itself is outside the app in this phase.
+
+### 6.3 Reschedule
+
+After payment a traveler may change the date. The rules:
+
+- Same number of nights or days, a new start date at least tomorrow, and the request is made at least 24 hours before the original start.
+- Self-service for MH-owned products without inventory (Rental allows it once, section 8). For inventory-based listings (hotels, restaurants, events) it is a request the Owner approves; until approved the original dates stand.
+- Each reschedule writes an event, issues a new voucher version, and notifies the other side.
+
+### 6.4 Data
+
+`bookings` exists (RLS, status and data checks). The target shape is one booking row for every category, plus a detail table where a category differs:
+
+| Table | Key columns |
+|---|---|
+| `bookings` | `id`, `request_code` (unique, `<PREFIX>-YYMMDD-####`: `HTL`, `RST`, `RNT`, `TKT`, `EVT`), `user_id`, `listing_id`, `owner_id`, `category`, `status`, `flow_mode`, `start_date`, `end_date`, `guests`, `currency`, `total_usd`, `payment_method`, `payment_deadline`, `paid_at`, `commission_pct`, `commission_mmk`, `voucher_version`, `special_requests`, `created_at`, `updated_at` |
+| `booking_events` | `id`, `booking_id`, `from_status`, `to_status`, `actor_id`, `note`, `at` |
+| `booking_hotel_details` | `booking_id`, `room_type`, `nights`, `check_in_time`, `check_out_time` |
+| `booking_refunds` | `id`, `booking_id`, `amount_mmk`, `reason`, `made_by`, `at` |
+
+Rental keeps its own `rental_orders` (section 8) and joins the traveler's list through the `my_bookings` view. Detail tables for restaurants, tickets and events are added with their modules (16C).
+
+### 6.5 Voucher and notifications
+
+The voucher is a printable page at `/account/bookings/<request_code>` with a QR code that encodes the code; its 17 fields map from the booking as the Rental table in section 8 shows. Notifications (16B.3): a new request goes to the Owner; accepted, paid, expired and cancelled go to the traveler; a reschedule goes to the other side.
+
+### 6.6 Edge cases
+
+Each request carries an idempotency key, so a double tap creates one booking. All dates and windows use Myanmar Time. An Owner who suspends a listing cannot accept new requests, and existing `paid` bookings stay valid. A cancelled `paid` booking creates a refund row for staff to settle.
+
+### 6.7 Acceptance criteria
+
+1. A booking only moves along the table in 6.1.
+2. An unpaid `accepted` booking becomes `expired` after 12 hours, by itself.
+3. A traveler cannot cancel; staff can, with a reason.
+4. The commission on a transaction does not change when the rate changes later.
+5. A booking on an expired-subscription Owner's listing is refused.
+6. A double submit makes one booking.
+7. The voucher shows all 17 fields and a working QR code.
 
 ---
 
@@ -524,6 +587,39 @@ Common rules:
   separate `/rentals` page. Bus Tickets means coach/express bus tickets, not the
   local YBS route-reference product. Keep ticket-specific search and purchase
   flows; train provider integration may remain separate from the current mock UI.
+
+### 7.1 Traveler flow for a ticket
+
+1. **Search** a route and date in the hub, or open an operator's profile. The hub calls each operator's `GET /trips` and merges the results; an operator that does not answer is left out with a short "temporarily unavailable" note (section 9).
+2. **Choose a trip** (operator, departure and arrival, duration, fare).
+3. **Choose seats** on the live seat map (free, taken, held). Opening the map starts nothing; choosing seats creates a **10-minute hold** and shows a countdown.
+4. **Passenger details:** name and phone for each seat.
+5. **Pay** (Instant flow, section 6). On payment the hub confirms the hold with the operator.
+6. **Ticket:** shown in Account → My Bookings with a QR code that encodes the `booking_ref`, and sent as a notification. The ticket is rendered from the operator's voucher design.
+
+Ticket statuses: `held` → `confirmed` → `completed` (after travel); `refunded` and `rescheduled` are events. A traveler cannot cancel; the operator cancelling a trip refunds in full (section 9). Rescheduling changes the date only, through the operator's reschedule call.
+
+### 7.2 Identity across products
+
+Supabase Auth is the identity provider. The other MH products (Ticketing operator system, MH Ride, YBS) accept the MH access token and verify it against the Supabase public keys (JWKS). Only identity data (account id, display name, phone) is shared; each product keeps its own business data.
+
+### 7.3 Local Bus data and the route planner
+
+| Table | Key columns |
+|---|---|
+| `bus_lines` | `id`, `code`, `name_mm`, `name_en`, `city_id`, `active` |
+| `bus_stops` | `id`, `name_mm`, `name_en`, `latitude`, `longitude`, `city_id` |
+| `bus_line_stops` | `line_id`, `stop_id`, `position`, `direction` |
+
+Admin enters stops, lines and their order. The planner builds a graph: stops are nodes, consecutive stops on a line are edges, and a walking edge joins any two stops within 500 m. It finds the route with the fewest transfers (at most 2) and then the least total time, using 25 km/h for a bus and 4.5 km/h for walking, and shows the walk to the first stop, each ride and transfer, and the walk from the last stop. The Bus option on a listing appears only when its Owner has enabled it. The planner is a Phase 2 module after Nearby.
+
+### 7.4 Acceptance criteria
+
+1. Opening a seat map shows live status; choosing seats starts the 10-minute hold, and an expired hold blocks payment.
+2. A confirmed ticket has a QR code and appears in My Bookings.
+3. An unreachable operator disappears from the hub without errors.
+4. The planner returns a route within 2 transfers, or says none exists.
+5. Hotels and rentals never appear in the Ticketing hub.
 
 ---
 
@@ -592,6 +688,8 @@ Verified against `src/features/rentals/RentalsPage.tsx`, `src/types/index.ts` an
 | `rental_order_events` | `id`, `order_id`, `from_status`, `to_status`, `actor_id`, `note`, `at` | Append-only timeline |
 | `rental_order_extras` | `id`, `order_id`, `description`, `amount_usd`, `added_by`, `at` | Travel guide expenses and other after-rental charges |
 | `my_bookings` (view) | union of `bookings` and `rental_orders` for one user | Account → My Bookings reads this view |
+
+Built schema (`SQL/20261122000100_rental_catalog.sql`, `20261122000200_rental_orders.sql`): catalog ids and the terms version are `text`, not `uuid` or `integer`; the Plan follows the built schema. The functions are in 16G.3.
 
 **Access (RLS).** Catalog tables: everyone reads active rows; Rental Admin and Super Admin write. Orders: a traveler reads their own and creates one only through `submit_rental_order`; Rental Admin, Admin and Super Admin read all; Payment Admin reads totals and payment fields; status changes only through `set_rental_order_status`. Roles come from `public.profiles` and are checked on the server; client role helpers only hide menus.
 
@@ -668,9 +766,9 @@ Every write goes to the audit log. Roles: Rental Admin and Super Admin edit; Adm
 
 Online payment and deposits, ID or licence checks, per-date stock, driver assignment, delivery tracking, multi-item orders. Rental reviews come after Completed, in the reviews work of Phase 2 (section 16D).
 
-#### 11. Build steps (for Cursor)
+#### 11. Build steps (who does each: tickets in section 16F.2)
 
-1. Migrations for the catalog tables and orders, with RLS, committed under `supabase/migrations`. 2. Seed them from `RentalsPage.tsx` and apply the section 2 decisions. 3. Make the page read catalog, availability and rates from Supabase instead of constants; add name and special-requests fields. 4. `submit_rental_order` and the confirmation with the request code. 5. My Bookings view and the voucher page. 6. Rental Admin Orders with the status actions and the expiry job. 7. Rental Admin Catalog, Availability, Rates, Branches and Terms. 8. Notifications. 9. Reschedule. 10. Reports.
+1. Migrations for the catalog tables and orders, with RLS, committed in `SQL/`. 2. Seed them from `RentalsPage.tsx` and apply the section 2 decisions. 3. Make the page read catalog, availability and rates from Supabase instead of constants; add name and special-requests fields. 4. `submit_rental_order` and the confirmation with the request code. 5. My Bookings view and the voucher page. 6. Rental Admin Orders with the status actions and the expiry job. 7. Rental Admin Catalog, Availability, Rates, Branches and Terms. 8. Notifications. 9. Reschedule. 10. Reports.
 
 #### 12. Acceptance criteria
 
@@ -811,6 +909,41 @@ remain the authority once they are applied.
 - Status: **frontend validation and API adapter complete**; production
   persistence, authentication, uniqueness enforcement, and authorization
   remain open backend work.
+
+### Owner money system: specification (2026-11-23)
+
+Built in Phase 3 (section 16D). It covers subscriptions, commission, wallets and payouts for every Owner; the ticketing operators (Main Owner, Branch Owner) add their own settlement rows in the Operator system specification below.
+
+#### 1. Tables
+
+| Table | Key columns | Notes |
+|---|---|---|
+| `owners` | `id`, `profile_id`, `business_name`, `status` (`active` / `expired` / `suspended`), `fee_mmk`, `subscription_period_end`, `commission_pct` (nullable), `payout_note`, `created_by`, `created_at` | One per Owner Admin account; Admin sets the fee, term and commission freely, including free and 0% |
+| `owner_subscriptions` | `id`, `owner_id`, `fee_mmk`, `period_start`, `period_end`, `status`, `recorded_by`, `paid_at` | One row per paid term |
+| `transactions` | `id`, `booking_id`, `owner_id`, `branch_id` (nullable), `gross_mmk`, `commission_pct`, `commission_mmk`, `net_mmk`, `status` (`confirmed` / `refunded`), `created_at` | Written when a booking becomes `paid`; the rate is a snapshot |
+| `wallet_ledger_entries` | `id`, `wallet` (`platform` / `main_owner` / `branch`), `owner_id`, `entry_type` (`sale`, `commission`, `refund`, `subscription`, `payout`, `adjustment`), `amount_mmk`, `ref`, `at` | Append-only; balances are sums |
+| `payout_batches` | `id`, `period_start`, `period_end`, `scheduled_for`, `status` (`draft` / `approved` / `paid`) | One per half-month |
+| `payout_items` | `id`, `batch_id`, `owner_id`, `amount_mmk`, `carried_over_mmk`, `status`, `paid_at`, `reference` | One per Owner with an amount |
+
+#### 2. Rules
+
+- **Commission** is deducted instantly at payment time. Its rate comes from the Owner (or branch), can differ shop by shop including 0%, and has no default or range. The applied rate is stored on the transaction.
+- **Expired Owners.** When `subscription_period_end` passes (Myanmar Time) the status becomes `expired`: the listing stays visible, booking and contact are blocked with a message, and the dashboard shows only a renewal reminder. Reminders go to the Owner 7, 3 and 1 days before.
+- **Payout periods:** days 1 to 15 are paid on the 20th; day 16 to month end on the 5th of the next month. A batch is drafted on the day after its period closes, Payment Admin approves it, and marks each item paid with a reference. An Owner whose available amount is under 50,000 MMK is carried over to the next batch (`carried_over_mmk`).
+- Refunds enter the ledger as negative entries and reduce the next payout; they never edit a past transaction.
+- Every fee, term, commission, subscription payment, payout approval and adjustment is audited.
+
+#### 3. Screens
+
+The Owner sees subscription status and end date, earnings by day and by period, the ledger, and the next payout. Admin sets fee, term and commission, records a subscription payment (extending the period), suspends or restores an Owner. Payment Admin runs the payout batches. All writes go through functions that check the role (16B.1).
+
+#### 4. Acceptance criteria
+
+1. A `paid` booking creates one transaction with the rate snapshotted and the ledger entries that add up to the gross amount.
+2. Changing an Owner's commission later does not change an old transaction.
+3. An expired Owner cannot receive a new booking.
+4. A batch for days 1 to 15 is paid on the 20th, and an amount under 50,000 MMK carries over.
+5. The platform, Main Owner and branch balances equal the sums of their ledger entries.
 
 ### Operator system and Ticketing integration: specification (planned, not scheduled; 2026-11-22)
 
@@ -998,7 +1131,7 @@ Corrections to what the Plan said earlier today: the ad limit is 3, not 2 (code 
 - **Delete.** Soft delete (`deleted_at`), audited; the post leaves the reader at once.
 - **Views.** `increment_blog_views(slug)`, at most once per session per post. Favorite count comes from the favorites table.
 
-#### 5. Media endpoint (Cloudflare Worker with an R2 binding)
+#### 5. Media endpoint (`POST /api/media/upload` in the one Worker, with the R2 binding)
 
 POST multipart with the user's Supabase token. Allow only Super Admin and Blog Post Admin (and Travel Guide Content Admin for guide images). Check the WebP magic bytes and a size of at most 450 KB. Store at `blog-posts/<yyyy>/<mm>/<uuid>.webp`. Return `{ url, key }`. Enforce a CORS allowlist and a per-account rate limit. A nightly job deletes R2 objects not referenced by any post or revision in the last 30 days (`blog_media.last_referenced_at`).
 
@@ -1127,20 +1260,89 @@ Earnings of Published guides are paid on the same two dates as Owner payouts (se
 - Report Content: repeated complaints against an Owner lower their rating,
   and Admin can manually raise it back.
 
+### 11.1 Who may review
+
+| Review | Requirement |
+|---|---|
+| A business or listing | A signed-in traveler with a `completed` booking for that listing, or, for places without bookings (attractions, markets), a recorded **visit**: the traveler taps "I visited" while their location is within 300 m of the place, once per place per 24 hours |
+| MH Travel itself (platform) | Any signed-in traveler, once every 90 days |
+
+### 11.2 Rules
+
+- One review per booking or visit. A rating is a whole number from 1 to 5. Text is up to 1,000 characters; up to 3 photos through the WebP pipeline (`reviews/`). A traveler can edit or delete their own review within 14 days.
+- **Displayed rating** is a smoothed average, `(5 × 4.0 + sum of ratings) / (5 + number of ratings)`, so one 5-star review does not read as a perfect 5.0. The raw count is shown beside it. Then the Owner adjustment below is applied.
+- **Owner reply:** the Owner may post one public reply per review, up to 500 characters. Admin can remove a reply.
+- A review appears at once. It is hidden automatically when 3 different travelers report it, until Admin decides.
+
+### 11.3 Reports
+
+Any signed-in user can report a review or a listing with a reason: spam, offensive, wrong information, scam, safety, or other (with a note).
+
+- **Review reports** go to the moderation queue. Admin hides, restores or deletes the review, and the reporters are not told which.
+- **Listing reports:** when 3 or more different users report the same listing for wrong information, scam or safety within 30 days, Admin is notified and the listing's rating adjustment drops by 0.2 for each such group of 3, down to −1.5. Admin can set the adjustment to any value between −1.5 and 0, which raises the rating back. The adjustment is never shown publicly.
+- MH Travel does not mediate disputes (section 6); repeated violations lead to the Owner's removal.
+
+### 11.4 Data
+
+| Table | Key columns |
+|---|---|
+| `reviews` (exists) | `id`, `user_id`, `listing_id` (null for a platform review), `booking_id` (nullable), `kind` (`business` / `platform`), `rating`, `body`, `hidden`, `created_at`, `edited_at` |
+| `review_photos` | `id`, `review_id`, `key`, `position` |
+| `review_replies` | `id`, `review_id`, `owner_id`, `body`, `created_at`, `removed` |
+| `reports` | `id`, `reporter_id`, `target_kind` (`review` / `listing`), `target_id`, `reason`, `note`, `status`, `handled_by`, `created_at` |
+| `rating_adjustments` | `listing_id`, `value` (−1.5 to 0), `set_by`, `updated_at` |
+| `visits` | `id`, `user_id`, `listing_id`, `at`, `distance_m` |
+
+Access: travelers write their own reviews, photos, visits and reports; Owners read their listing's reviews and write replies; Admin and Super Admin moderate; the public reads visible reviews and the computed rating. The rating shown on a listing is recomputed by a function when a review changes, so every card shows the same number.
+
+### 11.5 Acceptance criteria
+
+1. A traveler without a completed booking or a visit cannot review.
+2. A single 5-star review gives 4.2, not 5.0 (with the smoothing above).
+3. Three distinct reports hide a review until Admin acts.
+4. Three listing reports for scam within 30 days lower its rating by 0.2 and notify Admin; Admin can restore it.
+5. Every moderation action is audited.
+
 ---
 
 ## 12. Search, Nearby, Notifications and Support
 
 - Search is unified across all categories at once (hotels, restaurants,
   blogs, guides, rentals together). It favors simplicity and clarity over
-  exhaustive filters.
-- Nearby: GPS-based distance sorting, location bar with manual override,
-  category chips plus a "more categories" search, List/Map toggle, Open Now
-  emphasized, results as grid cards.
+  exhaustive filters. The full system specification, including Nearby, is
+  section 16H.
+- Nearby: GPS-based distance sorting, category chips plus a "more categories"
+  search, List/Map toggle, Open Now emphasized, results as grid cards. The
+  separate location selector, distance chips and search field were removed at
+  the founder's request (section 16): Nearby asks for location silently and
+  falls back to the center of Yangon.
 - Notifications fire when Admin publishes new content, an Owner publishes a
-  new listing or promotion, or a booking status changes.
+  new listing or promotion, or a booking status changes. The event list,
+  recipients and links are in section 16B.3.
 - Support: logged-in users get live chat with MH Travel; guests get a
   contact form only. Owner Admins have a separate private chat channel.
+
+### 12.1 Support: how it works
+
+| Table | Key columns |
+|---|---|
+| `support_threads` | `id`, `user_id`, `kind` (`traveler` / `owner`), `status` (`open` / `closed`), `assigned_to`, `created_at`, `updated_at` |
+| `support_messages` | `id`, `thread_id`, `sender_id`, `body`, `created_at`, `read_at` |
+| `contact_messages` | `id`, `name`, `email`, `phone`, `message`, `lang`, `status`, `handled_by`, `created_at` |
+
+- A signed-in traveler has one open thread; messages arrive live through Realtime. A message is plain text up to 2,000 characters; images are not supported in this phase.
+- **Owner Admins** use a separate thread of kind `owner`, which travelers and other owners can never read.
+- **Guests** use the contact form through `submit_contact_message`, rate-limited and protected by Cloudflare Turnstile; Admin answers by email or phone.
+- Admin and Super Admin see all threads, assign them, reply, and close them. A new message notifies the assigned Admin (or all Admin if unassigned); a reply notifies the user.
+- Threads and contact messages are kept 24 months.
+- Phase: Phase 2, with the Account dashboard Messages view and the Admin inbox.
+
+### 12.2 Acceptance criteria
+
+1. A user's messages are readable only by that user and by Admin and Super Admin.
+2. A reply appears live for the other side.
+3. A guest cannot open a chat; the contact form is rate-limited.
+4. Owner threads are invisible to travelers.
 
 ---
 
@@ -1169,6 +1371,14 @@ shell and bilingual throughout:
   if any string is missing one of the two languages, if the three national
   emergency lines disappear, or if an anchor id is duplicated.
 
+
+### 13.1 Content upkeep and later growth
+
+- The content stays in `src/data/foreignTourist.ts` with its test, until a later phase needs Admin to edit it. If that happens, the page text moves into an Admin-editable table and keeps the same two-language rule and the same checks.
+- Admin verifies the emergency numbers and the SIM and currency notes every 6 months and records the date in `Doc/STATUS.md`. The page never quotes prices that change.
+- Search (16H) indexes the four anchored sections as `kind = 'info'` so a traveler typing "SOS" or "SIM" lands on the right anchor.
+- Acceptance: all four sections are reachable from the jump row; the three national emergency numbers are `tel:` links; no string is missing a language; no visa content appears.
+
 ---
 
 ## 14. Accounts, Language and Currency
@@ -1188,39 +1398,87 @@ shell and bilingual throughout:
   account UI copy stays bilingual through the existing EN/MM translation system.
 - Language: EN/MM with auto-translation fallback. Auto-translated text is
   cached and queued for Admin review.
-- Currency: MMK and USD display using the current frontend formatter and a
-  hard-coded preview rate; an Admin/Supabase-managed exchange rate is planned,
-  not implemented.
-- Weather is one centralized service (Cloudflare Worker with caching)
-  reused everywhere, not duplicated per page.
+- Currency: MMK and USD display. The formatter is used today with a hard-coded
+  preview rate; the Admin-managed rate is specified in 16B.5.
+- Weather is one centralized service (the `/api/weather` route of the one
+  Worker, with caching) reused everywhere, not duplicated per page.
+
+### 14.1 Language
+
+- **First visit:** the browser language decides: Burmese (`my`) gives Myanmar, anything else gives English. The choice is saved on the device and, when signed in, in the profile (`profiles.language`).
+- Every string goes through the shared `t()` provider; a key missing a language fails the unit tests. Stored content (posts, guides, listings) holds both languages. When a language is missing the reader shows an auto-translation with an "Auto-translated" marker (16B.4).
+- `document.documentElement.lang` follows the choice. Numbers and dates follow the language (Myanmar digits are shown only in Myanmar, never stored).
+
+### 14.2 Currency
+
+- **First visit:** Myanmar language gives MMK, otherwise USD. The choice is saved on the device and, when signed in, in the profile (`profiles.currency`).
+- Prices are stored as USD; MMK is shown rounded to the nearest 100 and USD to 2 decimals, using the server exchange rate (16B.5). A booking or order stores the rate it used.
+
+### 14.3 What each Account view reads
+
+| View | Reads |
+|---|---|
+| My Bookings | the `my_bookings` view (bookings and rental orders) |
+| My Travel Plans | `custom_plan_requests` |
+| Favorites | `favorites` |
+| My Reviews | `reviews` by the user |
+| Messages | `support_threads` and `support_messages` |
+| Notifications | `notifications` and `notification_feed` |
+| Settings | `profiles` (name, avatar, language, currency), sign-out, deletion and export requests |
+| Support / Legal | static pages and the contact form |
+
+Each view keeps its local fallback behind the module's flag until the backend is on (16G.5).
+
+### 14.4 Later sign-in methods (phase 2)
+
+Phone sign-in (one-time code), Apple and Facebook are added through Supabase Auth. The SMS provider and the Apple and Facebook credentials are decided when that phase starts. Accounts are linked by verified email where one exists, and never merged across a traveler and an Owner Admin account (section 3).
 
 ---
 
 ## 15. Repo Conventions
 
-- `.env` holds `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. It is
-  gitignored and must never be committed. Set the same two variables in
-  Cloudflare's build environment.
+- `.env` holds the public `VITE_` values (`VITE_SUPABASE_URL`,
+  `VITE_SUPABASE_ANON_KEY` and the endpoint and flag values in 16G.5). It is
+  gitignored and must never be committed. Set the same values in Cloudflare's
+  build environment. Secrets never use a `VITE_` name.
 - Do not add a `public/_redirects` file. It conflicts with the Worker's
   `not_found_handling` setting and breaks the deploy.
 - Every card uses the shared `CardListing` type, with rating, distance,
-  isFavorited and views required.
+  isFavorited and views required. A card with no rating or no distance does
+  not render those parts (10, Blog card rule).
 - Card prices are stored as `priceUsd` and rendered through the currency
   formatter, never as a hardcoded string.
-- New feature UI strings should go through the translation helper. A source audit
-  still finds hard-coded English labels, accessibility text, and seeded catalog
-  content, so this is an implementation rule with remaining cleanup rather than
-  a claim that every visible string is already translated.
+- All UI strings go through the translation helper (`t()`); a missing language
+  fails the tests. Seeded catalog content is the remaining hard-coded text and
+  moves to the database with each module (16C).
 - Ad slots use the shared `AdSlot` component so the collapse rule lives in
   one place.
 - Overlays that use `position: fixed` (drawers, modals) must render through
   a React portal into `document.body`. The sticky header uses
   `backdrop-blur`, which makes any `fixed` child size itself to the header
   box instead of the screen. The mobile drawer hit exactly this bug.
+- Files go where section 16I says: `Plan/` one file, `Doc/` a fixed list, `SQL/`
+  only SQL, `Worker/` one file. A guard test enforces it.
+- Every route is declared once in `src/routes.ts`; `App.tsx`, the tests and
+  `public/manus-routes.json` read from it. A new page edits all three in place
+  and does not re-sort the manifest.
+- Delivery checks before any commit: `npm run typecheck`, `npm test`,
+  `npm run lint`, `npm run build`. A commit message starts with its ticket id
+  (16F.1).
+- Pure rules (pricing, status moves, publish checks, normalization) live in
+  small modules under `src/lib/` with unit tests, and the database enforces the
+  same rules again. The tests and the SQL share their test vectors.
+- Naming: one folder per module under `src/features/<module>/`; shared UI in
+  `src/components/`; data modules in `src/data/`; module backends in
+  `src/lib/<module>Api.ts` with the local fallback behind its flag.
 
 ---
 
-## 16. Open Items
+## 16. Page Behavior (decided, kept) and Open Items
+
+### 16.1 Page behavior as decided
+
+These bullets record behavior the founder decided page by page. They stay in force unless a section above changes them.
 
 - Favorites page implemented: saved listings resolve through shared categories and client-side favorite state; backend persistence remains pending.
 - Supabase core data foundation is now applied: `favorites`, `custom_plan_requests`, `bookings`, `notifications`, `reviews`, `ads`, and `admin_audit_logs` tables have RLS, owner/admin policies, validation checks, UTC timestamps, update triggers, and indexes. Frontend forms still need to be wired to these tables; no Edge Function was deployed because no function contract is defined yet.
@@ -1249,11 +1507,7 @@ shell and bilingual throughout:
 - Category-only search results such as `Hotel` use a single compact row: `All`, `Top rated`, and `Nearby` remain fixed, while the city-name chips rotate to the next city window every 10 seconds. Choosing a rotating city chip drills into that category for the selected city.
 - Combined searches such as `ရန်ကုန် ဟိုတယ်` show `All`, `Top rated`, and `Nearby` in one static row and render hotel cards with currency-aware nightly prices plus rating, distance, views, favorite state, and hotel name.
 - Language audit (updated 22 November 2026): the shared EN/MM provider persists the selected language, updates `document.documentElement.lang`, and is consumed by the traveler routes, shared Header/Mobile Menu/Footer, Ticketing, Rentals, Search, Favorites, Account, Notifications, City, Blogs, Travel Plans, Travel Guide, Restaurant, Book Shop, Admin Login, the Shop Owner and Main Owner dashboards, the whole Super Admin dashboard, and both content editors (Blog Post Management and Travel Guide Management). Frontend localization has no known gap left; the remaining translation work belongs to the backend (stored bilingual content and auto-translation review, §14).
-- Travel Guide and Search frontend pages are now implemented. Remaining detail
-  routes include City, Hotel, Attraction, Cafe, Market, Rental, Ticketing, and
-  Travel Plan detail destinations referenced by static cards. Nearby, Rentals,
-  Ticketing, Travel Guide, Account, Search, and Favorites are frontend UI over
-  local/static data pending backend wiring.
+- Travel Guide and Search frontend pages are implemented. Every internal link now resolves to a declared route and is guarded by tests (`Doc/STATUS.md`). Nearby, Rentals, Ticketing, Travel Guide, Account, Search and Favorites are frontend UI over local or static data pending backend wiring; the tickets in 16F.2 wire them.
 - Homepage reference alignment: local Myanmar photography now fills Travel
   Plan, Travel Guide, Blog, and Popular cards; Travel Guide uses the compact
   circular-image row treatment from the reference. Hero ad creative remains
@@ -1312,6 +1566,26 @@ shell and bilingual throughout:
 - Travel guide rental expense mechanics, decided 2026-11-22: after the rental, Rental Admin records the guide's actual accommodation, food and travel costs as extra lines on the order (`rental_order_extras`: description, amount, added by, time). The traveler sees the updated total and is notified; the extras are collected the same way as the rental payment.
 - Owner and Admin dashboard screens: for the MH-owned modules they are specified in sections 8, 10 and 16A; the Owner and listing dashboards follow the user-facing listing pages in Phase 2 (section 16D).
 
+
+### 16.2 Open items
+
+Everything below is a fact or choice only the founder or a vendor can supply. None of it blocks a build step; each has a default or a data setting (16E).
+
+| Item | Needed for | Default until supplied |
+|---|---|---|
+| Per-post rate for Travel Guide authors | Guide earnings (section 10) | The setting stays empty; Admin enters each amount |
+| Terms of each ad campaign | Ads (16A.12) | Set by hand per campaign |
+| AdSense and AdMob account ids | Ad fallback (16A) | Fallback off |
+| Ticket commission percentage and revenue-share formula | Operator settlement (section 9) | Admin-configurable per operator or branch; no default |
+| Definitions of the "express" and "အာတာဖတ်" vehicles | Rental variants (section 8) | Rental Admin adds them as data |
+| Payment gateway contracts and fees (KBZPay, AYA Pay, others) | Phase 3 | Payments recorded by staff |
+| Translation service provider and key | Auto-translation (16B.4) | Missing languages shown in the other language, flagged |
+| SMS provider and Apple and Facebook credentials | Auth phase 2 (section 14.4) | Email and Google only |
+| Map tile provider | Nearby Map view (16H.9) | Chosen in launch readiness (Phase 6) |
+| Contrast palette decision for the known contrast pair | Launch readiness (Phase 6) | Current palette |
+
+---
+
 ## 16A. Ads system and Adsboard (2026-11-22)
 
 The Adsboard is the Ads Management dashboard. It controls every ad shown in the web app and, later, the mobile app. Written against `src/components/ui/AdSlot.tsx`, `src/data/ads.ts`, the Ads Management panel in `SuperAdminPage.tsx` and `Doc/STATUS.md` (PREVIEW, local state; main @ `74b80fa`).
@@ -1329,7 +1603,7 @@ The Adsboard is the Ads Management dashboard. It controls every ad shown in the 
 - Placement keys in code: `home_hero`, `home_after_travel_plans`, `home_after_hotels`, `home_after_blogs`, `home_after_reviews`, `home_after_partners`, `blog_post_top`, `blog_post_bottom`, `blog_inline`. Any `blog_*` key falls back to `blog_inline`. The Rentals top banner is a fixed compact banner, not a placement yet.
 - `fetchMockAd` serves local SVG banners (800 × 220). The Supabase `ads` table exists with RLS and is not used by the page. Its columns must be checked before the schema below is applied.
 - The console has nine pages (Home, Cities, City Detail, Travel Plans, Travel Plan Detail, Blogs, Blog Detail, Nearby, User Dashboard), each with ads `{ page, slot, name, advertiser, active }`, add, edit, preview and publish or pause. All local state.
-- **Built 2026-11-25** (browser stand-in for §16A.4): `src/lib/adPlacements.ts` seeds the §16A.3 catalog with 19 keys, `adCampaigns.ts` holds the §16A.5 serving rules and the §16A.6 status machine, `adStats.ts` the event keys, the visibility threshold, the roll-up and the 90-day purge, `adCampaignJobs.ts` the window job, and `adStore.ts` the rows. `AdSlot` follows §16A.1 in order — Admin ad, then AdSense when the placement allows fallback and a client id is set, then collapse — and `AdsManagementPanel` is the seven §16A.7 sections. `supabase/migrations/20261125000100_ads.sql` carries the tables with RLS, the click-URL check and the both-language alt check, and `20261125000200_ads_serving.sql` adds `serve_ad`, `record_ad_click`, the roll-up and purge functions and the §16A.9 staff policies. Every §16A.3 key now has a live `AdSlot`, and a click goes through the `/ad/click/<creative_id>` route (`AdClickRedirect`) before it redirects. Still open: applying both migrations and moving the jobs onto a server runner.
+- **Built 2026-11-25** (browser stand-in for §16A.4): `src/lib/adPlacements.ts` seeds the §16A.3 catalog with 19 keys, `adCampaigns.ts` holds the §16A.5 serving rules and the §16A.6 status machine, `adStats.ts` the event keys, the visibility threshold, the roll-up and the 90-day purge, `adCampaignJobs.ts` the window job, and `adStore.ts` the rows. `AdSlot` follows §16A.1 in order — Admin ad, then AdSense when the placement allows fallback and a client id is set, then collapse — and `AdsManagementPanel` is the seven §16A.7 sections. `SQL/20261125000100_ads.sql` carries the tables with RLS, the click-URL check and the both-language alt check, and `20261125000200_ads_serving.sql` adds `serve_ad`, `record_ad_click`, the roll-up and purge functions and the §16A.9 staff policies. Every §16A.3 key now has a live `AdSlot`, and a click goes through the `/ad/click/<creative_id>` route (`AdClickRedirect`) before it redirects. Still open: applying both migrations and moving the jobs onto a server runner.
 
 - **Built 2026-11-25** (§16A.5 second pass, the two remaining server seams): `serve_ad` now takes the `p_language` argument the Plan names and returns `alt_text` beside both alts; the one-argument signature is dropped so a stale caller cannot reach the old body. The page side is `serveAdFor()` in `src/lib/adServingApi.ts` — it calls the RPC when Supabase is configured, falls back to `serveAdNow()` when the RPC cannot answer, and caches the answer for 60 seconds per placement and language, including a `null` so a collapsed slot is not re-asked on every render. Impressions and clicks now leave the browser: `recordAdEventWithBeacon()` writes the store row and then posts a beacon to `VITE_AD_EVENT_ENDPOINT` (`fetch` with `keepalive` when the beacon is refused), so a closed tab still reports. `AdClickRedirect` calls `recordAdClickRemotely()`, which returns the redirect target from `record_ad_click()`; a creative the server no longer has goes home, and an RPC that cannot answer falls back to the local URL. Still open: the Worker that serves `/ad/event` and the AdSense ids (§16A.12).
 
@@ -1369,7 +1643,7 @@ If the existing `ads` table can hold these, extend it; otherwise migrate its row
 3. Take the highest `priority`. Among equals rotate by `weight`.
 4. If there is none and `fallback_allowed`, the page asks AdSense / AdMob; if that is empty or off, the slot collapses.
 
-The response may be cached at the edge for 60 seconds. Click-through goes through `/ad/click/<creative_id>`, which records the click and redirects. An impression is counted when at least half the ad has been visible for 1 second (IntersectionObserver), once per creative per session per page view. Basic bot user agents are ignored.
+The response may be cached at the edge for 60 seconds. Click-through goes through `/api/ad/click/<creative_id>`, which records the click and redirects. An impression is counted when at least half the ad has been visible for 1 second (IntersectionObserver), once per creative per session per page view. Basic bot user agents are ignored.
 
 ### 16A.6 Campaign and creative lifecycle
 
@@ -1408,7 +1682,7 @@ Ads Admin builds and submits; **Super Admin approves** (the console's creative a
 
 Direct reads of the ad tables are denied to the public; they use `serve_ad` and the click endpoint only. Super Admin and Ads Admin read and write; Payment Admin reads reports. The role is checked on the server. Every campaign, creative, placement and settings change writes an admin audit row.
 
-### 16A.10 Build steps (for Cursor)
+### 16A.10 Build steps (who does each: tickets in section 16F.2)
 
 1. Check the live `ads` table, then migrate the tables above with RLS. 2. Seed `ad_placements` from 16A.3. 3. `serve_ad`, the click endpoint and the event beacon. 4. Replace `fetchMockAd` with `serve_ad` in `AdSlot`, keeping the collapse. 5. Rentals top becomes `rentals_top`. 6. Adsboard Pages and placements, then Campaigns and Creatives. 7. Approval flow. 8. Reports and the nightly roll-up. 9. AdSense / AdMob fallback.
 
@@ -1480,7 +1754,7 @@ One service, two tables: `notification_feed` (shared rows such as "new blog post
 
 When a text exists in one language only, the reader asks `translate(text, from, to)`. The result is cached in `translation_cache` (`id`, `source_hash`, `from_lang`, `to_lang`, `source_text`, `translated_text`, `status` auto / approved / edited, `reviewed_by`, `created_at`) and shown with a small "Auto-translated" marker. Admin has a review queue of `auto` rows, most viewed first; approving or editing makes the text permanent and removes the marker. The translation provider is called from a Cloudflare Worker with its key in secrets. Names, addresses and prices are never translated.
 
-Built 2026-11-24 (browser stand-in for `translation_cache`): `src/lib/translationCache.ts` holds the rules — `isTranslatable` refuses names, addresses and prices, `sourceHash` keys one text per direction, `resolveLocalized` returns the reader's own text, then a cached translation, then the source language with `needs` set, and `reviewTranslation` turns an `auto` row into `approved` or `edited` so the marker disappears. `src/lib/translationApi.ts` posts to `VITE_TRANSLATION_ENDPOINT` (the Worker) and stores what comes back; with no endpoint it reports `not_configured` and the reader simply shows the source text. `useLocalizedText()` is the reader seam and `AutoTranslatedMark` is the marker; the blog reader (title, excerpt, paragraph, image alt) and the travel guide reader (title, summary, stop title and description) use it. `TranslationReviewPanel` is the Admin queue in the new `translations` workspace section, busiest first, and each approval writes an audit row. `supabase/migrations/20261123000400_translation_cache.sql` is the table, its RLS (public read, automatic insert by a signed-in reader, review by Admin and Super Admin only), `cache_translation`, `record_translation_view`, `review_translation` and `translation_review_queue`. Closed 26 November 2026 — every remaining reader: the city page (intro, `bestFor`, `stay`, `travel` now bilingual, plus the category chips, search label, placeholder, result count, empty state and Show more/less through `t()`), the category pages, the place detail page, the restaurant page (dish name, description, badge, menu categories, amenities, nearby places, address/hours/price/cuisine values) and the book shop page (book categories, services, nearby places and the same fact values). `localizedOrFallback()` in `translationCache.ts` is the read used for those: it returns the reader's language, else the language the text was written in, and never asks the Worker and never shows the marker — which is what Plan §16B.4 requires for a name, an address and a price. A grid uses it per card so a twelve-card page does not fire twelve requests; the single-item reader (a blog story, a guide) still goes through `useLocalizedText()` and keeps the marker. The rental catalog's `localized()` gained the same fallback, so a label written in one language no longer renders blank in the other. The notification readers closed the same day: a bell row, an inbox row and a rental notice are stored as `{ mm, en }` (`FeedRow.title`/`message` are `LocalizedTextLike`, `NotificationItem.title` too) and read through `localizedOrFallback()`, so a traveler who switches language after the row was written still sees their own copy. `src/lib/timeAgo.ts` turns an age into a unit and a count and translates it (`time_*_ago`), and `ageBucket()` groups the inbox by Myanmar calendar day rather than by the word in an English label. A row written by an older build with one string is lifted to both on read, so nothing renders blank. Still open: the Worker itself, and moving the queue off browser storage.
+Built 2026-11-24 (browser stand-in for `translation_cache`): `src/lib/translationCache.ts` holds the rules — `isTranslatable` refuses names, addresses and prices, `sourceHash` keys one text per direction, `resolveLocalized` returns the reader's own text, then a cached translation, then the source language with `needs` set, and `reviewTranslation` turns an `auto` row into `approved` or `edited` so the marker disappears. `src/lib/translationApi.ts` posts to `VITE_TRANSLATION_ENDPOINT` (the Worker) and stores what comes back; with no endpoint it reports `not_configured` and the reader simply shows the source text. `useLocalizedText()` is the reader seam and `AutoTranslatedMark` is the marker; the blog reader (title, excerpt, paragraph, image alt) and the travel guide reader (title, summary, stop title and description) use it. `TranslationReviewPanel` is the Admin queue in the new `translations` workspace section, busiest first, and each approval writes an audit row. `SQL/20261123000400_translation_cache.sql` is the table, its RLS (public read, automatic insert by a signed-in reader, review by Admin and Super Admin only), `cache_translation`, `record_translation_view`, `review_translation` and `translation_review_queue`. Closed 26 November 2026 — every remaining reader: the city page (intro, `bestFor`, `stay`, `travel` now bilingual, plus the category chips, search label, placeholder, result count, empty state and Show more/less through `t()`), the category pages, the place detail page, the restaurant page (dish name, description, badge, menu categories, amenities, nearby places, address/hours/price/cuisine values) and the book shop page (book categories, services, nearby places and the same fact values). `localizedOrFallback()` in `translationCache.ts` is the read used for those: it returns the reader's language, else the language the text was written in, and never asks the Worker and never shows the marker — which is what Plan §16B.4 requires for a name, an address and a price. A grid uses it per card so a twelve-card page does not fire twelve requests; the single-item reader (a blog story, a guide) still goes through `useLocalizedText()` and keeps the marker. The rental catalog's `localized()` gained the same fallback, so a label written in one language no longer renders blank in the other. The notification readers closed the same day: a bell row, an inbox row and a rental notice are stored as `{ mm, en }` (`FeedRow.title`/`message` are `LocalizedTextLike`, `NotificationItem.title` too) and read through `localizedOrFallback()`, so a traveler who switches language after the row was written still sees their own copy. `src/lib/timeAgo.ts` turns an age into a unit and a count and translates it (`time_*_ago`), and `ageBucket()` groups the inbox by Myanmar calendar day rather than by the word in an English label. A row written by an older build with one string is lifted to both on read, so nothing renders blank. Still open: the Worker itself, and moving the queue off browser storage.
 
 ### 16B.5 Currency
 
@@ -1498,7 +1772,7 @@ Built 2026-11-24 (browser stand-in for `translation_cache`): `src/lib/translatio
 
 All uploads go through the authenticated Worker (type check, size check, role check, rate limit, CORS allowlist). A nightly job removes objects nothing has referenced for 30 days.
 
-Built 2026-11-24 (browser stand-in for the Worker): `src/lib/mediaRules.ts` is the one table for the five folders — `MEDIA_RULES` states prefix, accepted types, stored format, byte ceiling and longest edge, `AD_VIDEO` carries the 3 MB / 15 s MP4 limits, `folderPrefix()` refuses a missing or path-like shop id, and `checkMedia()` answers with a translatable code (`unsupported_type`, `too_large`, `video_too_long`, `shop_required`, `quota_reached`). Its `stage` option separates a source image (held only to the 12 MB ceiling, because it is compressed next) from the stored file (held to the folder ceiling). `src/lib/mediaApi.ts` replaces `blogMediaApi.ts`: it converts to WebP, steps the quality down and then halves the longest edge twice before refusing, and both content editors name their folder — `blog-posts` in Blog Post Management, `guide-stops` in Travel Guide Management. `supabase/migrations/20261123000500_media_objects.sql` adds `media_objects` (one row per object, `last_referenced_at`, the `shops/<id>/` and size checks), `register_media_object()`, `touch_media_object()`, `shop_media_count()`, `orphan_media_objects(days)` and `delete_media_object()`, with no client insert or delete policy. The orphan job is wired (26 November 2026): `src/lib/mediaObjects.ts` is the browser stand-in for `media_objects`, `registerMediaObject()` records a file that reached R2, `touchMediaUrls()` is called by both content saves with the photos they still use, and `cleanupOrphanMedia()` is bound to `orphan_media_cleanup`, so the 02:00 job now reports how many objects it removed and finds nothing on a second run. A URL with no row — a seeded image, or a preview data URL — is ignored rather than kept alive forever. Still open: the Worker (which must repeat the same checks and call `register_media_object()`), and an Ads creative file input.
+Built 2026-11-24 (browser stand-in for the Worker): `src/lib/mediaRules.ts` is the one table for the five folders — `MEDIA_RULES` states prefix, accepted types, stored format, byte ceiling and longest edge, `AD_VIDEO` carries the 3 MB / 15 s MP4 limits, `folderPrefix()` refuses a missing or path-like shop id, and `checkMedia()` answers with a translatable code (`unsupported_type`, `too_large`, `video_too_long`, `shop_required`, `quota_reached`). Its `stage` option separates a source image (held only to the 12 MB ceiling, because it is compressed next) from the stored file (held to the folder ceiling). `src/lib/mediaApi.ts` replaces `blogMediaApi.ts`: it converts to WebP, steps the quality down and then halves the longest edge twice before refusing, and both content editors name their folder — `blog-posts` in Blog Post Management, `guide-stops` in Travel Guide Management. `SQL/20261123000500_media_objects.sql` adds `media_objects` (one row per object, `last_referenced_at`, the `shops/<id>/` and size checks), `register_media_object()`, `touch_media_object()`, `shop_media_count()`, `orphan_media_objects(days)` and `delete_media_object()`, with no client insert or delete policy. The orphan job is wired (26 November 2026): `src/lib/mediaObjects.ts` is the browser stand-in for `media_objects`, `registerMediaObject()` records a file that reached R2, `touchMediaUrls()` is called by both content saves with the photos they still use, and `cleanupOrphanMedia()` is bound to `orphan_media_cleanup`, so the 02:00 job now reports how many objects it removed and finds nothing on a second run. A URL with no row — a seeded image, or a preview data URL — is ignored rather than kept alive forever. Still open: the Worker (which must repeat the same checks and call `register_media_object()`), and an Ads creative file input.
 
 ### 16B.7 Scheduled jobs
 
@@ -1542,7 +1816,7 @@ runs no job.
 
 ### 16B.9 Environments and delivery
 
-Three environments: local with a development Supabase project, staging, production. Every migration is committed under `supabase/migrations`, so a new project can be rebuilt from the repo. Every push runs typecheck, `npm test` and the production build. Deploys go through Cloudflare. Error tracking and an uptime check are set up before launch.
+Three environments: local with a development Supabase project, staging, production. Every migration is a file in `SQL/`, so a new project can be rebuilt from the repo. Every push runs typecheck, `npm test` and the production build. Deploys go through Cloudflare. Error tracking and an uptime check are set up before launch.
 
 ### 16B.10 Tests
 
@@ -1565,7 +1839,7 @@ After the MH-owned modules, every other module is filled in one at a time with t
 | 7 | Transport and local Bus | Static route and stop data; no seat booking |
 | 8 | Nearby | Reads the listings built above; adds distance, open now and the map |
 | 9 | Travel Plans | Custom-plan requests (`custom_plan_requests` exists) |
-| 10 | Unified Search | Needs all listings and content to exist |
+| 10 | Unified Search | v1 starts after Phase 1C with the MH-owned content and gains each module as it lands (section 16H) |
 
 Ticketing and the Operator system follow in their own phase (the Operator system specification in section 9).
 
@@ -1595,18 +1869,19 @@ Phases are ordered by dependency, with no calendar dates. A phase is finished on
 
 | Phase | Work | Gate |
 |---|---|---|
-| 0. Platform foundation | Migrations committed under `supabase/migrations`; real Auth with the first Super Admin (email and Google); roles on `profiles` and the server role helper; audit log standard; jobs runner; media Worker; notification service; exchange-rate service; translation fallback (section 16B) | Super Admin signs in, creates a Blog Post Admin, and the audit row and a notification appear; a failed job alerts Super Admin |
+| 0. Platform foundation | Migrations committed in `SQL/` and applied by Manus; the repository layout guard test (section 16I); real Auth with the first Super Admin (email and Google); roles on `profiles` and the server role helper; audit log standard; jobs runner; the one Worker with the media route; notification service; exchange-rate service; translation fallback (section 16B) | Super Admin signs in, creates a Blog Post Admin, and the audit row and a notification appear; a failed job alerts Super Admin |
 | 1A. Rentals | Section 8 end to end, including Rental Admin | Section 8 acceptance criteria all pass |
 | 1B. Blog | Section 10 Blog end to end, including the R2 endpoint and scheduling | Blog acceptance criteria all pass |
 | 1C. Travel Guide | Section 10 Travel Guide end to end, with the listing index seeded | Guide acceptance criteria all pass |
 | 1D. Ads and Adsboard | Section 16A, starting with Home and `blog_inline`; can run beside 1C | Section 16A acceptance criteria all pass |
-| 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one, with reviews and search | Hotels pass the 16C acceptance, then each next module does |
-| 3. Owner money and templates | Owner subscriptions, commission snapshots, wallets and twice-monthly payouts (section 9); template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **both halves are met: `replayPayout()` recomputes a run from its rows (2026-11-27), and a switch and a fallback are exercised on the rendered page (2026-11-28) — `resolveTemplateForShop()` falls back on a lapsed entitlement, a retirement or a rollback, and `npm run a11y` proves every template renders in both themes** |
+| 1E. Search v1 | Section 16H on the MH-owned content (blogs, guides, rentals, cities) | Section 16H.13 acceptance criteria all pass |
+| 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one; with them the universal booking and voucher work (section 6), reviews and reports (section 11), owner applications (section 3), support chat and the contact form (section 12), the Bus route planner (section 7.3) and the Home feed (section 5); each module joins the search index | Hotels pass the 16C acceptance, then each next module does |
+| 3. Owner money and templates | The Owner money system (section 9); the template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **both halves are met: `replayPayout()` recomputes a run from its rows (2026-11-27), and a switch and a fallback are exercised on the rendered page (2026-11-28) — `resolveTemplateForShop()` falls back on a lapsed entitlement, a retirement or a rollback, and `npm run a11y` proves every template renders in both themes** |
 | 4. Ticketing and operators | Operator system specification (section 9) | Operator system acceptance (section 9) passes |
 | 5. Mobile app | App using the same APIs, `serve_ad` with AdMob, push notifications | Same flows pass on a phone |
 | 6. Launch readiness | Security review of RLS and Workers; load test of search and booking; backup restore drill; privacy policy and terms pages; error tracking and uptime check; contrast palette decision (`Doc/STATUS.md` §8); content seeding | Checklist signed off by the founder |
 
-Dependencies to respect: the media Worker (Phase 0) before Blog, Guide and Ads uploads; the listing index before guide stops can use the database; the booking and voucher work in Hotels before any module after it; ledgers before payouts and before the operator settlement.
+Dependencies to respect: the media route of the one Worker (Phase 0) before Blog, Guide and Ads uploads; the listing index before guide stops can use the database; the booking and voucher work in Hotels before any module after it; ledgers before payouts and before the operator settlement.
 
 ## 16E. Decision register: review after trying the product (2026-11-22)
 
@@ -1648,11 +1923,363 @@ The founder delegated these decisions to Claude and will review them after the m
 | 32 | Audit log kept 24 months; notification retention 90 days | 16B | Settings |
 | 33 | MMK shown rounded to the nearest 100; USD 2 decimals | 16B | One formatter |
 | 34 | Module order: Hotels, Restaurants, Cafes, Attractions, Markets, Book Shops, Transport, Nearby, Travel Plans, Search | 16C | Reorder the list |
-| 35 | Phase order 0, 1A–1D, 2 to 6 with gates | 16D | Reorder; gates stay |
+| 35 | Phase order 0, 1A–1E, 2 to 6 with gates | 16D | Reorder; gates stay |
+| 36 | One Cloudflare Worker (`Worker/index.ts`) bound through the root `wrangler.jsonc`; routes under `/api/` | 16G.4, 16I | Split into several Workers later without changing the routes |
+| 37 | SQL lives in `SQL/`, applied by Manus with Supabase tools, not the Supabase CLI | 16F, 16I | Move to `supabase/migrations` only if the CLI is adopted |
+| 38 | Errors are `P0001` exceptions named `<module>_error_<code>`; no envelope | 16G.2 | The client helper and every function |
+| 39 | The Plan adopts the built rental schema and functions (text ids, `set_rental_order_status` with a status argument) | 8, 16G.3 | Reshape the functions and the client together |
+| 40 | Search: Postgres `pg_trgm` index, Unicode-only storage with Zawgyi conversion, aliases as data, 20 results per page | 16H | Move to a search service if the index outgrows Postgres |
+| 41 | Nearby: haversine distance without PostGIS; manual location beats GPS beats Yangon center | 16H.9 | Add PostGIS later |
+| 42 | Ticket status lives in `Doc/TICKETS.md`; only Claude edits the Plan | 16F | Process change |
 
 **Facts only the founder can supply later** (not blocking any build step): the Travel Guide default per-post rate; the commercial terms of each ad campaign; the AdSense and AdMob account ids; the commission percentage and revenue-share formula for tickets (already left Admin-configurable in section 9); definitions of the "express" and "အာတာဖတ်" vehicles, which Rental Admin enters as data.
 
-## Rentals UI reference provided by the user (2026-11-08)
+## 16F. Agent handoff: who does what (2026-11-23)
+
+Three agents work on MH Travel. This section is the single set of instructions for all of them.
+
+| Agent | Does | Does not |
+|---|---|---|
+| **Claude** | Writes and maintains this Plan only. Answers questions about it. | Write application code, SQL or Worker code. |
+| **OpenHands** | Application code in `src/`, its tests, and the `Doc/` updates for what it ships. | Touch Supabase, Cloudflare, R2 or secrets. |
+| **Manus AI** | Supabase (applying `SQL/`, RLS, functions, cron, Auth settings, seeds) and Cloudflare (the one Worker, R2, cron triggers, secrets), and the `Doc/` updates for what it ships. | Change the frontend, except environment variable values. |
+
+Project facts for Manus: Supabase project `mhtravelmm`, ref `ewuvxowujkbyvftoihxh`, region `ap-southeast-1`. The four applied migrations are described in Appendix B at the end of this Plan and are not in the repo as SQL; ticket M-00 exports them as the baseline. OpenHands has already written the migrations in `SQL/` (rental, exchange rates, job runs, notification feed, translation cache, media objects, scheduled publishing, content lifecycle, ads, subscriptions, owner ledger, shop templates); **none is applied** to any Supabase project yet. The root `wrangler.jsonc` serves only the built site (static assets) until ticket M-06 adds the Worker.
+
+### 16F.1 Rules
+
+1. **Only Claude edits this Plan.** Agents never edit `Plan/PROJECT-PLAN.md`. When code or the backend needs to differ from the Plan, or a point is unclear, write it in `Doc/PLAN-VS-CODE.md` under a heading "Questions for the Plan", with the section number, and keep building to the Plan until Claude answers. Where code already exists and works, Claude adopts it into the Plan (as with the rental functions in 16G.3).
+2. **Contract first.** Names, arguments, return shapes and error codes in section 16G are fixed. Neither agent renames or reshapes them alone.
+3. **Files go where section 16I says.** SQL only in `SQL/`, the Worker only in `Worker/`, documents only in `Doc/`, the Plan only in `Plan/`. A guard test enforces it (ticket O-05).
+4. **Never blocked.** OpenHands builds against the contract and keeps a local-preview fallback in each module adapter (`src/lib/<module>Api.ts`), switched by the per-module flags in 16G.5. Manus works through its tickets in order. When a Manus ticket lands, the matching flag is turned on.
+5. **Forward-only database changes.** Manus never edits or deletes an applied migration; it adds a new file in `SQL/`. It tries every migration on the staging project before production, and takes a backup before any destructive change. Applying is done with Supabase tools, not the Supabase CLI (whose default folder is `supabase/migrations`).
+6. **Secrets stay out of the repo and the browser.** The browser gets only `VITE_` values. The service role key, R2 credentials and API keys live in Supabase and Worker secrets.
+7. **Definition of done for every ticket:** the acceptance criteria of the Plan section it cites pass; `npm run typecheck`, `npm test`, `npm run lint` and `npm run build` pass; and `Doc/` is updated: `COMPLETED-WORK.md` says what was built and how (files, migration names, function names), `REMAINING-WORK.md` loses the finished item, `STATUS.md` marks it, and `TICKETS.md` records the ticket status and commit. Commit messages start with the ticket id.
+8. **Backend changes are visible in `Doc/`.** For each migration or Worker route, Manus records the file name and the date applied in `TICKETS.md`, so OpenHands knows the contract is live.
+
+### 16F.2 Tickets: Phase 0 and Phase 1 (and Search)
+
+Ids: `M-` for Manus, `O-` for OpenHands. Status lives only in `Doc/TICKETS.md`. Tickets for Phase 2 onward are written by Claude when Phase 1 is complete.
+
+| ID | Agent | Task | Depends on | Done when |
+|---|---|---|---|---|
+| M-00 | Manus | Export the live schema (tables, policies, functions, triggers) as `SQL/00000000000000_baseline.sql`; create a staging project; rebuild staging from `SQL/` | none | A project built only from `SQL/` matches the live schema with an empty diff |
+| M-01 | Manus | Roles: apply the role migrations (`20261122000050_rental_roles.sql`, `20261122000400_rental_role_slugs.sql`) so `current_role_name()` resolves the slug in `profiles.role`; add `private.has_role(text[])` if the policies need it; keep `public.is_super_admin()` | M-00 | A test as each of the nine roles confirms what it can and cannot read or write |
+| M-02 | Manus | Audit log per 16B.2: check and extend `admin_audit_logs`; add `private.write_audit(...)`; a purge at 24 months | M-01 | A write by a role creates one audit row; older rows are purged |
+| M-03 | Manus | Jobs: enable `pg_cron`; `job_runs` table; a failed job notifies Super Admin | M-04 | A forced failure appears in `job_runs` and in Super Admin's bell |
+| M-04 | Manus | Notifications: `notification_feed`; Realtime on it; a 90-day purge | M-00 | A feed row reaches a signed-in client within seconds |
+| M-05 | Manus | Exchange rates: `exchange_rates`, `get_exchange_rate()`, `set_exchange_rate()` (Super Admin and Payment Admin) | M-01 | The latest effective row is returned; rows cannot be edited |
+| M-06 | Manus | The one Worker `Worker/index.ts` with the routes of 16G.4, the R2 bucket, the public base URL, and the root `wrangler.jsonc` changes (`main`, `assets.run_worker_first`, the `MEDIA` binding, cron triggers). Start with `POST /api/media/upload` | M-01 | An upload by an allowed role stores a WebP at the right key; a wrong role, type or size is refused with the right code; the static site still serves every other path |
+| M-07 | Manus | `media_objects` table and the nightly orphan cleanup (a scheduled handler in the Worker) | M-06, M-03 | An unreferenced object older than 30 days is removed; a referenced one never is |
+| M-08 | Manus | Translation: `translation_cache`, the `POST /api/translate` route, review functions `list_translation_review` and `review_translation` | M-06 | A missing language returns a cached auto-translation; approving it makes it permanent |
+| M-09 | Manus | Auth: Google provider and redirect URLs; invitation flow for Admin and Owner accounts (no plaintext passwords); a username-login resolver that does not expose emails. Needs the founder's provider credentials entered by the founder in the session | M-00 | An invited admin signs in with the right role; the first Super Admin works with Google |
+| O-00 | OpenHands | `src/lib/backend.ts`: the per-module flags, an `rpc(name, args)` helper that reads a `P0001` error message and returns it for `t()`, and the common-code mapping | none | Unit tests cover success, a module error and an unknown error |
+| O-01 | OpenHands | `roleFromProfile`: maps `profiles.role` to `AuthRole` and `AdminRole` (16G.5); the guards use it; in Supabase mode the product role is read from the database; `content_admin` is retired there | none | Tests cover all nine values |
+| O-02 | OpenHands | Notification feed and currency clients read `notification_feed` and `get_exchange_rate()` with local fallback | M-04, M-05 | With the backend on, the bell and the currency use server data |
+| O-03 | OpenHands | Reader fallback for a missing language with the "Auto-translated" marker; Admin review panel | M-08 | Matches 16B.4 |
+| O-05 | OpenHands | Repository layout guard: a vitest test `src/repoLayout.test.ts` that fails on anything outside section 16I | none | The test passes on the current tree and fails when a stray file, folder or second Plan file is added |
+| M-10 | Manus | Review the rental migrations in `SQL/` (`…000100_rental_catalog`, `…000200_rental_orders`, `…000300_rental_functions`), apply them to staging then production, seed from `src/data/rentalCatalog.ts` | M-01 | Section 8 §3 is complete at the database and the seed matches the app's catalog |
+| M-11 | Manus | Complete the rental functions per 16G.3: `add_rental_extra`, remove the extras write policy, drop `p_fx_mmk_per_usd` after M-05 | M-10, M-02, M-04 | Section 8 acceptance 1 to 9 pass at the database |
+| M-12 | Manus | Rental jobs: `expire_overdue_rental_orders` every 5 minutes; the notifications of 16B.3 | M-11, M-03 | An Accepted order past its deadline becomes Expired; the notifications fire |
+| O-10 | OpenHands | Switch the rental order flow from the browser record to the functions, behind `VITE_BACKEND_RENTALS`; the catalog from the `rental_*` tables | M-11, O-00 | Section 8 acceptance 1 to 4 pass from the page with the flag on |
+| O-11 | OpenHands | My Bookings and the voucher page read the server (`my_bookings`) | M-11 | The voucher shows the 17 fields and a QR from server data |
+| O-12 | OpenHands | Rental Admin panel on the server: Orders, Catalog, Availability, Rates, Branches, Terms, Settings, Reports | M-11 | Section 8 §8 is complete on server data |
+| O-13 | OpenHands | Reschedule and the rental notifications from the server | M-11 | Section 8 acceptance 9 passes |
+| M-20 | Manus | Blog tables (section 10 Blog §3), the `blog_posts_public` view, RLS, seed from `src/data/blogsData.ts` and `src/data/additionalBlogPosts.ts` | M-01 | Public reads only published rows |
+| M-21 | Manus | Blog functions in 16G.3 and the "publish due content" job | M-20, M-02, M-03, M-04 | Section 10 Blog acceptance 1 to 6 pass at the database |
+| O-20 | OpenHands | Blog editor on the functions: autosave, version conflict, bilingual captions, no `galleryUrls`, optional coordinates, slug shown, revisions list | M-21, M-06, O-00 | Section 10 Blog acceptance 1 to 5 pass from the editor |
+| O-21 | OpenHands | Blog reader on `blog_posts_public`; cards hide a missing rating or distance | M-20 | Matches section 10 Blog §8 |
+| O-22 | OpenHands | Blog Post Admin guard (`blog_admin`) and workspace | M-01, O-01 | The role reaches only the Blog editor |
+| M-30 | Manus | `listings_index` seeded from `src/data/listingIndex` | M-00 | Every id the guide editor offers exists in the table |
+| M-31 | Manus | Guide tables, functions in 16G.3, `app_settings`, the earning-row trigger | M-30, M-21 | Section 10 Guide acceptance 1 to 5 pass at the database |
+| O-30 | OpenHands | Guide editor on the functions; duration from stop times; slug; earnings screens for Payment Admin, Super Admin and the author; reader on the public view; Guide Admin guard (`travel_guide_admin`) | M-31 | Section 10 Guide acceptance 1 to 8 pass |
+| M-40 | Manus | Inspect the existing `ads` table first; then the 16A.4 tables, RLS, the placements seed | M-01 | Section 16A.4 is complete; old rows are migrated or retired |
+| M-41 | Manus | `serve_ad`, `record_ad_event`, the admin functions, the Worker routes `/api/ad/click` and `/api/ad/event`, the roll-up and the campaign start and end jobs | M-40, M-03, M-06 | Section 16A acceptance 1 to 4 pass |
+| M-42 | Manus | Ad media folder `ads/` limits in the upload route | M-06 | An ad image over 300 KB or a video over 3 MB is refused |
+| O-40 | OpenHands | `AdSlot` calls `serve_ad` (keeping the collapse), the viewability beacon, `rentals_top` replaces the fixed banner | M-41 | Section 16A acceptance 1 to 4 pass in the browser |
+| O-41 | OpenHands | The Adsboard (16A.7): pages and placements, campaigns, creatives and approvals, advertisers, reports, settings; guard `ads_admin` and `super_admin` | M-41 | Section 16A.11 passes |
+| M-50 | Manus | Search: extensions `pg_trgm` and `unaccent`; `search_index`, `search_aliases`, `search_log`; `normalize_search_text`; triggers from the source tables; `search_all`, `search_suggest`, `search_nearby`, `rebuild_search_index`, `set_search_boost`, `get_search_report`; seed from the MH-owned content | M-21, M-31 | Section 16H.13 acceptance 1 to 11 pass at the database |
+| O-50 | OpenHands | Search page on the functions: the shared normalizer with test vectors, suggestions, recent searches, URL state, interpreted chips, counts; behind `VITE_BACKEND_SEARCH` | M-50, O-00 | Section 16H.13 acceptance 12 and 13 pass |
+| O-51 | OpenHands | Nearby page on `search_nearby`: GPS, manual location, Open Now, List and Map | M-50 | Section 16H.9 behavior passes |
+| O-52 | OpenHands | Admin search tuning: aliases, boosts, the report | M-50 | Section 16H.11 passes |
+
+### 16F.3 Order of work
+
+Manus: M-00, then M-01 to M-09 (any order after M-00 and M-01), then M-10 to M-12, M-20 and M-21, M-30 and M-31, M-40 to M-42, M-50. OpenHands: O-00, O-01 and O-05 now, then each module's tickets as the matching Manus ticket lands. Rentals first, then Blog, then Travel Guide, then Ads, then Search, as in the roadmap (section 16D). Ads can start while Travel Guide is in progress.
+
+## 16G. Contracts: names, shapes and codes (2026-11-23)
+
+These are fixed (rule 2 of 16F.1). Argument and field names are exact. Dates are `YYYY-MM-DD`; times are UTC `timestamptz` unless a field says Myanmar Time (MMT). Where code already exists, this section records what is built, and the Plan follows the code.
+
+### 16G.1 Conventions
+
+- Migrations are `.sql` files in the `SQL/` folder (section 16I), named `<YYYYMMDDHHMMSS>_<slug>.sql`, one concern per file, applied in name order, forward-only.
+- Tables and columns are `snake_case`. Primary keys are `id uuid default gen_random_uuid()`, except lookup tables keyed by a text slug (as the rental catalog is built). Every table has `created_at`; mutable ones also have `updated_at` with a trigger.
+- Functions are named `verb_object`. Those called by the app are `security definer` with a fixed `search_path`, live in `public`, and take the caller from `auth.uid()` and `public.profiles.role`. Helpers that must not be callable by the app live in the `private` schema.
+- Every table has RLS. Reads that are public go through a named view or a function; writes go through functions, never through a direct insert or update policy for the client.
+- Document-shaped saves (blog post, travel guide, ad campaign) take one `jsonb` document. Everything else takes positional arguments, as the rental functions do.
+
+### 16G.2 Errors (as the rental functions already do)
+
+A failure raises a Postgres exception with SQLSTATE `P0001` whose message is `<module>_error_<code>` (for example `rental_error_start_date`). The client shows `t('<message>')` in Myanmar and English, and a generic message for an unknown one. A success returns the row or a `jsonb` document directly; there is no envelope. When a failure needs data, the exception `DETAIL` is a JSON string, for example `{"problems":[{"code":"cover"}]}`.
+
+Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `media_` (the Worker returns the same names with HTTP status codes).
+
+Common: `common_error_not_signed_in`, `common_error_forbidden`, `common_error_not_found`, `common_error_version_conflict`, `common_error_rate_limit`.
+
+Rental (already in `SQL/20261122000300_rental_functions.sql`): `rental_error_not_signed_in`, `category`, `city_availability`, `variant`, `branch`, `start_date`, `end_date`, `min_days`, `name`, `phone`, `address`, `participants`, `terms`, `rate_limit`, `rate_missing`, `forbidden`, `order_missing`, `status_transition`, `payment_method`, `reschedule_not_paid`, `reschedule_limit`, `reschedule_too_late`, `reschedule_unchanged` (each prefixed `rental_error_`).
+
+Blog and Guide: `blog_error_publish_blocked` and `guide_error_publish_blocked` with `DETAIL.problems` using exactly the codes in `src/lib/publishProblems.ts` (`title_languages`, `excerpt_languages`, `category`, `cover`, `story_text`, `alt_missing`, `schedule`, `author`, `stop_required`, `stop_listing`, `stop_languages`, `stop_time_format`, `stop_time_order`, `ad_first`, `ad_adjacent`, `ad_max`); plus `*_error_version_conflict`.
+
+Ads: `ads_error_forbidden`, `ads_error_invalid_transition`, `ads_error_creative_not_approved`.
+
+Search: `search_error_query_too_long`, `search_error_bad_sort`, `search_error_location_required`.
+
+### 16G.3 Functions
+
+**Rentals (built; section 8)**
+
+| Function | Arguments | Returns | Who |
+|---|---|---|---|
+| `submit_rental_order` | `p_city_id text`, `p_category_id text`, `p_variant_id text`, `p_start_date date`, `p_end_date date`, `p_participants integer`, `p_customer_type text` (`citizen` / `foreigner`), `p_fulfillment text` (`delivery` / `branch`), `p_branch_id text`, `p_delivery_address text`, `p_customer_name text`, `p_phone text`, `p_special_requests text`, `p_terms_version text`, `p_display_currency text` (`MMK` / `USD`), `p_fx_mmk_per_usd numeric` | the new `rental_orders` row | signed-in traveler |
+| `set_rental_order_status` | `p_order_id uuid`, `p_status text`, `p_note text default ''`, `p_payment_method text default null` | the updated row. `p_status` is `accepted`, `paid` (needs `p_payment_method`: `cash`, `bank_transfer`, `mobile_wallet`), `completed`, `expired` or `cancelled` (staff only; the note is the reason). Allowed moves: requested → accepted or cancelled; accepted → paid, expired or cancelled; paid → completed or cancelled | `rental_admin`, `admin`, `super_admin`; `paid` also `payment_admin` |
+| `reschedule_rental_order` | `p_order_id uuid`, `p_start_date date` | the updated row | the order's traveler |
+| `expire_overdue_rental_orders` | none | `integer`, the number expired | the 5-minute job |
+| `add_rental_extra` (to build) | `p_order_id uuid`, `p_description text`, `p_amount_usd numeric` | the new `rental_order_extras` row | `rental_admin`, `super_admin` |
+| helpers | `rental_rate_for(p_city, p_category, p_variant)`, `rental_inclusive_days(p_start, p_end)` | rates; days | internal |
+
+Catalog reads are direct `select`s on the `rental_*` catalog tables (public read of active rows); there is no `get_rental_catalog` function. `my_bookings` is a view.
+
+Two changes the built schema needs, both as forward migrations: (a) once `get_exchange_rate()` exists (M-05), `submit_rental_order` drops `p_fx_mmk_per_usd` and reads the server rate; (b) the `rental_order_extras` write policy is removed, so extras go only through `add_rental_extra`.
+
+**Blog (section 10)**
+
+| Function | Arguments | Returns | Who |
+|---|---|---|---|
+| `save_blog_post` | `p_post jsonb`: `id` (optional), `title_en`, `title_mm`, `excerpt_en`, `excerpt_mm`, `category_slug`, `cover_key`, `cover_url`, `author_en`, `author_mm`, `location_en`, `location_mm`, `latitude`, `longitude`, `seo_tags text[]`, `blocks[]`, `status` (`Draft` / `Scheduled`), `scheduled_for_mmt` (`YYYY-MM-DDTHH:mm`, MMT); `p_expected_version integer` (null for a new post); `p_autosave boolean` | `jsonb`: `{ id, slug, version, status }`. Autosave writes the draft row only (no revision, no audit). A `Scheduled` save runs the publish check and raises `blog_error_publish_blocked` | `blog_admin`, `super_admin` |
+| `publish_blog_post` | `p_id uuid`, `p_expected_version integer` | `{ id, slug, version, published_at }` | same |
+| `unpublish_blog_post` | `p_id uuid` | `{ id, status: "Draft" }` | same |
+| `delete_blog_post` | `p_id uuid` | `{ id }` (soft delete) | same |
+| `list_blog_revisions` | `p_post_id uuid` | `{ revisions[ { id, saved_at, status, saved_by } ] }` | same |
+| `get_blog_revision` | `p_revision_id uuid` | `{ snapshot }` (nothing is saved; restoring is a normal save) | same |
+| `increment_blog_views` | `p_slug text` | `{ views }` | anyone |
+
+A block is exactly `{ id, type: "text", text_en, text_mm }`, `{ id, type: "image", image_url, alt_en, alt_mm, caption_en, caption_mm, credit }` or `{ id, type: "ad" }`. The public view `blog_posts_public` exposes: `id`, `slug`, `category_slug`, `cover_url`, `title_mm`, `title_en`, `excerpt_mm`, `excerpt_en`, `author_mm`, `author_en`, `location_mm`, `location_en`, `latitude`, `longitude`, `rating`, `read_minutes`, `blocks`, `published_at`, `views`, `favorite_count`.
+
+**Travel Guide (section 10)**
+
+| Function | Arguments | Returns | Who |
+|---|---|---|---|
+| `save_travel_guide` | `p_guide jsonb`: `id` (optional), `title_en`, `title_mm`, `summary_en`, `summary_mm`, `category`, `cover_key`, `cover_url`, `author_name`, `status`, `scheduled_for_mmt`, `stops[]` (each `day_number`, `time_text`, `listing_id`, `title_en`, `title_mm`, `description_en`, `description_mm`, `image_key`); `p_expected_version integer`; `p_autosave boolean` | `{ id, slug, version, status }`; the stops are replaced with the guide in one transaction | `travel_guide_admin`, `super_admin` |
+| `publish_travel_guide`, `unpublish_travel_guide`, `delete_travel_guide` | as for Blog | as for Blog | same |
+| `list_guide_earnings` | none | `{ rows[ { id, guide_id, author_name, published_at, amount_usd, paid, paid_at, paid_mmk } ] }`; an author sees only their own | `travel_guide_admin` (own), `payment_admin`, `super_admin` |
+| `set_guide_earning_amount` | `p_id uuid`, `p_amount_usd numeric` | the row | `payment_admin`, `admin`, `super_admin` |
+| `mark_guide_earning_paid` | `p_id uuid`, `p_paid_mmk numeric`, `p_note text` | the row; refused when `amount_usd` is null | `payment_admin`, `super_admin` |
+
+**Settings.** `get_setting(p_key text)` and `set_setting(p_key text, p_value jsonb)` over `app_settings(key text primary key, value jsonb, updated_by, updated_at)`; `set_setting` is Super Admin only. Keys: `guide_post_rate_usd`, `rental_new_order_highlight_hours` (default 2), `rental_min_notice_days` (default 1), `ad_fallback_provider` (`adsense` or `none`), `ad_adsense_client_id`, `translate_provider`.
+
+**Ads (section 16A)**
+
+| Function | Arguments | Returns | Who |
+|---|---|---|---|
+| `serve_ad` | `p_placement text`, `p_language text` | `null`, or `{ creative_id, campaign_id, type, media_url, click_url, alt, advertiser }`. "Nothing to show" is `null`, not an error | anyone |
+| `record_ad_event` | `p_creative_id uuid`, `p_placement text`, `p_kind text` (`impression` / `click`), `p_session_hash text` | nothing | anyone |
+| `save_ad_campaign` | `p_campaign jsonb` (advertiser, dates, priority, weight, placements, creatives, `agreed_fee_mmk`) | `{ id, status }` | `ads_admin`, `super_admin` |
+| `set_campaign_status` | `p_id uuid`, `p_action text` (`submit`, `pause`, `resume`, `end`) | `{ id, status }` | same |
+| `review_creative` | `p_id uuid`, `p_decision text` (`approve` / `reject`), `p_reason text` | `{ id, approval }` | `super_admin` only |
+| `set_placement_active` | `p_key text`, `p_active boolean` | `{ key, active }` | `ads_admin`, `super_admin` |
+| `get_ad_report` | `p_from date`, `p_to date`, `p_group_by text` (`placement`, `campaign`, `day`) | `{ rows[ { key, impressions, clicks, ctr } ] }` | `ads_admin`, `super_admin`, `payment_admin` |
+
+**Search and Nearby (section 16H)**
+
+| Function | Arguments | Returns | Who |
+|---|---|---|---|
+| `search_all` | `p_q text`, `p_lang text`, `p_city text`, `p_kinds text[]`, `p_sort text` (`relevance`, `rating`, `nearest`, `newest`), `p_lat numeric`, `p_lng numeric`, `p_limit integer default 20`, `p_offset integer default 0` | `{ items[ { kind, ref_id, title, subtitle, href, thumbnail_url, city_id, rating, distance_km, score } ], counts { all, <kind>... }, interpreted { mode, city, kind, text }, city_counts { <city_id>: n }, next_offset }`; `mode` is `city`, `category`, `city_category` or `text` (16H.6) | anyone |
+| `search_suggest` | `p_prefix text`, `p_lang text`, `p_limit integer default 8` | `[ { text, kind, href } ]` | anyone |
+| `search_nearby` | `p_lat numeric`, `p_lng numeric`, `p_radius_km numeric default 10`, `p_kinds text[]`, `p_open_now boolean default false`, `p_limit integer default 20`, `p_offset integer default 0` | the `search_all` item shape plus `distance_km`, `open_now`, `closes_at` | anyone |
+| `rebuild_search_index` | none | `integer` rows written | `super_admin` |
+| `set_search_boost` | `p_kind text`, `p_ref_id text`, `p_boost integer` (−20 to 50) | the index row | `super_admin`, `admin` |
+| `get_search_report` | `p_from date`, `p_to date` | `{ top_queries[], zero_result_queries[], click_through }` | `super_admin`, `admin` |
+
+### 16G.4 The one Worker
+
+There is **one** Cloudflare Worker, `Worker/index.ts` (section 16I). It serves the API under `/api/` and runs the scheduled jobs; every other path is served by the static site. The root `wrangler.jsonc` binds it: `main` points to `Worker/index.ts`, `assets.run_worker_first` is `["/api/*"]`, the R2 bucket binding is named `MEDIA`, and the cron triggers are set. Same-origin calls need no CORS in production; a development allowlist covers `http://localhost:5173`.
+
+| Route | Contract |
+|---|---|
+| `POST /api/media/upload` (multipart: `file`, `folder`, `contentType`; header `Authorization: Bearer <Supabase access token>`) | Success `{ url, key, bytes }` with status 200. Failure: status 4xx and `{ code, message }` with `code` one of the existing `MediaErrorCode` values (`choose_image`, `unsupported`, `still_large`, `r2_failed`) or `media_error_forbidden`, `media_error_rate_limit`. Folders and limits as in 16B.6; a folder is allowed only for the roles that own it (`blog-posts/`: `blog_admin`, `super_admin`; `guide-stops/`: `travel_guide_admin`, `super_admin`; `ads/`: `ads_admin`, `super_admin`; `rentals/`: `rental_admin`, `super_admin`). Keys: `<folder>/<yyyy>/<mm>/<uuid>.webp`. The current client already reads `url` and `key`. |
+| `GET /api/ad/click/:creativeId?p=<placement>&s=<session>` | Records a click and answers 302 to the creative's click URL. The link is signed with `AD_CLICK_SIGNING_KEY` so it cannot be forged |
+| `POST /api/ad/event` (JSON `{ creative_id, placement, kind: "impression", session_hash }`) | Records an impression; answers 204 |
+| `POST /api/translate` (JSON `{ text, from, to }`) | `{ text, status }`, using `translation_cache` first |
+| `GET /api/weather?city=<id>` | The one central weather service of section 12, cached for 30 minutes per city; returns the city's current conditions and forecast |
+| scheduled handler | Runs the jobs of 16B.7 that are not `pg_cron` |
+
+### 16G.5 Roles, flags and environment
+
+**Roles.** `profiles.role` in the database keeps its existing values. The app has two vocabularies on top of it: the coarse `AuthRole` in `src/lib/auth.tsx` and the product `AdminRole` names in `src/lib/adminRoles.ts`. One function, `roleFromProfile`, maps the database value to both (ticket O-01); the product role is read from the database and is never kept only in the browser once Supabase is configured.
+
+| Plan role | `profiles.role` | Frontend `AdminRole` |
+|---|---|---|
+| Traveler | `traveler` | none |
+| Super Admin | `super_admin` | `Super Admin` |
+| Ads Admin | `ads_admin` | `Ads Admin` |
+| Admin | `admin` | `Admin` |
+| Rental Admin | `rental_admin` | `Rental Admin` |
+| Payment Admin | `payment_admin` | `Payment Admin` |
+| Travel Guide Content Admin | `travel_guide_admin` | `Travel Guide Content Admin` |
+| Blog Post Admin | `blog_admin` | `Blog Post Admin` |
+| Owner Admin | `owner_admin` | `Owner Admin` |
+
+The database check allows exactly these nine values today. The app's `content_admin` is not a database value and is retired in Supabase mode. `shop_owner`, `main_owner` and `branch_owner` are added to the check when Phase 2 and Phase 4 need them.
+
+**Role spelling (decided 2026-11-23).** `profiles.role` stores the slug (`rental_admin`); the UI, this Plan and the permission matrix use the product name (`Rental Admin`). The server's `current_role_name()` resolves either spelling (`SQL/20261122000400_rental_role_slugs.sql`) and `src/lib/roleMapping.ts` does the same in the app, so SQL policies compare product names. A new role must be added to both or it signs in as a traveler and fails every write.
+
+**Frontend environment variables** (public values only): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT` (the upload route; the name is kept, the value is `/api/media/upload`), `VITE_MEDIA_PUBLIC_BASE_URL`, `VITE_AD_API_BASE` (`/api/ad`), `VITE_TRANSLATE_ENDPOINT` (`/api/translate`).
+
+**Per-module flags:** `VITE_BACKEND_RENTALS`, `VITE_BACKEND_BLOG`, `VITE_BACKEND_GUIDES`, `VITE_BACKEND_ADS`, `VITE_BACKEND_SEARCH`, each `on` or `off`. A module uses the backend only when its flag is `on` and Supabase is configured; otherwise it keeps its local preview, as `mainOwnerApi.ts` does today.
+
+**Secrets** (Supabase and Worker secrets only, never in the repo): `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` or the JWKS URL, `ALLOWED_ORIGINS`, `TRANSLATE_API_KEY`, `AD_CLICK_SIGNING_KEY`, and the R2 binding `MEDIA`.
+
+## 16H. Search and Nearby: system specification (2026-11-23)
+
+Written against `src/features/search/SearchPage.tsx`, the Nearby rules in section 12, and `Doc/STATUS.md`.
+
+### 16H.1 Rules (already decided, section 12)
+
+- Search is **unified**: hotels, restaurants, cafes, attractions, markets, book shops, rentals, transport, blogs, guides, travel plans and cities in one query. It favors simplicity over exhaustive filters.
+- Nearby: GPS-based distance sorting, a location bar with manual override, category chips plus a "more categories" search, a List and Map toggle, Open Now emphasized, results as grid cards.
+
+### 16H.2 As built (PREVIEW)
+
+`SearchPage.tsx` searches an in-memory list (`SEARCH_ENTRIES`) built from the seed data modules. The query is lower-cased and `,` and `၊` become spaces. A category alias or a city alias found inside the query (`CATEGORY_ALIASES`, `CITY_ALIASES`) is applied as a filter. The text match is a plain substring test on the title and subtitle. It has filter chips, sort modes and a city pager. It has no ranking, no typo tolerance, no Myanmar-specific handling, no backend, no suggestions and no recent searches.
+
+### 16H.3 What is searchable
+
+| Kind | Source | Appears only when |
+|---|---|---|
+| `hotels`, `restaurants`, `cafes`, `attractions`, `markets`, `bookshops`, `transport` | `listings` | `status = 'active'` |
+| `rentals` | `rental_categories` and `rental_availability` | the category is active (and, with a city filter, offered in that city) |
+| `blogs` | `blog_posts` | Published and `published_at <= now()` |
+| `guides` | `travel_guides` | Published and `published_at <= now()` |
+| `plans` | travel plans | active |
+| `cities` | `rental_cities` and the city catalog | active |
+
+Drafts, scheduled items, suspended or pending listings and soft-deleted rows never enter the index.
+
+### 16H.4 The index
+
+One table, `search_index`, so one query covers everything:
+
+`id`, `kind`, `ref_id` (the object's id or slug), `city_id`, `category`, `title_mm`, `title_en`, `subtitle_mm`, `subtitle_en`, `keywords` (MM and EN), `norm_text` (the normalized title, subtitle, keywords and the first 2,000 characters of body), `tsv_en` (an English `tsvector`), `boost_weight` (default 0), `rating`, `views`, `latitude`, `longitude`, `open_time`, `close_time`, `thumbnail_url`, `href`, `published_at`, `updated_at`.
+
+- Extensions: `pg_trgm` (substring and fuzzy match, the only method that works on Myanmar text) and `unaccent` (English). No PostGIS: distance uses a plain haversine function in the `private` schema.
+- Indexes: `gin (norm_text gin_trgm_ops)`, `gin (tsv_en)`, and `btree (kind, city_id)`.
+- Upkeep: a trigger on each source table inserts, updates or deletes the matching row when an item is published, edited, unpublished or removed. The row changes within 5 seconds. `rebuild_search_index()` (Super Admin) rebuilds everything from the sources.
+
+### 16H.5 Text normalization
+
+One definition, `normalize_search_text(text)` in SQL and `normalizeSearchText()` in TypeScript, checked against the same test vectors so they never disagree.
+
+1. Unicode NFC.
+2. Lower-case Latin letters; strip accents (`unaccent`).
+3. Convert Zawgyi to Unicode when the input is detected as Zawgyi (a rule-based detector on Zawgyi-only code point patterns). Only Unicode is ever stored. When detection is uncertain the text is left as typed.
+4. Remove zero-width characters (U+200B, U+200C, U+200D, U+2060, U+FEFF).
+5. Put combining marks into the standard Myanmar order (Unicode Technical Note 11), so differently typed spellings compare equal.
+6. Map Myanmar digits to ASCII digits.
+7. Turn `,` `၊` `။` `.` `-` `/` into spaces, collapse spaces, trim.
+
+The test vectors include: the same word typed in Zawgyi and Unicode; the same word with different mark order; `ပုဂံ`, `bagan` and `pagan`; a Myanmar number and its ASCII form; text with a zero-width space.
+
+### 16H.6 Understanding the query
+
+- Maximum length 80 characters (`search_error_query_too_long`).
+- Myanmar text has no spaces, so the whole normalized query is matched, not word by word. English is also split into words.
+- **Aliases are data**, in `search_aliases` (`id`, `kind` city / category / synonym, `term`, `target`, `active`). Admin edits them. Seeds: the city and category aliases now in code, plus common variants (for example `bagan` / `pagan` / `ပုဂံ`, `hotel` / `ဟိုတယ်`).
+- A city alias and a category alias found in the query become filters and are removed from the text part; the result carries them as `interpreted { mode, city, kind, text }` and the page shows them as removable chips. If nothing is left in the text part, the result is a browse ordered by rank.
+- **Query modes (decided earlier, kept):** `city` (a city only) shows every listing in that city, with one compact filter row `All`, `Top rated`, `Nearby`, `Hotels`, `Restaurants`, `Book Shops`, `Cafes`, `Rentals`, `Attractions`, `Markets`, all working inside that city. `category` (a category only, for example `Hotel`) shows **city cards only**: one card per city that has matches (`city_counts` in the result), with `All`, `Top rated` and `Nearby` fixed and the city chips rotating to the next window every 10 seconds; choosing a city drills into that category in that city, the same as typing both. `city_category` (both, for example `ရန်ကုန် ဟိုတယ်`) shows only that category in that city with `All`, `Top rated` and `Nearby`. `text` is any other query. The page keeps this behavior; the function supplies `mode` and `city_counts` so the page never has to guess.
+
+### 16H.7 Matching and ranking
+
+An item is a candidate when at least one is true: the normalized query is a substring of `norm_text`; title trigram similarity is at least 0.3; the English full-text query matches. Its score is the sum of:
+
+| Part | Points |
+|---|---|
+| Normalized title equals the query | +100 |
+| Title starts with the query | +60 |
+| Title trigram similarity | similarity × 50 |
+| `norm_text` trigram similarity | similarity × 20 |
+| English full-text rank | rank × 20 |
+| Matches the interpreted city or kind | +10 |
+| Rating | rating × 2 |
+| Views | `log10(views + 1)` × 2, at most 8 |
+| Blog or guide published in the last 30 days | +5 |
+| `boost_weight` (Admin, −20 to 50) | as set |
+
+Ties go to the higher rating, then the title. Sorts: `relevance` (default), `rating`, `nearest` (needs a location, otherwise `search_error_location_required`) and `newest` (blogs and guides). A page is 20 results, at most 50 per request. When a location is given under `relevance`, distance breaks ties.
+
+### 16H.8 Search functions
+
+`search_all`, `search_suggest` and `search_nearby` are in 16G.3. They are callable by anyone and read only active, published rows. `title` and `subtitle` come back in `p_lang`, falling back to the other language. `counts` holds the number of matches per kind for the same query, so the chips show true counts. Protection: a 3-second statement timeout for the API role, a result limit, and the 80-character query limit.
+
+### 16H.9 Nearby
+
+- `search_nearby(p_lat, p_lng, p_radius_km, p_kinds, p_open_now, ...)` returns items inside the radius (default 10 km), ordered by distance, with `distance_km`, `open_now` and `closes_at`.
+- **Open Now** is computed in Myanmar Time from `open_time` and `close_time`, handles an overnight close, and treats an unknown schedule as unknown, never as open. A 24-hour listing is always open.
+- **Location:** the page asks for GPS silently and uses it for distance. If GPS is refused or unavailable it uses the center of Yangon and keeps working. The separate city selector, radius chips, keyword field and location-status panel were removed at the founder's request and stay removed; the category row, Quick Filters (distance, Top Rated, Near Me, Open Now), favorites and result cards remain.
+- The map library loads only when the Map view opens, so the list view stays light. The tile provider is chosen in launch readiness (Phase 6).
+
+### 16H.10 Page behavior
+
+- A 250 ms debounce; suggestions after 2 characters; arrow keys, Enter and Escape work. No search runs while an input method (IME) is composing (wait for `compositionend`).
+- The last 8 searches are kept on the device only, with a Clear button.
+- State is in the URL (`?q=&city=&kind=&sort=`), so a result can be shared and a reload gives the same page.
+- Zero results: show "did you mean" with the best trigram match, then popular cities and categories.
+- Cards use the shared `ListingCard` sizes (default `md`). Every string goes through `t()`.
+
+### 16H.11 Logging and tuning
+
+`search_log` (`id`, `at`, `q_normalized`, `lang`, `kind`, `result_count`, `clicked_ref`) stores the normalized query only: no user id, no IP. Kept 90 days. `get_search_report` returns top queries, zero-result queries and click-through. Super Admin and Admin edit `search_aliases` and set `boost_weight` per item. Both are audited.
+
+### 16H.12 Rollout
+
+Search v1 starts after Phase 1C with the MH-owned content (blogs, guides, rentals, cities) and grows as each listing module lands in Phase 2, because the index only needs a trigger per source.
+
+### 16H.13 Acceptance criteria
+
+1. `ပုဂံ`, `bagan` and `pagan` all return the Bagan results.
+2. The same query typed in Zawgyi and in Unicode returns identical results.
+3. A draft, scheduled, suspended or deleted item never appears.
+4. `hotle` finds hotels.
+5. `hotels yangon` is interpreted as kind hotels and city Yangon, shown as removable chips.
+6. `nearest` without a location fails with `search_error_location_required`; with one it orders by distance.
+7. Open Now excludes closed and unknown-hours listings (Myanmar Time).
+8. A query over 80 characters is refused.
+9. An item published or unpublished changes the results within 5 seconds.
+10. The kind counts equal the number of results for that kind.
+11. A 10,000-row index answers in under 200 ms at the 95th percentile.
+12. A reload of a results URL reproduces the same results.
+13. Every string shows in Myanmar and English.
+
+## 16I. Repository layout and file rules (2026-11-23)
+
+Files are not scattered. Each kind of file has one home, and a test (ticket O-05) enforces it.
+
+| Path | Holds | Rule |
+|---|---|---|
+| `Plan/` | Exactly one file: `PROJECT-PLAN.md` | Only Claude edits it. No second plan, addendum or draft here |
+| `Doc/` | Exactly these files: `README.md` (index and rules), `STATUS.md`, `COMPLETED-WORK.md`, `REMAINING-WORK.md`, `PLAN-VS-CODE.md`, `TICKETS.md`, `HISTORY.md`, `BLOG-IMAGE-SOURCES.md` | A new document needs Claude to add it to this list first |
+| `SQL/` | Only `.sql` files named `<YYYYMMDDHHMMSS>_<slug>.sql` | Applied in name order; forward-only; never edit an applied file; the baseline `00000000000000_baseline.sql` comes first. No documents here |
+| `Worker/` | Exactly one Worker file: `index.ts` | One Cloudflare Worker for the whole `/api/` and the scheduled jobs (16G.4). Until M-06 the folder holds only `.gitkeep`, removed when `index.ts` is added |
+| `src/`, `public/` | The app and its static files | As in `AGENTS.md` |
+| repository root | Tool and config files (`package.json`, `vite.config.ts`, `wrangler.jsonc`, `tsconfig*.json`, `eslint.config.js`, `tailwind.config.js`, `postcss.config.js`, `index.html`, `.gitignore`), `README.md`, `AGENTS.md` | No other documents, SQL or Worker code at the root |
+
+**Not allowed anywhere:** a `supabase/` folder, a `docs/` folder (lower case), a `workers/` or `migrations/` folder, a second Plan file, `.sql` outside `SQL/`, `.md` outside `Doc/`, `Plan/` and the two root files, and Worker code outside `Worker/`. The static-site `wrangler.jsonc` at the root is the single Cloudflare configuration; the Worker is bound through it, so `Worker/` needs no config file of its own.
+
+**Where applied state is recorded.** Whether a file in `SQL/` has been applied is kept in `Doc/TICKETS.md` and in Supabase's own migration history, never in the `SQL/` folder.
+
+**The layout test (O-05)** checks: `Plan/` holds one file named `PROJECT-PLAN.md`; `Doc/` holds exactly the listed files; every file in `SQL/` is a `.sql` file with a valid name, in strictly increasing order; `Worker/` holds only `index.ts` (or only `.gitkeep`); none of the forbidden folders or stray files exist.
+
+## Appendix A. Rentals UI reference provided by the user (2026-11-08)
 
 - Source: https://drive.google.com/file/d/1CaeL6lpWMXGu29krPVJ8xXKreGs0l9qm/view?usp=sharing
 - The reference uses a navy/cyan MH Travel page with a wide Shwedagon-at-sunset hero, ride icon, “Rentals” heading, “Rent your favorite ride in Myanmar” copy, bicycle/e-bike/motorbike/scooter/car options, and a “Browse Rentals” CTA.
@@ -1661,158 +2288,38 @@ The founder delegated these decisions to Claude and will review them after the m
 
 - Data integration: preserve `POPULAR_RENTALS` unchanged for Home and City; build a Rentals-page catalog that reuses stable IDs `pre1`–`pre5` and adds unique `pre6`–`pre10`. Rentals favorites resolve in Favorites and Account while existing Home/City rows remain unchanged.
 
-
-## 18. Dashboard implementation record — 2026-11-10
-
-This section records the dashboard work completed from the supplied visual references and the follow-up Super Admin requests. These are frontend implementations and are intentionally distinguished from the backend provisioning work that remains.
-
-### Super Admin Dashboard
-
-- The standalone `/super-admin` dashboard was redesigned around the supplied MH Travel control-center reference: dark navy/cyan shell, responsive sidebar, hero banner, platform KPI cards, analytics, service distribution, quick actions, recent bookings, popular cities, and recent users.
-- A backward-compatible redirect was added for legacy blog card URLs so `/blogs/:storyId` redirects to the implemented `/blogs?story=<slug>` reader format.
-- The dashboard keeps the standalone Admin Login boundary, visible logout, Burmese/English toggle, theme toggle, mobile navigation, and existing protected Super Admin route behavior.
-
-### Ads Management
-
-- Super Admin now has a dedicated `Ads Management` sidebar section and a `Manage Ads` Quick Action.
-- The Ads console includes active-campaign, placement, impressions, and CTR summary cards; campaign inventory; advertiser and placement columns; Live/Paused status; preview/edit/pause controls; Admin Ads priority; auto-pause expired ads; creative approval; and placement-health indicators.
-- It reuses the repository's existing mock Admin Ads placement vocabulary and remains frontend/local state until ad campaigns, budgets, scheduling, creative storage, reporting, and AdSense/AdMob fallback are connected to Supabase or an ad provider.
-
-### Shop Owner creation and dashboard
-
-- Super Admin has a dedicated `Shop Owners` section and a `Create Shop Owner` Quick Action.
-- The Shop Owner form collects owner name, shop/business name, email, phone, city, business category, login username, and temporary password. A Generate username + password action can create lowercase username credentials and a temporary password; new records appear as `Pending`, with a review action and separate owner/shop/username/city/category/status columns.
-- After creation, the generated username and temporary password are shown once in a credential notice so Super Admin can securely deliver them to the owner. The account list never displays the password.
-- In the local preview auth flow, Create Shop Owner also persists an `owner_admin` account in the shared auth store. The Admin Login portal accepts that username/password and redirects the authenticated Owner Admin to `/shop-owner`; the protected route rejects travelers and unauthenticated visitors.
-- The frontend Shop Owner dashboard is available at `/shop-owner` and follows the supplied Royal Myanmar Restaurant reference: verified business profile, welcome hero, bookings/orders/reviews/revenue KPI cards, booking statistics chart, popular menu items, recent bookings, quick actions, responsive owner sidebar, mobile menu, notifications, and owner workspace sections.
-- The Super Admin Shop Owners table includes a `Preview dashboard` action that opens `/shop-owner`.
-- The `/shop-owner` route is protected for the local `owner_admin` preview role. Production still needs real Owner Admin Supabase authentication, secure invite/password-reset delivery, credential hashing, and shop ownership records.
-
-### Admin Management
-- Super Admin now has a dedicated `Admin Management` sidebar section and a `Create Admin` Quick Action.
-- The Admin Management form collects admin name, work email, phone, admin role, and permission group. Supported frontend role choices are Content Manager, Support Manager, Operations Admin, Finance Admin, and Ads Manager.
-- The page includes total-admin, active-admin, pending-invite, and permission-group summaries; an admin account table; role/permission/status display; review actions; audit-log entry point; invite-created local state; and a clear separation between platform Admin roles and Shop Owner accounts.
-- Current Admin creation is a frontend/local-state invitation workflow. Production work must add Supabase Auth invitations, an explicit role enum, permission/group tables, RLS policies, invite acceptance, password setup, status transitions, audit logs, and route guards.
-### Blog Post Management
-- Super Admin now has a dedicated `Blogs` navigation view and the existing `Add Blog` Quick Action opens a bilingual Blog Post editor instead of a placeholder notification.
-- The editor captures English/Myanmar title, excerpt, and body, category, author, location, cover image URL, internal SEO tags, publishing status, and schedule time. It supports Save Draft, Publish Post, Schedule Post, edit, preview, search, status filters, and Published/Draft/Scheduled inventory summaries.
-- Published posts, drafts, and scheduled posts are currently frontend/local preview state seeded from the existing `BLOG_POSTS` data. Production still needs Blog Post tables, media storage, authorization, scheduling workers, moderation/audit history, and a public query/cache path for new posts.
-### Routes, validation, and delivery
-
-- `src/App.tsx` now includes the `/shop-owner` route, and `public/manus-routes.json` is synchronized with it.
-- The implementation uses the existing Vite + React + TypeScript + Tailwind stack and existing local image assets; no new external assets or secrets were added.
-- The dashboard work passed `npm run typecheck`, `npm run build`, and `npm run lint` with no errors. Existing lint warnings, Browserslist freshness warnings, and bundle-size warnings remain non-blocking.
-- GitHub delivery commits for this dashboard sequence are: `420f69f` traveler dashboard refinement, `16d7362` Ads Management, `07d13fa` Shop Owner creation, `b541cfc` Shop Owner dashboard, and `ee684e4` Admin Management.
-
-### Super Admin Blog category and Cloudflare R2 media update — 2026-11-14
-- Blog Post Editor now lets Super Admin add a new category during post creation. Category names are normalized to safe slugs, duplicate names are rejected, and the new category is selected immediately for the current editor session.
-- Cover images now accept JPEG, PNG, and WebP uploads. The browser validates the file type and original size, resizes the longest edge to at most 1600px, converts the image to WebP, and repeatedly compresses it to a maximum of 450 KB before upload.
-- `src/lib/mediaApi.ts` sends the compressed file as multipart form data to `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT`, with the folder the caller names (`blog-posts` from Blog Post Management, `guide-stops` from Travel Guide Management). The expected endpoint returns the durable Cloudflare R2 URL and object key; the editor stores that URL in the cover-image field and reports the final KB size.
-- When the upload endpoint is not configured, the editor uses a local data-URL preview fallback so design testing remains usable. Production still requires the Cloudflare Worker/Pages Function endpoint, R2 binding, authenticated Super Admin authorization, object-key sanitization, content-type/size validation, and the public URL/CDN policy.
-
-### Blog post cover and gallery photo support — 2026-11-14
-- A Blog Post now supports one required Cover Photo plus multiple Additional Photos. Additional photos can be selected in one multi-file picker, previewed as thumbnails, and removed individually before saving.
-- Every gallery image uses the same media pipeline as the cover: type/original-size validation, longest-edge resize, WebP conversion, compression to the configured size limit, and upload under the `blog-posts` folder through the R2 media endpoint.
-- ~~The local preview post model now carries `galleryUrls[]`~~ **Superseded 26 November 2026:** `galleryUrls` was removed from the model. An extra photo is an image block, so it keeps its place in the story and its alt text; see §10 §2 and `src/lib/blogBlocks.ts`.
-
-### Compact inline Blog story composer and date/time scheduling — 2026-11-14
-- Replaced the large body text fields with a compact story-flow composer made of bilingual text blocks and image blocks. Super Admin can insert a photo between text blocks, add another text block after it, reorder by composing the flow, and remove either block.
-- Cover Photo and Inline Story Photos use the existing resize/WebP/compression/R2 upload pipeline, and the model stores ordered `blocks[]`. The separate Additional Photos list was dropped on 26 November 2026; those photos are image blocks now.
-- Replaced free-typed schedule datetime text with native calendar date and clock time controls. A Scheduled post requires both values; Draft and Published posts remain compact.
-- The editor spacing, input heights, modal width, table density, summary cards, thumbnail sizes, and action buttons were reduced to avoid oversized boxes while preserving responsive mobile behavior.
-- Production still needs the public Blog reader to render ordered text/image blocks and the database schema to persist block order and media metadata.
-
-### Super Admin compact density pass — 2026-11-14
-- Reduced the Super Admin shell footprint with a narrower desktop sidebar, shorter header, tighter navigation rows, smaller main-page padding, and compact mobile menu buttons.
-- Reduced Overview hero height, KPI card height/padding/icon size, chart height, distribution panel footprint, Quick Action tiles, panel headers, table cell padding, and common panel radius while retaining all dashboard content and controls.
-- Applied the same density direction to the existing Shop Owner, Ads, Admin Management, and generic Admin section cards/forms where they share the Super Admin layout, so the dashboard uses less vertical space without hiding data.
-
-### All admin dashboards second compact pass — 2026-11-14
-- Further reduced the Super Admin, Shop Owner, and Admin Management experiences together so their density feels consistent rather than compacting only one role.
-- Shop Owner now uses a narrower sidebar, shorter header, smaller verified-business profile, shorter welcome hero, smaller KPI cards, shorter chart, tighter tables, and compact quick actions/forms.
-- Super Admin Admin Management and Shop Owner management forms now use smaller inputs, labels, gaps, buttons, summary cards, credential notices, and table rows.
-- All existing content, actions, responsive behavior, and route protection remain unchanged.
-
-### User Dashboard compact density pass — 2026-11-14
-- Reduced the traveler User Dashboard shell width/padding, sidebar width, profile spacing, navigation rows, welcome banner, stat cards, booking/activity panels, quick actions, discovery banner, wallet/message/settings cards, and secondary view containers.
-- Preserved all dashboard content, navigation actions, favorite flows, booking controls, responsive mobile behavior, and footer content while using less space.
-
-### Site-wide right-click and zoom interaction guard — 2026-11-14
-- Added a global interaction guard that prevents the page context menu, Ctrl/Cmd zoom shortcuts (`+`, `-`, `0`), and Ctrl/Cmd + mouse-wheel zoom gestures while the site is open.
-- Added a mobile viewport scale restriction (`maximum-scale=1`, `user-scalable=no`) as a best-effort prevention for pinch zoom on supported browsers.
-- Browser menus/settings and browser-level zoom remain outside website control; users can still change zoom through browser UI or accessibility tools.
-
-### All dashboard third compact-density pass — 2026-11-14
-- Further reduced Super Admin/Admin shell and hero heights, sidebar/header widths, KPI/chart heights, quick-action tiles, form spacing, and table density.
-- Further reduced Shop Owner sidebar/header, welcome hero, KPI cards, booking chart, quick actions, tables, and form/card padding.
-- Further reduced User Dashboard max width, outer/sidebar spacing, welcome/discovery hero heights, stat cards, panels, and quick-action tiles.
-- Kept all dashboard content, actions, route protection, responsive behavior, and mobile navigation intact.
-
-### Dashboard footer/copyright compact pass — 2026-11-14
-- Reduced Super Admin and Shop Owner custom copyright footer boxes to short, low-padding rows with smaller logo/social elements.
-- Reduced the shared public Footer and PageCopyright height/padding used below the User Dashboard so the copyright area no longer consumes a large block.
-- Further tightened Super Admin/Admin, Shop Owner, and User shell/hero/chart/action spacing while preserving all dashboard content, controls, route guards, and responsive layouts.
-
-### Dashboard social footer simplification — 2026-11-14
-- Dashboard copyright areas now show only two compact social markers: Facebook and YouTube.
-- Added a reusable `DashboardCopyright` component for the User Dashboard so its footer is a short copyright row rather than the full public-site footer.
-- Removed the extra Telegram/Viber-style social markers from the Super Admin footer while preserving the copyright text and responsive layout.
-
 ---
 
-## Consolidated source: Plan folder overview
+## Appendix B. Supabase backend and authentication handoff record
 
-ဒီ folder သည် MH Travel platform အတွက် လုပ်ဆောင်ပြီးသမျှ အလုပ်များ၊ ဆုံးဖြတ်ချက်များ၊ Backend schema နှင့် ဆက်လုပ်ရန်ကျန်သောအချက်များကို မှတ်တမ်းတင်ထားသော note folder ဖြစ်သည်။ ယခု `Plan/PROJECT-PLAN.md` သည် product roadmap၊ implementation worklog နှင့် technical handoff notes အားလုံးကို စုစည်းထားသော authoritative file ဖြစ်သည်။
-
-## Note files
-
-- [`WORKLOG.md`](./WORKLOG.md) — UI pages၊ visual refinements၊ routes၊ authentication၊ Super Admin နှင့် Supabase schema အပါအဝင် ပြီးစီးထားသောအလုပ်များ။
-- [`BACKEND-AUTH.md`](./BACKEND-AUTH.md) — Supabase Auth၊ `public.profiles` table၊ roles၊ RLS၊ username logic နှင့် Google/Facebook OAuth setup အခြေအနေ။
-
-## Current implementation status
-
-လက်ရှိ project သည် Vite + React + TypeScript + Tailwind ဖြင့် တည်ဆောက်ထားပြီး dark theme ကို အခြေခံထားသည်။ Burmese/English translation system၊ currency/theme hooks၊ shared listing cards နှင့် responsive mobile sidebar တို့ကို ဆက်လက်အသုံးပြုထားသည်။
-
-Traveler Web နှင့် Admin Portal ကို သီးခြားခွဲထားသည်။ Traveler user များသည် website ၏ pages အားလုံးကို အသုံးပြုနိုင်ပြီး Super Admin သည် dedicated Admin Login နှင့် dashboard ကိုသာ အသုံးပြုသည်။ Super Admin အတွင်း Ads Management၊ Shop Owner creation၊ Admin Management နှင့် `/shop-owner` frontend preview dashboard တို့ကိုလည်း မှတ်တမ်းတင်ပြီး implementation ပြီးစီးထားသည်။
-
-Supabase project ထဲတွင် account profiles table၊ username uniqueness၊ role checks၊ signup trigger၊ core travel data tables နှင့် RLS policies များကို SQL migrations ဖြင့် တည်ဆောက်ပြီးဖြစ်သည်။ Core tables တွင် favorites၊ custom plan requests၊ bookings၊ notifications၊ reviews၊ ads နှင့် admin audit logs ပါဝင်သည်။ Frontend တွင် Supabase session, email signup/login, logout နှင့် Google/Facebook OAuth calls ကို ချိတ်ပြီးဖြစ်သည်။ Plan folder ထဲတွင် SQL source မဟုတ်ဘဲ ထို backend/OAuth work ၏ implementation record နှင့် လက်ရှိအခြေအနေကိုသာ ထားထားသည်။ Provider Client ID/Secret များ ထည့်ရန်နှင့် core forms များကို tables သို့ ချိတ်ရန်သာ ကျန်ရှိသည်။
-
-## Important current limitation
-
-Frontend auth UI သည် local preview session store ကို အသုံးပြုနေသေးသည်။ Supabase `public.profiles` schema နှင့် RLS ကို တကယ်တည်ဆောက်ပြီးဖြစ်သော်လည်း Supabase Auth session၊ username lookup/login၊ Google OAuth၊ Facebook OAuth၊ `owner_admin`/scoped admin roles နှင့် dashboard form persistence/invitations များကို production အဖြစ် ချိတ်ဆက်ရန် ဆက်လုပ်ရမည်။
-
----
-
-## Consolidated source: Supabase backend and authentication handoff
-
-## Supabase project
+### Supabase project
 
 - Project name: `mhtravelmm`
 - Project ref: `ewuvxowujkbyvftoihxh`
 - Region: `ap-southeast-1`
 - Status at setup: `ACTIVE_HEALTHY`
 
-## Applied migrations
+### Applied migrations
 
-### `create_user_profiles_and_auth_policies`
+#### `create_user_profiles_and_auth_policies`
 
 Created `public.profiles` with a foreign key to `auth.users(id)`, unique username support, display name, role, avatar URL, and timestamps. Enabled Row Level Security and added own-profile plus Super Admin policies. Added an `auth.users` insert trigger that creates a profile automatically after signup and derives a username from signup metadata or email when needed.
 
-### `allow_super_admin_role_management`
+#### `allow_super_admin_role_management`
 
 Updated the role protection trigger so travelers cannot escalate themselves, while a verified Super Admin can change roles through an authorized backend/admin operation.
 
-### `create_core_travel_data_and_rls`
+#### `create_core_travel_data_and_rls`
 
 Created RLS-protected `favorites`, `custom_plan_requests`, `bookings`, `notifications`, `reviews`, `ads`, and `admin_audit_logs` tables. Added ownership/admin policies, status and data checks, UTC timestamps, update triggers, indexes, and a public active-ad read policy. The schema matches the current Favorites, custom-plan quotation handoff, rentals/ticket bookings, notifications, reviews, and Super Admin Ads/Audit roadmap.
 
-### `harden_core_rls_helper_and_indexes`
+#### `harden_core_rls_helper_and_indexes`
 
 Moved the new admin-role helper into the non-exposed `private` schema, optimized the new policies to evaluate auth context once per query, and added indexes for the Ads and audit-log foreign keys. No Edge Functions were deployed because the current frontend has no defined function contract yet.
 
 The Plan folder intentionally stores only this implementation record, not the SQL source. The SQL was applied directly to the Supabase project through the four migrations above.
 
-## Roles
+### Roles
 
 The profile role check currently allows:
 
@@ -1828,11 +2335,11 @@ The profile role check currently allows:
 
 Traveler accounts remain distinct from admin and owner accounts. A person who uses MH Travel as a traveler and also manages a business must have a separate owner/admin account.
 
-## Current RLS behavior
+### Current RLS behavior
 
 A signed-in traveler can read and update their own profile fields. The profile role cannot be changed by a traveler. Super Admin access is checked through the `public.is_super_admin()` security-definer function. Super Admin policies allow management of profiles and roles. The profile table is protected by RLS and is not open for anonymous reads.
 
-## Signup metadata expected by the trigger
+### Signup metadata expected by the trigger
 
 The signup request should send metadata similar to:
 
@@ -1846,7 +2353,7 @@ The signup request should send metadata similar to:
 
 The trigger uses `username` first. For OAuth signups, if a username is not supplied, it derives a safe username from the OAuth profile/email and the app should send the user through a username-completion step before using the account fully.
 
-## Required frontend integration next
+### Required frontend integration next
 
 The UI now uses Supabase directly whenever the Supabase environment is configured. Admin Login does not fall back to the local preview account in that mode. The connected project must contain a real Supabase Auth user with a linked `public.profiles` row whose role is `super_admin`.
 
@@ -1862,7 +2369,7 @@ Current frontend integration:
 8. Google and Facebook buttons now call `supabase.auth.signInWithOAuth` with the Login callback route.
 9. Admin Login calls `supabase.auth.signInWithPassword`, verifies the linked profile role, and rejects accounts without `super_admin`.
 
-## OAuth setup still required
+### OAuth setup still required
 
 Google and Facebook buttons are present in the Signup UI, but they are not production OAuth yet. The owner must configure these providers in Supabase Auth with:
 
@@ -1875,563 +2382,8 @@ No OAuth secrets belong in the Git repository or in frontend source code.
 
 Facebook App credentials were provided during setup, but they were not entered because Supabase Dashboard login required a manual hCaptcha step. Provider configuration is deferred until the owner resumes the dashboard login. The supplied secret is intentionally not recorded here.
 
-## Account creation note
+### Account creation note
 
 The first Supabase Auth account was created through the Dashboard and its linked profile was promoted to `super_admin` through a one-time SQL role update. The account email still needs to be confirmed in Supabase Auth before password login can succeed if email confirmation is enabled. Never insert a fake `auth.users` row directly into the database.
 
 ---
-
-## Consolidated source: Daily development record — 8 November 2026
-
-**Date:** 8 November 2026
-**Scope:** Favorites real-time behavior and Ticketing flow completion
-
-## 1. Favorites page improvements
-
-The Favorites page was enhanced with a category-based browsing experience. Users can now switch between `All`, Blogs, Travel Plans, Guides, Hotels, Restaurants, Book Shops, Rentals, Transport, Cafes, Markets, and Attractions. Each category displays only the currently saved items and shows its live saved-item count. Burmese and English labels were added for every category and supporting count text.
-
-The Favorites page now reads the shared Favorites context directly. When a user unsaves a card, it immediately disappears from the active category and the `All` and category counts update without a refresh or route change.
-
-The shared Favorites provider was also strengthened for newly added favorites. It now broadcasts a same-tab change event and listens for browser `storage` events. As a result, saving a card from another page updates an already-open Favorites page immediately, and separate browser tabs remain synchronized. Existing localStorage persistence remains in place.
-
-## 2. Ticketing page improvements
-
-Ticketing continues to use the compact two-step flow: users first choose a ticket category and search criteria, then select a result before the detailed booking controls appear.
-
-The service preview data now includes explicit route and cinema-venue metadata. Bus and Train searches use the selected departure and destination cities to match results. Cinema searches use the selected cinema venue. If the local preview data has no exact mock result for a chosen combination, the category results remain visible as a safe fallback instead of producing a blank unusable page.
-
-The booking actions for Train, Events, and Cinema were completed. The previous non-functional generic `Book now` button now advances to the existing order-confirmation state. Cinema still requires the selected seat count to match the passenger count before the button is enabled. Train and Event orders can continue after selecting a service. Bus keeps its existing validation for passenger count, nationality, departure time, boarding point, drop-off point, and seat selection.
-
-The confirmation state now works for every ticket category supported by the preview flow. The existing backend/API limitation remains: real operator inventory, seat locking, payment, and final booking persistence still need Supabase or provider API integration.
-
-## 3. Documentation and validation
-
-The main implementation worklog was updated with the Favorites category filters, immediate unsave behavior, same-tab and cross-tab new-save synchronization, Ticketing result matching, and completion of non-bus booking actions. The Favorites route is now documented as a live categorized page rather than a placeholder.
-
-Validation completed successfully:
-
-- TypeScript typecheck: passed
-- Vite production build: passed
-- Git diff whitespace check: passed
-
-The browser compatibility warning about an outdated `caniuse-lite` database is non-blocking and does not affect the build result.
-
-## 4. Git delivery
-
-The session changes were committed and pushed to the GitHub `main` branch.
-
-- Favorites category and live unsave update: `ca045df`
-- New Favorite same-tab/cross-tab synchronization: `a1876af`
-- Ticketing completion, route/venue result matching, and daily documentation: `d1bf75a`
-
-## 5. Remaining backend work
-
-The current Ticketing flow is a complete frontend preview and order handoff. The next production step is to connect ticket inventory, seat availability/locking, booking records, payment or contact handoff, and confirmation persistence to the backend. Supabase OAuth provider setup remains an external dashboard configuration task.
-
----
-
-## Consolidated source: Daily development record — 9 November 2026
-
-**Date:** 9 November 2026
-**Scope:** Travel Guide and Search placeholder completion
-
-## Completed
-
-- Replaced the `/travel-guide` placeholder with a bilingual Travel Guide listing using the existing compact `ListingCard` design and shared favorite behavior.
-- Added `/travel-guide/:id` detail routing with guide photography, rating, distance, location, itinerary highlights, descriptive copy, and related guide cards.
-- Replaced the `/search` placeholder with an app-wide search page covering Travel Plans, Travel Guides, Blogs, and Popular listings.
-- Added category filters for All, Plans, Guides, Blogs, and Popular, plus a clearable search field and bilingual empty/result states.
-- Added all new Burmese/English translations to the shared i18n dictionary.
-- Updated the consolidated plan so both features are no longer recorded as placeholders.
-
-## Validation
-
-- TypeScript typecheck passed.
-- Vite production build passed.
-- Git diff whitespace check passed.
-- The existing Browserslist `caniuse-lite` freshness warning is non-blocking.
-
-## Remaining production integration
-
-Search currently searches the frontend catalog data. Travel Guide content and Search indexing should later connect to Supabase/Admin-managed content tables when those backend tables are provisioned.
-
----
-
-## Consolidated source: Implementation worklog
-
-## 1. Product foundation and visual direction
-
-- Project stack is Vite, React, TypeScript, Tailwind CSS, React Router, Lucide icons, and custom Language/Currency/Theme hooks.
-- Base visual direction is a dark travel platform UI with blue accents, red action/price accents, compact cards, responsive layouts, and bilingual Burmese/English text.
-- Shared listing/content cards are designed to show rating, distance, favorites, and views.
-- Home uses the full footer; inner pages use the copyright-only footer.
-- Mobile header keeps Menu, MH Travel, Search, and Notifications; account access is placed in the mobile sidebar footer.
-- Mobile sidebar uses a partial-width drawer and renders fixed overlays through a portal.
-- User-provided visual references are followed for Home, restaurant, bookstore, compact travel cards, and the `/cities` discovery sections.
-- Generic page hero banners now share the `mh-page-hero` utility: 190px on phones, 230px from the small breakpoint, and 250px from the medium/web breakpoint. City, Nearby, Rentals, Ticketing, Travel Plans, Travel Guide listing, Blogs, and Account overview use this same size; content styling and imagery remain page-specific. Restaurant/Book Shop and Travel Guide article heroes remain content-heavy detail headers rather than catalog banners.
-- Header Search now hands its query to `/search?q=...`; the Search Results page no longer renders a second search input. Results are filtered in-place with small, non-scrolling category chips including All, plus city chips such as Yangon, Naypyidaw, Mandalay, and Bagan. Category terms such as restaurant automatically match the relevant catalog group while city terms such as Yangon show the matching city catalog.
-- Search city matching was corrected so a Yangon query returns every Yangon-related catalog card across categories, not only cards whose title contains the word Yangon. Other city cards are no longer mislabeled as Yangon, and Burmese queries such as `ရန်ကုန်` and `စားသောက်ဆိုင်` are normalized to the same English search groups and city filters.
-- Search category results now show compact city chips directly beneath the category chips without the redundant `By city` label. The city row includes Yangon, Bago, Naypyidaw, Mandalay, and Bagan; hotel and restaurant mock results carry city metadata so selecting Yangon or Bago filters the category cards in place.
-- Search semantics were refined: a city-only query such as `ရန်ကုန်` returns every Yangon category card; a category-only query such as `Hotel` returns city cards only; and a combined query such as `ရန်ကုန် ဟိုတယ်` returns only Yangon hotel cards. City-only results expose only `Top rated` and `Nearby` sort controls.
-- Category city boxes now drill into the selected city’s category cards. Thus `Hotel` first shows city boxes, selecting Yangon shows Yangon hotels, and the selected-city category list also exposes `Top rated` and `Nearby`; `ရန်ကုန် ဟိုတယ်` opens directly in that same hotel result mode.
-- City-only results now show a complete compact filter row: All, Top rated, Nearby, Hotels, Restaurants, Book Shops, Cafes, Rentals, Attractions, and Markets. Selecting a category limits the cards to that category within the searched city; All restores every listing in the city.
-- Category-only searches such as `Hotel` now use one row with fixed `All`, `Top rated`, and `Nearby` controls followed by rotating city chips. The city chip window advances every 10 seconds while the three fixed controls remain stationary; selecting a city opens that category’s listings for the selected city.
-- Combined city/category searches such as `ရန်ကုန် ဟိုတယ်` now include a fixed `All` control alongside `Top rated` and `Nearby`. Hotel cards carry currency-aware nightly price badges in addition to the shared rating, distance, view count, favorite, and title metadata.
-- EN/MM coverage audit completed and closed 22 November 2026: traveler-facing routes, the shared traveler shell, both owner dashboards, the full Super Admin dashboard and both content editors consume the language context. The last English-only screens were `BlogPostsPanel.tsx` and `TravelGuidesPanel.tsx`; their publish checks and media errors now return codes that the editor translates, so the same rules serve both languages. What remains is backend translation storage, not UI coverage.
-- City discovery rows were corrected from six to a five-card width cap (`columns={5}`, a width-capped flex row rather than a five-column CSS grid) because each City catalog currently contains five cards. Restaurants, Book Shops, Rentals, Hotels, Attractions, Transport, Cafes, and Markets now fill the available row width without an empty sixth-column gap.
-- Mobile drawer order was corrected to follow the intended phone flow: Navigate links, Favorites and display controls, Help & Support, Content/contact, payment/download sections, Legal, then copyright. The duplicate MH Travel tagline block and duplicate Account/Login action were removed because the fixed phone header and bottom navigation already provide those destinations. Notifications remain in the phone header and are not duplicated in the drawer.
-
-## 2. Completed traveler-facing pages
-
-### Home
-
-- Home page includes categories, travel plans, travel guide, blogs, popular hotels/listings, reviews, awards, partners, ad slots, and full footer sections.
-- Travel Guide and Popular cards were resized and aligned to the compact shared card system.
-- Local Myanmar photography is used across Travel Plan, Travel Guide, Blog, and Popular cards.
-- Home ad positions use the shared `AdSlot` component and collapse when no ad is available.
-
-### Cities
-
-- City page now has a persistent visible bilingual hero banner with Shwedagon imagery, city discovery copy, and an Explore cities anchor CTA. It no longer depends on the optional `city_hero` ad response to show its page hero.
-
-### Blogs
-
-- Bilingual blog listing and article reader are implemented in `src/features/blogs/BlogsPage.tsx`.
-- Compact image-led cards replaced oversized story panels.
-- User-facing categories, tags, breadcrumbs, and unnecessary oversized intro panels were removed from the blog listing.
-- Articles open inside the same web app with shareable `?story=` URLs; they are not displayed as a separate paper-like page.
-- Favorite, share, view count, rating, and distance display are supported.
-- Distance is shown only after browser geolocation permission is granted.
-- A compact listing banner is shown where the removed intro text used to be.
-- Related stories are shown below an article before related hotels.
-- Blog post ads are supported through shared ad slots.
-- All blog labels, reader labels, and actions support Burmese/English.
-
-### Travel Plans
-
-- Search, duration filter, sorting, compact route cards, price display, and favorite toggles are implemented.
-- Added a bilingual page-level Travel Plans hero banner with Bagan sunrise imagery, compact dark/cyan overlay styling, a browse-plans CTA, and a direct anchor to the plan results.
-- Custom Plan builder lets users choose starting point, destinations from MH Travel data, days, travelers, nationality, budget, transport, accommodation, hotel choice, and notes.
-- Hotel selection can be left for later.
-- Custom Plan requests describe the MH Travel quotation flow: MH Travel reviews the request, calculates the cost, contacts the user, and negotiates destinations/services.
-- The page intentionally avoids the removed large intro/filter copy and ends with the detailed custom-plan builder.
-
-### Nearby
-
-- Location-aware Nearby page includes search, category grouping, rating filters, distance filters, closest results, and recommended higher-rated results.
-- Location permission state is handled explicitly; fallback messaging exists when location is unavailable.
-- Nearby Categories now uses the same compact Home Categories visual system: 36px icon circles, 64px item width, 16px icons, 8px labels, shared 22-second marquee animation, hover pause behavior, and the same duplicated continuous-scroll pattern. Nearby retains its own All/category filtering and active-state behavior.
-- Removed the unnecessary Nearby location/search control panel from the rendered page. The page now moves from the hero directly to Categories; category filtering, quick filters, geolocation distance calculation, and result cards remain available.
-
-### Account and Notifications
-
-- Traveler Account Dashboard includes overview, bookings, custom plans, favorites, reviews, messages, settings, support/legal, recent activity, and logout.
-- Account logout now clears the shared session/local storage state and redirects to `/login`.
-- Notifications has a full page, read/unread filters, and account activity integration.
-
-### Restaurants and Book Shops
-
-- Restaurant detail page follows the supplied layout reference while preserving the MH Travel shell.
-- Restaurant detail includes hero, info row, map/amenities, menu tabs, dishes, reviews, venue photos, nearby attractions, and CTA.
-- Book Shop detail page follows the supplied reference layout with services, photos, popular books, nearby attractions, and CTA.
-
-### Rentals
-
-- `/rentals` now uses a full bilingual city-first rental order flow instead of the earlier generic request-card design.
-- The user first chooses the rental city. Yangon, Bagan, Mandalay, Inle Lake, and Ngapali have different available categories and different MH Travel branch pickup options.
-- After choosing a city, the user chooses the rental type: motorbike, bicycle, car, horse carriage, camping tent, motorboat, or travel guide where available.
-- The user must choose a start date at least one day in advance, customer type (Myanmar citizen or foreigner), rental duration, and a phone number.
-- The user can choose delivery to a location or pickup from the selected city's MH Travel branch. Delivery address and branch are validated before order submission.
-- Motorbike and bicycle share the simple self-drive style flow. Cars use a separate flow with passenger count and a clear MH Travel vehicle/driver confirmation note.
-- The UI calculates an estimated total from city-available category rates, customer type, and number of days, then sends an order request for MH Travel follow-up.
-- After submission, the page confirms that MH Travel will call the provided phone number. This is a quotation/order handoff UI until the booking backend is connected.
-- The large Rentals heading/intro and the visible Rental Admin label were removed; the top position now uses the shared collapsible `AdSlot` banner pattern.
-- Car rental now has a dedicated vehicle-type step with family car (4–5 seats), 35-seat minibus, and 45-seat bus options. Each vehicle type has its own local/foreigner rate and is priced before the order is submitted.
-- The separate City, Rental Start Date, and advance-booking notice panel was removed from the page top and moved into the `Order details` panel, so the order form owns those inputs.
-- Rental type cards now include compact destination photography thumbnails while retaining the city-specific availability and selection behavior.
-- The removed Rentals intro copy was cleaned from the rendered header path and legacy translation values were changed to ad wording so the old `MH Travel Rental / Rent what your journey needs / Managed by Rental Admin` block cannot reappear from a stale route reference.
-- Rental card rates and the order estimate now use the shared `useCurrency().formatPrice()` formatter instead of hard-coded `$` strings, so the page follows the app-wide MMK/USD currency toggle.
-- Manual `Number of days` selection was removed from Rentals. Users now choose Start date and End date, and the page derives the inclusive rental duration automatically. Order details now asks for Participants instead of a day count. Cars still enforce an End date at least one day after the Start date (minimum 2 rental days); other rental types can use a same-day range for 1 day.
-- The Rentals top advertisement is now a visible compact banner rather than a development-only `AdSlot` placeholder that collapsed when no backend creative was returned. It keeps the `rentals-top` placement marker for later Admin Ads integration.
-
-### Ticketing
-
-- `/ticketing` now uses a bilingual city/township-first booking hub instead of a generic route-only search.
-- All Ticketing categories remain visible in the UI: Bus, Train, Events, and Cinema. The user selects a category and the page filters results to the closest matches for the selected cities, venue, date, and service.
-- Bus flow asks for from city/township, to city/township, bus line, date, passenger count, boarding point, drop-off point, and seats.
-- Train flow asks for from city/township, to city/township, train line, date, and passenger count.
-- Bus seat selection is shown as a compact seat grid and the selected seats plus boarding/drop-off points are summarized in the side panel.
-- Results use the shared currency formatter, operator cards, route/venue summaries, times, remaining-seat information, and category-specific continuation actions.
-- The page keeps live availability and seat-map handoff messaging. Real operator availability and seat locking remain a backend/API integration step.
-- Bus, Train, Event, Cinema, city, venue, boarding, drop-off, and seat labels support Burmese/English.
-- Ticketing was refined to a two-step flow: the first step only searches the route or venue; the second step opens after selecting a result.
-- Bus search now starts with departure city and destination city. After a bus line is selected, boarding point, drop-off point, and seat selection are shown.
-- After a bus line is chosen, the booking panel asks for passenger count, Myanmar citizen/foreigner, departure time, boarding location, drop-off location, and seats. The Order button stays disabled until the selected seat count matches the passenger count, then shows an MH Travel order confirmation.
-- Valid bus orders now open a dedicated Order Confirmation screen instead of only an inline success message. It shows an order number, order status, route, bus line, departure date/time, passenger count, customer type, boarding point, drop-off point, selected seats, estimated total, and MH Travel follow-up guidance.
-- Cinema search starts with city and cinema name; after a cinema result is selected, the user chooses Movie 1 or Movie 2, Hall 1 or Hall 2, and then seats.
-- The initial search remains compact for every category: detailed boarding, hall, and seat fields appear only after the relevant result is chosen.
-- Ticketing services now carry route/venue metadata. After searching, Bus and Train results match the selected departure/destination pair, while Cinema results match the selected cinema; when the local preview has no exact mock match, the category results remain available as a fallback rather than showing a broken blank state.
-- Train, Event, and Cinema booking actions now advance through the same confirmation state instead of leaving a non-functional `Book now` button. Cinema keeps seat-count validation, while Train/Event can continue after selecting a service; all booking buttons show disabled styling until their required selection is valid.
-
-## 3. Shared Favorites behavior
-
-- Added a shared Favorites provider with localStorage persistence so favorite overrides survive route changes and page refreshes.
-- Home listing cards, Travel Plans, Nearby, related hotels, and Blog posts now read/write the same favorite state instead of maintaining page-local heart state.
-- Restaurant and Book Shop detail-page save buttons use the same shared IDs as their listing cards, so saving from a detail page is reflected on cards and in the Account area.
-- Account Favorites now aggregates the app's listing collections and shows only currently saved items, with a Burmese/English empty state.
-- The current store is frontend-persistent; Supabase user-scoped favorites rows remain the next backend integration step.
-- ListingCard now falls back to the shared store when a page omits an explicit callback, fixing non-responsive small heart boxes on pages such as City listings.
-- Completed a second Favorites audit: ListingCard now reads the shared state for its filled/unfilled icon even without a page callback, and Header/Mobile Menu Favorites icons now open a real synchronized `/favorites` page instead of a placeholder.
-- Favorites page now includes an `All` tab plus grouped filters for Blogs, Travel Plans, Guides, Hotels, Restaurants, Book Shops, Rentals, Transport, Cafes, Markets, and Attractions. Each tab shows its saved-item count and only the user's saved items; all labels support Burmese/English.
-- Favorites now reads the shared Favorites context directly for live state. Unsaving a card immediately removes it from the active list and updates the `All` and category counts without a refresh or page navigation.
-- Shared Favorites now broadcasts a same-tab change event and listens to the browser `storage` event. Saving a new card from another page immediately appears in the open Favorites page, with category and `All` counts refreshed; separate tabs stay synchronized too.
-
-## 4. Authentication UI and session behavior
-
-### Traveler routes
-
-- `/login` is a dedicated traveler Login page.
-- `/signup` is a dedicated traveler Signup page.
-- Login and Signup are not shown as tabs in one combined form anymore.
-- Signup fields are Username, Display name, Gmail/Email, Password, and Confirm password.
-- Phone number is intentionally not requested.
-- Username validation allows lowercase English letters, numbers, and underscores, with a 3–24 character limit.
-- Login accepts either Username or Gmail/Email plus password.
-- User Login does not expose Super Admin preview credentials or an Admin shortcut.
-- Google and Facebook signup buttons use recognizable inline brand-style SVG icons.
-- OAuth buttons are currently visual entry points and will be activated after Supabase provider credentials and callback URLs are configured.
-
-### Session and navigation
-
-- `src/lib/auth.tsx` currently provides a local preview session store with traveler and `super_admin` roles.
-- Desktop Header and Mobile Menu react to the shared auth state.
-- Traveler account logout clears the session and returns to traveler Login.
-- Super Admin logout clears the session and returns to `/admin/login`.
-
-### Supabase Auth connection started
-
-- `src/lib/supabase.ts` now exposes a nullable configured client so builds without environment variables still work in preview.
-- The shared auth provider now hydrates Supabase sessions, listens to `onAuthStateChange`, supports Supabase email signup/login, and calls `supabase.auth.signOut()` on logout.
-- Signup sends `username` and `display_name` metadata so the `public.profiles` trigger can create the linked profile.
-- Google and Facebook buttons now call `supabase.auth.signInWithOAuth()` with a callback to the Login route.
-- Admin login checks the linked profile role before allowing the Super Admin portal.
-- The implementation was typechecked and production-built successfully.
-- Supabase Dashboard provider credentials are still required before Google/Facebook OAuth can complete in production; this remains an external configuration blocker.
-- Facebook App credentials were supplied, but Supabase Dashboard login/hCaptcha prevented provider configuration; setup was intentionally deferred at the user's request. The secret is not stored in the repository or Plan notes.
-
-## 4. Super Admin Portal
-
-- Super Admin does not use the traveler web shell.
-- `/admin/login` is a standalone Admin Login page without traveler Header, navigation, or Footer.
-- `/super-admin` is protected:
-  - unauthenticated visitors redirect to `/admin/login`;
-  - traveler accounts redirect to `/account`;
-  - only `super_admin` sessions can see the dashboard.
-- Super Admin sees the dashboard only, not the traveler website pages.
-- Dashboard includes overview metrics, recent activity, users, content/listings, bookings, settings, role notes, and quick actions.
-- A clearly labeled `Logout / ထွက်မည်` button is visible in the dashboard header and returns to `/admin/login`.
-- Super Admin Dashboard header now includes a Burmese/English language switcher and a Dark/Light theme toggle using the shared app providers. The controls work inside the standalone admin portal and persist the same app-wide preferences used by the traveler UI.
-- Admin Login now redirects explicitly to `/super-admin` after success. When Supabase is configured, it authenticates only a real Supabase Auth user whose linked profile has `super_admin` role; the local preview account is not used in that production path.
-
-## 5. Supabase backend work completed
-
-- Supabase project: `mhtravelmm` (`ewuvxowujkbyvftoihxh`).
-- Migration applied: `create_user_profiles_and_auth_policies`.
-- Follow-up migration applied: `allow_super_admin_role_management`.
-- `public.profiles` table exists with:
-  - `id uuid` referencing `auth.users(id)` with cascade delete;
-  - unique nullable `username`;
-  - `display_name`;
-  - `role` with traveler/admin role checks;
-  - `avatar_url`;
-  - `created_at` and `updated_at`.
-- RLS is enabled on `public.profiles`.
-- Own-profile select/insert/update policies and Super Admin management policies are present.
-- Auth-user signup trigger automatically creates a profile and derives a safe username from metadata/email when needed.
-- Role-change trigger blocks traveler self-escalation and allows Super Admin role management.
-- Current Supabase profile row count was zero because no real user account details were provided yet.
-- Two Supabase migrations were applied to create the profile schema and then allow verified Super Admin role management. `Plan/PROJECT-PLAN.md` records what those migrations did and their current status; SQL source files are intentionally not stored in the repository plan documentation.
-- Core data migration applied directly to Supabase: `favorites`, `custom_plan_requests`, `bookings`, `notifications`, `reviews`, `ads`, and `admin_audit_logs` now exist with RLS, ownership/admin policies, checks, timestamps, triggers, and indexes. A follow-up hardening migration moved the new admin helper into the private schema and indexed Ads/audit foreign keys. The project currently has no Edge Functions because no function contract has been specified.
-
-## 6. Routes currently in the app
-
-- `/`
-- `/cities`
-- `/nearby`
-- `/rentals`
-- `/restaurants`
-- `/restaurants/:id`
-- `/book-shops`
-- `/book-shops/:id`
-- `/ticketing`
-- `/travel-plans`
-- `/travel-guide` and `/travel-guide/:id` (bilingual guide listing/detail)
-- `/blogs`
-- `/search` (bilingual aggregated search results)
-- `/account`
-- `/login`
-- `/signup`
-- `/admin/login`
-- `/super-admin`
-- `/notifications`
-- `/account/notifications`
-- `/favorites` (live categorized Favorites page)
-
-## 7. Git delivery history for the recent work
-
-- `2a44a43` — Refine blog banner and related stories.
-- `879af23` — Add traveler auth and Super Admin dashboard.
-- `954988f` — Separate Admin Portal from traveler login.
-- `23635a7` — Make Super Admin dashboard standalone.
-- `434a1ff` — Make Super Admin logout visible.
-- `c972c9e` — Wire traveler account logout.
-- `55fa0a3` — Split traveler auth and add username login.
-- `5a5f6b5` — Add branded social signup icons.
-- `41be699` — Document Supabase account schema.
-
-## 8. Remaining implementation work
-
-1. Provision the first real Supabase traveler and Super Admin Auth accounts and verify their linked profile rows.
-2. Add secure username-to-auth identity login handling without exposing private email data.
-3. Configure Google OAuth and Facebook OAuth in Supabase and add production callback URLs.
-4. Create the first real traveler account only after receiving the requested username, Gmail/Email, display name, and temporary password.
-5. Complete Travel Guide detail, Search results, Favorites, and remaining detail pages.
-6. Connect bookings, custom plan requests, favorites, views, notifications, and reviews to Supabase tables and RLS policies.
-7. Add Admin-managed content tables, owner/admin account provisioning, audit logs, and production role management.
-
-
-## 9. Dashboard work completed — 2026-11-10
-
-### Traveler User Dashboard
-
-- Refined `/account` to follow the supplied MH Travel traveler-dashboard reference with the full-width navy/cyan shell, profile navigation, welcome banner, four statistic cards, upcoming trip, quick actions, recent activity, discovery panel, responsive behavior, and full desktop footer treatment.
-- Preserved existing account navigation, Favorites, notifications, settings/support views, and logout behavior.
-- Delivery commit: `420f69f` — `feat: refine traveler user dashboard`.
-
-### Super Admin Dashboard and Ads Management
-
-- Redesigned the standalone Super Admin control center to match the supplied reference with a dark navy/cyan admin shell, responsive sidebar, hero, KPI cards, analytics, distribution, quick actions, recent bookings, popular cities, and recent users.
-- Added a dedicated Ads Management section with campaign inventory, advertisers, placements, impressions, CTR, Live/Paused state, preview/edit/pause actions, priority/approval controls, and placement health.
-- Added the legacy blog URL redirect used by older blog card links.
-- Delivery commit: `16d7362` — `feat: add super admin ads management`.
-
-### Shop Owner creation and dashboard
-
-- Added the Super Admin Shop Owners section and Create Shop Owner workflow. The form collects owner/business name, email, phone, city, and business category; created records enter the local list as Pending for review.
-- Added the separate responsive `/shop-owner` dashboard based on the supplied Royal Myanmar Restaurant reference. It includes the owner profile/verified state, bookings/orders/reviews/revenue cards, booking chart, popular menu, recent bookings, quick actions, owner navigation, mobile menu, notifications, and workspace sections.
-- Added a Preview dashboard action from the Super Admin Shop Owners list and registered `/shop-owner` in `public/manus-routes.json`.
-- Delivery commits: `07d13fa` — `feat: add shop owner creation`; `b541cfc` — `feat: add shop owner dashboard`.
-
-### Admin Management
-
-- Added the Super Admin Admin Management section and Create Admin Quick Action. The frontend workflow collects name, email, phone, admin role, and permission group, and adds newly created records as Pending invite.
-- Added role choices for Content Manager, Support Manager, Operations Admin, Finance Admin, and Ads Manager; permission groups cover content, support, bookings/orders, payments/reports, and Ads Management.
-- Added admin summary cards, admin account table, status display, review actions, audit-log entry point, and explicit separation between platform admins and Shop Owners.
-- Delivery commit: `ee684e4` — `feat: add admin management`.
-
-### Current boundary for all dashboard work
-
-The dashboard screens, forms, local state, and preview interactions are complete and typechecked/build-validated. Admin invitations, shop ownership, permissions, audit logs, campaign persistence, real metrics, Supabase Auth invitations, email delivery, and RLS policies are still backend integration work. The frontend auth role model now includes local `owner_admin`; production role authorization remains pending.
-
-### Validation for the dashboard sequence
-
-- `npm run typecheck` passed.
-- `npm run build` passed.
-- `npm run lint` passed with the repository's existing seven non-blocking warnings only.
-- `git diff --check` passed before delivery.
-
-
-## 10. Shop Owner login credentials — 2026-11-11
-
-- Extended the Super Admin Shop Owner creation form to include a required login username and temporary password.
-- Added a `Generate username + password` action that derives a lowercase username from the shop name with a numeric suffix and creates a temporary password for the owner.
-- After account creation, the new Owner Admin record is added as `Pending`, the username is visible in the account list, and the username/password are shown once in a credential notice for secure delivery. Passwords are deliberately not displayed in the account table.
-- Added validation for username format and minimum password length, reset the credential fields after creation, and preserved the `/shop-owner` dashboard preview action.
-- This is still a frontend/local-state credential handoff. Production must use Supabase Auth invite or password-reset flows, never store plaintext passwords, hash credentials server-side, enforce unique usernames, and require the owner to change the temporary password on first login.
-
-
-## 11. Super Admin to Shop Owner login connection — 2026-11-11
-
-- Extended the frontend auth role model with `owner_admin` and added a shared `createShopOwner` auth action. Creating a Shop Owner from Super Admin now persists the username/password account in the local preview auth store instead of only adding a visual row.
-- Updated the standalone Admin Login portal to accept either email or username. A created Shop Owner can sign in with the generated username and temporary password; the role-aware redirect sends Super Admin to `/super-admin` and Owner Admin to `/shop-owner`.
-- Added a protected `RequireShopOwner` route guard. Unauthenticated users go to Admin Login, Super Admin users go to Super Admin, travelers go to the traveler Account page, and only `owner_admin` sessions can open the Shop Owner dashboard.
-- Shop Owner logout now clears the shared auth session and returns to `/admin/login`.
-- The connected flow is a local preview bridge. Production still requires Supabase Auth invitations, real `owner_admin` profiles, secure password-reset/temporary-password rotation, unique username enforcement, shop ownership records, and RLS-backed route authorization.
-
-## 12. Travel Plans entry and detail page — 2026-11-11
-
-- Kept the existing bilingual Travel Plans entry page with Bagan sunrise hero, search, duration filters, sorting, shared favorite cards, and the Custom Plan request builder.
-- Added `/travel-plans/:planId` detail routes so plan cards no longer lead to an undeclared route. The detail view includes a bilingual hero, duration/rating/views, schedule and traveler summary, day-by-day itinerary generated from the plan destinations, estimated starting price, Request this plan CTA, and Browse all plans action.
-- Added the `#custom-plan` anchor to the request builder and registered the detail route in `public/manus-routes.json`.
-- Typecheck, build, lint, and whitespace validation passed; existing lint/Browserslist/bundle-size warnings remain non-blocking.
-
-## 13. City detail page — 2026-11-11
-
-- Added `/cities/:cityId` so every City card can open a real detail route instead of falling through to Not Found.
-- Added city-specific hero imagery and English/Myanmar city introductions for Yangon, Bagan, Mandalay, Inle Lake, Ngapali, Bago, Mawlamyine, Kyaiktiyo, Taunggyi, and Kalaw.
-- Added best-for, recommended-stay, getting-there facts, attraction/hotel/restaurant recommendation sections, Back to Cities navigation, Plan a trip CTA, and a Custom Plan CTA.
-- Registered the route in `public/manus-routes.json`; typecheck, build, lint, preview URL, and whitespace validation passed.
-
-## 14. City categories and expanded business explorer — 2026-11-11
-
-- Added a Search-like explorer inside City Detail pages with category chips for All, Attractions, Hotels, Restaurants, Book Shops, Rentals, Transport, Cafes, and Markets.
-- Added city-scoped keyword search, result counts, bilingual labels, responsive business grids, and Show more/Show less behavior so visitors can see more hotels, restaurants, and other businesses instead of only three featured sections.
-- Typecheck and lint pass with only the repository's existing non-blocking warnings; production build and whitespace checks remain required before delivery.
-
-
-## 15. Shop Owner Web UI/UX template subscription plan — 2026-11-12
-
-The product plan now includes a selectable Shop Page Web UI/UX template system for Shop Owners. Every shop receives one default Free template. MH Travel will offer additional templates with different layouts, navigation, hero, catalog/menu, booking CTA, gallery, and mobile experiences, while keeping the Owner's business data reusable across templates.
-
-Switching from the included Free template to an alternative paid template will cost **2,000 MMK per month per Shop Owner shop**. One paid template entitlement is active at a time, and switching between paid templates must not duplicate shop content or subscriptions. Owners may return to the Free template at any time; cancellation, expiry, or unpaid status after a grace period falls back to Free without deleting business data.
-
-The remaining implementation work is a template catalog and version system, preview/apply selector, category compatibility, subscription/payment/entitlement records, renewal and grace-period handling, RLS, audit events, Platform Admin template management, safe retirement/rollback, and analytics. This is a new product requirement documented in the consolidated plan and Doc records; no UI or payment integration was implemented in this documentation-only update.
-
-
-## 16. Ticketing Main Owner and Branch Owner model — 2026-11-12
-
-The Ticketing plan now defines an operator hierarchy. A company such as JJ Express has one Main Owner account, and that Main Owner can create scoped Branch Owner accounts for stations such as Yangon Hlaing Tharyar Gate and Aung Mingalar Gate. Branch Owners can manage only their assigned station's operations, schedules, inventory, bookings, and reports; they cannot access another branch or operator.
-
-Each Branch Owner account costs **10,000 MMK per month**, billed to the Main Owner. This fee is separate from the 2,000 MMK Shop Page template subscription and from ticket transaction commissions. Ticket sales must retain both Main Owner/operator attribution and Branch Owner/station attribution, with a configurable revenue-share rule snapshotted on every transaction.
-
-The planned wallet model separates the MH Platform ledger for MH fees, account charges, commissions, refunds, and adjustments; the Main Owner consolidated wallet for operator and branch earnings; and branch-level wallets/ledgers for each station. Final commission percentage, payout schedule, minimum payout, refund/chargeback responsibility, withdrawal rules, and direct-versus-consolidated settlement remain open for the next ticketing business discussion. This is a documentation-only update; no branch account, payment, revenue-share, or wallet UI/backend was implemented.
-
-
-## 17. Main Owner Branch Account and Wallet Admin Panel — 2026-11-12
-
-- Added a protected `/main-owner` route with a Super Admin `?preview=1` path for design review while the distinct production Main Owner role is still pending.
-- Added a dark navy/cyan Main Owner control center for JJ Express-style operators with Overview, Branch Accounts, Wallets & Ledger, Ticket Sales, Revenue Share, and Operator Settings navigation.
-- Added a responsive Create Branch Account modal that captures station/branch name, city, address, Branch Owner name, login username, phone, fixed 10,000 MMK monthly account fee, and revenue-share percentage. New local preview records enter `Pending` status and appear in the branch table.
-- Added Main Owner overview metrics, branch wallet snapshot, ticket-sales chart, recent wallet activity, branch account table, consolidated Main Owner wallet, Branch Wallets, MH Platform Ledger, settlement preview, and ledger/activity rows.
-- Typecheck passed, production build passed, lint passed with the repository's existing seven non-blocking warnings, and the route manifest was updated. The UI remains local preview state; real branch roles, billing, revenue-share persistence, wallet ledgers, payments, and RLS remain backend work.
-
-
-## 18. Branch Account form validation and API integration — 2026-11-12
-
-- Added `src/lib/mainOwnerApi.ts` with shared Branch Account input types, validation, preview persistence, and async create behavior.
-- Added validation for station name, city, address length, Branch Owner name, lowercase username format, Myanmar phone format, and revenue share from 0–100%. Duplicate preview usernames are rejected before submission.
-- The Main Owner Create Branch Account modal now submits asynchronously, shows field-level errors and API/server errors, disables controls while creating, and reports whether a record was created through Supabase or the local preview fallback.
-- When Supabase is configured, the service inserts into the planned `operator_branches` table with `operator_id`, station/contact data, fixed 10,000 MMK monthly fee, revenue share, and Pending status. When Supabase is unavailable, it persists the new Pending branch in `localStorage` so the preview remains usable.
-- Typecheck and production build passed; lint passed with the repository's existing seven non-blocking warnings. Production still requires the `operator_branches` migration, unique username constraint, authenticated Main Owner identity, server-side validation, and RLS policies.
-
-
-## 19. Super Admin Blog Post Management — 2026-11-12
-
-- Confirmed the existing Super Admin Blogs menu and Add Blog Quick Action were UI placeholders; connected them to a dedicated Blog Posts Management view without changing the surrounding dashboard design.
-- Added `src/features/superAdmin/BlogPostsPanel.tsx` with seeded inventory from `BLOG_POSTS`, All/Published/Draft/Scheduled summaries, title/category/author/view/status table, search, status filters, edit, preview, and publish actions.
-- Added a bilingual Blog Post editor requiring English and Myanmar title, excerpt, and body, with category, author, location, cover image URL, internal SEO tags, publishing status, and schedule time. Save Draft, Publish Post, and Schedule Post actions update the local preview inventory.
-- The current implementation is frontend/local state. Production work remains for Blog Post/revision tables, media storage, Content Manager permissions, moderation/audit history, scheduled publishing, cache invalidation, and public Blogs/search API integration.
-- Typecheck, lint, and production build passed; lint continues to show only the repository's existing seven non-blocking warnings.
-
-## 20. Blog categories and compressed cover uploads — 2026-11-14
-
-The Super Admin Blog Editor now supports adding categories from the editor. New names are normalized into safe slugs, duplicate categories are rejected, and the newly added category is selected for the current post.
-
-Cover image upload now accepts JPEG, PNG, and WebP files, rejects unsupported types and originals above 12 MB, resizes the longest edge to 1600px, converts to WebP, and iteratively compresses to a maximum of 450 KB. The compressed file is sent as multipart form data with `folder=blog-posts` to `VITE_BLOG_MEDIA_UPLOAD_ENDPOINT`; a successful endpoint response supplies the durable R2 URL/key used by the Blog Post cover field.
-
-Because this repository currently has no deployed Cloudflare Worker/Pages Function or R2 binding, an unset endpoint uses a local data-URL fallback for preview only. Production still needs the authenticated R2 endpoint, bucket binding, public/custom-domain or signed URL policy, CORS, database persistence, orphan cleanup, and audit/rate-limit controls.
-
-Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
-
-## 21. Blog post cover and gallery photo support — 2026-11-14
-
-The Blog Post Editor now keeps a separate Cover Photo and supports multiple Additional Photos through a multi-file picker. Each selected gallery image is compressed individually through the existing resize/WebP/450 KB pipeline and uploaded using the same `blog-posts` R2 endpoint adapter. Uploaded gallery URLs appear as thumbnails with individual remove controls and are kept in `galleryUrls[]` separately from the cover URL.
-
-The current gallery list is local preview state. Production still needs ordered Blog Post media records, alt text/captions, public Blog reader rendering, transactional persistence of R2 keys, and orphan-object cleanup.
-
-## 22. Compact inline Blog story composer and schedule controls — 2026-11-14
-
-The Blog Editor was redesigned around a compact story-flow composer. It now supports bilingual text blocks and image blocks so a Super Admin can place photos between paragraphs, add another text block after the image, and remove blocks individually. Cover, gallery, and inline photos all use the existing compressed WebP upload pipeline.
-
-Schedule input was changed from a manually typed datetime field to separate native date and time pickers; Scheduled posts require both values. The modal, fields, cards, table density, thumbnails, and buttons were reduced to avoid oversized boxes. Typecheck and production build passed, and lint passed with the repository's existing seven non-blocking warnings. Public reader block rendering and durable ordered block persistence remain backend/content integration work.
-
-## 23. Super Admin compact dashboard density — 2026-11-14
-
-The Super Admin dashboard received a compact-density pass based on the user's preference for smaller boxes and less unused space. The desktop sidebar and header are shorter/narrower; the Overview hero, KPI cards, analytics chart, distribution panel, Quick Action tiles, panel headers, tables, forms, and shared admin cards use tighter padding, gaps, row heights, icon sizes, and radii. Existing content and actions remain available, including responsive mobile navigation.
-
-Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
-
-## 24. All admin dashboards second compact pass — 2026-11-14
-
-A second density pass was applied across the Super Admin, Shop Owner, and Admin Management dashboards. Shop Owner received a narrower sidebar, shorter header and hero, smaller profile/KPI/chart areas, tighter tables, quick actions, and section cards. Super Admin Admin Management and Shop Owner management forms received smaller controls and tighter table/form spacing. The role dashboards now share a compact visual rhythm while retaining content, actions, responsive layouts, and route protection.
-
-Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
-
-## 25. User Dashboard compact density — 2026-11-14
-
-The traveler User Dashboard was compacted to match the admin dashboard density direction. The shell and sidebar are narrower, navigation rows are shorter, the welcome hero is smaller, KPI/stat cards use less padding, and booking/activity, quick-action, discovery, wallet, message, settings, and secondary view panels are tighter. Existing content and actions remain available across desktop and mobile.
-
-Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
-
-## 26. Site-wide right-click and zoom interaction guard — 2026-11-14
-
-Added `SiteInteractionGuard` at the application root to prevent page context menus, page-level Ctrl/Cmd zoom shortcuts, and Ctrl/Cmd + mouse-wheel zoom. The HTML viewport now requests a maximum scale of 1 and disables user-scalable pinch zoom where supported. Browser menu/settings zoom remains intentionally documented as outside website control. Typecheck and production build passed; lint remains at the repository's existing seven non-blocking warnings.
-
-## 27. All dashboards third compact-density pass — 2026-11-14
-
-A third, tighter density pass was applied across Super Admin/Admin, Shop Owner, and User dashboards. Shell widths and outer padding, sidebar/header heights, hero banners, KPI/stat cards, charts, quick-action tiles, forms, panels, and tables were reduced again to minimize unused space. No dashboard content or actions were removed, and responsive layouts and route guards remain intact.
-
-Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
-
-## 28. Dashboard footer/copyright compact pass — 2026-11-14
-
-Reduced the oversized copyright/footer boxes beneath the dashboard experiences. Super Admin and Shop Owner custom footers now use short rows, smaller padding, and smaller brand/social elements. The shared Footer/PageCopyright used by the User Dashboard was also tightened. A further compact pass reduced shell, hero, chart, table, and action spacing across Super Admin/Admin, Shop Owner, and User dashboards while preserving content, actions, route guards, and responsiveness.
-
-Typecheck and production build passed. Lint passed with the repository's existing seven non-blocking warnings.
-
-## 29. Dashboard social footer simplification — 2026-11-14
-
-Simplified dashboard social footer content to Facebook and YouTube only, both rendered at compact sizes. Added reusable `DashboardCopyright` and connected it to the User Dashboard route, replacing the larger public footer there. Super Admin's custom footer now also keeps only the two requested social markers. Typecheck and production build passed; lint remains at the repository's existing seven non-blocking warnings.
-
-
----
-
-## Currency management and Shop Owner main-currency selection — 2026-11-16
-
-### Completed frontend behavior
-
-- Added a shared currency configuration layer with a persisted Admin exchange rate, defaulting to `1 USD = 4,500 MMK`.
-- Added a Super Admin `Settings` panel for changing the USD-to-MMK rate. Saving the rate immediately updates all shared `formatPrice()` outputs in the current application session.
-- Added persisted Shop Owner currency selection with `MMK Main` or `USD Main` choices inside the Shop Owner Settings workspace.
-- Added a live conversion preview showing the selected shop main price and the automatically converted secondary currency using the current Admin rate.
-- Kept the public display-currency toggle separate from the Shop Owner's pricing base currency. Public listing prices remain USD-base preview data and are converted with the Admin-managed rate.
-- Typecheck, production build, lint, and whitespace validation passed; lint retains the repository's existing non-blocking warnings.
-
-### Production integration still required
-
-- Persist exchange-rate history, effective dates, who changed the rate, and audit events in Supabase/Admin settings.
-- Persist Shop Owner base currency per shop/business profile and apply it to real menu, service, rental, ticket, and booking price records.
-- Add server-side conversion snapshots so an order retains the rate and currency that were shown at checkout; do not recalculate historical bookings from a newer rate.
-- Add validation, permissions, rate-effective scheduling, rounding rules, and payment/refund currency rules for production.
-
-
----
-
-## Super Admin Currency navigation and Shop Owner filters — 2026-11-16
-
-- Moved `Currency & Exchange Rate` from the generic Settings destination to a standalone Super Admin navigation item.
-- Added Shop Owners filters for `All`, city, business category, and application/status (`All`, `Pending`, `Active`).
-- Added filtered-result counts and an explicit Pending applications indicator above the Shop Owner account table.
-- New Shop Owner records continue to enter the Pending state, so submitted applications can be reviewed separately from active owners.
-
-
----
-
-## Shop Owner application notifications — 2026-11-16
-
-A successful Shop Owner application now creates a local preview notification for the Super Admin. The notification bell displays the unread count, opens a compact notification drawer, supports individual read state and Mark all read, and synchronizes the preview notification list across browser tabs. The notification includes the applicant, business, city, and category so the Admin can identify the application without opening the table.
-
-For production, the workflow must move to server-side notification records with authorization, realtime/API delivery, persistent read state, retention, and audit history.
-
-
----
-
-## Page-based Ads Management — 2026-11-16
-
-Ads Management is now organized around the actual website pages rather than a campaign-inventory table. Super Admin can choose a page such as Home, Cities, City Detail, Travel Plans, Blogs, Blog Detail, Nearby, or User Dashboard, then view only that page's placements. Each page supports adding an ad, editing its name/advertiser/placement, previewing the page, and publishing or pausing the placement.
-
-The current implementation is preview/local state. Production integration must persist page routes, placement slots, creative/media, advertiser, schedule, approval status, and page-level permissions in the backend, then render the published placement in the matching page component.
-
-**Built 2026-11-25 (Plan §16A).** The page-first view is now one of seven Adsboard sections, and the public pages read the same data: `AdSlot` is placed on every page that has a placement key and renders the served creative with the Sponsored label. Advertisers have their own section with contact details and campaign history, campaigns gained status/advertiser/placement/day filters, creatives enforce the §16A.8 limits and the Settings domain block list, and Payment Admin opens Reports read-only per the §16B.1 `R (reports)` row. The page routes, slots and approval state are still browser storage until `20261125000100_ads.sql` is applied.
-
-**Built 2026-11-25 (Plan §16A.3 and §16A.5, second pass).** Every placement key in §16A.3 now renders: `cities_top` and `city_detail_after_restaurants` on the two city pages, `travel_plans_top` and `travel_plan_detail_inline` on the plan pages, `nearby_top`, and `account_top`. An ad link is `/ad/click/<creative_id>?p=<placement>&s=<session>` built by `clickThroughHref()`; `AdClickRedirect` records the click through `recordAdEvent` and then replaces the history entry with the resolved target, so a shared link counts once and Back does not re-fire it. `adPlacementWiring.test.ts` reads the pages and fails when a slot names a key the catalog does not declare.

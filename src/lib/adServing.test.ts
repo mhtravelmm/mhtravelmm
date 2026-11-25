@@ -14,7 +14,7 @@ import type { AdminRole } from './adminRoles';
  */
 
 const sql = readFileSync(
-  join(process.cwd(), 'supabase', 'migrations', '20261125000200_ads_serving.sql'),
+  join(process.cwd(), 'SQL', '20261125000200_ads_serving.sql'),
   'utf8',
 );
 

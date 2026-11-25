@@ -50,7 +50,7 @@ errors.
 ### Phase 2 begins: the shared `listings` table
 
 Plan §16C.2 puts one table under every module, and §16C.3 step 1 seeds it from
-the compiled catalog with the ids kept. `supabase/migrations/20261130000100_listings.sql`
+the compiled catalog with the ids kept. `SQL/20261130000100_listings.sql`
 is that table: the §16C.2 columns, the category check, the price-display and
 booking-flow checks, and a 67-row seed covering attractions, hotels, guesthouses,
 restaurants, cafes, bars, markets, book shops, rentals, transport, travel
@@ -243,7 +243,7 @@ four hotel designs where the founder expects about ten.
   section: views, applies, apply rate, share of all views and last seen, in both
   languages. `template_events_purge` joins the §16B.7 registry (daily, 00:15
   Myanmar Time) and `platformJobs.ts` binds it.
-- **Storage.** `supabase/migrations/20261128000200_shop_template_events.sql`
+- **Storage.** `SQL/20261128000200_shop_template_events.sql`
   carries `shop_template_events`, its unique per-session index, a
   `template_usage()` report function and the purge. An anonymous shopper may
   insert a view of a live template and nothing else; an owner may insert an
@@ -413,7 +413,7 @@ the period ends, then expired — so both are one record with a `kind`.
 - **Notification bell.** The Shop Owner header bell now reads the same
   `useFeedRows()` the platform writes, so a renewal reminder lands there instead
   of a hard-coded badge.
-- **Migration committed.** `supabase/migrations/20261126000100_shop_subscriptions.sql`
+- **Migration committed.** `SQL/20261126000100_shop_subscriptions.sql`
   holds `shop_subscriptions` (`kind`, `template_id`, `amount_mmk`, `period_start`,
   `period_end`, `grace_days`, `status`, `reminded_keys`), the two indexes the
   jobs scan by, and RLS: Super Admin, Admin and Payment Admin read all rows, an
@@ -541,7 +541,7 @@ and writes the migrations that make the server the authority.
   internal note, the payment countdown on an accepted order, and the actions
   Accept, Record payment (with the method), Complete, Expire and Cancel. The
   `expireOverdue()` job is also exposed there as a manual run.
-- **Migrations** under `supabase/migrations`: role helpers
+- **Migrations** under `SQL/`: role helpers
   (`is_rental_staff`, `is_rental_editor`), the catalog tables with RLS, the
   order, event and extras tables with a `my_bookings` view, and the functions
   `submit_rental_order`, `set_rental_order_status`,
@@ -999,7 +999,7 @@ red waiting badge.
 **Validation and storage.** `rentalCatalogProblems` now rejects a branch without
 an address or a phone, a rate row naming a variant its category does not define,
 a rate row whose dates run backwards, and settings values the dashboard cannot
-use. `supabase/migrations/20261122000100_rental_catalog.sql` gained a
+use. `SQL/20261122000100_rental_catalog.sql` gained a
 `rental_settings` single-row table with RLS: everyone reads, Rental Admin and
 Super Admin write.
 
@@ -1176,7 +1176,7 @@ visible to a test instead of hidden behind a cast.
   `undefined` for a code this build does not know, so a newer server code reads
   as missing rather than as a type error or a crash. `t()` falls back to the key
   itself. `src/lib/rentalErrorMessages.test.ts` reads the codes straight out of
-  `supabase/migrations`, so a migration that adds a code fails the suite until
+  `SQL/`, so a migration that adds a code fails the suite until
   the text exists.
 - **The dictionary moved to `src/lib/translations.ts`.** `i18n.tsx` was 1,727
   lines and exported both the dictionary and the provider, which the
@@ -1235,7 +1235,7 @@ same mismatch made a staff account fall back to `traveler`.
 - **`RentalOrdersPanel.tsx`** shows only the status buttons the role may press,
   hides the guide-cost form and the expiry job from a payment-only account, and
   makes the admin note read-only for it.
-- **`supabase/migrations/20261122000400_rental_role_slugs.sql`** normalises the
+- **`SQL/20261122000400_rental_role_slugs.sql`** normalises the
   slug once in `current_role_name()`, adds `can_handle_rental_orders()` for
   writes, restricts Payment Admin to the `accepted → paid` step, points
   `is_rental_editor()` at the handler predicate, and repoints the
@@ -1377,7 +1377,7 @@ disabled too (`AdminRow.stored`), because they have no stored record to rewrite.
 (`mmkPerUsd`, `effectiveFrom`, `setBy`, `note`); the rate in force is the latest
 row whose `effective_from` has passed, and the Plan's 4,500 remains the fallback
 until the first row exists. Super Admin → Currency takes an optional note and
-shows the history table, so the reason for a change survives. `supabase/migrations/20261123000100_exchange_rates.sql`
+shows the history table, so the reason for a change survives. `SQL/20261123000100_exchange_rates.sql`
 commits the matching table, its RLS (public read; insert only for Super Admin and
 Payment Admin; no update or delete policy) and the `current_mmk_per_usd()`,
 `round_mmk()` and `usd_to_mmk()` functions.
@@ -1425,7 +1425,7 @@ reads "Not wired" rather than "Ready", so the page states how much of the
 schedule is real (`2/8` today, after scheduled publishing was wired on
 24 November) instead of implying the work is finished.
 
-`supabase/migrations/20261123000200_job_runs.sql` commits the `job_runs` table,
+`SQL/20261123000200_job_runs.sql` commits the `job_runs` table,
 its Super Admin-only read policy, a `run_platform_job(job, work)` wrapper that
 logs the outcome and re-raises on failure, and a `pg_cron` entry for the rental
 expiry job that is created only when the extension exists.
@@ -1466,7 +1466,7 @@ folder: `uploadContentImage(file, 'blog-posts')` in Blog Post Management and
 `uploadContentImage(file, 'guide-stops')` in Travel Guide Management, and the
 success message now reports the real folder instead of a fixed `R2/blog-posts`.
 
-`supabase/migrations/20261123000500_media_objects.sql` adds `media_objects`, one
+`SQL/20261123000500_media_objects.sql` adds `media_objects`, one
 row per object, with the five folder values, the `shops/<id>/` key check, the
 size checks that repeat the client table, and `last_referenced_at` — the cleanup
 reads that column rather than `created_at`, so an old file still in use is kept.
@@ -1518,7 +1518,7 @@ for the title, the summary, and each stop's title and description.
 rows). Each approval or edit writes one `adminAudit` row with object type
 `translation`.
 
-`supabase/migrations/20261123000400_translation_cache.sql` commits the table with
+`SQL/20261123000400_translation_cache.sql` commits the table with
 its status check and one unique index per text and direction, RLS (public read,
 automatic insert by a signed-in reader, review by Admin and Super Admin only,
 no delete), and the functions `cache_translation`, `record_translation_view`,
@@ -1559,7 +1559,7 @@ The admin bell reads the feed beside the staff notices, narrowed by
 that person may act on. The traveler's notifications page shows the same rows
 with the shared read map.
 
-`supabase/migrations/20261123000300_notification_feed.sql` commits the table,
+`SQL/20261123000300_notification_feed.sql` commits the table,
 `can_read_feed_row()` (role, account, author-byline or everyone), a read policy
 that also hides an expired row, and `purge_expired_feed_rows()` for the §16B.7
 schedule. There is no insert policy: only the server functions that own an event
@@ -1628,7 +1628,7 @@ metrics instead of printing `0`, on the listing card and on the guide detail
 panel. The publish check in `BlogPostsPanel` now passes the post's real excerpt
 rather than the `'ok'` placeholder it used to.
 
-`supabase/migrations/20261123000600_scheduled_publishing.sql` commits
+`SQL/20261123000600_scheduled_publishing.sql` commits
 `blog_posts` and `travel_guides` with the lifecycle columns the editor and the
 job share: `scheduled_for` (the UTC instant), `published_at` (only once live),
 `version` for optimistic concurrency, and check constraints that refuse a
@@ -1689,7 +1689,7 @@ eligibility predicate rather than losing the row from the store) and bumps the
 version it publishes, so an editor left open on a scheduled post is told the
 row moved instead of overwriting the job's publish.
 
-`supabase/migrations/20261124000100_content_lifecycle.sql` puts the same rule
+`SQL/20261124000100_content_lifecycle.sql` puts the same rule
 on the server: a `before update` trigger on both tables refuses any write that
 does not claim exactly `old.version + 1` and raises `version_conflict`
 (`40001`), and `unpublish_blog_post`, `soft_delete_content` and
@@ -1719,7 +1719,7 @@ fixed Rentals banner, and no serving function the public pages could call. The
 work below closes that gap end to end — one seam for the Adsboard, the pages and
 the jobs.
 
-**Data (§16A.4).** `supabase/migrations/20261125000100_ads.sql` creates
+**Data (§16A.4).** `SQL/20261125000100_ads.sql` creates
 `ad_advertisers`, `ad_campaigns`, `ad_creatives`, `ad_placements`,
 `ad_assignments`, `ad_events` and `ad_stats_daily` with RLS and the indexes the
 serving query needs. The click URL is checked by a `check` constraint as well as
@@ -2032,7 +2032,7 @@ rendered the guide with one stop's Directions replaced. `npm test` 58 files /
 ## The nightly orphan media job is wired — Plan §16B.6, 26 November 2026
 
 `media_objects` is one row per stored file, carrying when a row last referenced
-it. The table is committed in `supabase/migrations/20261123000500_media_objects.sql`
+it. The table is committed in `SQL/20261123000500_media_objects.sql`
 but not applied, so the job had nothing to read and stayed `wired: false`.
 
 `src/lib/mediaObjects.ts` is now the browser stand-in for that table, and the

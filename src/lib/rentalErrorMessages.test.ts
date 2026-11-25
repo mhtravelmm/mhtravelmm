@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { translate } from './translations';
 
-const MIGRATIONS = join(process.cwd(), 'supabase', 'migrations');
+const MIGRATIONS = join(process.cwd(), 'SQL');
 
 /** Every `rental_error_*` the SQL functions raise, read from the migrations themselves. */
 function serverRentalErrorCodes(): string[] {

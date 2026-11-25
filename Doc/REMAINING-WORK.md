@@ -97,7 +97,7 @@ the suite instead of reaching a user as "coming soon."
   notification, persist contact handoff, and connect payment and voucher or
   ticket issuance.
 - Apply the rental migrations and switch the client to them. The tables, RLS and
-  server functions are written and committed under `supabase/migrations`
+  server functions are written and committed under `SQL/`
   (`rental_categories`, `rental_variants`, `rental_cities`, `rental_branches`,
   `rental_availability`, `rental_rates`, `rental_terms`, `rental_orders`,
   `rental_order_events`, `rental_order_extras`, the `my_bookings` view, and
@@ -128,7 +128,7 @@ the suite instead of reaching a user as "coming soon."
 - **The rental expiry job** is one entry in the §16B.7 schedule
   (`src/lib/jobs.ts`) and runs through the shared runner every five minutes
   plus once on load. A closed browser cannot expire anything, so the schedule
-  moves to `pg_cron` (`supabase/migrations/20261123000200_job_runs.sql`) when
+  moves to `pg_cron` (`SQL/20261123000200_job_runs.sql`) when
   the order tables go live.
 - **The rental audit log** (`mh-travel-rental-audit`) records catalog diffs and
   order status changes in browser storage; it moves to the admin audit table.
@@ -146,7 +146,7 @@ the suite instead of reaching a user as "coming soon."
 - Publishing due content is wired, but against browser storage: the job reads
   the rows in `src/lib/contentStore.ts`, so it only runs while a Super Admin has
   the app open. `blog_posts` and `travel_guides` are committed in
-  `supabase/migrations/20261123000600_scheduled_publishing.sql` but not applied,
+  `SQL/20261123000600_scheduled_publishing.sql` but not applied,
   so the move is to point the store at those tables and the job at `pg_cron`.
 - `job_runs` is committed with the `pg_cron` entry for the rental expiry job but
   not applied. Until it is, the run log and the failure bell live in browser
@@ -204,7 +204,7 @@ Still open on this track:
 Plan §16B.4 is now wired end to end in the browser: `translationCache.ts` holds
 the rules, `translationApi.ts` calls the Worker, `useLocalizedText()` is the
 reader seam, `AutoTranslatedMark` is the marker, `TranslationReviewPanel` is the
-Admin queue and `supabase/migrations/20261123000400_translation_cache.sql` is the
+Admin queue and `SQL/20261123000400_translation_cache.sql` is the
 table with its RLS and functions. What remains:
 
 - **Deploy the Worker.** `VITE_TRANSLATION_ENDPOINT` points at it; until the
@@ -234,7 +234,7 @@ table with its RLS and functions. What remains:
 
 The client side of Plan §16B.6 is built: `src/lib/mediaRules.ts` holds the five
 folder rules, `src/lib/mediaApi.ts` compresses and posts, and
-`supabase/migrations/20261123000500_media_objects.sql` records every object with
+`SQL/20261123000500_media_objects.sql` records every object with
 `last_referenced_at` and lists the orphans. What remains:
 
 - Deploy an authenticated Cloudflare Worker/Pages Function with an R2 binding for
@@ -398,7 +398,7 @@ cover placements, campaigns, creatives, advertisers, reports and settings, and
 `ad_campaign_window` moves the statuses on the one-minute tick. What is left is
 the backend:
 
-- Apply `supabase/migrations/20261125000100_ads.sql` and
+- Apply `SQL/20261125000100_ads.sql` and
   `20261125000200_ads_serving.sql`, then replace the browser stand-in in
   `src/lib/adStore.ts` with calls to the two RPCs and reads of the staff tables.
   The SQL is written and tested for parity with the client rules
