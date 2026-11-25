@@ -1,6 +1,15 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 30 November 2026 (latest pass: the §16C.3 step 2 Admin and
+**Last updated:** 30 November 2026 (latest pass: the dashboard navigation split
+of Plan §3A.4 — tickets O-05 and O-60. Every sidebar entry now has its own
+section id, the aliases that made Tickets and Payments open Bookings, Cities
+and Reviews open Content and Reports open Overview are gone, the sidebar is
+grouped, and the section lives in `?section=<id>` so a reload or a shared link
+returns to it while a role's forbidden id falls back to its landing section.
+`tickets` is granted but hidden until Phase 4. The placeholder panels show the
+honest empty state of §3A.2 rule 4 instead of seeded figures.
+`src/lib/moduleFlags.ts` reads `VITE_BACKEND_ADMIN` and the five §16G.5 flags.
+`src/repoLayout.test.ts` is the §16I guard. Below it, the §16C.3 step 2 Admin and
 Owner listing screen; below it the migration chain run against a real Postgres,
 the four migrations that could never have applied fixed, and the §16C.2
 `listings` table seeded; below that the §4 catalog growth
@@ -84,6 +93,64 @@ same acceptance checks on Postgres 16 — nine now, including that an Owner's ed
 goes live after approval and that the stamp survives it. Mutating either side
 fails the other: reverting the policy to `status = 'pending'` fails the script,
 and dropping the stamp from the panel fails the DOM test.
+
+## The dashboard navigation split — 30 November 2026
+
+Tickets **O-05** and **O-60** (Plan §3A.4, §3A.16 criteria 1, 5 and 10).
+
+**Every entry is its own section.** The old `navItems` list repeated ids:
+`sa_nav_tickets` and `sa_nav_payments` both opened `bookings`, `sa_nav_cities`
+and `sa_nav_reviews` both opened `content`, and `sa_nav_reports` opened
+`overview`. That made the §3A.4 permission table untestable, because an `F` on
+one row described a screen four entries shared. `src/lib/adminWorkspace.ts` now
+declares 29 ids in the table's order, and `SECTION_GROUPS` groups them the way
+the sidebar shows them: Overview, People, Rentals, Commerce, Content, Growth,
+Operations.
+
+**The shell obeys the table.** `sectionsForRole()` returns what a role may open,
+`groupedSectionsForRole()` drops a group the role has nothing in, and
+`landingSection()` names where each role starts — Overview for Super Admin,
+Rental Orders for Payment Admin, Users for Admin, the first allowed section for
+the rest. `resolveSection()` is what makes a link safe: an id the role may not
+open falls back to its landing section instead of rendering an empty shell.
+
+**The section lives in the URL.** `/super-admin?section=payments` opens
+Payments; a reload keeps it; a link a role cannot use lands it on its landing
+section rather than a blank page. The sidebar marks the open entry with
+`aria-current="page"`.
+
+**`tickets` is a right without a screen.** §3A.4 grants it to Super Admin, Admin
+and Payment Admin, but Phase 4 builds the operator system (§16C.1). The id is in
+the table, `HIDDEN_SECTIONS` keeps it out of the sidebar, and ticket O-63 adds
+the screen. `NAV_SECTIONS` is the list the sidebar renders.
+
+**No seeded figures.** §3A.2 rule 4 says a panel with no backend shows an honest
+empty state. `AdminSection` used to print "48,750" users, "32,680" bookings and
+"+18.7%" growth on every placeholder; it now renders `sa_empty_title`,
+`sa_empty_detail` and `sa_empty_backend_note`, which is also exactly what a real
+empty database renders — so the acceptance criterion is met by the same screen
+that will show real rows later.
+
+**Flags.** `src/lib/moduleFlags.ts` reads `VITE_BACKEND_ADMIN` (new, ticket
+O-60) beside the five §16G.5 flags. `readFlag()` accepts only `on`, so a typo
+leaves a module on its local behaviour, and `backendIsOn()` also requires
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` — a half-configured deploy
+keeps the preview instead of failing every request.
+
+**The layout guard (O-05).** `src/repoLayout.test.ts` fails on anything §16I
+does not allow: a second Plan file, a ninth document, a migration outside `SQL/`
+or with a name that is not 14 digits plus a slug, migrations out of order or
+with a duplicated timestamp, more than one file in `Worker/`, a stray root file,
+one of the forbidden folders (`supabase/`, `docs/`, `workers/`, `migrations/`),
+and any `.sql` or `.md` outside its home. It was mutation-checked: creating
+`migrations/`, a root `.sql` and a root `.md` each made it fail.
+
+**Tests.** 931 → 957. `adminWorkspace.test.ts` grew to 20 tests (the table per
+role, the landing sections, the fallback, the grouping, tickets hidden, approval
+and settings with Super Admin); `src/features/superAdminShell.dom.test.tsx` adds
+7 rendered tests through the real provider stack plus `ThemeProvider`;
+`moduleFlags.test.ts` adds 6; `repoLayout.test.ts` adds 7. Lint stays at 0
+errors (7 pre-existing warnings), and the build succeeds.
 
 ## The migrations now apply — 30 November 2026
 

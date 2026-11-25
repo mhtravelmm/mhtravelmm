@@ -1,6 +1,25 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 30 November 2026 (Plan §16C.3 step 2: the Admin and Owner
+**Last audited:** 30 November 2026 (Plan §3A.4 and tickets O-05, O-60: the
+dashboard navigation split. Every sidebar entry now has its own section id —
+`reports`, `tickets`, `payments`, `cities`, `plans`, `listings`, `reviews`,
+`search`, `announcements`, `support`, `settings` were aliases of another panel
+and are now separate screens, so an `F`/`R` in the §3A.4 table describes one
+screen rather than a shared placeholder. `adminWorkspace.ts` carries the 29 ids
+in the table's order plus `SECTION_GROUPS`, `groupedSectionsForRole`,
+`landingSection` and `resolveSection`; the shell reads `?section=<id>` and falls
+back to the role's landing section, so a shared link never opens a screen the
+role may not use. `tickets` is granted to the roles its row names but held in
+`HIDDEN_SECTIONS` until Phase 4 builds it (O-63). The placeholder panels now
+show the honest empty state of §3A.2 rule 4 instead of the seeded "48,750" and
+"+18.7%" figures. `src/lib/moduleFlags.ts` reads `VITE_BACKEND_ADMIN` and the
+five flags of §16G.5, and `backendIsOn()` also requires Supabase. `src/repoLayout.test.ts`
+is the §16I guard for O-05: one Plan file, the eight documents, every migration
+in `SQL/` with a 14-digit name in increasing order, one Worker file, no stray
+root file, no forbidden folder, and no SQL or Markdown outside its home —
+mutation-checked against a stray `migrations/` folder, a root `.sql` and a root
+`.md`. Tests 931 → 957.
+Before that, 30 November 2026 (Plan §16C.3 step 2: the Admin and Owner
 listing screen. `src/lib/listingStore.ts` holds the §9 approval rule, the
 draft validation and the photo quota, and
 `src/features/superAdmin/ListingsPanel.tsx` renders it in a new `listings`

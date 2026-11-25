@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ADMIN_ROLES } from './adminRoles';
 import {
+  ALL_SECTIONS,
+  HIDDEN_SECTIONS,
+  NAV_SECTIONS,
+  SECTION_GROUPS,
+  canApproveAds,
+  canEditRentalCatalog,
+  canEditSettings,
   canHandleOrders,
   canMarkEarningPaid,
   canOpenSection,
@@ -10,16 +17,31 @@ import {
   canRunPayouts,
   canSetCommission,
   canSetEarningAmount,
+  groupedSectionsForRole,
+  landingSection,
+  resolveSection,
   sectionsForRole,
 } from './adminWorkspace';
 
 describe('the admin workspace (Plan §3, §16B.1)', () => {
-  it('gives Super Admin every section', () => {
-    expect(sectionsForRole('Super Admin')).toEqual([
-      'overview', 'users', 'admins', 'owners', 'bookings', 'content', 'blogs',
-      'guides', 'guideEarnings', 'payouts', 'templates', 'ads', 'currency', 'rentals', 'rentalOrders',
-      'rentalReports', 'listings', 'audit', 'jobs', 'translations',
+  it('gives Super Admin every section, in the §3A.4 order', () => {
+    expect(sectionsForRole('Super Admin')).toEqual(ALL_SECTIONS);
+    expect(ALL_SECTIONS).toEqual([
+      'overview', 'reports',
+      'users', 'admins', 'owners',
+      'rentals', 'rentalOrders', 'rentalReports',
+      'bookings', 'tickets', 'payments', 'payouts', 'currency',
+      'cities', 'plans', 'listings', 'reviews', 'blogs', 'guides', 'guideEarnings', 'translations',
+      'ads', 'templates', 'search', 'announcements',
+      'support', 'jobs', 'audit', 'settings',
     ]);
+  });
+
+  // §3A.16 criterion 1: no sidebar entry is an alias of another.
+  it('gives every section its own id, and no section twice', () => {
+    expect(new Set(ALL_SECTIONS).size).toBe(ALL_SECTIONS.length);
+    const grouped = SECTION_GROUPS.flatMap((group) => group.sections);
+    expect(grouped).toEqual(ALL_SECTIONS);
   });
 
   it('gives Rental Admin the rental module and nothing else', () => {
@@ -35,6 +57,10 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
   it('gives Payment Admin totals and payments, but no catalog editing', () => {
     expect(canOpenSection('Payment Admin', 'rentalReports')).toBe(true);
     expect(canOpenSection('Payment Admin', 'rentals')).toBe(false);
+    expect(canEditRentalCatalog('Payment Admin')).toBe(false);
+    // §3A.4 marks `reports` R (payments, rentals, earnings) for Payment Admin.
+    expect(canOpenSection('Payment Admin', 'reports')).toBe(true);
+    expect(canOpenSection('Payment Admin', 'payments')).toBe(true);
     expect(canOpenSection('Payment Admin', 'overview')).toBe(false);
     // §16B.1 marks the Ads row `R (reports)` for Payment Admin.
     expect(canOpenSection('Payment Admin', 'ads')).toBe(true);
@@ -42,9 +68,9 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
     expect(canOpenSection('Payment Admin', 'payouts')).toBe(true);
     expect(canRunPayouts('Payment Admin')).toBe(true);
     expect(canSetCommission('Payment Admin')).toBe(true);
-    // §4: Payment Admin records a template payment, Super Admin owns the catalog.
+    // §4 and §3A.4: Payment Admin records a template payment, Admin only reads.
     expect(canOpenSection('Payment Admin', 'templates')).toBe(true);
-    expect(canOpenSection('Admin', 'templates')).toBe(false);
+    expect(canOpenSection('Admin', 'templates')).toBe(true);
     expect(canOpenSection('Super Admin', 'templates')).toBe(true);
   });
 
@@ -145,5 +171,72 @@ describe('the admin workspace (Plan §3, §16B.1)', () => {
     }
     expect(canHandleOrders(undefined)).toBe(false);
     expect(canRecordPayment(undefined)).toBe(false);
+  });
+  // §3A.3: each role lands on a section it may open.
+  it('lands each role on a section its row allows', () => {
+    expect(landingSection('Super Admin')).toBe('overview');
+    expect(landingSection('Payment Admin')).toBe('rentalOrders');
+    expect(landingSection('Admin')).toBe('users');
+    expect(landingSection('Rental Admin')).toBe('rentals');
+    expect(landingSection('Ads Admin')).toBe('ads');
+    expect(landingSection('Blog Post Admin')).toBe('blogs');
+    expect(landingSection('Owner Admin')).toBeUndefined();
+    expect(landingSection(undefined)).toBeUndefined();
+    for (const role of ADMIN_ROLES) {
+      const landing = landingSection(role);
+      if (!landing) continue;
+      expect(canOpenSection(role, landing), role).toBe(true);
+    }
+  });
+
+  it('falls back to the landing section when the link asks for another', () => {
+    // §3A.3: a shared link must not land a role on a screen it cannot use.
+    expect(resolveSection('Rental Admin', 'users')).toBe('rentals');
+    expect(resolveSection('Ads Admin', 'audit')).toBe('ads');
+    expect(resolveSection('Admin', 'payments')).toBe('users');
+    expect(resolveSection('Admin', 'reports')).toBe('reports');
+    expect(resolveSection('Super Admin', 'settings')).toBe('settings');
+    expect(resolveSection('Super Admin', 'not-a-section')).toBe('overview');
+    expect(resolveSection('Super Admin', null)).toBe('overview');
+    expect(resolveSection(undefined, 'users')).toBeUndefined();
+  });
+
+  it('drops a group once a role has none of its sections', () => {
+    expect(groupedSectionsForRole('Rental Admin')).toEqual([
+      { groupKey: 'sa_group_rentals', sections: ['rentals', 'rentalOrders', 'rentalReports'] },
+    ]);
+    expect(groupedSectionsForRole('Ads Admin')).toEqual([
+      { groupKey: 'sa_group_growth', sections: ['ads'] },
+    ]);
+    expect(groupedSectionsForRole('Owner Admin')).toEqual([]);
+    const groups = groupedSectionsForRole('Super Admin');
+    expect(groups.map((group) => group.groupKey)).toEqual(SECTION_GROUPS.map((group) => group.groupKey));
+  });
+
+  // §3A.4: approving a creative and editing Settings stay with Super Admin.
+  it('keeps approval and settings with Super Admin', () => {
+    expect(canApproveAds('Super Admin')).toBe(true);
+    expect(canEditSettings('Super Admin')).toBe(true);
+    for (const role of ADMIN_ROLES.filter((candidate) => candidate !== 'Super Admin')) {
+      expect(canApproveAds(role), role).toBe(false);
+      expect(canEditSettings(role), role).toBe(false);
+    }
+    expect(canApproveAds(undefined)).toBe(false);
+    expect(canEditSettings(undefined)).toBe(false);
+  });
+  // §3A.4 gives `tickets` a row; Phase 4 builds the screen (ticket O-63).
+  it('grants tickets to the roles its row names but keeps it out of the sidebar', () => {
+    for (const role of ['Super Admin', 'Admin', 'Payment Admin'] as const) {
+      expect(canOpenSection(role, 'tickets'), role).toBe(true);
+      const navIds = groupedSectionsForRole(role).flatMap((group) => group.sections);
+      expect(navIds, role).not.toContain('tickets');
+    }
+    expect(HIDDEN_SECTIONS).toEqual(['tickets']);
+    expect(NAV_SECTIONS).not.toContain('tickets');
+    expect(NAV_SECTIONS.length).toBe(ALL_SECTIONS.length - HIDDEN_SECTIONS.length);
+    // Every other section is reachable from the sidebar.
+    for (const section of ALL_SECTIONS.filter((id) => !HIDDEN_SECTIONS.includes(id))) {
+      expect(NAV_SECTIONS, section).toContain(section);
+    }
   });
 });
