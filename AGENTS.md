@@ -272,6 +272,15 @@ claim as true without checking the code.
   `Authorization` header. `AdClickRedirect` additionally calls
   `recordAdClickRemotely()`, which returns the redirect target from
   `record_ad_click()` so a URL edited in the Adsboard wins over the local copy.
+- Destructive actions, exports and the two refused states live once, in
+  `src/lib/dashboardPieces.ts` (rules, tested) and
+  `src/features/superAdmin/shared/DashboardPieces.tsx` (rendering). Use
+  `ConfirmDialog` instead of `window.confirm`: it always asks for a reason and,
+  for `delete`, `suspend_owner` and `remove_admin`, also for the object's typed
+  name. Pass the *filtered* rows to `CsvExportButton` so an export cannot widen
+  a filter, and never hand-build a CSV — `buildCsv()` owns the byte-order mark,
+  the CRLF endings and the formula guard. A stale save shows
+  `VersionConflictNotice`, whose only action is Reload.
 - Every upload goes through `checkMedia()` in `mediaRules.ts` before the file is
   read, and the folder is named by the caller: `uploadContentImage(file,
   'blog-posts')` or `'guide-stops'`. Never hard-code a byte limit at the call
