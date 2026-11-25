@@ -1,6 +1,27 @@
 # MH Travel — Completed Work Record
 
-**Last updated:** 30 November 2026 (latest pass: ticket O-71, partial — the four
+**Last updated:** 1 December 2026 (latest pass: the twelve Super Admin sections,
+tickets O-61 to O-68 and O-70. Each sidebar entry has its own panel and its own
+rule module, and the rules are tested where they live rather than through the
+screen: `adminOverview` sums every KPI, chart point and Needs attention count
+from the rows over the Myanmar-Time window and the same-length previous window,
+`adminUsers` suspends, restores and anonymises, `adminBookings` refuses a status
+move the §6.1 table does not allow, `adminOwners` walks an application from
+`new` to `approved` or `rejected`, `adminCities` refuses a duplicate or
+malformed slug and derives popularity from views, `adminReviews` restores a
+review without leaving it auto-hidden, `adminSupport` assigns and replies,
+`adminSettings` validates each of the nine typed keys and stops at three
+announcements a day, `adminSearch` refuses a duplicate alias and a weight
+outside −20…50, and `adminReports` defines the nine reports with their roles and
+an inclusive date window. The header search answers in two characters or more
+and narrows each group by the role. Two defects surfaced while testing and are
+fixed: `restoreReview()` left `auto_hidden` set, so a restored review went
+straight back to the queue, and `reportRangeValid()` compared two strings, so
+"tomorrow" sorted after every real date and widened a report. The Support
+sidebar entry now carries the unread badge from the same `unreadSupportCount()`
+the inbox summary reads. 1115 tests across 91 files; typecheck, lint and
+build clean.
+Below it, ticket O-71, partial — the four
 shared dashboard pieces, wired into the listing screen: the type-to-confirm
 dialog that always wants a reason and asks the heaviest actions for the object's
 typed name, the CSV exporter with a byte-order mark and a formula guard, the
@@ -36,6 +57,56 @@ This document records the frontend features, preview workflows, backend preparat
 For the one-page view of what is finished versus open, read
 [`STATUS.md`](./STATUS.md) first. This file is the detail behind its
 **DONE** and **PREVIEW** marks.
+
+## The twelve Super Admin sections — 1 December 2026
+
+Tickets O-61 to O-68 and O-70. The shell already had one section id per sidebar
+entry (O-60); this pass gave each of them a screen, and gave each screen a rule
+module so the rule is tested where it lives rather than through the DOM.
+
+**Where the rules live.** `adminOverview.ts` (KPIs, series, distribution,
+popular cities, the twelve Needs attention items), `adminUsers.ts` (search,
+status filter, paging, suspend, restore, anonymise, JSON export),
+`adminBookings.ts` (six filters, facets, summary, the §6.1 status table, payment,
+timeline), `adminOwners.ts` (application pipeline, owners list, subscription
+renewal, one-time link), `adminCities.ts` (slug rules, city popularity, the plan
+request pipeline), `adminReviews.ts` (moderation queue, listing reports, rating
+adjustment), `adminSupport.ts` (threads, assignment, replies, the unread count),
+`adminSettings.ts` (nine typed keys, announcements with a three-a-day limit),
+`adminSearch.ts` (aliases, boosts, the query report), `adminReports.ts` (nine
+reports, roles, the date window, payout reconciliation) and `globalSearch.ts`
+(the header search).
+
+**Where the screens live.** `OverviewPanel`, `UsersPanel`, `BookingsPanel`,
+`PaymentsPanel`, `OwnersPanel`, `CitiesPanel`, `PlansPanel`, `ReviewsPanel`,
+`SupportPanel`, `SettingsPanel` (which also exports `AnnouncementsPanel`),
+`SearchTuningPanel`, `ReportsPanel`, `AdminManagementPanel`, plus
+`shared/SectionShell.tsx` for the panel chrome and `shared/sectionStyles.ts` for
+the tokens. `SuperAdminPage.tsx` routes each section to its panel; `tickets` is
+the only section left on `AdminSection`, which shows the honest empty state
+because Phase 4 has not built it.
+
+**Two defects the tests found.** `restoreReview()` cleared `hidden` but left
+`auto_hidden` set, so a restored review reappeared in the moderation queue on the
+next read. `reportRangeValid()` compared two strings, so any non-date sorted after
+every real day and widened a report without complaint; it now requires
+`YYYY-MM-DD` at both ends before comparing.
+
+**The Support badge.** §3A.3 and §3A.13 put the unread count on the sidebar item.
+The shell now reads `unreadSupportCount()` from the same store the inbox reads, so
+the badge and the inbox summary are one number. The Overview's quick actions and
+Needs attention links go through `selectNav()`, so the section a reader lands on
+is the one in the URL and a reload returns to it.
+
+**Tests.** 1115 across 91 files. New unit files: `adminOverview`,
+`adminBookings`, `adminOwners`, `adminSettings`, `adminModeration`, `adminUsers`,
+`adminCities`, `adminSearch`, `adminReports`, `globalSearch`. New DOM file:
+`superAdminSections.dom.test.tsx`, which renders the real panels through the
+provider stack and asserts what the screens must do — the Overview prints no
+seeded figure, Users shows the empty state and refuses a role without the
+section, a booking moves only through the drawer and writes its event, an owner
+form has no password field, a duplicate alias and an out-of-range boost are
+refused in the form, and a setting is written and audited.
 
 ## The Admin and Owner listing screen — 30 November 2026
 

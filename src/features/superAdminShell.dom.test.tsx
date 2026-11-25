@@ -91,10 +91,10 @@ describe('the Super Admin shell (Plan §3A.3, §3A.4)', () => {
     const user = userEvent.setup();
     renderDashboard('/super-admin');
     await user.click(within(nav()).getByRole('button', { name: text('sa_nav_payments') }));
-    // Payments is its own section, not the Bookings placeholder it used to be.
-    expect(screen.getByRole('heading', { name: text('sa_nav_payments') })).toBeTruthy();
-    expect(screen.getByText(text('admin_payments_intro'))).toBeTruthy();
-    expect(screen.queryByRole('heading', { name: text('sa_nav_bookings') })).toBeNull();
+    // Payments is its own section, not the Bookings screen it used to share.
+    expect(screen.getByRole('heading', { name: text('pay_title') })).toBeTruthy();
+    expect(screen.getByText(text('pay_intro'))).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: text('bk_title') })).toBeNull();
   });
 
   it('keeps a hidden section out of the sidebar', () => {
@@ -124,11 +124,40 @@ describe('the Super Admin shell (Plan §3A.3, §3A.4)', () => {
     expect(within(sidebar).queryByRole('button', { name: text('sa_nav_payments') })).toBeNull();
   });
 
+  it('badges the Support entry with the unread count the inbox shows', async () => {
+    // §3A.3 and §3A.13: one function feeds the badge and the inbox summary, so
+    // the sidebar can never claim a different number than the screen.
+    window.localStorage.setItem(
+      'mh-travel-admin-support',
+      JSON.stringify([
+        {
+          id: 'th-1', kind: 'traveler', subject: 'Refund for BKG-1', requester_name: 'Thar Thar',
+          requester_email: 'thar@example.com', status: 'open', assigned_to: null,
+          created_at: '2026-11-20T01:00:00.000Z', updated_at: '2026-11-20T01:00:00.000Z',
+          messages: [
+            { id: 'm1', from: 'traveler', body: 'Please refund', at: '2026-11-20T01:00:00.000Z', unread: true },
+            { id: 'm2', from: 'traveler', body: 'Still waiting', at: '2026-11-20T02:00:00.000Z', unread: true },
+          ],
+        },
+      ]),
+    );
+    const user = userEvent.setup();
+    renderDashboard('/super-admin');
+
+    const entry = within(nav()).getByRole('button', { name: new RegExp(text('sa_nav_support')) });
+    expect(entry.textContent).toContain('2');
+
+    await user.click(entry);
+    const inbox = screen.getAllByText(text('sp_summary_unread'))[0].closest('div') as HTMLElement;
+    expect(inbox.textContent).toContain('2');
+  });
+
   it('shows the honest empty state instead of sample rows', () => {
     renderDashboard('/super-admin?section=reviews');
-    expect(screen.getByText(text('sa_empty_title'))).toBeTruthy();
-    expect(screen.getByText(text('sa_empty_backend_note'))).toBeTruthy();
-    // §3A.2 rule 4: the placeholder used to print "48,750" and "+18.7%".
+    // §3A.2 rule 4: an empty store renders the empty state in every table on
+    // the screen, never a seeded figure. The dashboard used to print "48,750".
+    expect(screen.getAllByText(text('sa_empty_title')).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(text('sa_empty_backend_note')).length).toBeGreaterThan(0);
     expect(screen.queryByText('48,750')).toBeNull();
     expect(screen.queryByText('+18.7%')).toBeNull();
   });

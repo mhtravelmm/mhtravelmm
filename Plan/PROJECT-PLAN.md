@@ -192,10 +192,10 @@ Written against `src/features/superAdmin/*`, `src/lib/adminWorkspace.ts`, `src/l
 |---|---|
 | Shell: dark navy and cyan, responsive sidebar and mobile drawer, compact header, language toggle (Burmese / English), theme toggle, notification bell, logout | Built, bilingual |
 | Navigation filtered by role (`sectionsForRole`) | Built |
-| Overview: five KPI cards, analytics chart, service distribution, quick actions, recent bookings, popular cities, recent users | **Seeded, hard-coded numbers** (48,750 users, $243,750 revenue and so on). Quick actions for city, plan, users, reports and settings only show a "ready next" notice |
-| Users, Bookings, Content ("Travel Plans", "Cities", "Reviews") | **Placeholders:** three seeded rows each. Several sidebar entries are aliases that open the same placeholder: Tickets and Payments open Bookings; Travel Plans, Cities and Reviews open Content; Reports opens Overview |
+| Overview: five KPI cards, analytics chart, service distribution, quick actions, recent bookings, popular cities, recent users | Built on the rows: every figure is a sum over the stores for the chosen period, and an empty store renders zeros and empty states (§3A.16 criterion 2). Each quick action opens its section. `admin_get_overview` and `admin_needs_attention` are not applied yet, so the panel reads browser rows |
+| Users, Bookings, Payments, Owners, Cities, Travel Plans, Reviews, Support, Settings, Announcements, Search tuning, Reports | Built as their own sections on browser state, each with its list, its filters, its summary and the shared confirm dialog, CSV export and not-allowed state. `tickets` is the one section without a screen: it stays out of the sidebar and a hand-typed URL shows the honest empty state |
 | Admin Management | Built on local accounts: form with the eight Plan roles, permission group, role change with refusal rules (`planRoleChange`), audit entry point |
-| Shop Owners | Built on local state: create form, one-time credentials, filters (city, category, status), pending-only view, preview of the owner dashboard, notification on a new application |
+| Shop Owners | Built on local state: create form with an invitation or a one-time sign-in link and no password field, filters (city, category, status), pending-only view, the Applications tab, preview of the owner dashboard, notification on a new application |
 | Blogs, Travel Guides, Guide Earnings, Rentals, Rental Orders, Rental Reports, Ads, Owner Payouts, Shop Templates, Currency, Audit, Scheduled Jobs, Translations | Built as panels on local or browser state, each specified in its own section |
 | Server wiring | None. Every panel reads and writes browser state until its module's backend flag is on (16G.5) |
 

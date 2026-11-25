@@ -1,6 +1,6 @@
 # MH Travel — Remaining Work Record
 
-**Last updated:** 30 November 2026
+**Last updated:** 1 December 2026
 **Verified against:** `main` plus the rental order rules
 (`src/lib/rentalOrderRules.ts`), the full Rental Admin panel (catalog,
 availability, rates, branches, terms, settings, orders) built to Plan §8.8, the
@@ -32,7 +32,7 @@ What remains is the rest of §16C.3, module by module, in the §16C.1 order:
 | 4 | Booking or contact CTA per flow mode, with the voucher | **Partial.** Request records and references exist; the voucher is not built |
 | 5 | Reviews with the verification rule | **Partial.** Reviews are stored; the completed-booking check is not enforced |
 | 6 | Add the module to the search index and the notification events | **Not started** |
-| 7 | Tests: rules, RLS per role, one end-to-end booking, the route and link tests | **Partial.** 983 tests pass, including the listing rules, the step 2 screen and the seed's approval stamp, the §3A.4 permission table per role, the dashboard shell's deep links and empty state, the §16G.5 flags, the §16I layout guard and the four shared dashboard pieces (confirm, CSV, not-allowed, version conflict); no booking test |
+| 7 | Tests: rules, RLS per role, one end-to-end booking, the route and link tests | **Partial.** 1115 tests across 91 files pass, including the listing rules, the step 2 screen and the seed's approval stamp, the §3A.4 permission table per role, the dashboard shell's deep links, Support badge and empty state, the §16G.5 flags, the §16I layout guard, the four shared dashboard pieces (confirm, CSV, not-allowed, version conflict) and the ten Super Admin rule modules of O-61 to O-68; no booking test |
 
 Two things must happen before step 3 can start on any module:
 
@@ -47,6 +47,29 @@ Two things must happen before step 3 can start on any module:
 
 The order stays as §16C.1 sets it: Hotels first, because it settles the booking
 and voucher work that every module after it reuses.
+
+## Super Admin dashboard — the server half
+
+Tickets O-61 to O-68 and O-70 built the twelve sections on browser rows. What is
+left is the other half of each pair, and it is all Manus work:
+
+| Section | Waiting on |
+|---|---|
+| Overview | M-60: `admin_stats_daily`, the nightly 00:30 roll-up, `admin_get_overview`, `admin_needs_attention` |
+| Users | M-61: the `profiles` status columns, `admin_list_users`, `admin_set_user_status` (which must revoke sessions), `admin_request_password_reset`, `admin_sign_out_user`, `admin_process_deletion` |
+| Bookings and Payments | M-62: `admin_list_bookings`, `admin_get_booking`, `admin_list_payments`, the ledger-by-day view |
+| Cities, Travel Plans, Listings | M-63: the `cities` and `travel_plans` tables and their save/status functions |
+| Reviews | M-64: `admin_list_reports`, `admin_moderate_review`, `admin_set_rating_adjustment`, with `review_reports` and `rating_adjustments` |
+| Support | M-65: the support tables and functions, with Realtime, so a reply arrives without a reload |
+| Settings and Announcements | M-66: `app_settings`, `get_setting`, `set_setting`, `announcements`, `admin_publish_announcement` |
+| Search tuning | M-50 and M-66: `search_aliases`, `set_search_boost`, `get_search_report` |
+| Reports | M-67: `admin_report` for the nine reports of §3A.13, and `admin_search` for the header |
+| Admin Management | M-68: `admin_invites` and the five admin functions; the invitation email needs M-09 |
+| Owners | M-69: `owner_applications`, `admin_list_owners`, `admin_create_owner`, `admin_set_owner_status`, `admin_handle_application` |
+
+Two client-side items are open on their own, without a server dependency: the
+version-conflict notice is built but no editor sends a `version` yet, and the
+`common_error_*` mapping belongs to O-00.
 
 ## Internal links — resolved 20 November 2026
 

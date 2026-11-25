@@ -1,6 +1,25 @@
 # MH Travel — Work Status Record
 
-**Last audited:** 30 November 2026 (Ticket O-71, partial: the four pieces every
+**Last audited:** 1 December 2026 (Plan §3A.5 to §3A.14, tickets O-61 to O-68,
+O-70: the twelve Super Admin sections. Each sidebar entry now has its own panel
+instead of a placeholder: Overview computes every KPI, chart and Needs attention
+count from the stores (`src/lib/adminOverview.ts`), Users, Bookings, Payments,
+Owners, Cities, Travel Plans, Reviews, Support, Settings, Announcements, Search
+tuning and Reports each hold their rules in `src/lib/admin*.ts` and their screen
+in `src/features/superAdmin/*Panel.tsx`. The header global search
+(`src/lib/globalSearch.ts`) answers in two characters or more and narrows every
+group by the role, so it cannot offer a link the reader may not follow. `tickets`
+is the one section without a screen: it stays in `HIDDEN_SECTIONS` and a typed
+URL shows the honest empty state. Two real defects fell out of writing the
+tests: `restoreReview()` left `auto_hidden` set, so a restored review returned to
+the queue on the next read, and `reportRangeValid()` compared strings, so a word
+sorted after every date and silently widened a report; both are fixed. The
+Support entry now carries the unread badge from `unreadSupportCount()`, the same
+function the inbox summary reads. The server functions behind all of this
+(`admin_get_overview`, `admin_list_users`, `admin_report`, `admin_search` and the
+rest) belong to M-60 to M-69 and are not applied, so every panel reads browser
+rows. 1115 tests across 91 files, typecheck, lint and build clean.
+Before that, 30 November 2026 (Ticket O-71, partial: the four pieces every
 dashboard section shares. `src/lib/dashboardPieces.ts` holds the rules and
 `src/features/superAdmin/shared/DashboardPieces.tsx` renders them — a
 type-to-confirm dialog that always wants a reason and, for deleting, suspending
@@ -285,7 +304,7 @@ Verified in the browser: `/hotels/lotte`, `/book-shops/shwe` and
 
 | Area | Status | Notes |
 |---|---|---|
-| Super Admin metrics/users/content | **PARTIAL** | Seeded metrics; body localized through `useLanguage` |
+| Super Admin sections (§3A.5–§3A.14) | **PARTIAL** | Twelve sections, each its own panel and its own rule module: Overview (`adminOverview.ts` — every figure summed from the rows over the Myanmar-Time window, the same-length previous window for the change, Needs attention narrowed by `canOpenSection`), Users (`adminUsers.ts` — suspend, restore, anonymise, JSON export, 20-row paging), Bookings and Payments (`adminBookings.ts` — the §6.1 move table checked before every write, the event timeline, the per-day reconciliation), Owners (`adminOwners.ts` — the application pipeline and the owners list), Cities and Travel Plans (`adminCities.ts` — slug rules, popularity from views, the request pipeline), Reviews (`adminReviews.ts` — hide, restore, delete, the rating adjustment), Support (`adminSupport.ts` — assign, reply, close, the unread count that also badges the sidebar), Settings and Announcements (`adminSettings.ts` — the nine typed keys, three announcements a day), Search tuning (`adminSearch.ts` — aliases, the −20…50 boost, the query report) and Reports (`adminReports.ts` — nine reports, roles, the date window, CSV). The header search is `globalSearch.ts`. `tickets` has no screen: it stays hidden and a typed URL shows the honest empty state. Every panel reads browser rows until M-60 to M-69 apply their functions |
 | Super Admin Ads Management (§16A) | **PREVIEW** | The Adsboard serves from `src/lib/adStore.ts`, which mirrors the §16A.4 tables (`ad_advertisers`, `ad_campaigns`, `ad_creatives`, `ad_placements`, `ad_events`, `ad_stats_daily`); the DDL is committed in `SQL/20261125000100_ads.sql` and the serving, click, roll-up and staff-policy SQL in `20261125000200_ads_serving.sql`, neither applied. Seven sections: Overview, Pages and placements (toggle, current ad, health state, 24-hour fill rate), Campaigns (status / advertiser / placement / day filters, one create-edit form with the fee and invoiced-paid flags), Creatives and approvals, Advertisers (contact details plus campaign history, and a rename follows the campaigns that carry the old name), Reports (by day, placement and campaign with CSV export) and Settings (AdSense ids, creative limits, blocked domains). Serving follows §16A.1 in `src/components/ui/AdSlot.tsx`: Admin ad, then AdSense when a client id is set and the placement allows fallback, then collapse. A click goes through `/ad/click/<creative_id>`, which records it through `record_ad_click()` and then redirects to the URL the RPC returns (§16A.5); impressions and clicks also post to `VITE_AD_EVENT_ENDPOINT` via `navigator.sendBeacon`, so a closed tab still reports. `AdSlot` serves through `serveAdFor()`, which calls `serve_ad(placement_key, language)` and caches for 60 seconds. Every §16A.3 placement now has a live `AdSlot`: home (6), blog (3), rentals, cities (4), city detail, travel plans, travel plan detail, nearby and account. Payment Admin opens Reports read-only per the §16B.1 `R (reports)` row. Rows are still browser storage |
 | Super Admin Owner Payouts (§9, §16D Phase 3) | **PREVIEW** | The new `payouts` section, for Super Admin and Payment Admin only (§16B.1 `F`; Admin is `–`). It shows owed vs carried vs paid, the shops due this window, the per-shop commission editor (0–100%, default 0%), the run history and a per-run replay verdict. The rules are `src/lib/ownerLedger.ts`: the commission is frozen on each ledger row, the windows are day 1–15 due on the 20th and day 16–month end due on the 5th, `planPayout()` settles every unpaid row whose own window is due (which is how the 50,000 MMK minimum carries over), and `replayPayout()` is the §16D gate. Rows live in `src/lib/ownerLedgerStore.ts`; `20261127000100_owner_ledger.sql` carries the tables, RLS, the append-only trigger, `run_owner_payout()` and `verify_owner_payout()`, and is not applied. Refunds, manual adjustments, and the Main Owner/Branch Owner ledgers are still open |
 | Shop Owner creation | **PREVIEW** | Local persistence, plaintext preview password |

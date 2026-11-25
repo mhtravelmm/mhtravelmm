@@ -281,6 +281,28 @@ claim as true without checking the code.
   a filter, and never hand-build a CSV — `buildCsv()` owns the byte-order mark,
   the CRLF endings and the formula guard. A stale save shows
   `VersionConflictNotice`, whose only action is Reload.
+- A dashboard section keeps its rules in `src/lib/admin<Section>.ts` and only
+  renders them in `src/features/superAdmin/<Section>Panel.tsx`. The lib module is
+  what the tests exercise, so a rule never lives in JSX: `adminOverview` (every
+  KPI, chart point and Needs attention count summed from the rows),
+  `adminUsers`, `adminBookings` (the §6.1 move table is checked before a write),
+  `adminOwners`, `adminCities`, `adminReviews`, `adminSupport`, `adminSettings`,
+  `adminSearch`, `adminReports` and `globalSearch`. Each panel opens with
+  `NotAllowedState` when `canOpenSection(adminRole, section)` is false — the
+  server refuses the write too, so this is convenience only (§3A.2 rule 2).
+  Section chrome comes from `shared/SectionShell.tsx` and the tokens from
+  `shared/sectionStyles.ts`; the tokens are separate because a module that
+  exports both components and constants cannot hot reload.
+- `tickets` is the one section with no panel: it is in `HIDDEN_SECTIONS`, so the
+  sidebar omits it, and a hand-typed `?section=tickets` lands on `AdminSection`,
+  which shows the honest empty state until Phase 4 builds it. Do not add it to
+  `NAV_SECTIONS` before the screen exists.
+- The Support unread count comes from `unreadSupportCount()` in `adminSupport.ts`
+  and is read by both the inbox summary and the shell's sidebar badge. One
+  function, so the two numbers cannot disagree.
+- A report window is validated by `reportRangeValid()`, which requires
+  `YYYY-MM-DD` at both ends before comparing. Comparing the strings alone lets a
+  word sort after every real day and widen the report without complaint.
 - Every upload goes through `checkMedia()` in `mediaRules.ts` before the file is
   read, and the folder is named by the caller: `uploadContentImage(file,
   'blog-posts')` or `'guide-stops'`. Never hard-code a byte limit at the call

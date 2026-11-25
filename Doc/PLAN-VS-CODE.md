@@ -1,6 +1,7 @@
 # Plan vs Code — Verification Record
 
-**Checked:** 20 November 2026; **re-checked** against `main` @ `abe2700`.
+**Checked:** 20 November 2026; **re-checked** against `main` @ `abe2700`, and
+again on 1 December 2026 for the Super Admin sections (§3.8–§3.10).
 **Against:** `main` @ `abe2700` (re-check), originally `8cdcf4e`.
 **Method:** every claim below was read in `Plan/PROJECT-PLAN.md` and then tested
 against the source tree. Nothing here is inferred from earlier notes.
@@ -15,9 +16,10 @@ where it contradicts itself. It does not change any code or any plan text.
 | Result | Count |
 |---|---|
 | Plan claim **confirmed** by code | 5 (§2 rows 1, 2, 6, 8, 9) |
-| Plan claim **stale** (code moved on) | 7 (§3.1–§3.7, one each) |
+| Plan claim **stale** (code moved on) | 10 (§3.1–§3.10, one each) |
 | Plan **internally contradictory** | 2 (§4.1 resolved 22 Nov; §4.2 still open) |
 | Plan claim **still open / accurate as a gap** | 2 (one narrowed to reads) |
+| Server functions behind the dashboard sections | 0 of 11 applied (M-60 to M-69) |
 
 The Plan is broadly honest. Its weakness is age: the audit section is dated
 2026-11-09, and seven claims in it have since been fixed in code without the
@@ -155,6 +157,43 @@ Directions and Call build a Google Maps search URL and a `tel:` link from
 `src/lib/placeActions.ts`.
 
 **Fix**: move these three rows out of §5 into the fixed list.
+
+### 3.8 "The Overview is seeded and the dashboard sections are placeholders" — stale since 1 December 2026
+
+**Plan said** (§3A.1, written against `b0ea19b`): the Overview shows hard-coded
+numbers (48,750 users, $243,750 revenue), Users, Bookings and Content hold three
+seeded rows each, and several sidebar entries are aliases of one placeholder.
+
+**Code says**: `adminOverview.ts` computes every figure from the rows, and
+`OverviewPanel.tsx` renders zeros and empty states on an empty store; each of
+the twelve sections has its own panel and its own rule module; the alias entries
+were removed in O-60, so Tickets, Payments, Cities, Plans, Reviews, Reports,
+Search, Announcements, Support and Settings open their own screens. `tickets` is
+the one section with no screen, held in `HIDDEN_SECTIONS` until Phase 4.
+
+**Fix**: §3A.1 now states this. What remains true in the original claim is that
+every panel still reads browser rows — the functions behind them are M-60 to
+M-69 and are not applied.
+
+### 3.9 "The Support unread count is on the sidebar item" — true since 1 December 2026
+
+**Plan says** (§3A.3, §3A.13): the unread count sits on the Support sidebar item.
+
+**Code said**: the count existed only as a summary card inside the inbox, so the
+badge the Plan describes did not exist.
+
+**Fix**: `SuperAdminPage.tsx` now reads `unreadSupportCount()` from the same
+store the inbox reads and badges both the desktop entry and the mobile drawer,
+so the two numbers cannot diverge.
+
+### 3.10 "A report has a date range" — the window accepted any string
+
+**Plan says** (§3A.13): a report always has a date range in Myanmar Time.
+
+**Code said**: `reportRangeValid()` compared the two inputs as strings, so
+`"tomorrow"` sorted after every real day and widened the window silently.
+
+**Fix**: both ends must now match `YYYY-MM-DD` before the comparison.
 
 ---
 

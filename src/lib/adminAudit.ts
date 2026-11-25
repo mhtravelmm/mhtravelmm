@@ -16,6 +16,7 @@ export type AdminAuditAction =
   | 'approved'
   | 'payment'
   | 'preview'
+  | 'exported'
   | 'role_change';
 
 export type AdminAuditObject =
@@ -34,7 +35,20 @@ export type AdminAuditObject =
   | 'owner_commission'
   | 'shop_template'
   | 'template_entitlement'
-  | 'listing';
+  | 'listing'
+  | 'user'
+  | 'admin_invite'
+  | 'owner_application'
+  | 'booking'
+  | 'review'
+  | 'support_thread'
+  | 'app_setting'
+  | 'announcement'
+  | 'search_alias'
+  | 'search_boost'
+  | 'report_run'
+  | 'city'
+  | 'plan';
 
 export interface AdminAuditEntry {
   id: string;
@@ -58,7 +72,18 @@ export interface AdminAuditEntry {
     | 'subscriptions'
     | 'payouts'
     | 'templates'
-    | 'listings';
+    | 'listings'
+    | 'users'
+    | 'admins'
+    | 'owners'
+    | 'bookings'
+    | 'payments'
+    | 'reviews'
+    | 'support'
+    | 'settings'
+    | 'announcements'
+    | 'search'
+    | 'reports';
 }
 
 const STORAGE_KEY = 'mh-travel-admin-audit';
