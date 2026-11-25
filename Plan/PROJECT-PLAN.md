@@ -58,7 +58,7 @@
 
 ### Section map
 
-1 Overview · 2 Tech and architecture · 3 Roles and accounts · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout.
+1 Overview · 2 Tech and architecture · 3 Roles and accounts · 3A Super Admin dashboard · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout.
 
 ---
 
@@ -137,7 +137,7 @@ Travel Guide Content Admin, Blog Post Admin, Owner Admin.
   bookings for Owner Admin, which the separate `/shop-owner` workspace serves.
   Super Admin keeps all sections.
   Route guards only hide menus; the server must check the role on every write
-  (sections 8, 10 and 16A; the permission matrix is in section 16B.1).
+  (sections 8, 10 and 16A; the permission matrix is in section 16B.1; the Super Admin dashboard itself is section 3A).
 - Role spelling (decided 2026-11-23): `profiles.role` stores a slug
   (`rental_admin`); the UI, this Plan and the permission matrix use the product
   name (`Rental Admin`). `src/lib/roleMapping.ts` and the server's
@@ -177,6 +177,254 @@ The roles other than the first row are never self-service. A traveler cannot rai
 3. An invited admin sets their own password and signs in with the invited role; no password is stored anywhere in clear.
 4. An application can be submitted once per minute per IP and appears to Admin.
 5. Each role change, invitation and deletion is in the audit log.
+
+---
+
+## 3A. Super Admin Dashboard: specification (2026-11-24)
+
+The Super Admin dashboard is the control center for the whole platform. It lives at `/super-admin` (a standalone shell reached through `/admin/login`) and is the one place where every admin panel exists. The other admin roles use the same panels through the role-filtered workspace (section 3 and `src/lib/adminWorkspace.ts`); Super Admin keeps all sections. This section specifies the shell, every section, the data behind it, and the work that remains. Where a panel already has its own specification, this section points to it and adds only what the dashboard needs.
+
+Written against `src/features/superAdmin/*`, `src/lib/adminWorkspace.ts`, `src/lib/adminRoles.ts`, `src/lib/adminAudit.ts` and `Doc/STATUS.md` (main @ `b0ea19b`).
+
+### 3A.1 As built
+
+| Part | State |
+|---|---|
+| Shell: dark navy and cyan, responsive sidebar and mobile drawer, compact header, language toggle (Burmese / English), theme toggle, notification bell, logout | Built, bilingual |
+| Navigation filtered by role (`sectionsForRole`) | Built |
+| Overview: five KPI cards, analytics chart, service distribution, quick actions, recent bookings, popular cities, recent users | **Seeded, hard-coded numbers** (48,750 users, $243,750 revenue and so on). Quick actions for city, plan, users, reports and settings only show a "ready next" notice |
+| Users, Bookings, Content ("Travel Plans", "Cities", "Reviews") | **Placeholders:** three seeded rows each. Several sidebar entries are aliases that open the same placeholder: Tickets and Payments open Bookings; Travel Plans, Cities and Reviews open Content; Reports opens Overview |
+| Admin Management | Built on local accounts: form with the eight Plan roles, permission group, role change with refusal rules (`planRoleChange`), audit entry point |
+| Shop Owners | Built on local state: create form, one-time credentials, filters (city, category, status), pending-only view, preview of the owner dashboard, notification on a new application |
+| Blogs, Travel Guides, Guide Earnings, Rentals, Rental Orders, Rental Reports, Ads, Owner Payouts, Shop Templates, Currency, Audit, Scheduled Jobs, Translations | Built as panels on local or browser state, each specified in its own section |
+| Server wiring | None. Every panel reads and writes browser state until its module's backend flag is on (16G.5) |
+
+### 3A.2 Principles
+
+1. **Density.** Compact by design (the founder's standing preference): narrow sidebar, short header, small cards, tight tables, no unused space, nothing hidden to achieve it.
+2. **Server authority.** Hiding a menu is convenience only. Every write is a function that checks the role on the server (16B.8); a refused write shows its translated message and changes nothing.
+3. **Everything audited.** Every create, update, delete, publish, approve, payment, status change and role change writes one audit row (16B.2).
+4. **Real or absent.** No panel shows seeded or invented figures once its backend is on. A panel with no data shows an honest empty state, never sample rows.
+5. **Bilingual.** Every label, message and error is Myanmar and English through `t()`. Stored content shows as stored.
+6. **One time zone for people, one for the database.** Screens show Myanmar Time; the database stores UTC (16B.7).
+7. **Destructive actions are deliberate.** Suspend, delete, cancel and role change ask for a reason, and the heaviest (delete, suspend an owner, remove an admin) ask the user to type the object's name.
+
+### 3A.3 Shell
+
+- **Layout:** a fixed sidebar of grouped sections on desktop, a drawer on phones; a header with the search box, the notification bell, the language and theme toggles, and the account menu with the role badge and logout. No horizontal scrolling at any width from 320 px; tables scroll inside their own container.
+- **Deep links:** the active section is in the URL as `/super-admin?section=<id>`, so a reload or a shared link returns to the same section. An id the role may not open falls back to its landing section.
+- **Landing:** Super Admin lands on Overview, Payment Admin on Rental Orders, Admin on Users, and every other role on its first allowed section (`sectionsForRole`).
+- **Session:** an admin session needs a fresh sign-in after 12 hours of inactivity (section 3.2); the page then returns to `/admin/login` with a message and keeps the section so the user lands back in it.
+- **Notification bell:** shows feed events narrowed to the role and account, plus staff notices (16B.3), with an unread count, open-one, and mark-all-read.
+- **States every section shares:** loading skeleton, empty state, error state with a retry, and a "not allowed" message when the server refuses.
+- **Accessibility:** keyboard navigation of the sidebar and tables, `aria-current` on the active section, visible focus, and the contrast rules of section 4.
+
+### 3A.4 Sections and who may open them
+
+Sections are grouped in the sidebar. Each has its own id; the aliases of today (Tickets, Payments, Cities, Travel Plans and Reviews opening other panels, Reports opening Overview) are removed. F = full, R = read, O = own records only, – = not available. A role also needs the server permission in 16B.1; this table is what the menu shows.
+
+| Group | Section id | Super Admin | Ads Admin | Admin | Rental Admin | Payment Admin | Guide Content Admin | Blog Post Admin |
+|---|---|---|---|---|---|---|---|---|
+| Overview | `overview` | F | – | – | – | – | – | – |
+| Overview | `reports` | F | – | R (users, content, support) | – | R (payments, rentals, earnings) | – | – |
+| People | `users` | F | – | F | – | – | – | – |
+| People | `admins` | F | – | – | – | – | – | – |
+| People | `owners` (Applications and Owners) | F | – | F | – | – | – | – |
+| Rentals | `rentals` (catalog, availability, rates, branches, terms) | F | – | R | F | – | – | – |
+| Rentals | `rentalOrders` | F | – | R + handle | F | R + record payment | – | – |
+| Rentals | `rentalReports` | F | – | R | F | R | – | – |
+| Commerce | `bookings` | F | – | R + handle | – | – | – | – |
+| Commerce | `tickets` (Phase 4) | F | – | R | – | R | – | – |
+| Commerce | `payments` | F | – | – | – | F | – | – |
+| Commerce | `payouts` | F | – | – | – | F | – | – |
+| Commerce | `currency` | F | – | – | – | F | – | – |
+| Content | `cities` | F | – | F | – | – | – | – |
+| Content | `plans` (Travel Plans catalog and requests) | F | – | F | – | – | – | – |
+| Content | `listings` | F | – | F | – | – | – | – |
+| Content | `reviews` (reviews and reports) | F | – | F | – | – | – | – |
+| Content | `blogs` | F | – | R | – | – | – | F |
+| Content | `guides` | F | – | R | – | – | F | – |
+| Content | `guideEarnings` | F | – | R | – | F | O | – |
+| Content | `translations` | F | – | F | – | – | – | – |
+| Growth | `ads` | F + approve | F | – | – | R (reports) | – | – |
+| Growth | `templates` | F | – | R | – | F (record payments) | – | – |
+| Growth | `search` (tuning) | F | – | F | – | – | – | – |
+| Growth | `announcements` | F | – | F | – | – | – | – |
+| Operations | `support` | F | – | F | – | – | – | – |
+| Operations | `jobs` | F | – | – | – | – | – | – |
+| Operations | `audit` | F | – | – | – | – | – | – |
+| Operations | `settings` | F | – | – | – | – | – | – |
+
+Owner Admin is not in this table: its rights are `O` and are served by the separate `/shop-owner` workspace (section 16B.1).
+
+**Known mismatch to fix.** `SQL/20261122000050_rental_roles.sql` lets Admin edit the rental catalog (`is_rental_editor()` includes Admin). The Plan, and this table, say Admin reads the catalog and handles orders; only Rental Admin and Super Admin edit. The Plan wins; ticket M-11 changes the helper.
+
+### 3A.5 Overview (`overview`)
+
+The Overview answers three questions: how is the platform doing, what needs me now, and where do I go next.
+
+**Period.** A selector with 7 days, 30 days (default), 90 days and Year. Every figure and chart follows it. Days begin at midnight Myanmar Time. Each KPI shows its change against the previous period of the same length.
+
+**KPI cards** (all from `admin_get_overview`, never typed in):
+
+| Card | Meaning | Source |
+|---|---|---|
+| Users | New traveler accounts in the period; the total is shown beside it | `profiles` where role is `traveler` |
+| Bookings | Bookings that became `paid` in the period, across hotels, restaurants, events, rentals and tickets | `bookings`, `rental_orders`, `ticket_transactions` |
+| Plan requests | Custom travel-plan requests received | `custom_plan_requests` |
+| Revenue | Platform revenue in the period: rental totals paid, commissions, Owner subscriptions, template payments, and ad fees marked paid. Shown in the selected currency; the gross booking value passing through the platform is shown beneath it | `transactions`, `rental_orders`, `owner_subscriptions`, `template_invoices`, `ad_campaigns` |
+| Reviews | Reviews posted in the period; the average rating beside it | `reviews` |
+
+**Needs attention** (a new panel and the most useful one): a short list of counts, each linking to its section, shown only for what the viewer may open.
+
+| Item | Condition |
+|---|---|
+| Owner applications waiting | status `new` |
+| Rental requests unattended | `requested` for longer than `rental_new_order_highlight_hours` |
+| Ad creatives waiting for approval | approval `pending` |
+| Reviews to moderate | reported, or hidden automatically |
+| Listing reports | 3 or more distinct reports in 30 days |
+| Support threads | open and unassigned |
+| Scheduled jobs failed | last run not OK |
+| Subscriptions ending | within 7 days (owners and templates) |
+| Payout batch due | a draft batch for the current period |
+| Guide earnings with no amount | published and unpriced |
+| Translations to review | status `auto` |
+| Listings waiting for approval | status `pending` |
+
+**Charts and lists.** *Platform analytics*: users, bookings and revenue per day (a line chart). *Service distribution*: paid bookings by category. *Popular cities*: city views, with the change against the previous period. *Recent bookings* and *Recent users*: the latest five each, linking to their sections. A chart with no data shows an empty state.
+
+**Quick actions** (each opens a real form or section): Add city, Create plan, Add blog post, Manage ads, Create owner, Create admin, Manage users, View reports, System settings. A role sees only those it may use.
+
+**Data.** `admin_get_overview(p_from, p_to)` returns `{ kpis, series, distribution, popular_cities, recent_bookings, recent_users }`. `admin_needs_attention()` returns the counts above. History comes from `admin_stats_daily` (`day`, `metric`, `dimension`, `value`), rolled up nightly at 00:30 Myanmar Time, and today's figures are computed live. Results may be cached for 5 minutes.
+
+### 3A.6 Users (`users`)
+
+Every traveler account, for support and safety. Not for editing travelers' content.
+
+- **List:** name, username, email, phone, joined, last sign-in, language, status (`active`, `suspended`), number of bookings. Search by name, username, email, phone; filter by status and join date; 20 per page.
+- **Detail drawer:** profile, bookings, reviews, favorites count, support threads, and reports made against the user, each as a short list with links.
+- **Actions** (Super Admin and Admin, each with a reason, each audited):
+  - **Suspend / restore:** a suspended user cannot sign in, book or review; their sessions are revoked at once. Existing paid bookings stay valid.
+  - **Send a password-reset email.**
+  - **Sign out everywhere.**
+  - **Process a deletion request** (section 3.2): anonymize the profile, keep bookings 24 months as "Deleted user".
+  - **Export** the user's data as JSON on request.
+- **Not allowed:** viewing passwords, changing a role from here (only Admin Management does, and only Super Admin), and impersonating a user. There is no impersonation in this product.
+- **Data:** `profiles` gains `status`, `suspended_reason`, `suspended_at` and `last_sign_in_at`. Functions: `admin_list_users`, `admin_get_user`, `admin_set_user_status`, `admin_request_password_reset`, `admin_sign_out_user`, `admin_process_deletion`.
+
+### 3A.7 Admin Management (`admins`)
+
+Super Admin only. Creates and controls the staff accounts.
+
+- **Summary cards:** total admins, active, invitations pending, permission groups in use.
+- **Create:** name, work email, phone, one of the seven creatable roles (never Super Admin), and the permission group that scopes it (the role's default is pre-selected). In production there is **no password field**: the form sends an invitation and the person sets their own password (section 3.2). The local preview's password field exists for development only.
+- **Table:** name, email, role, permission group, status (`pending_invite`, `active`, `suspended`, `removed`), last sign-in.
+- **Role change:** `planRoleChange` rules stay: only Super Admin may change a role, nobody changes their own, the Super Admin row is locked, an unchanged role is refused. Each change is audited with both roles.
+- **Other actions:** suspend or restore, resend an invitation, remove (soft; sessions revoked, history kept). Removing or suspending asks the user to type the admin's name.
+- **Permission groups** are labels that decide which sections a role gets (`adminWorkspace.ts`); they are shown in the table and described in a help tooltip.
+- **Audit entry point:** each row links to that person's audit entries.
+- **Data and functions:** `profiles` and `admin_invites`; `invite_admin(p_name, p_email, p_phone, p_role, p_group)`, `change_admin_role(p_user_id, p_role)`, `set_admin_status(p_user_id, p_status, p_reason)`, `resend_admin_invite(p_user_id)`, `remove_admin(p_user_id)`.
+
+### 3A.8 Owners and applications (`owners`)
+
+Two tabs: **Applications** and **Owners**. Super Admin and Admin.
+
+- **Applications:** the rows from `owner_applications` (section 3.3): business, applicant, category, city, phone, submitted. Statuses `new` → `contacted` → `approved` or `rejected`, each with a note and the handler. An approved application can open the Create owner form pre-filled. A new application raises the bell and the Needs attention count.
+- **Owners:** columns owner, shop, username, city, category, status (`pending`, `active`, `expired`, `suspended`), subscription end, commission. Filters: All, city, category, status; a Pending-only switch; totals above the table.
+- **Create owner** (as built): owner name, shop name, email, phone, city, category, username. In production the account is created by an **invitation email** with a set-password link. If the owner has no email, Super Admin can generate a one-time sign-in link, shown once and never stored; no password is ever generated or shown. The local preview's temporary password is development only.
+- **Money terms** set here or on the owner's detail: monthly fee, term, commission (section 9; free and 0% are allowed). A verified badge toggle.
+- **Actions:** preview the owner's dashboard (read-only), suspend or restore (type the shop name), renew a subscription (records the payment), open the listing. All audited.
+- **Data and functions:** `owners` and `owner_applications`; `admin_list_owners`, `admin_create_owner`, `admin_set_owner_status`, `admin_handle_application(p_id, p_status, p_note)`.
+
+### 3A.9 Bookings, Tickets and Payments (`bookings`, `tickets`, `payments`)
+
+- **Bookings:** one list across hotels, restaurants, events and rentals (an admin view over `bookings`, `rental_orders` and later `ticket_transactions`). Columns: request code, category, listing, traveler, dates, total, status, flow, created. Filters: category, status, city, owner, date range; search by code, name or phone. The detail shows the timeline (`booking_events`), the voucher, and the payment record. Actions follow section 6.1 and the role: Super Admin cancels with a reason, records a payment, and adds a note; Admin handles orders where the matrix allows. Nobody edits a total. Rental orders open the Rental Orders panel (section 8).
+- **Tickets (Phase 4):** ticket transactions from the operators (section 9): status `held`, `confirmed`, `refunded`, `rescheduled`; per operator and branch; refunds; the settlement each belongs to.
+- **Payments:** the ledger view for Super Admin and Payment Admin: transactions (gross, commission, net), refunds, subscription and template payments, ad fees, guide earnings paid. Filters by type, owner, date; totals per day that must equal the sum of the ledger entries; CSV export. Reconciliation is shown as a green or red line per day.
+- **Functions:** `admin_list_bookings`, `admin_get_booking`, `admin_list_payments`, and the status functions of section 6 and 16G.3.
+
+### 3A.10 Content (`cities`, `plans`, `listings`, `reviews`, `translations`)
+
+- **Cities:** add and edit a city: name (MM/EN), slug, cover photo, description (MM/EN), coordinates, active, sort order. "Popular" is derived from views, not typed. Deactivating a city hides it from search and pages but keeps its listings. Table `cities`; functions `admin_save_city`, `admin_set_city_active`.
+- **Travel Plans:** two tabs. *Catalog*: the public plan cards (title MM/EN, number of days, price, what is included, itinerary, cover, active); *Requests*: `custom_plan_requests` with status `new`, `contacted`, `quoted`, `booked`, `closed`, a note, and the handler. A new request raises the bell. Tables `travel_plans`, `custom_plan_requests`; functions `admin_save_plan`, `admin_set_plan_request_status`.
+- **Listings:** every listing across categories (section 16C.2): filters category, city, owner, status (`pending`, `active`, `suspended`, `retired`); actions approve, suspend, retire (type the name), and, for MH-managed listings (attractions, markets), edit the basic fields directly. Owner edits to an approved listing go live after the first approval (section 9). Also: the search `boost_weight` and a count of open reports against the listing. Functions `admin_list_listings`, `admin_set_listing_status`, `admin_save_listing`.
+- **Reviews and reports:** the moderation queue of section 11: reported and auto-hidden reviews with hide, restore, delete; listing reports with the rating-adjustment control (−1.5 to 0); platform reviews. Every action audited; reporters are never told which. Functions `admin_list_reports`, `admin_moderate_review`, `admin_set_rating_adjustment`.
+- **Translations:** as built (the review queue of 16B.4): rows with status `auto`, most viewed first; approve or edit makes the text permanent; each action writes a `translation` audit row.
+
+### 3A.11 Rentals, Blogs, Guides, Guide Earnings
+
+Specified in section 8 (Rental), section 10 (Blog and Travel Guide, earnings). The dashboard adds only: a summary strip on top of each (counts by status, items needing attention), the same filters and search as elsewhere, and role limits from the table in 3A.4 (a read-only role sees no write buttons, and the server refuses a write it attempts anyway).
+
+### 3A.12 Growth (`ads`, `templates`, `search`, `announcements`)
+
+- **Ads:** the Adsboard of section 16A (pages and placements, campaigns, creatives and approvals, advertisers, reports, settings). Only Super Admin approves creatives.
+- **Templates:** the catalog manager of section 4: templates and their status, usage per template (never counting a preview), invoice recording, entitlements, retirement notices, rollback.
+- **Search tuning:** `search_aliases` (city, category and synonym terms, each with a target and an on/off), `boost_weight` per item (−20 to 50), and the report: top queries, zero-result queries, click-through (section 16H.11). Aliases and boosts are audited.
+- **Announcements:** a Super Admin or Admin writes a notification for everyone: title and message in both languages, an optional link, an audience (all users, travelers, owners), and a send time or "now". It becomes one `notification_feed` row. Limit 3 per day. The list shows past announcements with their audience and time. Table `announcements`; functions `admin_publish_announcement`, `admin_list_announcements`.
+
+### 3A.13 Operations (`support`, `jobs`, `audit`, `settings`) and Reports
+
+- **Support:** the inbox of section 12.1: threads for travelers and, in a separate tab, owners; filters open, unassigned, mine, closed; assign, reply (live), close; the contact-form messages below them. The unread count is on the sidebar item.
+- **Scheduled jobs** (as built, section 16B.7): each job with its cadence, last run, last result and last error; a failed job turns red and has already notified Super Admin. Super Admin can **Run now**, which uses the same safe, idempotent function and is audited. History keeps the last 50 runs per job.
+- **Audit log** (as built, section 16B.2): filters by actor, role, action, object type and date; search by object id; each row shows actor, role, action, object, a one-line summary, UTC time (shown in Myanmar Time) and source. Append-only; kept 24 months; **CSV export**.
+- **Settings:** a typed editor over `app_settings` (16G.3). Super Admin only; every change audited with the old and new value.
+
+| Key | Type | Default | Meaning |
+|---|---|---|---|
+| `guide_post_rate_usd` | number | empty | Default earning for a published guide |
+| `rental_new_order_highlight_hours` | number | 2 | When a requested rental is flagged |
+| `rental_min_notice_days` | number | 1 | Minimum days before a rental starts |
+| `ad_fallback_provider` | `adsense` or `none` | `none` | Fallback when no campaign serves |
+| `ad_adsense_client_id` | text | empty | AdSense account id |
+| `translate_provider` | text | empty | Translation service |
+| `maintenance_mode` | `on` or `off` | `off` | When `on`, travelers see a maintenance notice; staff still sign in |
+| `maintenance_message_mm`, `maintenance_message_en` | text | empty | The notice |
+
+The exchange rate is not here: it has its own section (`currency`, 16B.5), where the history table, a note per change, and a warning when a new rate differs from the previous one by more than 10% protect against typing mistakes.
+
+- **Reports:** each report has a date range (Myanmar Time), filters, a table, and a CSV export (UTF-8 with a byte-order mark, so Myanmar text opens correctly in Excel). `admin_report(p_report, p_from, p_to, p_filters)` returns rows.
+
+| Report | Contents | Roles |
+|---|---|---|
+| Revenue | By source (rentals, commission, subscriptions, templates, ads) and day | Super Admin, Payment Admin |
+| Bookings | By category, city and status | Super Admin |
+| Users | Sign-ups and active users | Super Admin, Admin |
+| Owners | Active, expired, suspended; revenue share | Super Admin |
+| Content | Views, favorites, reviews by item | Super Admin, Admin |
+| Ads | Section 16A.7 | Super Admin, Ads Admin, Payment Admin |
+| Search | Section 16H.11 | Super Admin, Admin |
+| Rentals | Section 8 §9 | Super Admin, Rental Admin, Payment Admin, Admin |
+| Payout reconciliation | Batches against ledger sums | Super Admin, Payment Admin |
+
+### 3A.14 Cross-cutting behavior
+
+- **Global search** in the header: `admin_search(p_q)` returns up to five matches each for users, bookings (by code or phone), owners, listings, blog posts and guides, limited to what the role may open, with links. At least 2 characters.
+- **Exports:** every list that says so exports exactly the rows its filters show, as CSV; an export is audited with its filters.
+- **Concurrency:** editors save with the `version` they loaded; a stale save is refused with `common_error_version_conflict` and offers Reload.
+- **Confirmations:** suspending a user, suspending or removing an owner or admin, deleting, and retiring a listing ask for a reason, and the heaviest ask to type the name.
+- **Responsive:** one column on phones with the sidebar in a drawer; tables become a horizontally scrolling container, never the page.
+- **Performance:** each section loads its own data when opened; lists are paged (20 rows); the Overview calls two functions only.
+- **Privacy:** an admin sees only the personal data the role's section needs (the role table above); email and phone appear only in Users, Owners and Support.
+
+### 3A.15 Build tickets
+
+The tickets are in section 16F.2 (ids O-60 to O-71 and M-60 to M-69) and in `Doc/TICKETS.md`. Order: O-60 first (the navigation split), then Overview and its functions, then Users, Bookings and Payments, Content, Reviews, Support, Settings and announcements, Reports, Admin Management on the server, Owners on the server, and last global search. A new flag, `VITE_BACKEND_ADMIN`, switches the dashboard's server data on; until then each panel keeps its local behavior.
+
+### 3A.16 Acceptance criteria
+
+1. Every sidebar entry opens its own section; none is an alias of another.
+2. The Overview shows no seeded number; with an empty database every card reads zero and every list shows an empty state.
+3. Each KPI equals the sum of its source rows for the chosen period in Myanmar Time.
+4. Needs attention shows only items the viewer may open, and each count matches the list behind its link.
+5. A role never sees a section its row in 3A.4 marks `–`, and a write it is not allowed fails on the server with a translated message.
+6. Suspending a user ends their sessions at once and blocks sign-in, booking and review.
+7. No production screen ever shows or generates a password; invitations and one-time links are the only paths.
+8. Role changes follow `planRoleChange` and are audited with both roles.
+9. Every write in every section writes one audit row; the audit log can be filtered and exported.
+10. A reload or a shared link returns to the same section; an expired session returns to login and then to that section.
+11. Lists export CSV that opens correctly in Excel with Myanmar text.
+12. Every string, including server errors, shows in Myanmar and English, and no section scrolls horizontally on a 320 px screen.
 
 ---
 
@@ -1722,6 +1970,11 @@ Roles live in `public.profiles.role` and are checked on the server for every wri
 | Owner accounts and listing approval | F | – | F | – | – | – | – | O (own listing) |
 | Payments, payouts, exchange rates | F | – | – | – | F | – | – | O (own earnings) |
 | Template catalog and entitlements | F | – | R | – | F (record payments) | – | – | O (own shop) |
+| Reviews and reports moderation | F | – | F | – | – | – | – | O (reply to reviews) |
+| Cities, travel plans and listings content | F | – | F | – | – | – | – | O (own listing) |
+| Search tuning and announcements | F | – | F | – | – | – | – | – |
+| Support inbox | F | – | F | – | – | – | – | O (own thread) |
+| Scheduled jobs and audit log | F | – | – | – | – | – | – | – |
 | Settings and roles | F | – | – | – | – | – | – | – |
 
 Super Admin creates every other admin account. Traveler accounts are separate from all of these (section 3).
@@ -1875,6 +2128,7 @@ Phases are ordered by dependency, with no calendar dates. A phase is finished on
 | 1C. Travel Guide | Section 10 Travel Guide end to end, with the listing index seeded | Guide acceptance criteria all pass |
 | 1D. Ads and Adsboard | Section 16A, starting with Home and `blog_inline`; can run beside 1C | Section 16A acceptance criteria all pass |
 | 1E. Search v1 | Section 16H on the MH-owned content (blogs, guides, rentals, cities) | Section 16H.13 acceptance criteria all pass |
+| 1F. Super Admin dashboard | Section 3A section by section on the server, as each module's backend lands (Overview, Users and Settings can start in Phase 0 and 1) | Section 3A.16 acceptance criteria all pass |
 | 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one; with them the universal booking and voucher work (section 6), reviews and reports (section 11), owner applications (section 3), support chat and the contact form (section 12), the Bus route planner (section 7.3) and the Home feed (section 5); each module joins the search index | Hotels pass the 16C acceptance, then each next module does |
 | 3. Owner money and templates | The Owner money system (section 9); the template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **both halves are met: `replayPayout()` recomputes a run from its rows (2026-11-27), and a switch and a fallback are exercised on the rendered page (2026-11-28) — `resolveTemplateForShop()` falls back on a lapsed entitlement, a retirement or a rollback, and `npm run a11y` proves every template renders in both themes** |
 | 4. Ticketing and operators | Operator system specification (section 9) | Operator system acceptance (section 9) passes |
@@ -1931,6 +2185,13 @@ The founder delegated these decisions to Claude and will review them after the m
 | 40 | Search: Postgres `pg_trgm` index, Unicode-only storage with Zawgyi conversion, aliases as data, 20 results per page | 16H | Move to a search service if the index outgrows Postgres |
 | 41 | Nearby: haversine distance without PostGIS; manual location beats GPS beats Yangon center | 16H.9 | Add PostGIS later |
 | 42 | Ticket status lives in `Doc/TICKETS.md`; only Claude edits the Plan | 16F | Process change |
+| 43 | Every dashboard section has its own id; the alias entries are removed; the sidebar is grouped | 3A.4 | Menu only |
+| 44 | Role landing sections and `?section=` deep links | 3A.3 | One function |
+| 45 | The Overview has a Needs attention panel, and no figure is seeded | 3A.5 | Remove the panel |
+| 46 | No impersonation; no password is ever generated or shown in production (invitations and one-time links only) | 3A.6 to 3A.8 | A new, audited flow would be needed |
+| 47 | Admin reads the rental catalog and handles orders but does not edit the catalog (the Plan wins over the SQL helper) | 3A.4, 8 | Change one helper |
+| 48 | Announcements limited to 3 a day; a `maintenance_mode` setting | 3A.12, 3A.13 | Settings |
+| 49 | A new exchange rate more than 10% away from the previous one asks for confirmation | 3A.13 | One constant |
 
 **Facts only the founder can supply later** (not blocking any build step): the Travel Guide default per-post rate; the commercial terms of each ad campaign; the AdSense and AdMob account ids; the commission percentage and revenue-share formula for tickets (already left Admin-configurable in section 9); definitions of the "express" and "အာတာဖတ်" vehicles, which Rental Admin enters as data.
 
@@ -2002,10 +2263,32 @@ Ids: `M-` for Manus, `O-` for OpenHands. Status lives only in `Doc/TICKETS.md`. 
 | O-50 | OpenHands | Search page on the functions: the shared normalizer with test vectors, suggestions, recent searches, URL state, interpreted chips, counts; behind `VITE_BACKEND_SEARCH` | M-50, O-00 | Section 16H.13 acceptance 12 and 13 pass |
 | O-51 | OpenHands | Nearby page on `search_nearby`: GPS, manual location, Open Now, List and Map | M-50 | Section 16H.9 behavior passes |
 | O-52 | OpenHands | Admin search tuning: aliases, boosts, the report | M-50 | Section 16H.11 passes |
+| O-60 | OpenHands | Dashboard navigation split: real section ids for `reports`, `tickets`, `payments`, `cities`, `plans`, `listings`, `reviews`, `search`, `announcements`, `support`, `settings`; the alias entries removed; groups in the sidebar; `/super-admin?section=<id>` deep links; `adminWorkspace.ts` extended to the table in 3A.4, with a test per role; `VITE_BACKEND_ADMIN` flag | none | Section 3A.16 criteria 1, 5 and 10 pass |
+| M-60 | Manus | `admin_stats_daily`, `admin_get_overview`, `admin_needs_attention` and the nightly roll-up job | M-03 | Section 3A.16 criteria 2 to 4 pass at the database |
+| O-61 | OpenHands | Overview on the functions: period selector, KPIs, Needs attention, charts, real quick actions; the seeded numbers removed | M-60, O-60, O-00 | Section 3A.16 criteria 2 to 4 pass on the page |
+| M-61 | Manus | User administration: `profiles` status columns, `admin_list_users`, `admin_get_user`, `admin_set_user_status` (revokes sessions), `admin_request_password_reset`, `admin_sign_out_user`, `admin_process_deletion` | M-01, M-09 | Section 3A.16 criterion 6 passes |
+| O-62 | OpenHands | Users section: list, detail drawer, actions with reasons | M-61, O-60 | Section 3A.6 is complete |
+| M-62 | Manus | `admin_list_bookings`, `admin_get_booking`, `admin_list_payments`, and the ledger-by-day view | M-11 | Section 3A.9 data is complete |
+| O-63 | OpenHands | Bookings and Payments sections (Tickets stays hidden until Phase 4) | M-62, O-60 | Section 3A.9 is complete |
+| M-63 | Manus | `cities` and `travel_plans` tables; `admin_save_city`, `admin_set_city_active`, `admin_save_plan`, `admin_set_plan_request_status`, `admin_list_listings`, `admin_set_listing_status`, `admin_save_listing` | M-01 | Each function refuses a wrong role |
+| O-64 | OpenHands | Cities, Travel Plans and Listings sections | M-63, O-60 | Section 3A.10 is complete for those three |
+| M-64 | Manus | Review and report functions of section 11: `admin_list_reports`, `admin_moderate_review`, `admin_set_rating_adjustment`, with `review_reports` and `rating_adjustments` | M-01 | Section 11.5 criteria 3 to 5 pass at the database |
+| O-65 | OpenHands | Reviews and reports section | M-64, O-60 | Section 3A.10 Reviews is complete |
+| M-65 | Manus | Support tables and functions of section 12.1, with Realtime | M-04 | Section 12.2 criteria pass at the database |
+| O-66 | OpenHands | Support inbox section with live replies and the unread count | M-65, O-60 | Section 12.2 passes |
+| M-66 | Manus | `app_settings`, `get_setting`, `set_setting`, and `announcements` with `admin_publish_announcement` and `admin_list_announcements` (3 per day) | M-04 | Settings are Super Admin only; a 4th announcement in a day is refused |
+| O-67 | OpenHands | Settings editor, Announcements and Search tuning sections (tuning needs M-50) | M-66, M-50, O-60 | Section 3A.12 and 3A.13 are complete for these |
+| M-67 | Manus | `admin_report` with the reports of 3A.13, and `admin_search` | M-60, M-62 | Each report matches its source rows |
+| O-68 | OpenHands | Reports section with CSV export (UTF-8 with a byte-order mark) and the header global search | M-67, O-60 | Section 3A.16 criterion 11 passes |
+| M-68 | Manus | `admin_invites` and the Admin Management functions `invite_admin`, `change_admin_role`, `set_admin_status`, `resend_admin_invite`, `remove_admin` | M-09 | Section 3A.16 criteria 7 and 8 pass at the database |
+| O-69 | OpenHands | Admin Management on the functions: no password field in Supabase mode, invitations, statuses | M-68, O-01 | Section 3A.16 criteria 7 and 8 pass on the page |
+| M-69 | Manus | `owner_applications`, `submit_owner_application`, `admin_list_owners`, `admin_create_owner` (invitation or one-time link), `admin_set_owner_status`, `admin_handle_application` | M-09 | An application flows from submit to an active owner at the database |
+| O-70 | OpenHands | Owners section: the Applications and Owners tabs on the functions | M-69, O-60 | Section 3A.8 is complete |
+| O-71 | OpenHands | Shared dashboard pieces: the type-to-confirm dialog, the CSV exporter, the not-allowed state, the version-conflict reload | O-00 | Used by every section above |
 
 ### 16F.3 Order of work
 
-Manus: M-00, then M-01 to M-09 (any order after M-00 and M-01), then M-10 to M-12, M-20 and M-21, M-30 and M-31, M-40 to M-42, M-50. OpenHands: O-00, O-01 and O-05 now, then each module's tickets as the matching Manus ticket lands. Rentals first, then Blog, then Travel Guide, then Ads, then Search, as in the roadmap (section 16D). Ads can start while Travel Guide is in progress.
+Manus: M-00, then M-01 to M-09 (any order after M-00 and M-01), then M-10 to M-12, M-20 and M-21, M-30 and M-31, M-40 to M-42, M-50. OpenHands: O-00, O-01 and O-05 now, then each module's tickets as the matching Manus ticket lands. Rentals first, then Blog, then Travel Guide, then Ads, then Search, as in the roadmap (section 16D). Ads can start while Travel Guide is in progress. The dashboard tickets (section 3A.15) start with O-60 and then follow each module's backend as it lands.
 
 ## 16G. Contracts: names, shapes and codes (2026-11-23)
 
@@ -2023,7 +2306,7 @@ These are fixed (rule 2 of 16F.1). Argument and field names are exact. Dates are
 
 A failure raises a Postgres exception with SQLSTATE `P0001` whose message is `<module>_error_<code>` (for example `rental_error_start_date`). The client shows `t('<message>')` in Myanmar and English, and a generic message for an unknown one. A success returns the row or a `jsonb` document directly; there is no envelope. When a failure needs data, the exception `DETAIL` is a JSON string, for example `{"problems":[{"code":"cover"}]}`.
 
-Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `media_` (the Worker returns the same names with HTTP status codes).
+Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `admin_`, `media_` (the Worker returns the same names with HTTP status codes).
 
 Common: `common_error_not_signed_in`, `common_error_forbidden`, `common_error_not_found`, `common_error_version_conflict`, `common_error_rate_limit`.
 
@@ -2075,6 +2358,8 @@ A block is exactly `{ id, type: "text", text_en, text_mm }`, `{ id, type: "image
 | `list_guide_earnings` | none | `{ rows[ { id, guide_id, author_name, published_at, amount_usd, paid, paid_at, paid_mmk } ] }`; an author sees only their own | `travel_guide_admin` (own), `payment_admin`, `super_admin` |
 | `set_guide_earning_amount` | `p_id uuid`, `p_amount_usd numeric` | the row | `payment_admin`, `admin`, `super_admin` |
 | `mark_guide_earning_paid` | `p_id uuid`, `p_paid_mmk numeric`, `p_note text` | the row; refused when `amount_usd` is null | `payment_admin`, `super_admin` |
+
+**Super Admin dashboard (section 3A).** The `admin_*` functions are named in section 3A. They follow these conventions: positional arguments, `P0001` errors with the `admin_error_` prefix, and a role check on the server.
 
 **Settings.** `get_setting(p_key text)` and `set_setting(p_key text, p_value jsonb)` over `app_settings(key text primary key, value jsonb, updated_by, updated_at)`; `set_setting` is Super Admin only. Keys: `guide_post_rate_usd`, `rental_new_order_highlight_hours` (default 2), `rental_min_notice_days` (default 1), `ad_fallback_provider` (`adsense` or `none`), `ad_adsense_client_id`, `translate_provider`.
 
