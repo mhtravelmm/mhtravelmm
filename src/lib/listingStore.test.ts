@@ -22,7 +22,7 @@ import {
  */
 
 const sql = readFileSync(
-  join(process.cwd(), 'supabase', 'migrations', '20261130000100_listings.sql'),
+  join(process.cwd(), 'SQL', '20261130000100_listings.sql'),
   'utf8',
 );
 
@@ -214,7 +214,7 @@ describe('canAddPhoto', () => {
 
   it('matches the SQL trigger that refuses the insert', () => {
     const photos = readFileSync(
-      join(process.cwd(), 'supabase', 'migrations', '20261130000200_listing_photos.sql'),
+      join(process.cwd(), 'SQL', '20261130000200_listing_photos.sql'),
       'utf8',
     );
     expect(photos).toContain('listing_photo_quota_reached');

@@ -523,7 +523,7 @@ describe('preview (§4 own data only)', () => {
  * fails the axis trigger on the server cannot ship from the client.
  */
 describe('shop template migrations match the client catalog', () => {
-  const dir = join(process.cwd(), 'supabase', 'migrations');
+  const dir = join(process.cwd(), 'SQL');
   const sql = ['20261128000100_shop_templates.sql', '20261128000200_shop_template_events.sql',
     '20261129000100_shop_template_catalog_growth.sql']
     .map((file) => readFileSync(join(dir, file), 'utf8'))

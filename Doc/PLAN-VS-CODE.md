@@ -129,7 +129,7 @@ suite.
 **Plan says** (§2A audit, and it is listed as *confirmed* in §2 above): the
 checkout has no `supabase/` directory, so nothing on the server side exists.
 
-**Code says**: `supabase/migrations/` holds 22 committed migrations, from
+**Code says**: `SQL/` holds 22 committed migrations, from
 `20261122000050_rental_roles.sql` through
 `20261130000200_listing_photos.sql`. **None of them is applied to a Supabase
 project**, so the browser store remains the source of truth for every feature
@@ -298,7 +298,7 @@ client preview — one order per submit, a voucher lookup scoped to the viewer
 the 24-hour reschedule notice counted from Yangon midnight rather than a
 browser-local one, and all 23 `rental_error_*` codes the migrations raise
 carrying both an MM and an EN string, with `src/lib/rentalErrorMessages.test.ts`
-reading the codes out of `supabase/migrations` so a new one cannot land
+reading the codes out of `SQL/` so a new one cannot land
 untranslated. Criteria 6–8 stay open until the migrations are applied, because
 they describe what the server does.
 
@@ -307,7 +307,7 @@ state with a fixed Rentals banner and no serving function the pages could call.
 §16A.1–§16A.9 are now implemented against one seam — `src/lib/adPlacements.ts`,
 `adCampaigns.ts`, `adStats.ts`, `adCampaignJobs.ts`, `adClicks.ts` and the
 browser stand-in in `adStore.ts` — with the §16A.4 DDL committed in
-`supabase/migrations/20261125000100_ads.sql`, the serving and access SQL in
+`SQL/20261125000100_ads.sql`, the serving and access SQL in
 `20261125000200_ads_serving.sql`, and the §16A.7 seven sections in
 `AdsManagementPanel.tsx`. One Plan detail still differs from the code and it is
 deliberate: the fallback step is AdSense only until the mobile app ships

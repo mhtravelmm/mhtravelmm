@@ -71,7 +71,7 @@ SQL
 
 echo "== applying migrations in order"
 fail=0
-for file in supabase/migrations/*.sql; do
+for file in SQL/*.sql; do
   # Each file is a psql script; `-v ON_ERROR_STOP=1` makes the first error fatal
   # so a partial apply cannot look like success.
   if out=$($DC exec -i "$CONTAINER" psql -U postgres -q -v ON_ERROR_STOP=1 -f - <"$file" 2>&1); then

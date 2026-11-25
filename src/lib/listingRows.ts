@@ -18,7 +18,7 @@ import { NEARBY_LISTINGS } from '../data/nearbyData';
  * row shape the compiled catalog already carries, so a module can move from
  * `src/data` to a query without changing its components: `toListingRow()` is
  * the one place the two shapes are reconciled, and the seed in
- * `supabase/migrations/20261130000100_listings.sql` is generated from
+ * `SQL/20261130000100_listings.sql` is generated from
  * `SEED_LISTING_ROWS` so the table and the catalog cannot drift.
  */
 
