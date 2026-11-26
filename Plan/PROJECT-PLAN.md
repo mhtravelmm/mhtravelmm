@@ -58,7 +58,7 @@
 
 ### Section map
 
-1 Overview · 2 Tech and architecture · 3 Roles and accounts · 3A Super Admin dashboard · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout.
+1 Overview · 2 Tech and architecture · 3 Roles and accounts · 3A Super Admin dashboard · 3B Owner dashboard · 3C Main Owner panel · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 7A City, category, listing and shop pages · 7B Travel Plans · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout · 16J Mobile app.
 
 ---
 
@@ -380,6 +380,7 @@ Specified in section 8 (Rental), section 10 (Blog and Travel Guide, earnings). T
 | `translate_provider` | text | empty | Translation service |
 | `maintenance_mode` | `on` or `off` | `off` | When `on`, travelers see a maintenance notice; staff still sign in |
 | `maintenance_message_mm`, `maintenance_message_en` | text | empty | The notice |
+| `min_app_version` | text | empty | Oldest mobile app version allowed; below it the app asks for an update (section 16J) |
 
 The exchange rate is not here: it has its own section (`currency`, 16B.5), where the history table, a note per change, and a warning when a new rate differs from the previous one by more than 10% protect against typing mistakes.
 
@@ -425,6 +426,105 @@ The tickets are in section 16F.2 (ids O-60 to O-71 and M-60 to M-69) and in `Doc
 10. A reload or a shared link returns to the same section; an expired session returns to login and then to that section.
 11. Lists export CSV that opens correctly in Excel with Myanmar text.
 12. Every string, including server errors, shows in Myanmar and English, and no section scrolls horizontally on a 320 px screen.
+
+---
+
+## 3B. Owner dashboard (`/shop-owner`): specification (2026-11-25)
+
+The Owner dashboard is where a business owner (the Owner Admin account) runs one listing: profile, catalog, photos, bookings, reviews, promotions, money and subscription. The shell matches the Super Admin dashboard (section 3A.3): compact, bilingual, light and dark, deep links as `/shop-owner?section=<id>`, role checks on the server for every write.
+
+Written against `src/features/shopOwner/*`, `src/lib/ownerSubscriptions.ts`, `src/lib/ownerLedger.ts`, `src/lib/shopTemplates.ts` and `Doc/STATUS.md` (main @ `8c17a3c`).
+
+### 3B.1 As built
+
+| View | State |
+|---|---|
+| Subscription, Earnings (`payments`), Templates, Settings (currency display) | Built on local state, each specified elsewhere (sections 9, 4, 16B.5) |
+| Dashboard overview | **Seeded** stats, popular menu and recent bookings |
+| Shop, Bookings, Orders, Menu, Gallery, Reviews, Analytics, Promotions, Support | **Placeholders:** one generic panel with the numbers 128 and +18%, an "Add new" button that only shows a notice, and three sample notes |
+| Server wiring | None |
+
+### 3B.2 Rules
+
+1. **One account, one shop.** An Owner Admin account manages exactly one listing. A business with several locations has one Owner account per location, linked by Admin; ticket operators use the Main Owner and Branch Owner model (section 3C and 9).
+2. **Scope.** Every row an owner reads or writes carries their `owner_id`; the server refuses anything else.
+3. **Subscription gate (section 9).** When the subscription has expired the dashboard shows only Subscription (with the renewal reminder) and Support; the listing stays visible and takes no bookings. A suspended owner sees a read-only dashboard with a banner and cannot change anything.
+4. **Approval.** The first publication of a listing needs Admin approval (status `pending` until then). After that, the owner's edits go live at once and are audited. Name, address and coordinates edits are audited with old and new values. Category and city are read-only; Admin changes them.
+5. **Prices are USD.** The owner enters prices in USD or MMK as they prefer; the server stores USD at the day's rate (16B.5) and the listing shows the traveler's chosen currency. The listing's price display (hidden, after payment, public) is the owner's choice.
+6. **Bilingual content.** Name, description, item names and promotion text are entered in Myanmar and English; a missing language is auto-translated for readers (16B.4) and flagged to the owner as "auto-translated".
+
+### 3B.3 Views
+
+| Id | What the owner does |
+|---|---|
+| `dashboard` | Reads how the shop is doing and what needs action |
+| `shop` | Edits the listing profile |
+| `bookings` | Handles date-based requests: hotel stays, table reservations, events |
+| `orders` | Handles item-based requests: book shop and restaurant pick-up orders (categories with a catalog) |
+| `menu` | Manages the catalog (rooms, menu items, products, ticket types) |
+| `gallery` | Manages photos |
+| `reviews` | Reads reviews and replies |
+| `analytics` | Reads views and conversion |
+| `payments` | Reads earnings, the ledger and the next payout (section 9) |
+| `promotions` | Publishes promotions |
+| `subscription` | Sees status and renews (section 9) |
+| `templates` | Previews, buys and applies Shop Page templates (section 4) |
+| `settings` | Hours, booking mode, notifications, password, currency display |
+| `support` | Private chat with MH Travel (section 12.1) |
+
+**Dashboard.** A period selector (7 days, 30 days default, 90 days, year; Myanmar-time days). Cards: Views, Favorites added, Booking requests, Paid bookings, Earnings (net, in the selected currency), Rating (with the review count). *Needs action* (links): requests waiting for an answer, unpaid accepted bookings and their countdowns, reviews without a reply, a subscription ending within 7 days, a draft promotion. Charts: requests and paid bookings per day. Lists: the latest five bookings and the top five catalog items. Nothing is seeded; an empty shop shows zeros and empty states.
+
+**Shop (profile).** Name (MM/EN), description (MM/EN), address, coordinates (a map pin), phone, public email, website and social links, amenity tags, languages spoken, opening hours, cover photo, booking mode, price display. *Opening hours* are per weekday, in Myanmar Time, with closed days, a 24-hour switch, and an overnight close; they feed Open Now (16H.9). *Booking mode* is Full Manual or Instant (section 6). Saving checks both languages, a valid phone, coordinates inside Myanmar, and hours that make sense, and shows the changes the server refused.
+
+**Bookings.** A list with status filters (`requested`, `accepted`, `paid`, `completed`, `expired`, `cancelled`) and a search by request code, name or phone. Each booking opens a detail with its timeline, guest details, special requests, and the actions of section 6.1: **Accept** (opens the 12-hour window; the countdown is shown), **Record payment** (method and amount), **Complete**, **Cancel** (reason required), and, for reschedule requests, **Approve** or **Decline**. A voucher can be viewed and printed. In Instant mode the list is view-only except Complete and Cancel. A new request notifies the owner (16B.3) and leaves the sidebar badge.
+
+**Orders.** Same list and actions for item orders (pick-up only; no delivery in this phase). An order has lines (`catalog_item_id`, quantity, price snapshot), a pick-up date, and the same statuses.
+
+**Menu (catalog).** `catalog_items`: `id`, `listing_id`, `kind` (`room`, `menu_item`, `product`, `ticket_type`), `name_mm`, `name_en`, `description_mm`, `description_en`, `price_usd`, `unit`, `attributes` (jsonb: room beds, size and amenities; menu spicy and vegetarian flags; product author and stock), `photo_key`, `available`, `sort_order`. The owner adds, edits, reorders, hides and removes items; removing an item used by a booking hides it instead. Prices follow the listing's price display. The kinds shown depend on the category (hotel: rooms; restaurant and cafe: menu items; book shop: products; attraction: ticket types).
+
+**Gallery.** Photos through the WebP pipeline (at most 450 KB each) into `shops/<shop-id>/`, within the quota Admin sets (default 20). Reorder, choose the cover, add a caption (MM/EN), delete. A photo in use as the cover cannot be deleted until another is chosen. Alt text defaults to the caption or the shop name.
+
+**Reviews.** Reviews of this listing with the rating summary. The owner may post one public reply per review (500 characters), edit it, and flag a review to Admin ("report"); the owner cannot hide or delete a review (section 11).
+
+**Analytics.** Daily views, favorites added, search impressions and clicks, booking requests and paid bookings, with the conversion from view to request and request to paid. Source: `listing_stats_daily`, rolled up nightly (00:30 Myanmar Time) plus today's live counts. Never shows other shops' data.
+
+**Promotions.** `promotions`: `id`, `listing_id`, `title_mm`, `title_en`, `description_mm`, `description_en`, `discount_text`, `image_key`, `valid_from`, `valid_to`, `status` (`draft`, `published`, `ended`, `removed`). Publishing makes the promotion appear on the listing and creates **one** notification feed row (title, thumbnail, link) (16B.3). At most 2 promotions published per week per owner; Admin can remove one. A promotion ends by itself at `valid_to`.
+
+**Settings.** Booking mode, price display, opening hours shortcut, notification preferences (in-app always; email for new requests and renewal reminders on or off), password change, currency display (as built), and a payout note (how the owner wants to be paid, entered as text and never a card number).
+
+### 3B.4 Data and functions
+
+Tables: `listings` (16C.2), `catalog_items`, `listing_photos`, `promotions`, `listing_stats_daily` (`day`, `listing_id`, `views`, `favorites_added`, `search_impressions`, `search_clicks`, `booking_requests`, `paid_bookings`). Functions (positional arguments, `owner_error_<code>` errors): `owner_get_overview(p_from, p_to)`, `owner_save_listing(p_listing, p_expected_version)`, `owner_save_catalog_item(p_item)`, `owner_set_item_available(p_id, p_available)`, `owner_add_photo(p_key, p_caption_mm, p_caption_en)`, `owner_reorder_photos(p_ids)`, `owner_set_cover(p_photo_id)`, `owner_delete_photo(p_id)`, `owner_reply_review(p_review_id, p_body)`, `owner_flag_review(p_review_id, p_reason)`, `owner_get_analytics(p_from, p_to)`, `owner_save_promotion(p_promotion)`, `owner_set_promotion_status(p_id, p_status)`. Booking and order moves use the section 6 functions with the owner role.
+
+### 3B.5 Acceptance criteria
+
+1. An owner reads and writes only their own listing, bookings, items, photos and promotions; the server refuses anything else.
+2. An expired owner sees only Subscription and Support and cannot be booked; a suspended owner cannot change anything.
+3. The dashboard shows no seeded number; an empty shop reads zeros.
+4. Accept opens a 12-hour window with a countdown; an unpaid booking expires by itself; recording payment issues the voucher.
+5. Publishing a promotion creates exactly one notification; a third in the same week is refused.
+6. Opening hours drive Open Now in Myanmar Time, including an overnight close.
+7. A photo above 450 KB or over the quota is refused with a translated message.
+8. Every write writes one audit row.
+
+---
+
+## 3C. Main Owner panel (`/main-owner`): specification (Phase 4, 2026-11-25)
+
+The Main Owner is a ticket operator's head office (section 9, Operator system). The panel is built and used in Phase 4 together with the operator system; this section fixes what it must do so the branch work already built is not redone.
+
+**As built.** Overview, Branches, Wallets, Tickets, Revenue and Settings views on local state. Branch creation works against `src/lib/mainOwnerApi.ts` (the `operator_branches` migration is still required). The wallet, ticket and revenue figures are seeded.
+
+| View | Specification |
+|---|---|
+| Overview | Branch count, tickets sold (MH Travel channel and counter, shown separately), gross, commission, net, upcoming settlement; branch snapshot; recent activity. Real figures from `ticket_transactions` and the operator's own sales totals |
+| Branches | Table of branch name, station, city, manager, status (`active`, `suspended`, `expired`), monthly fee (10,000 MMK), revenue share, subscription end. **Create branch:** branch name, station, city, manager name, phone, email, username; the server creates a Branch Owner account by invitation (no password shown) and the `operator_branches` row. Suspend or restore a branch (type its name); a branch's staff keep their data |
+| Wallets | The three wallets of section 9 (platform, Main Owner, branch) as ledger views: opening balance, entries, closing balance, per branch drill-down. Balances are sums of `wallet_ledger_entries` |
+| Tickets | Ticket transactions for the operator across branches, filters by branch, trip, date, channel, status; refunds; export |
+| Revenue | Commission and revenue-share per branch and period; the settlement statements of section 9 with status and payment date |
+| Settings | Operator profile, voucher designer entry (section 9, Vouchers), API key rotation request, staff accounts |
+
+**Rules.** A Main Owner sees only its own operator; a Branch Owner only its own branch and its staff roles (manager, counter staff). Money figures are read-only (they come from the ledger). Every write is audited. Tickets for this panel are written when Phase 4 starts.
 
 ---
 
@@ -771,7 +871,7 @@ After payment a traveler may change the date. The rules:
 
 | Table | Key columns |
 |---|---|
-| `bookings` | `id`, `request_code` (unique, `<PREFIX>-YYMMDD-####`: `HTL`, `RST`, `RNT`, `TKT`, `EVT`), `user_id`, `listing_id`, `owner_id`, `category`, `status`, `flow_mode`, `start_date`, `end_date`, `guests`, `currency`, `total_usd`, `payment_method`, `payment_deadline`, `paid_at`, `commission_pct`, `commission_mmk`, `voucher_version`, `special_requests`, `created_at`, `updated_at` |
+| `bookings` | `id`, `request_code` (unique; the shape is `<PREFIX>-<date>-<sequence>`: `RNT-YYMMDD-####` for rentals as built, `MHC-YYYYMMDD-###` for custom plan requests and `MHT-YYYYMMDD-###` for ticket orders as built, and `HTL-` and `RST-` with the rental shape for hotels and restaurants), `user_id`, `listing_id`, `owner_id`, `category`, `status`, `flow_mode`, `start_date`, `end_date`, `guests`, `currency`, `total_usd`, `payment_method`, `payment_deadline`, `paid_at`, `commission_pct`, `commission_mmk`, `voucher_version`, `special_requests`, `created_at`, `updated_at` |
 | `booking_events` | `id`, `booking_id`, `from_status`, `to_status`, `actor_id`, `note`, `at` |
 | `booking_hotel_details` | `booking_id`, `room_type`, `nights`, `check_in_time`, `check_out_time` |
 | `booking_refunds` | `id`, `booking_id`, `amount_mmk`, `reason`, `made_by`, `at` |
@@ -868,6 +968,121 @@ Admin enters stops, lines and their order. The planner builds a graph: stops are
 3. An unreachable operator disappears from the hub without errors.
 4. The planner returns a route within 2 transfers, or says none exists.
 5. Hotels and rentals never appear in the Ticketing hub.
+
+---
+
+## 7A. City, category, listing and shop pages: specification (2026-11-25)
+
+Written against `src/features/city/CityPage.tsx`, `src/features/category/*`, `src/features/place/*`, `src/features/shop/ShopPage.tsx`, `src/routes.ts` and `Doc/STATUS.md`. The pages are built on compiled data and local favorites; this section fixes what each shows once the data is live (16C.2) and what the server provides. Every page reads only active, published rows (16H.3).
+
+### 7A.1 Route map
+
+| Route | Page |
+|---|---|
+| `/cities` | All active cities |
+| `/cities/:cityId` (and `/city/:cityId`, which redirects to it) | One city |
+| `/attractions`, `/hotels`, `/restaurants`, `/cafes`, `/markets`, `/book-shops`, `/rentals`, `/transport`, `/populars` | One category across all cities |
+| `/categories` | The category index |
+| `/attractions/:id`, `/hotels/:id`, `/cafes/:id`, `/markets/:id`, `/restaurants/:id`, `/book-shops/:id`, `/rentals/:id`, `/ticketing/:id`, `/populars/:id` | A place (listing detail) |
+| `/shops/:shopId` | A shop rendered by its template (section 4) |
+| any other path | The not-found page (7A.6) |
+
+### 7A.2 City page
+
+- **Hero:** city name, a one-line subtitle, cover photo, and a "Plan a trip" button that opens the custom plan form with the city already chosen (section 7B).
+- **Facts:** best for, how long to stay, how to travel, each in both languages, from the `cities` table (3A.10). A weather card from `/api/weather?city=<id>`; if the weather service fails the card is hidden.
+- **Search inside the city** (a text box) and **category chips** `All`, `Hotels`, `Restaurants`, `Cafes`, `Attractions`, `Markets`, `Book Shops`, `Rentals`, `Transport`. With no query and `All`, the page shows rows per category (Top attractions, Popular hotels, Restaurants, Book shops, Cafes, Markets, Rentals, Transport operators, and the city's travel guides), each up to five cards across; choosing a chip or typing switches to a result list with a count, ordered by rating then views, with "Show more" in batches of 12 (the shared paging rule, section 4).
+- One ad slot after the restaurants row (`city_detail_after_restaurants`, 16A.3).
+- A city that does not exist or is inactive shows "City not found" with a link back to `/cities`.
+
+### 7A.3 City index and category pages
+
+- `/cities`: a grid of active cities with their cover, name and listing count; search by name.
+- A category page (for example `/hotels`): a title, the total count, a search box, and the results as cards across all cities, ordered by rating then views, batches of 12. No other filters (simplicity first, section 12). Cities can be filtered by typing the city name, which the search understands (16H.6).
+- `/categories`: the nine categories with their counts and icons.
+- Empty results show "No matching businesses" with a link to clear the search.
+
+### 7A.4 Place page (listing detail)
+
+One layout for every category, with parts that appear only when they apply.
+
+| Part | Content |
+|---|---|
+| Photos | The cover and gallery from `listing_photos`, swipeable on a phone, with alt text |
+| Header | Name, category, city, rating with the review count, Open Now (from hours), and the Save (heart) button |
+| About | The description in the reader's language (auto-translation marker when needed) |
+| Facts | Address, phone, opening hours by weekday, amenities, languages spoken |
+| Price | "From $X per night / day / person" formatted in the selected currency, shown according to the listing's price display (hidden, after payment, public); a hidden price shows "Price on request" |
+| Promotion | The current promotion badge and text, if any |
+| Action | The category's button: **Book now** (hotel and others with a booking flow; opens the section 6 form: dates, guests, special requests; shows a total before sending), **Request** (Full Manual), **Reserve** (restaurant), **Order** (book shop), **Rent** (rentals, section 8), **Buy tickets** (ticketing, section 7), none for attractions and markets without bookings. Disabled with a short message when the Owner's subscription has expired |
+| Directions | A **How to get there** button that opens the phone's map app with the coordinates; no embedded map in this phase. Plus a nearby-places list from `search_nearby` |
+| Reviews | The rating summary, the latest reviews (batches of 5), the Owner's replies, and a Write a review button when the traveler is eligible (section 11) |
+| Share and report | Share (the device share sheet, or copy link; the link carries `?lang=`, section 16B.14) and Report this listing (reasons of section 11.3) |
+| Related | Up to five more places in the same city and category |
+| Plan a trip | Opens the custom plan form with this place added (section 7B) |
+
+Opening a place counts one view per session (`increment_listing_views`). A place that is not found or not active shows "Place not found" with a link to its category.
+
+### 7A.5 Shop page
+
+`/shops/:shopId` renders the shop through its active template (section 4: the `ShopPageData` contract, 7-day grace, free fallback). `?preview=<template-id>` is visible only to the shop's owner and never counts as use. An unknown shop shows "Shop not found".
+
+### 7A.6 Not-found and error pages
+
+- **Not found (404):** a friendly message in both languages, a search box, and links to Home, Cities and Search. The SPA answers unknown paths with the shell, so this page is rendered by the router.
+- **Not allowed:** a dashboard route opened by the wrong role shows a "not allowed" message with a link to the right place; it never reveals whether the object exists.
+- **Crash:** a global error boundary shows a short apology with Reload and Home, and logs the error (16B.13).
+
+### 7A.7 Data and functions
+
+Reads: `listings` and `cities` through public views, `listing_photos`, `catalog_items`, `reviews`, `promotions`. Functions: `increment_listing_views(p_listing_id)` (once per session), `get_listing_page(p_category, p_id)` (one call returning the listing, photos, current promotion, rating summary, next opening change and related ids). Weather: `/api/weather`.
+
+### 7A.8 Acceptance criteria
+
+1. Every route in 7A.1 resolves; an unknown id shows its not-found message, not a blank page.
+2. A place shows only the parts that apply to it; a hidden price shows "Price on request".
+3. The action button matches the listing's booking mode and category, and is disabled for an expired owner.
+4. A city page opens the custom plan form with the city selected.
+5. A draft, suspended or retired item never appears on any of these pages.
+6. Every string is Myanmar and English; no page scrolls horizontally on a 320 px screen.
+
+---
+
+## 7B. Travel Plans: specification (2026-11-25)
+
+Written against `src/features/travelPlans/TravelPlansPage.tsx`, `src/lib/travelRequests.ts` and `src/data/*`. Travel Plans has two parts: a catalog of ready-made plans and a custom plan request.
+
+### 7B.1 As built
+
+- **Catalog:** `/travel-plans` lists plans (title, duration in days and nights, price, rating, views) with a search box, a duration filter (all, short = up to 3 days, long = 5 days or more) and a sort (most viewed, top rated, lowest price). `/travel-plans/:planId` is the plan detail.
+- **Custom plan:** a form with start date, destination, nationality (citizen or foreigner), hotel (or "decide later"), places to visit (multi-select), days, travelers, budget (low, mid, high), transport (car, bus, mixed), stay (hotel, guesthouse, flexible) and notes. It can be saved as a draft and sent as a request; the confirmation shows a reference such as `MHC-20261122-001` and "quotation pending".
+- Requests are kept in the account's browser storage and, when Supabase is configured, also written to `public.bookings`.
+
+### 7B.2 Decisions
+
+- **Plans are quotations, not instant purchases.** A catalog plan's price is a guide ("from"); the traveler sends a request for it and MH Travel confirms by phone or message. The request uses the same form, with the plan pre-filled.
+- Both kinds of request are rows in `custom_plan_requests` (it already exists), not in `bookings`. The reference keeps the built format `MHC-YYYYMMDD-###`.
+- Statuses (the dashboard side is section 3A.10): `new` → `contacted` → `quoted` → `booked` → `closed`; a request can also be `cancelled` by Admin with a reason. The traveler cannot cancel (section 6) but can write to support.
+- When a quote is ready the traveler is notified and sees the amount (USD base, shown in the selected currency) in Account → My Travel Plans; accepting a quote turns the request into a booking handled by section 6 (Full Manual, request code `MHC-...` kept).
+
+### 7B.3 Data
+
+| Table | Key columns |
+|---|---|
+| `travel_plans` | `id`, `slug`, `title_mm`, `title_en`, `days`, `nights`, `price_from_usd`, `summary_mm`, `summary_en`, `includes_mm`, `includes_en`, `itinerary` (jsonb, ordered days with stops linked to listings), `cover_key`, `rating`, `views`, `active`, `created_at` |
+| `custom_plan_requests` (exists) | adds `reference`, `plan_id` (nullable), `start_date`, `destination_city_id`, `nationality`, `hotel_listing_id`, `place_ids` (text[]), `days`, `travelers`, `budget`, `transport`, `stay`, `notes`, `status`, `quote_usd`, `quote_note`, `handled_by`, `updated_at` |
+
+### 7B.4 Functions
+
+`submit_custom_plan_request(p_request jsonb)` returns the row with its reference; signed-in travelers only; at most 5 open requests per account; the server validates dates (start at least tomorrow in Myanmar Time), days 1 to 30, travelers 1 to 30, and that every listing id exists. `admin_set_plan_request_status(p_id, p_status, p_quote_usd, p_note)` is in section 3A.10. Draft saving stays on the device.
+
+### 7B.5 Acceptance criteria
+
+1. A request creates one row and shows its `MHC-...` reference; a sixth open request is refused.
+2. An invalid date, a missing destination or an unknown listing id is refused with a translated message.
+3. Admin moving a request to `quoted` with an amount notifies the traveler, who sees it in My Travel Plans.
+4. The catalog filter, sort and search behave as built and follow the selected language.
+5. A plan or place that becomes inactive disappears from the catalog but stays on existing requests.
 
 ---
 
@@ -1667,6 +1882,7 @@ shell and bilingual throughout:
 | View | Reads |
 |---|---|
 | My Bookings | the `my_bookings` view (bookings and rental orders) |
+| Payments | the traveler's paid bookings, with their vouchers (14.9) |
 | My Travel Plans | `custom_plan_requests` |
 | Favorites | `favorites` |
 | My Reviews | `reviews` by the user |
@@ -1680,6 +1896,52 @@ Each view keeps its local fallback behind the module's flag until the backend is
 ### 14.4 Later sign-in methods (phase 2)
 
 Phone sign-in (one-time code), Apple and Facebook are added through Supabase Auth. The SMS provider and the Apple and Facebook credentials are decided when that phase starts. Accounts are linked by verified email where one exists, and never merged across a traveler and an Owner Admin account (section 3).
+
+
+### 14.5 Favorites
+
+- A heart appears on every card and place page. Tapping it saves or removes the item; the change shows at once.
+- **Signed in:** rows in `favorites` (`user_id`, `kind`, `ref_id`, `created_at`, unique per user, kind and item). Kinds: listings, travel plans, travel guides, blog posts. The listing's `favorite_count` is kept by a trigger. At most 500 per account.
+- **Guest:** saved on the device. When the guest signs in, the device list and the account list are merged (union, no duplicates) and the device list is cleared.
+- The Favorites page groups items by kind, newest first, and shows an item that is no longer published greyed out with "No longer available" and a Remove button. The count appears in Account.
+
+### 14.6 Notifications page
+
+- `/notifications` (and `/account/notifications`): items grouped as Today, This week and Earlier; an unread count; Mark all as read; tapping an item opens its link and marks it read. An empty state explains what will appear.
+- The list is the account's `notifications` rows plus the shared feed rows (16B.3), newest first, in batches of 20; retention 90 days. New items arrive live through Realtime and raise the bell count. The read state is per account.
+- A notification stores its link; if the target has been unpublished the page shows a short "no longer available" message instead of an error.
+
+### 14.7 Settings
+
+| Group | Fields and actions |
+|---|---|
+| Profile | Display name, username (changeable once every 30 days, same rules as sign-up), avatar (WebP at most 200 KB, folder `avatars/`), phone (optional) |
+| Sign-in | Email (a change needs verification of the new address), password change (needs a recent sign-in), the linked sign-in methods, Sign out everywhere |
+| Preferences | Language and currency (saved to the profile), email notifications on or off for booking messages (account-security emails are always sent) |
+| Privacy | Download my data (a JSON file, prepared within 24 hours), Request account deletion (section 3.2, Admin completes it within 30 days), links to the Terms and the Privacy Policy |
+
+`profiles` gains `display_name`, `avatar_key`, `phone`, `language`, `currency`, `email_notifications`, `accepted_terms_version`, `accepted_at`. Functions: `update_my_profile(p_profile jsonb)`, `request_account_deletion()`, `request_data_export()`.
+
+### 14.8 Sign-in pages
+
+- **Login:** username or email, password, a Google button. A wrong pair always reads "Incorrect username, email or password", never saying which part was wrong. Too many failures (10 in 15 minutes for an account or an address) block further tries for 15 minutes. After a successful sign-in the user returns to the page they came from (`returnTo`), otherwise to Home.
+- **Sign-up:** full name, username (3 to 24 characters: lower-case letters, digits, underscore; unique), email, password (at least 8 characters, checked against known leaked passwords where Supabase supports it), confirm password, and a required checkbox for the Terms and Privacy Policy (16B.15). The email must be confirmed before the first sign-in; the page says so and offers to resend the message. A Google sign-up without a username goes through a username step.
+- **Forgot password** (a link on the login page): email in, a reset message out, a new-password page; the reply is the same whether or not the email exists.
+- **Facebook** is a phase 2 method (14.4): its button is hidden until then. Admin sign-in is `/admin/login`, with username or email and password, and no social buttons for roles other than Super Admin.
+- All messages are Myanmar and English; the password field has show and hide; nothing is stored in `localStorage` except the Supabase session.
+
+### 14.9 What the Account "Wallet" is
+
+The Account dashboard has a Wallet view with a balance and payment methods. MH Travel does not hold travelers' money and stores no card details, so this view becomes **Payments**: a list of the traveler's paid bookings (receipt: date, item, amount in the selected currency, method) with a link to each voucher. There is no balance and no stored payment method; when an online gateway arrives (section 6.2) it keeps any saved method itself and the app only shows a masked label it returns.
+
+### 14.10 Acceptance criteria
+
+1. A guest's favorites survive sign-in without duplicates; an unpublished item shows as unavailable and can be removed.
+2. The notification page marks items read, opens their links, and updates live.
+3. A username change twice within 30 days is refused.
+4. Login errors never reveal which part was wrong; the 11th failed try in 15 minutes is blocked.
+5. Sign-up needs the confirmed email and the accepted terms; the accepted version and time are stored.
+6. The Payments view shows no balance and no card data.
 
 ---
 
@@ -2075,6 +2337,70 @@ Three environments: local with a development Supabase project, staging, producti
 
 Keep the pure-rule unit tests. Add: RLS tests per role for every new table; one end-to-end test per critical flow (submit and pay a rental, publish and schedule a blog post, serve and click an ad); and a Playwright or axe check of each new dashboard section.
 
+### 16B.11 Email and other channels
+
+| Channel | Used for | Phase |
+|---|---|---|
+| In-app (bell, Realtime) | Every event in 16B.3 | Now |
+| Email | Transactional only: account invitations, password reset and email-change verification (Supabase Auth templates in Myanmar and English); booking request received, accepted with its payment deadline, payment confirmed with the voucher link, expired, cancelled, rescheduled; owner new-request alerts and renewal reminders (7, 3, 1 days); data-export ready | Phase 2 (account mail from Phase 0) |
+| Push | The same booking and promotion events | Phase 5 (mobile app, section 16J) |
+| SMS | None in this plan | — |
+
+There is no marketing email. The email provider is a service with SPF and DKIM set up on the MH Travel domain; Supabase Auth's built-in mailer is not used in production, so the provider's SMTP is configured in Supabase (ticket M-09). Messages are queued: a database trigger inserts a row into `email_outbox` (`id`, `to_email`, `template`, `lang`, `params` jsonb, `status` queued / sent / failed, `attempts`, `last_error`, `created_at`, `sent_at`) and the Worker's scheduled handler sends queued rows every minute, retries 3 times, then marks the row `failed` and notifies Super Admin. The language is the recipient's profile language. Rows are kept 90 days after sending.
+
+### 16B.12 Data retention
+
+| Data | Kept | Then |
+|---|---|---|
+| Audit log | 24 months | Purged |
+| Notifications and feed rows | 90 days | Purged |
+| Search log, raw ad events | 90 days | Purged (ad statistics by day kept 24 months) |
+| Support threads and contact messages | 24 months | Purged |
+| Email queue | 90 days after sending | Purged |
+| Bookings and orders | 24 months after completion | Personal fields (name, phone, address) cleared; amounts and codes kept |
+| Transactions, ledger, payouts, invoices | 7 years | Kept; the founder should confirm the period with a local accountant |
+| Reviews | Until the user deletes them | Anonymized when the account is deleted |
+| Media with no reference | 30 days | Deleted (16B.6) |
+| Job history | 50 runs per job | Older runs dropped |
+| Revisions | 20 per item | Oldest dropped |
+| Exchange rates, translation cache | Always | Kept |
+
+Account deletion and data export follow section 3.2 and 14.7.
+
+### 16B.13 Analytics and error logging
+
+- **Site analytics:** Cloudflare Web Analytics, which sets no cookies and stores no personal data. There are no third-party trackers and no advertising identifiers, except what AdSense or AdMob add when the fallback provider is on (consent: 16B.15).
+- **Product counts:** views (listings, posts, guides, plans) are counted once per session through functions; searches go to `search_log`; ads to `ad_events`; nightly roll-ups feed the dashboards (3A.5, 3B.3).
+- **Errors:** an error-tracking service is added in launch readiness (Phase 6); until then the global error boundary (7A.6) sends a short report to a `client_errors` table (`at`, `route`, `message`, `user_agent`, no user id), kept 30 days and read in Operations. Job failures already notify Super Admin (16B.7).
+
+### 16B.14 SEO and sharing
+
+The app is a single-page application, so search engines and chat apps see an empty shell unless the server helps.
+
+- **Pages the Worker prepares:** for the public routes of 7A.1, `/blogs?story=<slug>`, `/travel-guide/<slug>` and `/travel-plans/<id>`, the Worker returns the app shell with the right `<title>`, description, canonical link, Open Graph and Twitter tags, and structured data (`Article` for posts and guides; `LodgingBusiness`, `Restaurant` or `TouristAttraction` with the rating for places), read from the public views and cached for 10 minutes. These paths are listed in `assets.run_worker_first` (16G.4) and the Worker answers with the shell through the static-assets binding after rewriting the head.
+- **`/sitemap.xml`:** generated by the Worker from the published posts, guides, active listings, cities and plans, cached for an hour. **`robots.txt`** is a static file in `public/` that blocks `/admin`, `/super-admin`, `/shop-owner`, `/main-owner`, `/account`, `/api` (except the sitemap) and the unsorted search URLs.
+- **Language:** one URL per page. A link may carry `?lang=mm` or `?lang=en`, which the app honors on load; the Share button adds the sharer's language, and the head carries `alternate` links to both. Titles and descriptions are in the language the link asks for.
+- **In the browser:** the app sets `document.title` and the description on every navigation.
+- **Sharing:** the Share button uses the device share sheet and falls back to copying the link.
+- **Acceptance:** a link to a blog post pasted into a chat app shows its title, summary and cover; the sitemap lists exactly the published items; the private routes are not indexed.
+
+### 16B.15 Legal pages and consent
+
+- **Pages:** Terms of Service, Privacy Policy, and Owner Terms (for businesses), at `/legal/terms`, `/legal/privacy` and `/legal/owner-terms`, linked from the sign-up page, the Settings page and the copyright strip (the footer rule of section 15 stays). Rental terms are separate (section 8).
+- **Content:** written by the founder, with a lawyer, in Myanmar and English. They are stored in `legal_documents` (`slug`, `version`, `body_mm`, `body_en`, `published_at`, `published_by`) and edited by Super Admin only; every new version is a new row.
+- **Acceptance of terms:** sign-up requires the checkbox and stores `accepted_terms_version` and `accepted_at` on the profile. When a new version of the Terms or the Privacy Policy is published, the next sign-in shows it and asks the user to accept before continuing.
+- **Consent for ads:** when `ad_fallback_provider` is `adsense` (and, in the app, AdMob), a first-visit banner offers Accept or Reject; Reject asks the provider for non-personalized ads. With the fallback off there is no banner. Language, theme, recent searches and guest favorites are stored on the device because the app needs them to work, and need no banner; the Privacy Policy lists them.
+- **Acceptance:** an account created without the checkbox is impossible; publishing a new Terms version makes every user accept it once.
+
+### 16B.16 Backup, recovery and incidents
+
+- **Database:** Supabase daily backups, with point-in-time recovery switched on when the plan allows. Targets: recovery point 24 hours (less with point-in-time recovery), recovery time 4 hours. A restore to staging is rehearsed every quarter and the result is noted in `Doc/STATUS.md`.
+- **R2:** objects are copied weekly to a second bucket (the media is the one dataset that cannot be rebuilt).
+- **Secrets inventory:** kept by the founder in a password manager, with Manus holding only the working copies in the Supabase and Worker stores.
+- **Monitoring:** an uptime check every minute on `/` and on `/api/health` (a Worker route that answers 200 after a quick database query). A failure alerts Super Admin by email and bell.
+- **Incidents:** severity 1 is bookings or payments down, 2 is a degraded module, 3 is minor. For severity 1 the founder and Manus are contacted at once, `maintenance_mode` shows the notice (3A.13), and a short note goes into `Doc/STATUS.md` afterwards with the cause and the fix.
+
+
 ## 16C. Remaining modules: the repeatable recipe (2026-11-22)
 
 After the MH-owned modules, every other module is filled in one at a time with the same recipe, so each one is a copy of a pattern that already works.
@@ -2129,11 +2455,11 @@ Phases are ordered by dependency, with no calendar dates. A phase is finished on
 | 1D. Ads and Adsboard | Section 16A, starting with Home and `blog_inline`; can run beside 1C | Section 16A acceptance criteria all pass |
 | 1E. Search v1 | Section 16H on the MH-owned content (blogs, guides, rentals, cities) | Section 16H.13 acceptance criteria all pass |
 | 1F. Super Admin dashboard | Section 3A section by section on the server, as each module's backend lands (Overview, Users and Settings can start in Phase 0 and 1) | Section 3A.16 acceptance criteria all pass |
-| 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one; with them the universal booking and voucher work (section 6), reviews and reports (section 11), owner applications (section 3), support chat and the contact form (section 12), the Bus route planner (section 7.3) and the Home feed (section 5); each module joins the search index | Hotels pass the 16C acceptance, then each next module does |
+| 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one; with them the universal booking and voucher work (section 6), reviews and reports (section 11), owner applications (section 3), support chat and the contact form (section 12), the Bus route planner (section 7.3), the Home feed (section 5), the Owner dashboard (section 3B), the listing pages (7A), Travel Plans (7B), the Account pages and sign-in pages (14.5 to 14.9), email (16B.11) and the legal pages (16B.15); each module joins the search index | Hotels pass the 16C acceptance, then each next module does |
 | 3. Owner money and templates | The Owner money system (section 9); the template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **both halves are met: `replayPayout()` recomputes a run from its rows (2026-11-27), and a switch and a fallback are exercised on the rendered page (2026-11-28) — `resolveTemplateForShop()` falls back on a lapsed entitlement, a retirement or a rollback, and `npm run a11y` proves every template renders in both themes** |
-| 4. Ticketing and operators | Operator system specification (section 9) | Operator system acceptance (section 9) passes |
-| 5. Mobile app | App using the same APIs, `serve_ad` with AdMob, push notifications | Same flows pass on a phone |
-| 6. Launch readiness | Security review of RLS and Workers; load test of search and booking; backup restore drill; privacy policy and terms pages; error tracking and uptime check; contrast palette decision (`Doc/STATUS.md` §8); content seeding | Checklist signed off by the founder |
+| 4. Ticketing and operators | Operator system specification (section 9) with the Main Owner panel (3C) | Operator system acceptance (section 9) passes |
+| 5. Mobile app | Section 16J: the Capacitor app on the same APIs, `serve_ad` with AdMob, push notifications | Same flows pass on a phone |
+| 6. Launch readiness | Security review of RLS and Workers; load test of search and booking; backup restore drill (16B.16); SEO and sharing (16B.14); the retention jobs (16B.12); privacy policy and terms pages; error tracking and uptime check; contrast palette decision (`Doc/STATUS.md` §8); content seeding | Checklist signed off by the founder |
 
 Dependencies to respect: the media route of the one Worker (Phase 0) before Blog, Guide and Ads uploads; the listing index before guide stops can use the database; the booking and voucher work in Hotels before any module after it; ledgers before payouts and before the operator settlement.
 
@@ -2192,6 +2518,19 @@ The founder delegated these decisions to Claude and will review them after the m
 | 47 | Admin reads the rental catalog and handles orders but does not edit the catalog (the Plan wins over the SQL helper) | 3A.4, 8 | Change one helper |
 | 48 | Announcements limited to 3 a day; a `maintenance_mode` setting | 3A.12, 3A.13 | Settings |
 | 49 | A new exchange rate more than 10% away from the previous one asks for confirmation | 3A.13 | One constant |
+| 50 | One Owner account manages one shop; several locations mean several accounts | 3B.2 | Add a multi-shop link later |
+| 51 | Owner's first listing needs Admin approval; later edits go live and are audited; category and city are Admin-only | 3B.2 | Approval rule |
+| 52 | Promotions publish at once, 2 a week, one notification each | 3B.3 | Two constants |
+| 53 | Product orders (book shop, restaurant) are pick-up only in this phase | 3B.3 | Add delivery later |
+| 54 | Travel Plans are quotations, not instant purchases; requests are `custom_plan_requests` | 7B.2 | Add instant purchase later |
+| 55 | "Directions" opens the phone's map app; no embedded map yet | 7A.4 | Add a map view later |
+| 56 | The traveler "Wallet" becomes Payments (no balance, no stored card) | 14.9 | Add stored methods through a gateway |
+| 57 | Confirmed email before first sign-in; Facebook button hidden until phase 2; 10 failed logins in 15 minutes block | 14.8 | Auth settings |
+| 58 | Cloudflare Web Analytics only; no third-party trackers | 16B.13 | Add a tool and a consent step |
+| 59 | The Worker prepares the head of public pages and the sitemap; one URL per page with `?lang=` | 16B.14 | Separate language URLs |
+| 60 | Terms re-acceptance on every new version; ad consent banner only when the AdSense fallback is on | 16B.15 | Legal review |
+| 61 | Transaction records kept 7 years (to be confirmed with a local accountant) | 16B.12 | One setting |
+| 62 | The mobile app is a Capacitor wrapper of the web app; no in-app purchase | 16J | A native rewrite |
 
 **Facts only the founder can supply later** (not blocking any build step): the Travel Guide default per-post rate; the commercial terms of each ad campaign; the AdSense and AdMob account ids; the commission percentage and revenue-share formula for tickets (already left Admin-configurable in section 9); definitions of the "express" and "အာတာဖတ်" vehicles, which Rental Admin enters as data.
 
@@ -2220,7 +2559,7 @@ Project facts for Manus: Supabase project `mhtravelmm`, ref `ewuvxowujkbyvftoihx
 
 ### 16F.2 Tickets: Phase 0 and Phase 1 (and Search)
 
-Ids: `M-` for Manus, `O-` for OpenHands. Status lives only in `Doc/TICKETS.md`. Tickets for Phase 2 onward are written by Claude when Phase 1 is complete.
+Ids: `M-` for Manus, `O-` for OpenHands. Status lives only in `Doc/TICKETS.md`. Tickets for the Phase 2 modules not listed here (Hotels onward) and for Phases 3 to 5 are written by Claude when Phase 1 is complete.
 
 | ID | Agent | Task | Depends on | Done when |
 |---|---|---|---|---|
@@ -2285,6 +2624,29 @@ Ids: `M-` for Manus, `O-` for OpenHands. Status lives only in `Doc/TICKETS.md`. 
 | M-69 | Manus | `owner_applications`, `submit_owner_application`, `admin_list_owners`, `admin_create_owner` (invitation or one-time link), `admin_set_owner_status`, `admin_handle_application` | M-09 | An application flows from submit to an active owner at the database |
 | O-70 | OpenHands | Owners section: the Applications and Owners tabs on the functions | M-69, O-60 | Section 3A.8 is complete |
 | O-71 | OpenHands | Shared dashboard pieces: the type-to-confirm dialog, the CSV exporter, the not-allowed state, the version-conflict reload | O-00 | Used by every section above |
+| M-70 | Manus | Owner dashboard data: `listing_stats_daily` with its nightly roll-up, `owner_get_overview`, `owner_get_analytics` | M-03 | Section 3B.5 criterion 3 passes at the database |
+| O-72 | OpenHands | Owner dashboard shell and Overview on the functions: `?section=` deep links, the expired and suspended gates, real cards, Needs action, no seeded numbers; behind `VITE_BACKEND_OWNER` | M-70, O-60 | Section 3B.5 criteria 2 and 3 pass |
+| M-71 | Manus | `catalog_items`, `listing_photos`, `promotions` and the functions `owner_save_listing`, `owner_save_catalog_item`, `owner_set_item_available`, `owner_add_photo`, `owner_reorder_photos`, `owner_set_cover`, `owner_delete_photo` | M-01 | Section 3B.5 criteria 1, 7 and 8 pass at the database |
+| O-73 | OpenHands | Owner Shop view: profile, opening hours, booking mode, price display, with server validation messages | M-71, O-72 | Section 3B.5 criterion 6 passes |
+| O-74 | OpenHands | Owner Menu (catalog) and Gallery views | M-71, O-72 | Section 3B.5 criterion 7 passes |
+| M-72 | Manus | `owner_reply_review`, `owner_flag_review`, `owner_save_promotion`, `owner_set_promotion_status` (one notification, 2 a week) | M-71, M-64 | Section 3B.5 criterion 5 passes at the database |
+| O-75 | OpenHands | Owner Reviews, Analytics and Promotions views | M-72, M-70, O-72 | Section 3B.5 criterion 5 passes on the page |
+| O-76 | OpenHands | Owner Bookings and Orders views on the section 6 functions (written with the Hotels tickets in Phase 2) | Phase 2 booking tickets, O-72 | Section 3B.5 criterion 4 passes |
+| M-73 | Manus | Public views for listings, cities and photos; `get_listing_page`, `increment_listing_views`; seed from `src/features/place/placeCatalog.ts` and the city data | M-01 | A place and a city page can be built from one call each |
+| O-77 | OpenHands | City, category, place and shop pages on live data; the not-found, not-allowed and crash pages; `?lang=` handling | M-73 | Section 7A.8 passes |
+| M-74 | Manus | `travel_plans`; extend `custom_plan_requests`; `submit_custom_plan_request` (5 open requests, date checks) | M-01 | Section 7B.5 criteria 1 and 2 pass at the database |
+| O-78 | OpenHands | Travel Plans catalog and custom request on the functions; quotes in My Travel Plans | M-74 | Section 7B.5 passes |
+| M-75 | Manus | `favorites` count trigger, the new `profiles` columns, `update_my_profile`, `request_account_deletion`, `request_data_export` | M-01 | Section 14.10 criteria 1 and 3 pass at the database |
+| O-79 | OpenHands | Account pages: Favorites with the guest merge, Notifications page, Settings, and the Payments view in place of Wallet | M-75, M-04 | Section 14.10 criteria 1, 2, 3 and 6 pass |
+| O-80 | OpenHands | Sign-in pages: forgot password, email confirmation notice, the Terms checkbox, login error behavior and lockout message, Facebook button hidden | M-09, M-76 | Section 14.10 criteria 4 and 5 pass |
+| M-76 | Manus | `legal_documents`, `accept_legal`, the acceptance columns | M-01 | A new version forces re-acceptance at the next sign-in |
+| O-81 | OpenHands | Legal pages `/legal/terms`, `/legal/privacy`, `/legal/owner-terms` (routes added in place), the re-acceptance dialog, the ad consent banner | M-76 | Section 16B.15 acceptance passes |
+| M-77 | Manus | Worker routes for SEO: head rewrite for the public routes, `/sitemap.xml`, `/api/health`; `assets.run_worker_first` updated | M-06 | Section 16B.14 acceptance passes |
+| O-82 | OpenHands | Page titles and descriptions on every navigation, `?lang=` support, the Share button, and `public/robots.txt` | none | A shared link carries its language and the private routes are not indexed |
+| M-78 | Manus | Email: `email_outbox`, the triggers, the Worker sender with retries, Myanmar and English templates, the provider's SMTP in Supabase | M-06, M-09 | A booking event sends one email in the recipient's language; 3 failures notify Super Admin |
+| M-79 | Manus | Backups and monitoring: point-in-time recovery, the weekly R2 copy, the uptime check, a restore drill on staging, the retention purge jobs of 16B.12 | M-00, M-03 | The drill succeeds and every purge job runs |
+| M-80 | Manus | `client_errors` table and its 30-day purge | M-03 | A reported error is stored without a user id |
+| O-83 | OpenHands | The global error boundary reports to `client_errors` | M-80 | A forced crash shows the apology and stores one row |
 
 ### 16F.3 Order of work
 
@@ -2306,7 +2668,7 @@ These are fixed (rule 2 of 16F.1). Argument and field names are exact. Dates are
 
 A failure raises a Postgres exception with SQLSTATE `P0001` whose message is `<module>_error_<code>` (for example `rental_error_start_date`). The client shows `t('<message>')` in Myanmar and English, and a generic message for an unknown one. A success returns the row or a `jsonb` document directly; there is no envelope. When a failure needs data, the exception `DETAIL` is a JSON string, for example `{"problems":[{"code":"cover"}]}`.
 
-Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `admin_`, `media_` (the Worker returns the same names with HTTP status codes).
+Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `admin_`, `owner_`, `media_` (the Worker returns the same names with HTTP status codes).
 
 Common: `common_error_not_signed_in`, `common_error_forbidden`, `common_error_not_found`, `common_error_version_conflict`, `common_error_rate_limit`.
 
@@ -2361,7 +2723,9 @@ A block is exactly `{ id, type: "text", text_en, text_mm }`, `{ id, type: "image
 
 **Super Admin dashboard (section 3A).** The `admin_*` functions are named in section 3A. They follow these conventions: positional arguments, `P0001` errors with the `admin_error_` prefix, and a role check on the server.
 
-**Settings.** `get_setting(p_key text)` and `set_setting(p_key text, p_value jsonb)` over `app_settings(key text primary key, value jsonb, updated_by, updated_at)`; `set_setting` is Super Admin only. Keys: `guide_post_rate_usd`, `rental_new_order_highlight_hours` (default 2), `rental_min_notice_days` (default 1), `ad_fallback_provider` (`adsense` or `none`), `ad_adsense_client_id`, `translate_provider`.
+**Owner dashboard (section 3B).** The `owner_*` functions are named in section 3B.4 and follow the same conventions with the `owner_error_` prefix.
+
+**Settings.** `get_setting(p_key text)` and `set_setting(p_key text, p_value jsonb)` over `app_settings(key text primary key, value jsonb, updated_by, updated_at)`; `set_setting` is Super Admin only. Keys: `maintenance_mode`, `maintenance_message_mm`, `maintenance_message_en`, `min_app_version`, `guide_post_rate_usd`, `rental_new_order_highlight_hours` (default 2), `rental_min_notice_days` (default 1), `ad_fallback_provider` (`adsense` or `none`), `ad_adsense_client_id`, `translate_provider`.
 
 **Ads (section 16A)**
 
@@ -2388,7 +2752,7 @@ A block is exactly `{ id, type: "text", text_en, text_mm }`, `{ id, type: "image
 
 ### 16G.4 The one Worker
 
-There is **one** Cloudflare Worker, `Worker/index.ts` (section 16I). It serves the API under `/api/` and runs the scheduled jobs; every other path is served by the static site. The root `wrangler.jsonc` binds it: `main` points to `Worker/index.ts`, `assets.run_worker_first` is `["/api/*"]`, the R2 bucket binding is named `MEDIA`, and the cron triggers are set. Same-origin calls need no CORS in production; a development allowlist covers `http://localhost:5173`.
+There is **one** Cloudflare Worker, `Worker/index.ts` (section 16I). It serves the API under `/api/` and runs the scheduled jobs; every other path is served by the static site. The root `wrangler.jsonc` binds it: `main` points to `Worker/index.ts`, `assets.run_worker_first` is `["/api/*", "/sitemap.xml"]` plus the public paths of 16B.14, the R2 bucket binding is named `MEDIA`, and the cron triggers are set. Same-origin calls need no CORS in production; a development allowlist covers `http://localhost:5173`.
 
 | Route | Contract |
 |---|---|
@@ -2396,6 +2760,7 @@ There is **one** Cloudflare Worker, `Worker/index.ts` (section 16I). It serves t
 | `GET /api/ad/click/:creativeId?p=<placement>&s=<session>` | Records a click and answers 302 to the creative's click URL. The link is signed with `AD_CLICK_SIGNING_KEY` so it cannot be forged |
 | `POST /api/ad/event` (JSON `{ creative_id, placement, kind: "impression", session_hash }`) | Records an impression; answers 204 |
 | `POST /api/translate` (JSON `{ text, from, to }`) | `{ text, status }`, using `translation_cache` first |
+| `GET /api/health` | Answers 200 after a quick database query; used by the uptime check (16B.16) |
 | `GET /api/weather?city=<id>` | The one central weather service of section 12, cached for 30 minutes per city; returns the city's current conditions and forecast |
 | scheduled handler | Runs the jobs of 16B.7 that are not `pg_cron` |
 
@@ -2563,6 +2928,32 @@ Files are not scattered. Each kind of file has one home, and a test (ticket O-05
 **Where applied state is recorded.** Whether a file in `SQL/` has been applied is kept in `Doc/TICKETS.md` and in Supabase's own migration history, never in the `SQL/` folder.
 
 **The layout test (O-05)** checks: `Plan/` holds one file named `PROJECT-PLAN.md`; `Doc/` holds exactly the listed files; every file in `SQL/` is a `.sql` file with a valid name, in strictly increasing order; `Worker/` holds only `index.ts` (or only `.gitkeep`); none of the forbidden folders or stray files exist.
+
+## 16J. Mobile app (Phase 5): specification (2026-11-25)
+
+The app must stay in step with the web app through the shared backend. This section fixes how, so the web work done now is not wasted.
+
+**Approach (decided).** The iOS and Android apps are the same React application wrapped with **Capacitor**: one codebase, one set of screens, the same Supabase and Worker APIs. Native plugins add what a browser cannot do well. React Native is not used.
+
+| Need | How |
+|---|---|
+| Push notifications | A push plugin with a device-token table `push_tokens` (`user_id`, `token`, `platform`, `lang`, `created_at`, `last_seen_at`); the Worker's scheduled handler sends the booking and promotion events of 16B.3; a user can turn push off in Settings |
+| Location | The native location permission, asked only when Nearby opens ("while using the app") |
+| Share, deep links | The native share sheet; universal links so a web link to a post, guide, place or voucher opens in the app, with the web page as the fallback |
+| Session storage | The Supabase session in secure storage |
+| Ads | AdMob through a plugin, reading the same `serve_ad` and placement catalog (16A); AdMob is the fallback provider in the app |
+| Offline | Read-only caching of the Foreign Tourist section, the traveler's vouchers and saved favorites; nothing that changes data works offline |
+| Payments | No in-app purchase: bookings are real-world services paid outside the stores' payment systems |
+
+**Store requirements the app must meet.** In-app account deletion (Settings, 14.7), privacy details that match the Privacy Policy, a visible link to the Terms, screenshots in Myanmar and English, and a content rating. Sign-in with Google works; Sign in with Apple is added when Apple's rules require it.
+
+**Releases.** The web build is the source. A setting `min_app_version` (16G.3) lets Super Admin require an update: below it the app shows an "Update required" screen. Crash reports go to the error-tracking service (16B.13). Each release is tested on one older and one current phone of each platform.
+
+**Acceptance.** Every flow of sections 5 to 8 and 14 passes on a phone; a push for a paid booking opens that voucher; an app below `min_app_version` cannot continue; account deletion can be started in the app.
+
+Tickets for this phase are written by Claude when Phase 4 is complete.
+
+---
 
 ## Appendix A. Rentals UI reference provided by the user (2026-11-08)
 
