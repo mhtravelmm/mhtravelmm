@@ -58,7 +58,7 @@
 
 ### Section map
 
-1 Overview · 2 Tech and architecture · 3 Roles and accounts · 3A Super Admin dashboard · 3B Owner dashboard · 3C Main Owner panel · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 7A City, category, listing and shop pages · 7B Travel Plans · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout · 16J Mobile app.
+1 Overview · 2 Tech and architecture · 3 Roles and accounts · 3A Super Admin dashboard · 3B Owner dashboard · 3C Main Owner panel · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 7A City, category, listing and shop pages · 7B Travel Plans · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules (recipe and module specifications) · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout · 16J Mobile app.
 
 ---
 
@@ -460,7 +460,7 @@ Written against `src/features/shopOwner/*`, `src/lib/ownerSubscriptions.ts`, `sr
 | `dashboard` | Reads how the shop is doing and what needs action |
 | `shop` | Edits the listing profile |
 | `bookings` | Handles date-based requests: hotel stays, table reservations, events |
-| `orders` | Handles item-based requests: book shop and restaurant pick-up orders (categories with a catalog) |
+| `orders` | Handles item-based pick-up orders (book shops) |
 | `menu` | Manages the catalog (rooms, menu items, products, ticket types) |
 | `gallery` | Manages photos |
 | `reviews` | Reads reviews and replies |
@@ -848,7 +848,7 @@ Common rules:
 | `expired` | The window passed unpaid, or the Owner never answered | the system | none |
 | `cancelled` | Cancelled with a reason by the Owner or staff. **Never by the traveler** | Owner or staff | none |
 
-Instant bookings are created directly as `paid`. A move that is not in the table is refused with `<module>_error_status_transition`. Rescheduling is an event on a `paid` booking, not a status.
+Instant bookings are created directly as `paid`. A listing with `payment_required = false` (a table reservation, a pay-at-the-shop pick-up order, free entry) skips the payment window: Accept issues the voucher and the booking stays `accepted` until staff mark it `completed`; `paid` is not used (16C.4.2). A move that is not in the table is refused with `<module>_error_status_transition`. Rescheduling is an event on a `paid` booking, not a status.
 
 ### 6.2 Payment
 
@@ -871,9 +871,10 @@ After payment a traveler may change the date. The rules:
 
 | Table | Key columns |
 |---|---|
-| `bookings` | `id`, `request_code` (unique; the shape is `<PREFIX>-<date>-<sequence>`: `RNT-YYMMDD-####` for rentals as built, `MHC-YYYYMMDD-###` for custom plan requests and `MHT-YYYYMMDD-###` for ticket orders as built, and `HTL-` and `RST-` with the rental shape for hotels and restaurants), `user_id`, `listing_id`, `owner_id`, `category`, `status`, `flow_mode`, `start_date`, `end_date`, `guests`, `currency`, `total_usd`, `payment_method`, `payment_deadline`, `paid_at`, `commission_pct`, `commission_mmk`, `voucher_version`, `special_requests`, `created_at`, `updated_at` |
+| `bookings` | `id`, `request_code` (unique; the shape is `<PREFIX>-<date>-<sequence>`: `RNT-YYMMDD-####` for rentals as built, `MHC-YYYYMMDD-###` for custom plan requests and `MHT-YYYYMMDD-###` for ticket orders as built, and `HTL-` and `RST-` with the rental shape for hotels and restaurants), `user_id`, `listing_id`, `owner_id`, `category`, `status`, `flow_mode`, `start_date`, `end_date`, `guests`, `party_size`, `reservation_time`, `payment_required`, `currency`, `total_usd`, `payment_method`, `payment_deadline`, `paid_at`, `commission_pct`, `commission_mmk`, `voucher_version`, `special_requests`, `created_at`, `updated_at` |
 | `booking_events` | `id`, `booking_id`, `from_status`, `to_status`, `actor_id`, `note`, `at` |
 | `booking_hotel_details` | `booking_id`, `room_type`, `nights`, `check_in_time`, `check_out_time` |
+| `booking_lines` | `id`, `booking_id`, `catalog_item_id`, `name_snapshot`, `quantity`, `unit_price_usd` (the items of an order, or the room of a stay) |
 | `booking_refunds` | `id`, `booking_id`, `amount_mmk`, `reason`, `made_by`, `at` |
 
 Rental keeps its own `rental_orders` (section 8) and joins the traveler's list through the `my_bookings` view. Detail tables for restaurants, tickets and events are added with their modules (16C).
@@ -1907,7 +1908,7 @@ Phone sign-in (one-time code), Apple and Facebook are added through Supabase Aut
 
 ### 14.6 Notifications page
 
-- `/notifications` (and `/account/notifications`): items grouped as Today, This week and Earlier; an unread count; Mark all as read; tapping an item opens its link and marks it read. An empty state explains what will appear.
+- `/notifications` (and `/account/notifications`): All, Unread and Read filters; items grouped as Today and Earlier; an unread count; Mark all as read; tapping an item opens its link and marks it read. An empty state explains what will appear.
 - The list is the account's `notifications` rows plus the shared feed rows (16B.3), newest first, in batches of 20; retention 90 days. New items arrive live through Realtime and raise the bell count. The read state is per account.
 - A notification stores its link; if the target has been unpublished the page shows a short "no longer available" message instead of an error.
 
@@ -2416,7 +2417,7 @@ After the MH-owned modules, every other module is filled in one at a time with t
 | 5 | Markets | Same shape as Attractions |
 | 6 | Book Shops | Owner catalog of products |
 | 7 | Transport and local Bus | Static route and stop data; no seat booking |
-| 8 | Nearby | Reads the listings built above; adds distance, open now and the map |
+| 8 | Nearby (with Services) | Reads the listings built above plus the Services information listings (exchange, hospitals, clinics, gyms); adds distance, open now and the map |
 | 9 | Travel Plans | Custom-plan requests (`custom_plan_requests` exists) |
 | 10 | Unified Search | v1 starts after Phase 1C with the MH-owned content and gains each module as it lands (section 16H) |
 
@@ -2424,7 +2425,7 @@ Ticketing and the Operator system follow in their own phase (the Operator system
 
 ### 16C.2 Shared tables
 
-- **`listings`** (ids stay as today, for example `lotte` or `pre1`, so links and tests keep working): `id`, `category`, `city_id`, `owner_id` (null for MH-managed), `name_mm`, `name_en`, `description_mm`, `description_en`, `address`, `latitude`, `longitude`, `open_time`, `close_time`, `checkin_time` and `checkout_time` (hotels), `price_display` (hidden / after payment / public), `price_from_mmk`, `price_from_usd`, `booking_flow_mode` (full_manual / instant), `status` (pending / active / suspended / retired), `rating`, `review_count`, `favorite_count`, `views`, `created_at`, `updated_at`.
+- **`listings`** (ids stay as today, for example `lotte` or `pre1`, so links and tests keep working): `id`, `category` (hotels, restaurants, cafes, attractions, markets, bookshops, services, transport), `subcategory`, `city_id`, `owner_id` (null for MH-managed), `name_mm`, `name_en`, `description_mm`, `description_en`, `address`, `latitude`, `longitude`, `open_time`, `close_time`, `checkin_time` and `checkout_time` (hotels), `price_display` (hidden / after payment / public), `price_from_mmk`, `price_from_usd`, `booking_flow_mode` (full_manual / instant), `payment_required` (default true), `status` (pending / active / suspended / retired), `rating`, `review_count`, `favorite_count`, `views`, `created_at`, `updated_at`.
 - **Category detail tables** for what differs: hotel rooms, restaurant and cafe menus, book shop products, market stalls.
 - **`listing_photos`** (`id`, `listing_id`, `key`, `position`) within the owner's Admin-set quota, stored in `shops/<shop-id>/`.
 - **`bookings`** (exists): the universal booking with the section 6 flow. A listing's mode decides the path. **Full Manual:** requested → accepted → payment pending (12 hours) → paid → voucher → completed, with Expired and Cancelled; **Instant:** pay → voucher. Users cannot cancel; after full payment they may reschedule the date. The Owner's commission rate is snapshotted on each transaction (section 9).
@@ -2442,6 +2443,122 @@ Ticketing and the Operator system follow in their own phase (the Operator system
 
 Acceptance for each module: pages read live data; an Owner changes only their own listing; a booking follows the listing's flow mode end to end; a review appears only after a verified booking; the module is searchable.
 
+### 16C.4 Module specifications (2026-11-25)
+
+Each remaining module has the same skeleton (16C.3). This subsection fixes what differs: the taxonomy, the extra fields, the catalog, the action, the booking mode and the page. Written against `src/features/place/*`, `src/features/city/*`, the Restaurants, Book Shop and Nearby decisions in section 16.1, and `Doc/STATUS.md`.
+
+#### 16C.4.1 Taxonomy
+
+`listings.category` is the module; `listings.subcategory` refines it. Subcategories are data (`listing_subcategories`: `category`, `slug`, `label_mm`, `label_en`, `icon`, `in_nearby`, `sort_order`) so Admin can add one without code. The thirteen Nearby icons map onto them:
+
+| Category | Subcategories | Nearby icon |
+|---|---|---|
+| `hotels` | `hotel`, `guesthouse` | Hotels, Guesthouses |
+| `restaurants` | `restaurant`, `bar` | Restaurants, Bars |
+| `cafes` | `cafe` | Cafes |
+| `attractions` | `attraction`, `temple` | Temples |
+| `markets` | `market` | City Markets |
+| `bookshops` | `bookstore` | Bookstores |
+| `services` (new, information only) | `exchange`, `hospital`, `clinic`, `gym` | Exchange, Hospitals, Clinics, Gyms |
+| `transport` | `transport_operator` | none |
+| rentals | rental branches (section 8) | Rentals |
+
+`services` appears in Nearby and in Search (kind `services`) and never on Home or the category index. All thirteen icons keep the continuous right-to-left marquee of section 16.1.
+
+#### 16C.4.2 Summary
+
+| Module | Managed by | Action | Default mode | Price shown | Catalog (`catalog_items.kind`) |
+|---|---|---|---|---|---|
+| Hotels | Owner | Book now | Full Manual | Public, "From $X per night" | `room` |
+| Restaurants | Owner | Reserve a table | Full Manual, no payment | Public on dishes | `menu_item` |
+| Cafes | Owner | Directions and Call; reserve only if enabled | Contact | Public on items | `menu_item` |
+| Attractions | MH Travel | Save, Directions, Plan a trip | none | Entry-fee text | `ticket_type` (information) |
+| Markets | MH Travel | Save, Directions, Plan a trip | none | none | none |
+| Book Shops | Owner | Reserve for pick-up | Full Manual, pay at the shop | Public on products | `product` |
+| Services | MH Travel | Call, Directions | none | none | none |
+| Transport | Owner (the operator) | Info; Buy tickets when integrated | none | Fares from the operator | none |
+
+**A listing without payment.** A listing, item or booking with `payment_required = false` (table reservations, pay-at-the-shop pick-up, free entry) skips the payment window: **Accept** issues the voucher and moves the booking straight to `accepted`, and the staff mark it `completed` afterwards; `paid` is not used (6.1).
+
+#### 16C.4.3 Hotels (and guesthouses)
+
+- **Extra fields:** check-in and check-out times, star rating (optional, entered by the Owner), amenities, policies text (no cancellation by travelers, section 6), breakfast included (yes or no).
+- **Rooms** (`catalog_items.kind = room`): `attributes` hold room type name, beds, bed type, maximum guests, size in square metres, amenities, view, breakfast included. The price is per night in USD and includes taxes; the breakdown shows nights × rate and any service charge the Owner states in the room note.
+- **Booking form** (progressive disclosure, section 6): the hero shows "From $X per night" and **Book now**. Tapping it reveals the dates and guests, then the price breakdown, then Confirm. Fields: room, check-in, check-out, guests, special requests, guest name and phone (filled from the profile). Rules the server checks: check-in at least tomorrow in Myanmar Time; 1 to 30 nights; guests not above the room's maximum; the room is `available`; the listing's Owner subscription is active.
+- **Mode:** Full Manual only in this phase. Instant needs an availability calendar (`room_availability`: `room_item_id`, `date`, `rooms_left`) that the Owner keeps; it is added later and then the Owner may choose Instant.
+- **Data:** `booking_hotel_details` (6.4) plus `booking_lines` for the room. Search kinds `hotels`, with `guesthouse` as a Nearby icon. Cards show a currency-aware nightly price.
+
+#### 16C.4.4 Restaurants (and bars)
+
+- **Extra fields:** cuisine tags, price level (1 to 3, entered by the Owner), whether reservations are enabled, maximum party size (default 12), how many days ahead a table can be reserved (default 60).
+- **Menu** (`menu_item`): `attributes` hold the menu section (starters, mains, desserts, drinks and so on), spicy and vegetarian flags. On the page the menu is a row of tabs, one per section, and **choosing a tab filters the dishes** (the earlier build changed the state without filtering; this is the rule).
+- **Reserve a table:** date, time, party size, special requests, guest name and phone. The server checks that the date is not in the past, that a same-day request is at least 2 hours ahead, that the time falls within the opening hours (Myanmar Time, overnight close allowed), and that the party is within the maximum. The booking is `requested` and the Owner confirms (**Accept** issues the voucher; no payment).
+- **Page** (as built): hero, info row, map link and amenities, menu tabs and dishes, reviews, venue photos, nearby attractions, and the reserve call to action.
+- **Not in this phase:** ordering dishes online. `bookings` gains `party_size` and `reservation_time`.
+
+#### 16C.4.5 Cafes
+
+The same fields and menu as restaurants. Reservations are **off by default**: the primary actions are **Call** (`tel:`) and **Directions**. An Owner may enable reservations, after which a cafe behaves like a restaurant (16C.4.4).
+
+#### 16C.4.6 Attractions
+
+- MH Travel edits these listings directly (3A.10); there is no Owner, subscription or commission.
+- **Extra fields:** entry fee text (MM/EN), opening hours, best time to visit, etiquette or dress notes (for a temple, for example, shoes off and covered shoulders), accessibility notes, and `ticket_type` items shown as information only.
+- **Page:** the shared place page (7A.4) without a booking button. It adds **Guides featuring this place**, found by looking up the guide stops that point to the listing, and keeps Save, Directions and Plan a trip.
+- Subcategory `temple` is the Nearby Temples icon.
+
+#### 16C.4.7 Markets
+
+MH-managed like attractions. **Extra fields:** market type (day, night, wholesale, craft), days and hours, what to buy, a short bargaining note. No catalog and no booking. Subcategory `market` is the Nearby City Markets icon.
+
+#### 16C.4.8 Book Shops
+
+- **Extra fields:** services offered (for example gift wrapping, printing), languages of the books, a pick-up note.
+- **Products** (`product`): `attributes` hold the section (books, stationery, gifts, as built), author, language, and `in_stock`. Stock is a yes or no that the Owner keeps; it is not decremented automatically in this phase.
+- **Reserve for pick-up:** the traveler chooses products and quantities and a pick-up date. This is an **order**: a booking with lines (`booking_lines`: item, quantity, unit price snapshot) and a total. `payment_required` is false by default, so the shop confirms (Accept issues the voucher) and the traveler pays at the shop; an Owner may switch recording of payment on.
+- **Page** (as built): hero and facts, services, About, books, stationery, gifts, photos, reviews, nearby attractions, and the reserve call to action. No delivery in this phase.
+
+#### 16C.4.9 Services (exchange, hospital, clinic, gym)
+
+Information listings, edited by MH Travel: address, phone, opening hours or a 24-hour flag, an `emergency` flag for hospitals, and a note. The primary action is **Call**, then **Directions**. Hospital and clinic pages carry the line "Information only. In an emergency call the national emergency numbers" with the numbers of section 13. Exchange listings show no rates (rates change; section 13 explains cash and exchange). Services have no reviews on hospitals and clinics (review is disabled for these two subcategories); exchange and gyms allow reviews.
+
+#### 16C.4.10 Transport
+
+- **Transport operators** (`transport_operator` listings) are the ticket sellers of section 9 and 7.1: name, logo, description, contact, and the cities they serve. The page lists the operator's routes (a summary read from its trips) and a **Buy tickets** button that opens the Ticketing hub with the operator pre-selected. Until the operator system is integrated (Phase 4) the page is information and contact only.
+- **Local Bus** (YBS) is not a listing: it is the route reference and planner of 7.3.
+
+#### 16C.4.11 Ticketing hub products (Phase 4)
+
+The hub (section 7) sells five products: Flight, Bus (coach and express), Event, Cinema and Train tickets. They map onto the operator contract of section 9 as follows.
+
+| Product | What is sold | Seats |
+|---|---|---|
+| Bus, Ferry | A trip on a route and date | Seat map |
+| Train | A trip | Seat map; through its own provider later |
+| Flight | A flight | Provider adapter (a third-party feed), written when Phase 4 starts |
+| Event | A show with ticket types | General admission by quantity, or a seat map where the venue has one |
+| Cinema | A showing of a film | Seat map |
+
+Trips use `GET /trips` and `GET /trips/{id}/seats` as in section 9. Events and cinema use two more calls on the same contract: `GET /shows?kind=event|cinema&date&q` (the showings, with times, venue and ticket types or free-seat counts) and `GET /shows/{id}/seats?date` (the seat map, or the remaining count per ticket type). Holds, confirms, rescheduling and the voucher are the same as for trips. The hub's pages keep the product tabs and the Popular Routes and Best Deals rows of section 7 and show no hotels or rentals.
+
+#### 16C.4.12 Search and Nearby behavior per module
+
+Search indexes each module under its category as the kind (16H.3), plus `services`. Nearby uses subcategories for its icons, shows Open Now from the hours, and puts Services listings (exchange, hospitals, clinics, gyms) and rental branches on the map beside the others. A module's cards use the shared sizes (section 4) and the price rule of 16C.4.2.
+
+#### 16C.4.13 Acceptance criteria
+
+1. A hotel booking follows 6.1; a room above the guest limit, a past check-in or 31 nights is refused with a translated message.
+2. A restaurant reservation outside the opening hours, for a party above the maximum, or less than 2 hours ahead the same day is refused; Accept issues the voucher with no payment step.
+3. Choosing a menu tab shows only that section's dishes.
+4. A cafe with reservations off shows Call and Directions and no reserve button.
+5. A book shop pick-up order stores lines and a total, and its voucher is issued at Accept.
+6. An attraction page has no booking button and lists the guides that feature it.
+7. A hospital page shows the emergency numbers and has no review button.
+8. Every subcategory with `in_nearby` appears as a Nearby icon, and a Services listing shows on the Nearby map.
+9. A transport operator page opens the Ticketing hub with the operator chosen once the operator system is integrated.
+
+---
+
 ## 16D. Build roadmap and gates (2026-11-22)
 
 Phases are ordered by dependency, with no calendar dates. A phase is finished only when its gate is met. Each phase ends with the `Doc/` update (what was completed and how it was built).
@@ -2455,7 +2572,7 @@ Phases are ordered by dependency, with no calendar dates. A phase is finished on
 | 1D. Ads and Adsboard | Section 16A, starting with Home and `blog_inline`; can run beside 1C | Section 16A acceptance criteria all pass |
 | 1E. Search v1 | Section 16H on the MH-owned content (blogs, guides, rentals, cities) | Section 16H.13 acceptance criteria all pass |
 | 1F. Super Admin dashboard | Section 3A section by section on the server, as each module's backend lands (Overview, Users and Settings can start in Phase 0 and 1) | Section 3A.16 acceptance criteria all pass |
-| 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one; with them the universal booking and voucher work (section 6), reviews and reports (section 11), owner applications (section 3), support chat and the contact form (section 12), the Bus route planner (section 7.3), the Home feed (section 5), the Owner dashboard (section 3B), the listing pages (7A), Travel Plans (7B), the Account pages and sign-in pages (14.5 to 14.9), email (16B.11) and the legal pages (16B.15); each module joins the search index | Hotels pass the 16C acceptance, then each next module does |
+| 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one; with them the universal booking and voucher work (section 6), reviews and reports (section 11), owner applications (section 3), support chat and the contact form (section 12), the Bus route planner (section 7.3), the Home feed (section 5), the Owner dashboard (section 3B), the listing pages (7A), Travel Plans (7B), the Account pages and sign-in pages (14.5 to 14.9), email (16B.11) and the legal pages (16B.15); each module follows its specification in 16C.4 and joins the search index | Hotels pass the 16C acceptance, then each next module does |
 | 3. Owner money and templates | The Owner money system (section 9); the template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **both halves are met: `replayPayout()` recomputes a run from its rows (2026-11-27), and a switch and a fallback are exercised on the rendered page (2026-11-28) — `resolveTemplateForShop()` falls back on a lapsed entitlement, a retirement or a rollback, and `npm run a11y` proves every template renders in both themes** |
 | 4. Ticketing and operators | Operator system specification (section 9) with the Main Owner panel (3C) | Operator system acceptance (section 9) passes |
 | 5. Mobile app | Section 16J: the Capacitor app on the same APIs, `serve_ad` with AdMob, push notifications | Same flows pass on a phone |
@@ -2521,7 +2638,7 @@ The founder delegated these decisions to Claude and will review them after the m
 | 50 | One Owner account manages one shop; several locations mean several accounts | 3B.2 | Add a multi-shop link later |
 | 51 | Owner's first listing needs Admin approval; later edits go live and are audited; category and city are Admin-only | 3B.2 | Approval rule |
 | 52 | Promotions publish at once, 2 a week, one notification each | 3B.3 | Two constants |
-| 53 | Product orders (book shop, restaurant) are pick-up only in this phase | 3B.3 | Add delivery later |
+| 53 | Product orders (book shops) are pick-up only in this phase; restaurants take table reservations, not dish orders | 3B.3, 16C.4.4 | Add delivery and dish ordering later |
 | 54 | Travel Plans are quotations, not instant purchases; requests are `custom_plan_requests` | 7B.2 | Add instant purchase later |
 | 55 | "Directions" opens the phone's map app; no embedded map yet | 7A.4 | Add a map view later |
 | 56 | The traveler "Wallet" becomes Payments (no balance, no stored card) | 14.9 | Add stored methods through a gateway |
@@ -2531,6 +2648,15 @@ The founder delegated these decisions to Claude and will review them after the m
 | 60 | Terms re-acceptance on every new version; ad consent banner only when the AdSense fallback is on | 16B.15 | Legal review |
 | 61 | Transaction records kept 7 years (to be confirmed with a local accountant) | 16B.12 | One setting |
 | 62 | The mobile app is a Capacitor wrapper of the web app; no in-app purchase | 16J | A native rewrite |
+| 63 | Categories plus data-driven subcategories; a new information-only `services` category for exchange, hospitals, clinics and gyms | 16C.4.1 | Subcategories are data |
+| 64 | `payment_required = false` listings skip the payment window: Accept issues the voucher | 6.1, 16C.4.2 | A per-listing flag |
+| 65 | Hotels are Full Manual only until an availability calendar exists | 16C.4.3 | Add the calendar, then allow Instant |
+| 66 | Restaurants take reservations only (same-day at least 2 hours ahead, up to 60 days, party up to 12); no online dish ordering | 16C.4.4 | Per-listing settings |
+| 67 | Cafes are contact-only by default; reservations are optional | 16C.4.5 | A per-listing switch |
+| 68 | Book shops take pick-up orders, pay at the shop by default; stock is a yes or no | 16C.4.8 | Add stock counts later |
+| 69 | Hospitals and clinics have no reviews and show an information-only note | 16C.4.9 | One rule |
+| 70 | Events and cinema use two extra operator calls (`/shows`); flights come through a provider adapter later | 16C.4.11 | Reshape the contract |
+| 71 | The universal booking functions of 16G.3 (`request_booking`, `set_booking_status`, `request_reschedule`, `decide_reschedule`) | 16G.3 | Reshape the functions and the client together |
 
 **Facts only the founder can supply later** (not blocking any build step): the Travel Guide default per-post rate; the commercial terms of each ad campaign; the AdSense and AdMob account ids; the commission percentage and revenue-share formula for tickets (already left Admin-configurable in section 9); definitions of the "express" and "အာတာဖတ်" vehicles, which Rental Admin enters as data.
 
@@ -2647,6 +2773,14 @@ Ids: `M-` for Manus, `O-` for OpenHands. Status lives only in `Doc/TICKETS.md`. 
 | M-79 | Manus | Backups and monitoring: point-in-time recovery, the weekly R2 copy, the uptime check, a restore drill on staging, the retention purge jobs of 16B.12 | M-00, M-03 | The drill succeeds and every purge job runs |
 | M-80 | Manus | `client_errors` table and its 30-day purge | M-03 | A reported error is stored without a user id |
 | O-83 | OpenHands | The global error boundary reports to `client_errors` | M-80 | A forced crash shows the apology and stores one row |
+| M-81 | Manus | Listings core: `listings` with `subcategory`, `payment_required` and the per-category fields of 16C.4, `listing_subcategories`, `catalog_items`, `listing_photos`; seeds from `src/features/place/placeCatalog.ts` (ids kept) plus the Services listings | M-01, M-73 | Every id the app uses exists; the thirteen Nearby icons resolve to subcategories |
+| M-82 | Manus | Universal booking: the target `bookings` shape, `booking_events`, `booking_lines`, `booking_hotel_details`, the functions of 16G.3 (Bookings), and the expiry job | M-81, M-02, M-03, M-04 | Section 6.7 and 16C.4.13 criteria 1, 2 and 5 pass at the database |
+| M-83 | Manus | `get_guides_for_listing` and the review rule that turns reviews off for hospitals and clinics | M-81, M-31 | A listing returns the guides that use it; a hospital refuses a review |
+| O-84 | OpenHands | Hotels: the progressive booking form on the place page, the generic voucher page for any booking, Owner Bookings tied in | M-82 | 16C.4.13 criterion 1 passes from the page |
+| O-85 | OpenHands | Restaurants and Cafes: the reservation form, menu tabs that filter, Call and Directions, reservations switch for cafes | M-82 | 16C.4.13 criteria 2 to 4 pass |
+| O-86 | OpenHands | Book Shops: product sections, the pick-up order with lines | M-82 | 16C.4.13 criterion 5 passes |
+| O-87 | OpenHands | Attractions, Markets and Services pages: information layout, Guides featuring this place, emergency lines, no review button for hospitals and clinics | M-83 | 16C.4.13 criteria 6 and 7 pass |
+| O-88 | OpenHands | Transport operator pages: information and contact now, the Ticketing hub link when the operator system is integrated | M-81 | 16C.4.13 criterion 9 passes when Phase 4 is integrated |
 
 ### 16F.3 Order of work
 
@@ -2668,7 +2802,7 @@ These are fixed (rule 2 of 16F.1). Argument and field names are exact. Dates are
 
 A failure raises a Postgres exception with SQLSTATE `P0001` whose message is `<module>_error_<code>` (for example `rental_error_start_date`). The client shows `t('<message>')` in Myanmar and English, and a generic message for an unknown one. A success returns the row or a `jsonb` document directly; there is no envelope. When a failure needs data, the exception `DETAIL` is a JSON string, for example `{"problems":[{"code":"cover"}]}`.
 
-Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `admin_`, `owner_`, `media_` (the Worker returns the same names with HTTP status codes).
+Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `admin_`, `owner_`, `booking_`, `media_` (the Worker returns the same names with HTTP status codes).
 
 Common: `common_error_not_signed_in`, `common_error_forbidden`, `common_error_not_found`, `common_error_version_conflict`, `common_error_rate_limit`.
 
@@ -2696,6 +2830,19 @@ Search: `search_error_query_too_long`, `search_error_bad_sort`, `search_error_lo
 Catalog reads are direct `select`s on the `rental_*` catalog tables (public read of active rows); there is no `get_rental_catalog` function. `my_bookings` is a view.
 
 Two changes the built schema needs, both as forward migrations: (a) once `get_exchange_rate()` exists (M-05), `submit_rental_order` drops `p_fx_mmk_per_usd` and reads the server rate; (b) the `rental_order_extras` write policy is removed, so extras go only through `add_rental_extra`.
+
+**Bookings (section 6; built with the Hotels tickets)**
+
+| Function | Arguments | Returns | Who |
+|---|---|---|---|
+| `request_booking` | `p_listing_id text`, `p_item_id text` (a room, or null), `p_start_date date`, `p_end_date date` (null for a single day), `p_party_size integer`, `p_reservation_time time` (restaurants), `p_lines jsonb` (`[{ "item_id": "...", "quantity": 1 }]` for orders), `p_guest_name text`, `p_phone text`, `p_special_requests text`, `p_display_currency text`, `p_idempotency_key text` | the `bookings` row. A repeated `p_idempotency_key` returns the existing row. The checks per category are in 16C.4 | signed-in traveler |
+| `set_booking_status` | `p_booking_id uuid`, `p_status text`, `p_note text default ''`, `p_payment_method text default null` | the updated row. The moves are those of 6.1; for a listing with `payment_required = false`, `accepted` issues the voucher and `paid` is never used | the listing's Owner, `admin`, `super_admin`; `payment_admin` records payments |
+| `request_reschedule` | `p_booking_id uuid`, `p_start_date date`, `p_reservation_time time default null` | the row with a pending reschedule (inventory listings) or the changed row (self-service products) | the booking's traveler |
+| `decide_reschedule` | `p_booking_id uuid`, `p_approve boolean`, `p_note text default ''` | the updated row | the listing's Owner, `admin`, `super_admin` |
+| `expire_overdue_bookings` | none | `integer`, the number expired: accepted bookings past `payment_deadline`, and requests the Owner has not answered in 24 hours | the 5-minute job |
+| `get_guides_for_listing` | `p_listing_id text` | the published guides whose stops use the listing | anyone |
+
+Booking codes (`booking_error_<code>`): `not_signed_in`, `listing`, `item`, `start_date`, `end_date`, `nights`, `guests`, `party_size`, `time_outside_hours`, `same_day_too_soon`, `name`, `phone`, `owner_expired`, `status_transition`, `forbidden`, `payment_method`, `reschedule_not_paid`, `reschedule_too_late`, `reschedule_unchanged`, `not_found`.
 
 **Blog (section 10)**
 
@@ -2807,7 +2954,7 @@ Written against `src/features/search/SearchPage.tsx`, the Nearby rules in sectio
 
 | Kind | Source | Appears only when |
 |---|---|---|
-| `hotels`, `restaurants`, `cafes`, `attractions`, `markets`, `bookshops`, `transport` | `listings` | `status = 'active'` |
+| `hotels`, `restaurants`, `cafes`, `attractions`, `markets`, `bookshops`, `services`, `transport` | `listings` | `status = 'active'` |
 | `rentals` | `rental_categories` and `rental_availability` | the category is active (and, with a city filter, offered in that city) |
 | `blogs` | `blog_posts` | Published and `published_at <= now()` |
 | `guides` | `travel_guides` | Published and `published_at <= now()` |
