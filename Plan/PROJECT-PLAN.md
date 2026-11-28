@@ -58,7 +58,7 @@
 
 ### Section map
 
-1 Overview · 2 Tech and architecture · 3 Roles and accounts · 3A Super Admin dashboard · 3B Owner dashboard · 3C Main Owner panel · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 7A City, category, listing and shop pages · 7B Travel Plans · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules (recipe and module specifications) · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout · 16J Mobile app.
+1 Overview · 2 Tech and architecture · 3 Roles and accounts · 3A Super Admin dashboard · 3B Owner dashboard · 3C Main Owner panel · 4 Design system and Shop Page templates · 5 Home Page · 6 Booking Flow · 7 Ticketing, Bus and related products · 7A City, category, listing and shop pages · 7B Travel Plans · 8 Rental · 9 Owner business model, money and the Operator system · 10 Blog and Travel Guide · 11 Reviews and Reports · 12 Search, Nearby, Notifications and Support · 13 Foreign Tourist section · 14 Accounts, Language and Currency · 15 Repo conventions · 16 Page behavior and open items · 16A Ads and the Adsboard · 16B Platform services · 16C Remaining modules (recipe and module specifications) · 16D Roadmap · 16E Decision register · 16F Agent handoff · 16G Contracts · 16H Search system · 16I Repository layout · 16J Mobile app · 16K Launch readiness checklist.
 
 ---
 
@@ -482,7 +482,7 @@ Written against `src/features/shopOwner/*`, `src/lib/ownerSubscriptions.ts`, `sr
 
 **Menu (catalog).** `catalog_items`: `id`, `listing_id`, `kind` (`room`, `menu_item`, `product`, `ticket_type`), `name_mm`, `name_en`, `description_mm`, `description_en`, `price_usd`, `unit`, `attributes` (jsonb: room beds, size and amenities; menu spicy and vegetarian flags; product author and stock), `photo_key`, `available`, `sort_order`. The owner adds, edits, reorders, hides and removes items; removing an item used by a booking hides it instead. Prices follow the listing's price display. The kinds shown depend on the category (hotel: rooms; restaurant and cafe: menu items; book shop: products; attraction: ticket types).
 
-**Gallery.** Photos through the WebP pipeline (at most 450 KB each) into `shops/<shop-id>/`, within the quota Admin sets (default 20). Reorder, choose the cover, add a caption (MM/EN), delete. A photo in use as the cover cannot be deleted until another is chosen. Alt text defaults to the caption or the shop name.
+**Gallery.** Photos through the browser's WebP pipeline into `shops/<listing-id>/photos/` (a full image of at most 450 KB and a 45 KB thumbnail, 16B.6), within the quota Admin sets (`listings.photo_quota`, default 20). Reorder, choose the cover (exactly one), add a caption (MM/EN), delete. A photo in use as the cover cannot be deleted until another is chosen. Alt text defaults to the caption or the shop name.
 
 **Reviews.** Reviews of this listing with the rating summary. The owner may post one public reply per review (500 characters), edit it, and flag a review to Admin ("report"); the owner cannot hide or delete a review (section 11).
 
@@ -1378,16 +1378,17 @@ remain the authority once they are applied.
 
 Built in Phase 3 (section 16D). It covers subscriptions, commission, wallets and payouts for every Owner; the ticketing operators (Main Owner, Branch Owner) add their own settlement rows in the Operator system specification below.
 
-#### 1. Tables
+#### 1. Tables (the built schema; the Plan follows it)
 
 | Table | Key columns | Notes |
 |---|---|---|
-| `owners` | `id`, `profile_id`, `business_name`, `status` (`active` / `expired` / `suspended`), `fee_mmk`, `subscription_period_end`, `commission_pct` (nullable), `payout_note`, `created_by`, `created_at` | One per Owner Admin account; Admin sets the fee, term and commission freely, including free and 0% |
-| `owner_subscriptions` | `id`, `owner_id`, `fee_mmk`, `period_start`, `period_end`, `status`, `recorded_by`, `paid_at` | One row per paid term |
-| `transactions` | `id`, `booking_id`, `owner_id`, `branch_id` (nullable), `gross_mmk`, `commission_pct`, `commission_mmk`, `net_mmk`, `status` (`confirmed` / `refunded`), `created_at` | Written when a booking becomes `paid`; the rate is a snapshot |
-| `wallet_ledger_entries` | `id`, `wallet` (`platform` / `main_owner` / `branch`), `owner_id`, `entry_type` (`sale`, `commission`, `refund`, `subscription`, `payout`, `adjustment`), `amount_mmk`, `ref`, `at` | Append-only; balances are sums |
-| `payout_batches` | `id`, `period_start`, `period_end`, `scheduled_for`, `status` (`draft` / `approved` / `paid`) | One per half-month |
-| `payout_items` | `id`, `batch_id`, `owner_id`, `amount_mmk`, `carried_over_mmk`, `status`, `paid_at`, `reference` | One per Owner with an amount |
+| `shop_subscriptions` | `id`, `shop_id`, `kind` (`owner` or `template`), `template_id`, `owner_name`, `amount_mmk`, `period_start`, `period_end`, `grace_days`, `status`, `reminded_keys`, `recorded_by` | One row per paid term, for the Owner subscription or a template |
+| `owner_commission_settings` | `shop_id`, `percent`, `updated_by`, `updated_at` | Any percentage per shop, including 0 |
+| `owner_ledger_rows` | `id`, `kind`, `shop_id`, `shop_name`, `owner_name`, `booking_ref`, `paid_day`, `gross_mmk`, `commission_percent`, `commission_mmk`, `net_mmk`, `payout_id` | Amounts are frozen once written (`freeze_ledger_amounts`); a refund is a negative row |
+| `owner_payout_runs` | `id`, `shop_id`, `shop_name`, `owner_name`, `window_start_day`, `window_end_day`, `due_day`, `row_ids`, `gross_mmk`, `commission_mmk`, `net_mmk`, `min_mmk`, `run_at`, `run_by` | One run per shop per due day; it is also the payout line, so there are no separate batch and item tables |
+| `shop_page_settings`, `shop_template_entitlements`, `template_invoices`, `shop_templates`, `shop_template_events` | section 4 | |
+
+**Changes the built schema still needs** (tickets M-94 and M-95): (1) owners are matched by `owner_name`, which can repeat or change, so every table with `owner_name` gains `owner_id` (from `listings.owner_id`) and its policies move to it; (2) `owner_payout_runs` gains `status` (`drafted`, `approved`, `paid`), `paid_at` and `reference`, with `approve_owner_payout` and `mark_owner_payout_paid`; (3) ledger rows are written by the booking functions when a booking becomes `paid` or is refunded; (4) the platform, Main Owner and branch wallets (`wallet_ledger_entries`) arrive with the operator system in Phase 4, since Phase 3 needs only the owner ledger.
 
 #### 2. Rules
 
@@ -2276,19 +2277,111 @@ Built 2026-11-24 (browser stand-in for `translation_cache`): `src/lib/translatio
 
 `exchange_rates` (`id`, `mmk_per_usd`, `effective_from`, `set_by`, `note`); the current rate is the latest row with `effective_from <= now`. Super Admin and Payment Admin set it, and rows are never edited. Orders and bookings snapshot the rate and display currency. USD is kept to 2 decimals; MMK is shown rounded to the nearest 100. The hard-coded 4,500 stays as the fallback until the first row exists.
 
-### 16B.6 Media and storage (Cloudflare R2)
+### 16B.6 Media and storage (Cloudflare R2): layout (rewritten 2026-11-26)
 
-| Folder | Holds | Limit |
+Every photo and video lives in R2. This subsection fixes the buckets, the key of every object, the sizes, who may write where, how an object is served, how it is deleted, and which database column points at it. It extends what is built (`src/lib/mediaRules.ts` and `SQL/20261123000500_media_objects.sql` know five folders); the new folders and columns arrive as forward migrations (tickets M-90 and O-90).
+
+#### 1. Buckets
+
+| Bucket (binding) | Holds | Access |
 |---|---|---|
-| `blog-posts/` | cover and inline images | WebP, at most 450 KB |
-| `guide-stops/` | guide covers and stop photos | WebP, at most 450 KB |
-| `ads/` | ad images and video | image at most 300 KB; video MP4 at most 3 MB and 15 s |
-| `rentals/` | category and variant images | WebP, at most 450 KB |
-| `shops/<shop-id>/` | owner photos, within the Admin-set quota | WebP, at most 450 KB |
+| `mh-media` (`MEDIA`) | Every public image and video | Public read through the custom domain `media.<domain>`; written only by the Worker |
+| `mh-private` (`PRIVATE`) | User data exports | Never public; served only by the Worker through a signed link that expires after 7 days |
+| `mh-backup` (`BACKUP`) | A weekly copy of `mh-media` (16B.16) | Manus only |
 
-All uploads go through the authenticated Worker (type check, size check, role check, rate limit, CORS allowlist). A nightly job removes objects nothing has referenced for 30 days.
+Each environment has its own set (`mh-media-staging` and so on), so staging never writes into production.
 
-Built 2026-11-24 (browser stand-in for the Worker): `src/lib/mediaRules.ts` is the one table for the five folders — `MEDIA_RULES` states prefix, accepted types, stored format, byte ceiling and longest edge, `AD_VIDEO` carries the 3 MB / 15 s MP4 limits, `folderPrefix()` refuses a missing or path-like shop id, and `checkMedia()` answers with a translatable code (`unsupported_type`, `too_large`, `video_too_long`, `shop_required`, `quota_reached`). Its `stage` option separates a source image (held only to the 12 MB ceiling, because it is compressed next) from the stored file (held to the folder ceiling). `src/lib/mediaApi.ts` replaces `blogMediaApi.ts`: it converts to WebP, steps the quality down and then halves the longest edge twice before refusing, and both content editors name their folder — `blog-posts` in Blog Post Management, `guide-stops` in Travel Guide Management. `SQL/20261123000500_media_objects.sql` adds `media_objects` (one row per object, `last_referenced_at`, the `shops/<id>/` and size checks), `register_media_object()`, `touch_media_object()`, `shop_media_count()`, `orphan_media_objects(days)` and `delete_media_object()`, with no client insert or delete policy. The orphan job is wired (26 November 2026): `src/lib/mediaObjects.ts` is the browser stand-in for `media_objects`, `registerMediaObject()` records a file that reached R2, `touchMediaUrls()` is called by both content saves with the photos they still use, and `cleanupOrphanMedia()` is bound to `orphan_media_cleanup`, so the 02:00 job now reports how many objects it removed and finds nothing on a second run. A URL with no row — a seeded image, or a preview data URL — is ignored rather than kept alive forever. Still open: the Worker (which must repeat the same checks and call `register_media_object()`), and an Ads creative file input.
+#### 2. Key rules (for every object)
+
+- Lower case, `/` between parts. An id inside a key matches `[a-z0-9_-]+` and is never a user-typed value that could escape the folder.
+- The file name is a random UUID. A user's file name, an owner's text or a title is **never** part of a key.
+- A key is never reused. Replacing a photo uploads a new object and moves the reference; the old object ages out (section 6).
+- The database stores the **key**, never a URL (the host can change). The reader builds the URL from `VITE_MEDIA_PUBLIC_BASE_URL`.
+- Renditions share a base: the full image is `<base>.webp`, its thumbnail `<base>_t.webp`, a video's poster `<base>_p.webp`. Only the full key is stored in a content row; the others are derived by that rule.
+- The original upload is never stored: the browser re-encodes it (which also drops camera metadata), and the Worker keeps only the WebP (or MP4).
+
+#### 3. Folders
+
+| Folder | Key pattern | Holds | Written by | Full / thumb limit | Pointed at by |
+|---|---|---|---|---|---|
+| `blog-posts/` | `blog-posts/<yyyy>/<mm>/<uuid>.webp` | Cover and inline images | `blog_admin`, `super_admin` | 1600 px, 450 KB / 480 px, 45 KB | `blog_posts.cover_key`, image blocks |
+| `guide-stops/` | `guide-stops/<yyyy>/<mm>/<uuid>.webp` | Guide covers and stop photos | `travel_guide_admin`, `super_admin` | same | `travel_guides.cover_key`, `guide_stops.image_key` |
+| `shops/` | `shops/<listing-id>/photos/<uuid>.webp`, `shops/<listing-id>/items/<uuid>.webp`, `shops/<listing-id>/promotions/<uuid>.webp` | Every listing's gallery, catalog item photos and promotion images, **whether an Owner or MH Travel manages the listing** (the folder name is as built) | the listing's Owner, `admin`, `super_admin` | same | `listing_photos.key`, `catalog_items.photo_key`, `promotions.image_key` |
+| `cities/` | `cities/<city-id>/<uuid>.webp` | City covers | `admin`, `super_admin` | same | `cities.cover_key` |
+| `plans/` | `plans/<plan-id>/<uuid>.webp` | Travel plan covers | `admin`, `super_admin` | same | `travel_plans.cover_key` |
+| `rentals/` | `rentals/<category-id>/<uuid>.webp` (a variant uses `rentals/<category-id>/<variant-id>/<uuid>.webp`) | Rental category and variant images | `rental_admin`, `super_admin` | same | `rental_categories.image_key`, `rental_variants.image_key` |
+| `templates/` | `templates/<template-id>/<uuid>.webp` | Shop Page template previews | `super_admin` | same | `shop_templates.preview_image_key` |
+| `ads/` | `ads/<campaign-id>/<uuid>.webp` or `.mp4`, with `<uuid>_p.webp` for a video poster | Ad creatives | `ads_admin`, `super_admin` | image 1600 px, 300 KB; video MP4 3 MB and 15 s; no thumbnail | `ad_creatives.media_key` |
+| `avatars/` | `avatars/<user-id>/<uuid>.webp` | A traveler's or admin's avatar, 256 × 256 square | the user (own folder) | 200 KB; no thumbnail | `profiles.avatar_key` |
+| `reviews/` | `reviews/<listing-id>/<user-id>/<uuid>.webp` | Up to 3 photos per review | the reviewing traveler (own folder) | 450 KB / 45 KB | `review_photos.key` |
+| `operators/` | `operators/<operator-id>/logo/<uuid>.webp` | An operator's logo shown in the hub | `admin`, `super_admin` | 450 KB / 45 KB | `operators.logo_key` |
+| `home/` | `home/<section>/<uuid>.webp` | Awards, partner logos and banners once they leave the code | `super_admin` | 450 KB / 45 KB | a Home content table (later) |
+| `exports/` (**private** bucket) | `exports/<user-id>/<uuid>.json` | A user's data export | the system | 5 MB | `data_exports.key` |
+
+Operators' own media (event and cinema posters, their voucher artwork) stays in their systems; the hub shows the poster URL the operator returns, over HTTPS, and falls back to a placeholder if it fails.
+
+#### 4. Renditions and display
+
+- Every image folder except `ads/` and `avatars/` stores two WebP files: **full** (longest edge 1600 px, at most 450 KB) and **thumb** (longest edge 480 px, at most 45 KB). The browser makes both and uploads them together.
+- Cards, lists and the gallery strip use the thumb; the place page, post and lightbox use the full image. `<img>` carries `srcset` (thumb 480w, full 1600w), the stored `width` and `height` (no layout shift), `loading="lazy"` except above the fold, and alt text.
+- Alt text: a photo's caption if it has one, otherwise the listing or post title. A decorative image has an empty alt. An ad has the alt text it was created with (16A.8).
+- A missing key, or a 404, shows the bundled placeholder, never a broken image. Seeded images bundled in the app are used only while a key is empty.
+
+#### 5. Upload flow
+
+1. The user chooses a file. The browser checks type (JPEG, PNG or WebP; MP4 for an ad), the 12 MB source ceiling, and, for a listing, the photo quota (`listings.photo_quota`, default 20).
+2. The browser decodes and re-encodes to WebP (dropping EXIF), resizing to the folder's rule, and makes the thumbnail.
+3. `POST /api/media/upload` sends `file` (and `thumb`), `folder`, the scope id (listing, city, plan and so on) and `contentType`, with the user's token.
+4. The Worker checks the role and ownership (section 6), the rate limit (60 uploads an hour per account), the type by its first bytes, the size, the dimensions, the quota, and that the file has **no** `EXIF` or `XMP ` chunk (`media_error_exif`).
+5. It writes the objects to R2 with the headers of section 7 and registers one `media_objects` row per object (`register_media_object`).
+6. It returns `{ url, key, thumb_url, thumb_key, width, height, bytes }`. The current client already reads `url`, `key` and `bytes`.
+7. The user saves the content row; saving it calls `touch_media_object` for each key it now shows.
+
+A failed step 5 removes anything it wrote; the browser may retry with the same request, and a duplicate key is a conflict, not a second copy.
+
+#### 6. Who may write where (checked by the Worker)
+
+| Folder | Role | Extra check |
+|---|---|---|
+| `shops/<listing-id>/…` | `owner_admin` | `listings.owner_id = the caller`, and the owner is not suspended |
+| `shops/<listing-id>/…` | `admin`, `super_admin` | none |
+| `avatars/<user-id>/…`, `reviews/<listing-id>/<user-id>/…` | any signed-in user | `<user-id>` equals the caller |
+| other folders | the roles in the table above | none |
+
+A path whose id does not match the caller, or whose folder is not allowed for the role, is refused with `media_error_forbidden`.
+
+#### 7. Serving
+
+Objects are public by an unguessable UUID key, not secret: anyone with the URL can fetch it. Every object is written with `Cache-Control: public, max-age=31536000, immutable` and `Content-Type: image/webp` (`video/mp4` for video), served from the media domain through Cloudflare's cache, with `Access-Control-Allow-Origin: *` for GET only. Because a key is never rewritten, the cache never needs purging.
+
+#### 8. Lifecycle and deletion
+
+- **Orphans:** an object whose rows nothing has touched for 30 days is deleted by the nightly job (as built: the Worker deletes the R2 object first, then the row, so a failed delete is retried the next night).
+- **Explicit delete:** `DELETE /api/media/object?key=<key>` removes an object at once, for the role and ownership that may write it, and only when no content row still points at it. A listing's cover cannot be deleted until another photo is the cover.
+- **Reviews:** deleting a review deletes its photos at once. A review hidden by moderation keeps its photos until Admin decides, and they stay unlisted.
+- **Account deletion:** the job removes `avatars/<user-id>/` and `reviews/*/<user-id>/` (section 3.2).
+- **Private exports:** an export is written to `exports/<user-id>/<uuid>.json`, the user gets a signed link valid 7 days, and the object is deleted after 7 days.
+- **Backup:** `mh-media` is copied to `mh-backup` weekly; orphans and thumbnails older than the last good copy are included, and a restore copies back the missing keys only.
+
+#### 9. Data model
+
+`media_objects` (built) gains: `rendition` (`full`, `thumb`, `poster`), `width`, `height`, `purpose` (`cover`, `gallery`, `item`, `promotion`, `inline`, `avatar`, `review`, `logo`, `preview`, `creative`), and its `folder` check widens to the folders above. `listing_photos` (built: `key`, `position`) gains `caption_mm`, `caption_en`, `is_cover` (exactly one cover per listing, enforced by a partial unique index), `width` and `height`. The count a shop is held to is `shop_media_count` (built). Every `*_key` column in section 3 is a plain text key with no foreign key to R2.
+
+#### 10. Seed images
+
+The seeded blog posts, guides, listings, cities, plans, rental categories and templates use images bundled in the app. Ticket M-91 uploads each one into its folder (making the thumb), writes the keys into the rows, and leaves the bundled file as the fallback until the key is set. Nothing is renamed by hand.
+
+#### 11. Acceptance criteria
+
+1. Every upload produces the objects and `media_objects` rows named in sections 3 and 9, and the key matches its folder's pattern.
+2. A file with EXIF or XMP data, a wrong type, or over its limit is refused with the right code and nothing is stored.
+3. An owner cannot write into another listing's folder; a user cannot write into another user's avatar or review folder.
+4. A 21st photo on a listing with a quota of 20 is refused.
+5. A replaced photo's old object disappears after 30 days and never while a row still points at it.
+6. Deleting a review removes its photos; deleting an account removes the avatar and review photos.
+7. An export link stops working after 7 days and the object is gone.
+8. A card loads the thumb and a place page the full image; no image shifts the layout.
+9. Staging and production never share a bucket.
 
 ### 16B.7 Scheduled jobs
 
@@ -2573,10 +2666,10 @@ Phases are ordered by dependency, with no calendar dates. A phase is finished on
 | 1E. Search v1 | Section 16H on the MH-owned content (blogs, guides, rentals, cities) | Section 16H.13 acceptance criteria all pass |
 | 1F. Super Admin dashboard | Section 3A section by section on the server, as each module's backend lands (Overview, Users and Settings can start in Phase 0 and 1) | Section 3A.16 acceptance criteria all pass |
 | 2. Listings and bookings | Section 16C in order: Hotels first, then the rest one by one; with them the universal booking and voucher work (section 6), reviews and reports (section 11), owner applications (section 3), support chat and the contact form (section 12), the Bus route planner (section 7.3), the Home feed (section 5), the Owner dashboard (section 3B), the listing pages (7A), Travel Plans (7B), the Account pages and sign-in pages (14.5 to 14.9), email (16B.11) and the legal pages (16B.15); each module follows its specification in 16C.4 and joins the search index | Hotels pass the 16C acceptance, then each next module does |
-| 3. Owner money and templates | The Owner money system (section 9); the template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **both halves are met: `replayPayout()` recomputes a run from its rows (2026-11-27), and a switch and a fallback are exercised on the rendered page (2026-11-28) — `resolveTemplateForShop()` falls back on a lapsed entitlement, a retirement or a rollback, and `npm run a11y` proves every template renders in both themes** |
+| 3. Owner money and templates | The Owner money system (section 9; the owner ledger, payout runs and subscriptions are already written as SQL); the template system (section 4) | A payout run is reproducible from ledger rows; a template switch and fallback work — **both halves are met: `replayPayout()` recomputes a run from its rows (2026-11-27), and a switch and a fallback are exercised on the rendered page (2026-11-28) — `resolveTemplateForShop()` falls back on a lapsed entitlement, a retirement or a rollback, and `npm run a11y` proves every template renders in both themes** |
 | 4. Ticketing and operators | Operator system specification (section 9) with the Main Owner panel (3C) | Operator system acceptance (section 9) passes |
 | 5. Mobile app | Section 16J: the Capacitor app on the same APIs, `serve_ad` with AdMob, push notifications | Same flows pass on a phone |
-| 6. Launch readiness | Security review of RLS and Workers; load test of search and booking; backup restore drill (16B.16); SEO and sharing (16B.14); the retention jobs (16B.12); privacy policy and terms pages; error tracking and uptime check; contrast palette decision (`Doc/STATUS.md` §8); content seeding | Checklist signed off by the founder |
+| 6. Launch readiness | Security review of RLS and Workers; load test of search and booking; the launch readiness checklist (16K); backup restore drill (16B.16); SEO and sharing (16B.14); the retention jobs (16B.12); privacy policy and terms pages; error tracking and uptime check; contrast palette decision (`Doc/STATUS.md` §8); content seeding | Checklist signed off by the founder |
 
 Dependencies to respect: the media route of the one Worker (Phase 0) before Blog, Guide and Ads uploads; the listing index before guide stops can use the database; the booking and voucher work in Hotels before any module after it; ledgers before payouts and before the operator settlement.
 
@@ -2657,6 +2750,15 @@ The founder delegated these decisions to Claude and will review them after the m
 | 69 | Hospitals and clinics have no reviews and show an information-only note | 16C.4.9 | One rule |
 | 70 | Events and cinema use two extra operator calls (`/shows`); flights come through a provider adapter later | 16C.4.11 | Reshape the contract |
 | 71 | The universal booking functions of 16G.3 (`request_booking`, `set_booking_status`, `request_reschedule`, `decide_reschedule`) | 16G.3 | Reshape the functions and the client together |
+| 72 | R2: one public bucket, one private bucket and one backup bucket per environment | 16B.6.1 | Rename or split buckets |
+| 73 | Keys are random UUIDs, never reused and never carrying a user's text; thumbnails by the `_t` rule | 16B.6.2 | Change the pattern before the seed migration |
+| 74 | The browser makes both renditions; the Worker refuses EXIF and XMP data | 16B.6.5 | Strip on the server instead |
+| 75 | The `shops/` folder holds every listing's photos, whether an Owner or MH Travel manages it | 16B.6.3 | Add a `places/` folder |
+| 76 | Public objects are unguessable, not secret; user exports are private with a 7-day signed link | 16B.6.7, 16B.6.8 | Signed links for all media |
+| 77 | Owners are identified by account id, not by name (forward migration) | 9, M-94 | Keep matching by name |
+| 78 | Phase 3 payouts are one run per shop per due day; wallets arrive with operators in Phase 4 | 9, M-95 | Add batch tables |
+| 79 | The owner application and contact form go through the Worker with a Turnstile check | 16G.4 | Another bot check |
+| 80 | Launch gates and performance targets (Home 2.5 s, search 200 ms, booking 500 ms) | 16K | The targets |
 
 **Facts only the founder can supply later** (not blocking any build step): the Travel Guide default per-post rate; the commercial terms of each ad campaign; the AdSense and AdMob account ids; the commission percentage and revenue-share formula for tickets (already left Admin-configurable in section 9); definitions of the "express" and "အာတာဖတ်" vehicles, which Rental Admin enters as data.
 
@@ -2781,6 +2883,39 @@ Ids: `M-` for Manus, `O-` for OpenHands. Status lives only in `Doc/TICKETS.md`. 
 | O-86 | OpenHands | Book Shops: product sections, the pick-up order with lines | M-82 | 16C.4.13 criterion 5 passes |
 | O-87 | OpenHands | Attractions, Markets and Services pages: information layout, Guides featuring this place, emergency lines, no review button for hospitals and clinics | M-83 | 16C.4.13 criteria 6 and 7 pass |
 | O-88 | OpenHands | Transport operator pages: information and contact now, the Ticketing hub link when the operator system is integrated | M-81 | 16C.4.13 criterion 9 passes when Phase 4 is integrated |
+| M-90 | Manus | Media model and the upload route: the forward migration widening `media_objects` (new folders, `rendition`, `width`, `height`, `purpose`) and `listing_photos` (captions, `is_cover` with one cover per listing, size); the Worker changes of 16B.6 (the `thumb` part, the EXIF and XMP check, the role and ownership matrix, `DELETE /api/media/object`); the three buckets per environment and the media domain | M-06, M-81 | Section 16B.6.11 criteria 1 to 5 pass |
+| M-91 | Manus | Seed media migration: upload the bundled seed images (full and thumb) into their folders and write the keys into the rows | M-90, M-81, M-20, M-31, M-74 | Seeded content shows R2 images; the bundled file is used only while a key is empty |
+| O-90 | OpenHands | App media layer: the new folders and limits in `src/lib/mediaRules.ts`, both renditions made in the browser, `mediaUrl` and `mediaThumbUrl`, an image component with `srcset`, stored width and height and the fallback, callers for avatars, reviews, cities, plans and templates, and the delete call | M-90 | Section 16B.6.11 criteria 1 to 4 and 8 pass in the browser |
+| M-92 | Manus | Private exports: `data_exports`, the export builder job, `GET /api/private/export/:id` with a signed link, and the 7-day purge | M-90, M-75 | Section 16B.6.11 criterion 7 passes |
+| M-93 | Manus | `POST /api/apply` and `POST /api/contact` with Turnstile verification and the two functions of 16G.3 | M-06, M-69, M-65 | A request without a valid Turnstile token is refused |
+| M-94 | Manus | Owner identity: add `owner_id` (from `listings.owner_id`) to the subscription, ledger, payout and template tables and move their policies off `owner_name` | M-81 | Two owners with the same name never see each other's rows |
+| M-95 | Manus | Money flow: a ledger row when a booking becomes `paid` (commission snapshot) and a negative row for a refund; payout status columns (`status`, `paid_at`, `reference`); `approve_owner_payout`, `mark_owner_payout_paid`, `owner_get_earnings`; the due-day and reminder jobs | M-82, M-94, M-03 | Section 9 money acceptance 1 to 5 passes at the database |
+| O-91 | OpenHands | Owner Earnings, Subscription and Templates views on the server (section 3B) | M-95, O-72 | The Owner reads real earnings, status and templates |
+| O-92 | OpenHands | Payment Admin screens: payout runs, subscription payments, template payments | M-95, O-60 | Section 9 money acceptance 4 passes from the screen |
+| M-96 | Manus | Finish the template functions: `resolve_shop_template`, `apply_shop_template`, `record_template_payment`, `template_usage`, the expiry and grace job, retirement notices | M-94, M-03 | Section 4 template acceptance passes at the database |
+| O-93 | OpenHands | Shop Page rendering through `resolve_shop_template`, owner preview, switch and fallback | M-96 | A lapsed entitlement falls back to the free template on the rendered page |
+| M-100 | Manus | Operator tables of section 9: `operators`, `operator_branches`, `ticket_transactions`, `wallet_ledger_entries`, `settlement_batches`, with RLS | M-01, M-94 | The section 9 tables exist and each role sees only its own rows |
+| M-101 | Manus | The operator gateway in the Worker: signed requests, the trip search merge, live seat maps, holds, confirm, reschedule, timeouts and retries, idempotency, and the unavailable state | M-06, M-100 | Section 9 acceptance (seat held once, an unreachable operator drops out) passes against the mock |
+| M-102 | Manus | Settlement: ticket transactions with the commission snapshot, refunds, settlement batches and statements, and the platform, Main Owner and branch wallets | M-100, M-95 | Section 9 acceptance (a refund leaves the statement correct) passes |
+| M-103 | Manus | Operator onboarding: create an operator and issue and rotate its API key | M-100 | An operator can sign a request; a rotated key invalidates the old one |
+| O-100 | OpenHands | Ticketing hub on the gateway: product tabs, search, merged trip list, unavailable notes | M-101, O-103 | Section 7.4 criteria 1 and 3 pass |
+| O-101 | OpenHands | Seat map, hold countdown, passenger details, payment and the ticket page with a QR code | M-101, M-82 | Section 7.4 criterion 2 passes |
+| O-102 | OpenHands | Main Owner panel on the server (section 3C) | M-102 | Section 3C is complete on server data |
+| O-103 | OpenHands | A mock operator server and contract tests for the section 9 API, so the hub is built before a live operator exists | none | The contract tests pass against the mock |
+| O-110 | OpenHands | The Capacitor project, build pipeline, icons, splash and environment config (section 16J) | none | The web build runs inside the app shell on both platforms |
+| M-110 | Manus | `push_tokens`, push sending from the Worker's scheduled handler, and the `min_app_version` check | M-04, M-06 | A paid booking sends one push to the device |
+| O-111 | OpenHands | Native plugins: push, location, share, deep links, secure session storage | O-110, M-110 | Section 16J acceptance passes |
+| O-112 | OpenHands | AdMob through a plugin on `serve_ad` | O-110, M-41 | An app placement shows a served ad or collapses |
+| O-113 | OpenHands | Offline read-only cache for the Foreign Tourist section, vouchers and favorites | O-110 | Those three open with no network |
+| M-111 | Manus | The universal-link files (`/.well-known/apple-app-site-association`, `assetlinks.json`) served by the Worker | M-06 | A web link to a post opens the app |
+| O-114 | OpenHands | Store listing assets, privacy details and in-app account deletion | O-110 | The store checklist of 16J passes |
+| M-120 | Manus | Security review: the per-role RLS suite, Worker route tests and the secret scan (16K) | all | The 16K Security rows pass |
+| M-121 | Manus | Load test to the 16K targets for search, booking submit and the Home feed | M-50, M-82 | The 16K Performance row passes |
+| O-120 | OpenHands | Accessibility audit of every route and the contrast palette decision | none | The 16K Accessibility row passes |
+| O-121 | OpenHands | Performance budget: Home largest content in 2.5 s on a mid-range phone over 4G, a JS budget per route | O-90 | The 16K Performance row passes |
+| M-122 | Manus | Production cutover: domain, DNS, SPF and DKIM, buckets, secrets, cron, monitoring, error tracking, the backup drill | M-79 | The 16K Operations rows pass |
+| M-123 | Manus | The runbook and the rollback steps in `Doc/`, tried once | M-122 | The rollback rehearsal succeeds |
+| O-122 | OpenHands | Content seeding review and the legal text loaded | M-76 | The 16K Content and Legal rows pass |
 
 ### 16F.3 Order of work
 
@@ -2802,7 +2937,7 @@ These are fixed (rule 2 of 16F.1). Argument and field names are exact. Dates are
 
 A failure raises a Postgres exception with SQLSTATE `P0001` whose message is `<module>_error_<code>` (for example `rental_error_start_date`). The client shows `t('<message>')` in Myanmar and English, and a generic message for an unknown one. A success returns the row or a `jsonb` document directly; there is no envelope. When a failure needs data, the exception `DETAIL` is a JSON string, for example `{"problems":[{"code":"cover"}]}`.
 
-Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `admin_`, `owner_`, `booking_`, `media_` (the Worker returns the same names with HTTP status codes).
+Prefixes: `common_`, `rental_`, `blog_`, `guide_`, `ads_`, `search_`, `admin_`, `owner_`, `booking_`, `review_`, `favorite_`, `support_`, `media_` (the Worker returns the same names with HTTP status codes).
 
 Common: `common_error_not_signed_in`, `common_error_forbidden`, `common_error_not_found`, `common_error_version_conflict`, `common_error_rate_limit`.
 
@@ -2868,6 +3003,44 @@ A block is exactly `{ id, type: "text", text_en, text_mm }`, `{ id, type: "image
 | `set_guide_earning_amount` | `p_id uuid`, `p_amount_usd numeric` | the row | `payment_admin`, `admin`, `super_admin` |
 | `mark_guide_earning_paid` | `p_id uuid`, `p_paid_mmk numeric`, `p_note text` | the row; refused when `amount_usd` is null | `payment_admin`, `super_admin` |
 
+**Reviews, favorites, notifications and support (sections 11, 14.5, 14.6, 12.1; to build)**
+
+| Function | Arguments | Returns | Who |
+|---|---|---|---|
+| `submit_review` | `p_listing_id text`, `p_booking_id uuid` (or null), `p_rating integer`, `p_body text`, `p_photo_keys text[]` | the review row | an eligible signed-in traveler (completed booking or a recorded visit, section 11.1) |
+| `edit_review`, `delete_review` | `p_review_id uuid` (+ rating, body, keys for edit) | the row; allowed for 14 days | the review's author |
+| `mark_visit` | `p_listing_id text`, `p_lat numeric`, `p_lng numeric` | `{ ok }` when within 300 m, once per place per 24 hours | signed-in traveler |
+| `report_content` | `p_target_kind text` (`review` / `listing`), `p_target_id text`, `p_reason text`, `p_note text` | `{ id }` | signed-in user |
+| `toggle_favorite` | `p_kind text`, `p_ref_id text` | `boolean`, true when now saved | signed-in user |
+| `merge_guest_favorites` | `p_items jsonb` (`[{ "kind": "...", "ref_id": "..." }]`) | `integer`, the number added | signed-in user |
+| `mark_notification_read`, `mark_all_notifications_read` | `p_id uuid` / none | `integer` | signed-in user |
+| `open_support_thread` | `p_kind text` (`traveler` / `owner`) | the thread | signed-in user |
+| `send_support_message` | `p_thread_id uuid`, `p_body text` | the message | the thread's user, `admin`, `super_admin` |
+| `assign_support_thread`, `close_support_thread` | `p_thread_id uuid` (+ `p_admin_id uuid`) | the thread | `admin`, `super_admin` |
+| `get_home_feed` | `p_city text default null` | one `jsonb` document with every Home row of 5.1 | anyone |
+
+Codes: `review_error_<code>` (`not_eligible`, `rating`, `body_too_long`, `photos`, `too_late`, `duplicate`, `not_found`, `rate_limit`), `favorite_error_limit`, `support_error_<code>` (`empty`, `too_long`, `forbidden`, `closed`).
+
+The public forms that need a bot check go through the Worker (16G.4): `POST /api/apply` (owner application) and `POST /api/contact` (contact message). The Worker verifies the Cloudflare Turnstile token, then calls `submit_owner_application(p_name, p_phone, p_business, p_category, p_city, p_address, p_notes)` or `submit_contact_message(p_name, p_email, p_phone, p_message, p_lang)` with the service key. Both are rate-limited per address.
+
+**Money, subscriptions and templates (built; sections 9 and 4)**
+
+| Function | Arguments | Returns | Who |
+|---|---|---|---|
+| `shop_accepts_bookings` | `p_shop_id text` | `boolean`; false when the Owner's subscription has expired or the Owner is suspended; every booking function calls it | internal |
+| `expire_shop_subscriptions` | none | `integer`, the number expired | the hourly job |
+| `subscription_renewal_due` | none | the rows due a 7, 3 or 1-day reminder | the daily job |
+| `mark_subscription_reminded` | `p_id uuid`, `p_days integer` | nothing | the daily job |
+| `owner_payout_due_day` | `p_paid_day date` | `date`: the 20th for days 1 to 15, the 5th of the next month otherwise | internal |
+| `run_owner_payout` | `p_shop_id text`, `p_due_day date` | the `owner_payout_runs` row; rows under the minimum stay unpaid and carry over | `payment_admin`, `super_admin` |
+| `verify_owner_payout` | `p_run_id text` | `{ ok, gross_mmk, commission_mmk, net_mmk }` recomputed from the run's rows (reproducibility) | `payment_admin`, `super_admin` |
+| `resolve_shop_template` | `p_shop_id text` | the template to render, falling back to the free one on a lapsed entitlement, a retirement or a rollback | anyone |
+| `apply_shop_template` | `p_shop_id text`, `p_template_id text` | `shop_page_settings` row; a paid template needs an active entitlement | the shop's Owner |
+| `record_template_payment` | `p_shop_id text`, `p_template_id text`, `p_invoice_id text` | the entitlement row | `payment_admin`, `super_admin` |
+| `template_usage` | `p_since timestamptz` | usage per template, never counting previews | `super_admin`, `admin` |
+
+Still to add (tickets M-95 and M-96): `approve_owner_payout(p_run_id)`, `mark_owner_payout_paid(p_run_id, p_reference)`, `owner_get_earnings(p_from, p_to)`, and the ledger writes made when a booking becomes `paid` or is refunded.
+
 **Super Admin dashboard (section 3A).** The `admin_*` functions are named in section 3A. They follow these conventions: positional arguments, `P0001` errors with the `admin_error_` prefix, and a role check on the server.
 
 **Owner dashboard (section 3B).** The `owner_*` functions are named in section 3B.4 and follow the same conventions with the `owner_error_` prefix.
@@ -2903,7 +3076,10 @@ There is **one** Cloudflare Worker, `Worker/index.ts` (section 16I). It serves t
 
 | Route | Contract |
 |---|---|
-| `POST /api/media/upload` (multipart: `file`, `folder`, `contentType`; header `Authorization: Bearer <Supabase access token>`) | Success `{ url, key, bytes }` with status 200. Failure: status 4xx and `{ code, message }` with `code` one of the existing `MediaErrorCode` values (`choose_image`, `unsupported`, `still_large`, `r2_failed`) or `media_error_forbidden`, `media_error_rate_limit`. Folders and limits as in 16B.6; a folder is allowed only for the roles that own it (`blog-posts/`: `blog_admin`, `super_admin`; `guide-stops/`: `travel_guide_admin`, `super_admin`; `ads/`: `ads_admin`, `super_admin`; `rentals/`: `rental_admin`, `super_admin`). Keys: `<folder>/<yyyy>/<mm>/<uuid>.webp`. The current client already reads `url` and `key`. |
+| `POST /api/media/upload` (multipart: `file`, `thumb`, `folder`, the scope id, `contentType`; header `Authorization: Bearer <Supabase access token>`) | Success `{ url, key, thumb_url, thumb_key, width, height, bytes }`, status 200 (the client reads `url`, `key` and `bytes`). Failure: status 4xx and `{ code, message }` with `code` one of the existing `MediaErrorCode` values (`choose_image`, `unsupported`, `still_large`, `r2_failed`) or `media_error_forbidden`, `media_error_rate_limit`, `media_error_exif`, `media_error_quota`. The folders, key patterns, limits and the role and ownership checks are in 16B.6. |
+| `DELETE /api/media/object?key=<key>` | Deletes one object for the role and owner that may write it, only when no row points at it (16B.6.8); `{ ok }` or `{ code, message }` |
+| `GET /api/private/export/:id` | Streams a user's data export from the private bucket for a signed link that expires after 7 days |
+| `POST /api/apply`, `POST /api/contact` | The owner application and the contact message, each with a Cloudflare Turnstile token; the Worker verifies it, then calls the function of 16G.3 and rate-limits per address |
 | `GET /api/ad/click/:creativeId?p=<placement>&s=<session>` | Records a click and answers 302 to the creative's click URL. The link is signed with `AD_CLICK_SIGNING_KEY` so it cannot be forged |
 | `POST /api/ad/event` (JSON `{ creative_id, placement, kind: "impression", session_hash }`) | Records an impression; answers 204 |
 | `POST /api/translate` (JSON `{ text, from, to }`) | `{ text, status }`, using `translation_cache` first |
@@ -3099,6 +3275,35 @@ The app must stay in step with the web app through the shared backend. This sect
 **Acceptance.** Every flow of sections 5 to 8 and 14 passes on a phone; a push for a paid booking opens that voucher; an app below `min_app_version` cannot continue; account deletion can be started in the app.
 
 Tickets for this phase are written by Claude when Phase 4 is complete.
+
+---
+
+## 16K. Launch readiness checklist (Phase 6; 2026-11-26)
+
+The founder signs this checklist off before the public launch (roadmap Phase 6, section 16D). A row passes only with the evidence named. The tickets are in 16F.2.
+
+| Area | Check | Evidence | Who |
+|---|---|---|---|
+| Security | Every table has RLS and every role is tested against every table | The per-role RLS test suite passes | Manus |
+| Security | Every Worker route refuses a missing token, a wrong role, an oversize body and a flood | Route tests pass | Manus |
+| Security | No secret is in the repository, a `VITE_` value or the browser bundle | A secret scan of the repo and the build is clean | Manus |
+| Security | No production screen shows or generates a password; admin and owner accounts are invitation-only | A walk-through of sections 3.2 and 3A | OpenHands |
+| Data | Backups run, and a restore to staging has been rehearsed this quarter | The drill is noted in `Doc/STATUS.md` | Manus |
+| Data | Retention jobs (16B.12) run and the media cleanup deletes only unreferenced objects | Job history and a test | Manus |
+| Performance | Home loads (largest content shown) in 2.5 s or less on a mid-range phone over 4G | A measured run on the staging build | OpenHands |
+| Performance | Search answers in 200 ms or less at the 95th percentile on a 10,000-row index; booking submit in 500 ms or less; the Home feed in 400 ms or less | The load test report | Manus |
+| Accessibility | Every route passes the automated axe check in both themes and both languages, and the known contrast pair is resolved | `npm run a11y` and the palette decision recorded | OpenHands |
+| Legal | Terms, Privacy Policy, Owner Terms and Rental Terms are published in Myanmar and English; the ad consent banner works when AdSense is on | The pages and a sign-up test | Founder |
+| Operations | The domain, DNS, SPF and DKIM are live; transactional mail reaches an inbox in both languages | A test message per template | Manus |
+| Operations | Uptime checks and error tracking alert Super Admin; `maintenance_mode` shows its notice | A forced failure | Manus |
+| Operations | The runbook and the rollback steps are written and tried once | A rollback rehearsal | Manus |
+| Content | Every seeded item is real: no sample numbers, no placeholder photos, every listing has a photo, a phone and hours | A content review by the founder | Founder |
+| Content | Every owner on launch day was visited, has an active subscription and an approved listing | The owner list reconciled with `owners` | Founder |
+| Support | The Support inbox is staffed and the contact form reaches Admin | A test thread and a test message | Founder |
+| Release | A soft launch with invited travelers and owners runs for two weeks with no severity 1 incident (16B.16) | The incident log | Founder |
+| Release | The mobile apps pass the store checks (section 16J) | Store review results | OpenHands |
+
+The founder may add rows. A failed row blocks the launch until it passes or the founder records an exception in `Doc/STATUS.md`.
 
 ---
 
